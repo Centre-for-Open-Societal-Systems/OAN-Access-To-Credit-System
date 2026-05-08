@@ -1,0 +1,34 @@
+$page-bg: #f4f7fb;
+$surface: #ffffff;
+$surface-strong: #f8fbff;
+$text-primary: #162033;
+$text-muted: #6e7684;
+$border-subtle: #d8dfea;
+$panel: #17355f;
+$panel-deep: #10284a;
+$panel-soft: #234873;
+$accent: #ee7b35;
+$accent-soft: #fff1e6;
+$success: #79ba74;
+$button-bg: #17355f;
+$button-bg-hover: #10284a;
+
+:root {
+  --page-bg: #{$page-bg};
+  --surface: #{$surface};
+  --surface-strong: #{$surface-strong};
+  --text-primary: #{$text-primary};
+  --text-muted: #{$text-muted};
+  --border-subtle: #{$border-subtle};
+  --panel-bg: #{$panel};
+  --panel-bg-deep: #{$panel-deep};
+  --panel-soft: #{$panel-soft};
+  --accent: #{$accent};
+  --accent-soft: #{$accent-soft};
+  --success: #{$success};
+  --button-bg: #{$button-bg};
+  --button-bg-hover: #{$button-bg-hover};
+  --shadow-elevated: 0 30px 80px rgba(18, 31, 54, 0.16);
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+}

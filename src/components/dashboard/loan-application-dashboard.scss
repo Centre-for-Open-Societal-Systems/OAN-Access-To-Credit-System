@@ -224,7 +224,7 @@
 }
 
 .dashboard-metric-card__label {
-  font-size: 0.75rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -334,14 +334,14 @@
 }
 
 .dashboard-activity-table tbody td strong {
-  display: block;
+  display: inline-block;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .dashboard-activity-table tbody td span {
-  display: block;
+  display: inline-block;
   margin-top: 0.15rem;
   font-size: 0.62rem;
   color: var(--text-muted);
