@@ -16,7 +16,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/leads" replace />} />
         <Route path="leads" element={<LeadsDashboard />} />
         <Route path="leads/new" element={<NewLeadCreation />} />
-        <Route path="loans" element={<LoanApplicationDashboard />} />
+        <Route path="loanApplicationDashboard" element={<LoanApplicationDashboard />} />
         <Route path="loans/new" element={<NewLoanApplication />} />
         <Route path="loans/update-status" element={<UpdateLoanStatus />} />
       </Route>

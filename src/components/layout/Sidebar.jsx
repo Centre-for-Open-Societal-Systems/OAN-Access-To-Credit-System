@@ -3,14 +3,15 @@ import { ShieldCheck } from 'lucide-react';
 
 import './Sidebar.module.scss';
 
-function Sidebar({ isCollapsed, sections = [] }) {
+function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   return (
     <aside
       id="dashboard-sidebar"
-      className={`dashboard-sidebar ${isCollapsed ? 'dashboard-sidebar--collapsed' : ''}`}
+      className={`dashboard-sidebar${isCollapsed ? ' dashboard-sidebar--collapsed' : ''}${isMobileOpen ? ' dashboard-sidebar--mobile-open' : ''}`}
+      aria-hidden={!isMobileOpen ? undefined : undefined}
     >
       <div className="dashboard-sidebar__brand">
         <div className="dashboard-sidebar__brand-icon" aria-hidden="true">

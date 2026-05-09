@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Clock3, FileText, ListChecks, Plus, Users } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,7 +12,7 @@ const navigationSections = [
     title: 'DASHBOARDS',
     items: [
       { path: '/leads', label: 'Leads Dashboard', icon: Users },
-      { path: '/loans', label: 'Loan Application Dashboard', icon: FileText },
+      { path: '/loanApplicationDashboard', label: 'Loan Application Dashboard', icon: FileText },
     ],
   },
   {
@@ -28,27 +28,48 @@ const navigationSections = [
 const PAGE_TITLES = {
   '/leads': 'Leads Dashboard',
   '/leads/new': 'New Lead Creation',
-  '/loans': 'Loan Application Dashboard',
+  '/loanApplicationDashboard': 'Loan Application Dashboard',
   '/loans/new': 'New Loan Application Creation',
   '/loans/update-status': 'Update Loan Application Status',
 };
 
 function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard';
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
+
+  function handleToggleSidebar() {
+    if (window.innerWidth <= 900) {
+      setIsMobileOpen((prev) => !prev);
+    } else {
+      setIsSidebarCollapsed((prev) => !prev);
+    }
+  }
 
   return (
     <div
       id="dashboard-shell"
       className={`dashboard-shell ${isSidebarCollapsed ? 'dashboard-shell--collapsed' : ''}`}
     >
-      <Sidebar isCollapsed={isSidebarCollapsed} sections={navigationSections} />
+      {isMobileOpen && (
+        <div
+          className="dashboard-sidebar-overlay"
+          aria-hidden="true"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileOpen} sections={navigationSections} />
       <main id="dashboard-main" className="dashboard-main">
         <TopHeader
           isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
+          onToggleSidebar={handleToggleSidebar}
           onLogout={() => navigate('/login')}
           pageTitle={pageTitle}
         />
