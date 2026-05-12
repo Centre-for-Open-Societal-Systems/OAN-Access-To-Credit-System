@@ -1580,8 +1580,7 @@ function NewLoanApplication() {
   function goBack() {
     setErrors({});
     if (currentStep === 1) {
-      navigate('/loanApplicationDashboard');
-    } else {
+      navigate('/loans/applications');    } else {
       const prevStep = currentStep - 1;
       setCompletedSteps((prev) => {
         const next = new Set(prev);
@@ -1616,6 +1615,37 @@ function NewLoanApplication() {
     const now = new Date();
     setShowSubmitConfirm(false);
     setSubmittedAt(now);
+
+    // Persist submitted application to localStorage
+    const appId = 'APP-' + String(Math.floor(Math.random() * 9000) + 1000);
+    const MONTHS = ['January','February','March','April','May','June','July','August',
+                    'September','October','November','December'];
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const formattedDate = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} · ${timeStr}`;
+
+    // Exclude non-serialisable fields (File objects, OTP digits)
+    const { landCertificateFile, otpCode, ...serializableForm } = form;
+
+    const newEntry = {
+      id: appId,
+      applicant: form.fullName || 'Unknown Applicant',
+      type: form.loanType || 'Agricultural Loan',
+      status: 'Pending Review',
+      statusTone: 'info',
+      updated: formattedDate,
+      action: 'View',
+      amount: form.requestedAmount || '',
+      phone: form.mobilePhone || '',
+      region: form.farmRegion || form.region || '',
+      proposedLoanTerm: form.proposedLoanTerm || '',
+      submittedAt: now.toISOString(),
+      formData: serializableForm,
+    };
+    try {
+      const existing = JSON.parse(localStorage.getItem('a2c_submitted_loans') || '[]');
+      localStorage.setItem('a2c_submitted_loans', JSON.stringify([newEntry, ...existing]));
+    } catch { /* ignore storage errors */ }
+
     setShowSubmitSuccess(true);
   }
 
@@ -1672,7 +1702,7 @@ function NewLoanApplication() {
               <p className="text-xs text-green-700">You will be notified once your application has been reviewed by the assigned development agent and financial institution.</p>
             </div>
             <button
-              onClick={() => { setShowSubmitSuccess(false); navigate('/loanApplicationDashboard'); }}
+              onClick={() => { setShowSubmitSuccess(false); navigate('/loans/applications'); }}
               className="w-full rounded-lg bg-[#4a7c59] py-2.5 text-sm font-medium text-white hover:bg-[#3a6347]"
             >Done</button>
           </div>
@@ -1692,7 +1722,7 @@ function NewLoanApplication() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          <button onClick={() => navigate('/loanApplicationDashboard')} className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Cancel</button>
+          <button onClick={() => navigate('/loans/applications')} className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Cancel</button>
           <button className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Save Draft</button>
         </div>
       </div>

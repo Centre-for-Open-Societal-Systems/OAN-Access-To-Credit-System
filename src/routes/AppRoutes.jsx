@@ -6,6 +6,7 @@ import LeadsDashboard from '../features/leads/pages/LeadsDashboard.jsx';
 import NewLeadCreation from '../features/leads/pages/NewLeadCreation.jsx';
 import LoanApplicationDashboard from '../features/loans/pages/LoanApplicationDashboard.jsx';
 import NewLoanApplication from '../features/loans/pages/NewLoanApplication.jsx';
+import NewLoanApplicationDashboard from '../features/loans/pages/NewLoanApplicationDashboard.jsx';
 import UpdateLoanStatus from '../features/loans/pages/UpdateLoanStatus.jsx';
 
 function AppRoutes() {
@@ -18,6 +19,7 @@ function AppRoutes() {
         <Route path="leads/new" element={<NewLeadCreation />} />
         <Route path="loanApplicationDashboard" element={<LoanApplicationDashboard />} />
         <Route path="loans/new" element={<NewLoanApplication />} />
+        <Route path="loans/applications" element={<NewLoanApplicationDashboard />} />
         <Route path="loans/update-status" element={<UpdateLoanStatus />} />
       </Route>
       <Route path="*" element={<Navigate to="/leads" replace />} />
