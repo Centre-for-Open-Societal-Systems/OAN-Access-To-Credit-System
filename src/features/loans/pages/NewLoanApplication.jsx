@@ -1,1041 +1,59 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  AlertTriangle,
-  ChevronDown,
-  Info,
-  Cloud,
-  MapPin,
-  Upload,
-  Eye,
-  Crosshair,
-  Search,
-  Fingerprint,
-  FileText,
-  Image,
-  PenLine,
-  Users,
-  Clock,
+  ArrowLeft, ArrowRight, Check, AlertTriangle, ChevronDown, ChevronLeft, ChevronRight,
+  Info, Upload, Eye, Fingerprint, FileText, Image, PenLine,
+  Lock, Edit2, Send, X, Download, LayoutDashboard, Zap, Calendar, Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// ─── Step metadata ────────────────────────────────────────────────────────────
 const STEPS = [
-  { number: 1, shortLabel: 'Applicant Personal Details' },
-  { number: 2, shortLabel: 'KYC Identification (Fayda OTP)' },
-  { number: 3, shortLabel: 'Farm Location & Land Details' },
-  { number: 4, shortLabel: 'Agricultural Profile' },
-  { number: 5, shortLabel: 'Loan Request Details' },
-  { number: 6, shortLabel: 'Household Income & Expenditure' },
-  { number: 7, shortLabel: 'Collateral & Guarantor' },
-  { number: 8, shortLabel: 'Document Upload & Declaration' },
-  { number: 9, shortLabel: 'Final Review' },
+  { number: 1, label: 'Farmer Details' },
+  { number: 2, label: 'Loan Details' },
+  { number: 3, label: 'Consent & OTP' },
+  { number: 4, label: 'Registry Data' },
+  { number: 5, label: 'Documents' },
+  { number: 6, label: 'Review' },
+  { number: 7, label: 'Submit' },
 ];
 
 const STEP_META = [
-  { title: 'Start New Application', subtitle: 'Basic farmer information and contact details' },
-  { title: 'KYC Identification (Fayda OTP)', subtitle: 'Digital Identity verification via Fayda ID' },
-  { title: 'Farm Location & Land Details', subtitle: 'GPS coordinates and land ownership information' },
-  { title: 'Agricultural Profile', subtitle: 'Farming activities and crop information' },
-  { title: 'Loan Request Details', subtitle: 'Loan amount, purpose, and terms' },
-  { title: 'Household Income & Expenditure', subtitle: 'Financial capacity assessment' },
-  { title: 'Collateral & Guarantor', subtitle: 'Financial capacity assessment' },
-  { title: 'Document Upload & Declaration', subtitle: 'Supporting documents and final consent' },
-  { title: 'Final Review', subtitle: 'Review and submit your loan application' },
+  { title: 'Farmer Information',         subtitle: "Please verify or enter the farmer's personal details." },
+  { title: 'Loan Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
+  { title: 'Consent & OTP Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
+  { title: 'Registry Data Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
+  { title: 'Supporting Documents',       subtitle: "Obtain farmer's consent to access registry data via Fayda OTP!" },
+  { title: 'Review Application',         subtitle: 'Please review all information before final submission. Resolve any warnings or missing info.' },
+  { title: 'Review Application',         subtitle: 'Please review all information before final submission. Resolve any warnings or missing info.' },
 ];
 
-// ─── Option lists ─────────────────────────────────────────────────────────────
-const GENDER_OPTIONS = ['Male', 'Female'];
-const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
-const EDUCATION_OPTIONS = [
-  'No Formal Education', 'Primary School', 'Secondary School',
-  'Vocational / TVET', 'Diploma', "Bachelor's Degree", 'Postgraduate',
+const GENDER_OPTIONS    = ['Male', 'Female'];
+const MARITAL_OPTIONS   = ['Single', 'Married', 'Divorced', 'Widowed'];
+const EDUCATION_OPTIONS = ['No Formal Education', 'Primary School', 'Secondary School', 'Vocational / TVET', 'Diploma', "Bachelor's Degree", 'Postgraduate'];
+const LOAN_TYPE_OPTIONS = [
+  { value: 'input',     label: 'Input Financing',     sub: 'Seeds, fertilizers, chemicals' },
+  { value: 'machinery', label: 'Machinery/Equipment',  sub: 'Tractors, harvesters, irrigation' },
 ];
-const REGION_OPTIONS = [
-  'Oromia', 'Amhara', 'Tigray', 'SNNPR', 'Afar', 'Somali',
-  'Benishangul-Gumuz', 'Gambela', 'Harari', 'Dire Dawa', 'Sidama', 'Southwest Ethiopia',
-];
-const LAND_OWNERSHIP_OPTIONS = ['Owned', 'Leased', 'Communal', 'Family'];
-const CROP_OPTIONS = ['Wheat', 'Maize', 'Teff', 'Barley', 'Sorghum', 'Coffee', 'Chat', 'Sesame', 'Sunflower'];
-const FARMING_SEASON_OPTIONS = ['Meher', 'Belg', 'Irrigated Year-Round'];
-const YEARS_OPTIONS = ['1', '2', '3', '5', '10', 'More than 10'];
-const LOAN_TYPE_OPTIONS = ['Input Financing', 'Equipment Financing', 'Land Development', 'Working Capital', 'Emergency Loan'];
-const REPAYMENT_OPTIONS = ['Monthly', 'Quarterly', 'Semi-Annual', 'Annual'];
-const LOAN_PURPOSE_OPTIONS = ['Crop Production', 'Livestock', 'Equipment Purchase', 'Land Development', 'Input Purchase'];
-const LOAN_TERM_OPTIONS = ['3', '6', '12', '18', '24', '36'];
-const BANK_OPTIONS = [
-  'Commercial Bank of Ethiopia', 'Cooperative Bank of Oromia',
-  'Awash Bank', 'Amhara Bank', 'Dashen Bank',
-];
-const COLLATERAL_TYPE_OPTIONS = ['Land / Property', 'Livestock', 'Equipment', 'Vehicle', 'Savings / Deposit', 'Other'];
-const RELATIONSHIP_OPTIONS = ['Spouse', 'Parent', 'Sibling', 'Neighbor', 'Friend', 'Other'];
+const PURPOSE_OPTIONS  = ['Agro-processing (e.g., milling grain)', 'Crop Production', 'Livestock', 'Equipment Purchase', 'Land Development', 'Input Purchase'];
+const DURATION_OPTIONS = ['6 Months', '12 Months (1 Year)', '18 Months', '24 Months (2 Years)', '36 Months (3 Years)'];
+const CROP_OPTIONS     = ['Barley', 'Teff', 'Maize', 'Soybeans', 'Wheat', 'Sorghum', 'Coffee'];
+const DATA_FIELDS      = ['Basic Profile (Required)', 'Phone Number', 'Farm Details & Location'];
 
-const INCOME_FIELDS = [
-  { key: 'primaryCropSales', label: 'Primary Crop Sales' },
-  { key: 'livestockSales', label: 'Livestock Sales' },
-  { key: 'secondaryCropSalesIncome', label: 'Secondary Crop Sales' },
-  { key: 'farmingIncome', label: 'Farming Income' },
-  { key: 'offFarmWage', label: 'Off-farm / Wage' },
-  { key: 'otherIncome', label: 'Other Income (Remittances, etc.)' },
-];
-
-const EXPENDITURE_FIELDS = [
-  { key: 'foodLivingCosts', label: 'Food & Living Costs' },
-  { key: 'educationCost', label: 'Education' },
-  { key: 'healthCost', label: 'Health' },
-  { key: 'farmingInputsSelf', label: 'Farming Inputs (Self-funded)' },
-  { key: 'existingDebtRepayments', label: 'Existing Debt Repayments' },
-  { key: 'existingLoanRepayments', label: 'Existing Loan Repayments' },
-  { key: 'otherExpenditure', label: 'Other Expenditure', wide: true },
-];
-
-const FARMING_PRACTICES = [
-  { key: 'usesIrrigation', label: 'Uses Irrigation' },
-  { key: 'usesImprovedSeeds', label: 'Uses Improved Seeds' },
-  { key: 'usesFertilizers', label: 'Uses Fertilizers' },
-  { key: 'memberOfCooperative', label: 'Member of Cooperative' },
-  { key: 'improvedSeeds', label: 'Improved seeds' },
-  { key: 'fertilizerUse', label: 'Fertilizer use' },
-  { key: 'irrigation', label: 'Irrigation' },
-  { key: 'cropRotation', label: 'Crop rotation' },
-  { key: 'pesticides', label: 'Pesticides' },
-  { key: 'mechanization', label: 'Mechanization' },
-];
-
-// ─── Step validation ──────────────────────────────────────────────────────────
-function validateStep(_step, _form) {
-  return {};
+function formatDateTime(date) {
+  if (!date) return '';
+  return date.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+}
+function formatFileSize(bytes) {
+  if (!bytes) return '0 KB';
+  if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / 1024).toFixed(1) + ' KB';
 }
 
-// ─── Reusable field components ────────────────────────────────────────────────
-function SelectField({ id, label, placeholder, options, value, onChange, required, error }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    function handleOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [isOpen]);
-
+function AnimatedCheckbox({ checked, onChange }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-base font-medium text-text-primary">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
-      <div ref={containerRef} className="relative">
-        {/* Trigger */}
-        <button
-          id={id}
-          type="button"
-          onClick={() => setIsOpen((o) => !o)}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-base shadow-sm transition-all duration-150 focus:outline-none ${
-            error
-              ? 'border-red-400 bg-red-50/40'
-              : isOpen
-              ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
-              : 'border-border-subtle bg-white hover:border-[#4a7c59]/40'
-          }`}
-        >
-          <span className={`truncate ${value ? 'text-text-primary' : 'text-text-muted'}`}>
-            {value || placeholder}
-          </span>
-          <ChevronDown
-            size={15}
-            className={`shrink-0 transition-all duration-200 ${
-              isOpen ? 'rotate-180 text-[#4a7c59]' : 'rotate-0 text-text-muted'
-            }`}
-          />
-        </button>
-
-        {/* Dropdown list */}
-        <ul
-          className={`absolute z-50 mt-1.5 w-full origin-top overflow-y-auto rounded-xl border border-border-subtle bg-white py-1 shadow-xl transition-all duration-150 ${
-            isOpen
-              ? 'pointer-events-auto scale-y-100 opacity-100'
-              : 'pointer-events-none scale-y-95 opacity-0'
-          }`}
-          style={{ maxHeight: '216px' }}
-        >
-          {options.map((opt) => {
-            const selected = value === opt;
-            return (
-              <li
-                key={opt}
-                onMouseDown={() => { onChange(opt); setIsOpen(false); }}
-                className={`flex cursor-pointer items-center justify-between px-3.5 py-2.5 text-base transition-colors ${
-                  selected
-                    ? 'bg-[#4a7c59]/8 font-medium text-[#4a7c59]'
-                    : 'text-text-primary hover:bg-gray-50 active:bg-gray-100'
-                }`}
-              >
-                <span>{opt}</span>
-                {selected && <Check size={13} strokeWidth={2.5} className="shrink-0 text-[#4a7c59]" />}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-      {error && <p className="mt-0.5 text-sm text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function TextField({ id, label, placeholder, value, onChange, type = 'text', hint, required, readOnly, error, max, min }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-base font-medium text-text-primary">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
-      <input
-        id={id}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        readOnly={readOnly}
-        max={max}
-        min={min}
-        className={`w-full rounded-lg border px-3 py-2.5 text-base shadow-sm placeholder:text-text-muted focus:outline-none focus:ring-2 ${
-          readOnly
-            ? 'border-border-subtle bg-gray-50 text-text-muted cursor-default focus:border-border-subtle focus:ring-0'
-            : error
-            ? 'border-red-400 bg-red-50/40 text-text-primary focus:border-red-400 focus:ring-red-100'
-            : 'border-border-subtle bg-white text-text-primary focus:border-button focus:ring-button/20'
-        }`}
-      />
-      {hint && !error && <p className="text-sm text-text-muted">{hint}</p>}
-      {error && <p className="mt-0.5 text-sm text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function TextAreaField({ id, label, placeholder, value, onChange, required, rows = 4, error }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-base font-medium text-text-primary">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
-      <textarea
-        id={id}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        rows={rows}
-        className={`w-full resize-none rounded-lg border px-3 py-2.5 text-base text-text-primary shadow-sm placeholder:text-text-muted focus:outline-none focus:ring-2 ${
-          error
-            ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
-            : 'border-border-subtle bg-white focus:border-button focus:ring-button/20'
-        }`}
-      />
-      {error && <p className="mt-0.5 text-sm text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function NumberField({ id, label, value, onChange, required, error }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-text-primary">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
-      <input
-        id={id}
-        type="number"
-        min="0"
-        placeholder="0.00"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-lg border px-3 py-2 text-sm text-text-primary shadow-sm placeholder:text-text-muted focus:outline-none focus:ring-2 ${
-          error
-            ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
-            : 'border-border-subtle bg-white focus:border-button focus:ring-button/20'
-        }`}
-      />
-      {error && <p className="mt-0.5 text-sm text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-// ─── Step 1 ───────────────────────────────────────────────────────────────────
-function Step1({ form, setField, errors }) {
-  const today = new Date();
-  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-    .toISOString()
-    .split('T')[0];
-  const minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
-    .toISOString()
-    .split('T')[0];
-
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-        <h2 className="font-display text-lg font-semibold text-text-primary">Applicant Personal Details</h2>
-        <span className="text-xs text-text-muted">All fields required</span>
-      </div>
-      <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField id="fullName" label="Full Name" placeholder="e.g. Tilahun" value={form.fullName} onChange={setField('fullName')} required error={errors.fullName} />
-          <TextField id="fatherName" label="Father's Name" placeholder="e.g. Alemu" value={form.fatherName} onChange={setField('fatherName')} required error={errors.fatherName} />
-          <TextField id="grandfatherName" label="Grandfather's Name" placeholder="e.g. Kebede" value={form.grandfatherName} onChange={setField('grandfatherName')} required error={errors.grandfatherName} />
-        </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField id="dateOfBirth" label="Date of Birth" placeholder="mm/dd/yyyy" type="date" value={form.dateOfBirth} onChange={setField('dateOfBirth')} required error={errors.dateOfBirth} max={maxDob} min={minDob} />
-          <SelectField id="gender" label="Gender" placeholder="Select Gender" options={GENDER_OPTIONS} value={form.gender} onChange={setField('gender')} required error={errors.gender} />
-          <SelectField id="maritalStatus" label="Marital Status" placeholder="Select Marital Status" options={MARITAL_OPTIONS} value={form.maritalStatus} onChange={setField('maritalStatus')} required error={errors.maritalStatus} />
-        </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField id="mobilePhone" label="Mobile Phone" placeholder="Enter Mobile No." type="tel" value={form.mobilePhone} onChange={setField('mobilePhone')} hint="Ethiopian mobile number (+251...)" required error={errors.mobilePhone} />
-          <TextField id="alternatePhone" label="Alternate Phone" placeholder="Enter Mobile No." type="tel" value={form.alternatePhone} onChange={setField('alternatePhone')} hint="Ethiopian mobile number (+251...)" required error={errors.alternatePhone} />
-          <SelectField id="educationLevel" label="Education Level" placeholder="Select Education" options={EDUCATION_OPTIONS} value={form.educationLevel} onChange={setField('educationLevel')} required error={errors.educationLevel} />
-        </div>
-        <div className="border-t border-border-subtle pt-5">
-          <h3 className="mb-4 text-base font-semibold text-text-primary">Location Details</h3>
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextField id="region" label="Region" value={form.region} readOnly />
-              <TextField id="zone" label="Zone" value={form.zone} readOnly />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextField id="woreda" label="Woreda / District" value={form.woreda} readOnly />
-              <TextField id="kebele" label="Kebele" placeholder="Enter Kebele" value={form.kebele} onChange={setField('kebele')} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 2 ───────────────────────────────────────────────────────────────────
-function Step2({ form, setField, errors }) {
-  const otpRefs = useRef([]);
-
-  function handleOtpChange(index, value) {
-    if (!/^\d?$/.test(value)) return;
-    const newOtp = [...form.otpCode];
-    newOtp[index] = value;
-    setField('otpCode')(newOtp);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
-  }
-
-  function handleOtpKeyDown(index, e) {
-    if (e.key === 'Backspace' && !form.otpCode[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  }
-
-  return (
-    <>
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
-        <div>
-          <p className="text-sm font-semibold text-amber-800">Internet connection required</p>
-          <p className="text-xs text-amber-700">Fayda ID verification needs an active connection. Connect to the internet to send the OTP.</p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-          <h2 className="font-display text-lg font-semibold text-text-primary">KYC Identification (Fayda)</h2>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Pending Verification</span>
-        </div>
-        <div className="flex flex-wrap justify-center gap-5 md:gap-8">
-          {/* Left: Fayda ID entry */}
-          <div className="flex w-full max-w-md flex-col items-center gap-6 rounded-xl border border-border-subtle bg-white px-4 py-6 sm:px-8 sm:py-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-border-subtle bg-gray-50">
-              <Fingerprint size={30} className="text-[#1a2332]" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-base font-semibold text-text-primary">Verify Identity</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-                Enter the applicant's 12-digit Fayda National ID number to request a verification OTP.
-              </p>
-            </div>
-            <div className="w-full">
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">Fayda ID Number</label>
-              <input
-                type="text"
-                placeholder="XXXX - XXXX - XXXX"
-                value={form.faydaId}
-                onChange={(e) => setField('faydaId')(e.target.value)}
-                className={`w-full rounded-lg border px-3 py-2.5 text-center text-sm tracking-widest shadow-sm placeholder:text-text-muted focus:outline-none focus:ring-2 ${
-                  errors.faydaId
-                    ? 'border-red-400 bg-red-50/40 text-text-primary focus:border-red-400 focus:ring-red-100'
-                    : 'border-border-subtle bg-white text-text-primary focus:border-button focus:ring-button/20'
-                }`}
-              />
-              {errors.faydaId && <p className="mt-1 text-xs text-red-500">{errors.faydaId}</p>}
-            </div>
-            <button className="w-full rounded-lg bg-[#1a2332] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2a3342]">
-              Request OTP
-            </button>
-          </div>
-
-          {/* Right: OTP entry */}
-          <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-xl border border-border-subtle bg-white px-4 py-6 sm:px-8 sm:py-8">
-            <div className="text-center">
-              <h3 className="text-base font-semibold text-text-primary">Enter OTP Code</h3>
-              <p className="mt-1 text-xs text-text-muted">Code sent to registered mobile ending in ****567</p>
-            </div>
-            <div className="flex justify-center gap-1.5 sm:gap-3">
-              {form.otpCode.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={(el) => (otpRefs.current[i] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleOtpChange(i, e.target.value)}
-                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                  className="h-9 w-9 sm:h-12 sm:w-12 rounded-lg border border-border-subtle bg-white text-center text-base sm:text-xl font-semibold text-text-primary shadow-sm focus:border-button focus:outline-none focus:ring-2 focus:ring-button/20"
-                />
-              ))}
-            </div>
-            <button className="w-full rounded-lg bg-[#1a2332] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2a3342]">
-              Verify Identity
-            </button>
-            <p className="text-center text-xs text-text-muted">
-              Didn't receive code?{' '}
-              <button className="font-semibold text-[#1a2332] hover:underline">Resend OTP</button>
-            </p>
-            <div className="flex w-full items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-              <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
-              <div>
-                <p className="text-xs font-semibold text-blue-800">Offline Fallback Available</p>
-                <p className="text-xs text-blue-700">If OTP fails due to network issues, you can proceed with manual document upload in Step 3.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Step 3 ───────────────────────────────────────────────────────────────────
-function Step3({ form, setField, errors }) {
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [gpsError, setGpsError] = useState('');
-  const [coords, setCoords] = useState(null);
-  const [searchValue, setSearchValue] = useState('');
-  const [zoom, setZoom] = useState(1);
-  const [certDragging, setCertDragging] = useState(false);
-  const certFileRef = useRef(null);
-
-  function parseNominatimAddress(addr) {
-    const rawState = addr.state || '';
-    // Match Ethiopian region names — handles "Oromia Region", "Oromia National Regional State", etc.
-    const matchedRegion = REGION_OPTIONS.find((r) =>
-      rawState.toLowerCase().includes(r.toLowerCase())
-    ) || '';
-    // Strip common suffixes so the Zone field is clean (e.g. "East Shewa Zone" → "East Shewa")
-    const rawZone = addr.county || addr.state_district || addr.region || '';
-    const zone = rawZone.replace(/\s*(zone|district|woreda)$/i, '').trim();
-    const woreda =
-      addr.city_district ||
-      addr.suburb ||
-      addr.town ||
-      addr.city ||
-      addr.village ||
-      addr.municipality ||
-      '';
-    const kebele =
-      addr.neighbourhood || addr.quarter || addr.hamlet || addr.residential || '';
-    return { matchedRegion, zone, woreda, kebele };
-  }
-
-  function handleCertFile(file) {
-    if (!file) return;
-    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowed.includes(file.type)) {
-      setGpsError('Land certificate must be a PDF, JPG, or PNG file.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setGpsError('Land certificate file must be 5 MB or smaller.');
-      return;
-    }
-    setField('landCertificateFile')(file);
-  }
-
-  async function handleGps() {
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
-      return;
-    }
-    setGpsLoading(true);
-    setGpsError('');
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setCoords({ lat: latitude, lng: longitude });
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { headers: { 'Accept-Language': 'en' } }
-          );
-          const data = await res.json();
-          const addr = data.address || {};
-          const { matchedRegion, zone, woreda, kebele } = parseNominatimAddress(addr);
-          const displayName = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-          setSearchValue(displayName);
-          setField('farmRegion')(matchedRegion);
-          setField('farmZone')(zone);
-          setField('farmWoreda')(woreda);
-          setField('farmKebele')(kebele);
-        } catch {
-          setGpsError('Coordinates captured but address lookup failed. Please fill the fields manually.');
-        }
-        setGpsLoading(false);
-      },
-      (err) => {
-        setGpsError(err.message || 'Unable to retrieve location. Please allow location access.');
-        setGpsLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
-  }
-
-  async function handleSearch() {
-    if (!searchValue.trim()) return;
-    setGpsLoading(true);
-    setGpsError('');
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchValue)}&format=json&limit=1`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
-      const results = await res.json();
-      if (!results || results.length === 0) {
-        setGpsError('Address not found. Try a more specific search term.');
-        setGpsLoading(false);
-        return;
-      }
-      const { lat, lon } = results[0];
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
-      setCoords({ lat: latitude, lng: longitude });
-      const rev = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
-      const revData = await rev.json();
-      const addr = revData.address || {};
-      const { matchedRegion, zone, woreda, kebele } = parseNominatimAddress(addr);
-      setField('farmRegion')(matchedRegion);
-      setField('farmZone')(zone);
-      setField('farmWoreda')(woreda);
-      setField('farmKebele')(kebele);
-    } catch {
-      setGpsError('Search failed. Please check your connection and try again.');
-    }
-    setGpsLoading(false);
-  }
-
-  return (
-    <>
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
-        <div>
-          <p className="text-sm font-semibold text-amber-800">Internet connection required</p>
-          <p className="text-xs text-amber-700">GPS and address lookup require an active internet connection. You can also fill the fields manually.</p>
-        </div>
-      </div>
-      <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-          <h2 className="font-display text-lg font-semibold text-text-primary">Farm Location & Land Details</h2>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Pending Verification</span>
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="flex flex-col gap-3">
-            <h3 className="text-base font-semibold text-text-primary">Current Geolocation</h3>
-            {/* Search bar */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search address..."
-                  className="w-full rounded-lg border border-border-subtle bg-white py-2.5 pl-8 pr-3 text-sm text-text-primary shadow-sm focus:border-button focus:outline-none focus:ring-2 focus:ring-button/20"
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                disabled={gpsLoading}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#1a2332] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#2a3342] disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Search size={13} /> Search
-              </button>
-              <button
-                onClick={handleGps}
-                disabled={gpsLoading}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border-subtle bg-white px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Crosshair size={13} className={gpsLoading ? 'text-gray-400 animate-spin' : 'text-blue-600'} />
-                {gpsLoading ? 'Locating…' : 'GPS'}
-              </button>
-            </div>
-            {gpsError && (
-              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-                <AlertTriangle size={13} className="mt-0.5 shrink-0 text-red-500" />
-                <p className="text-xs text-red-700">{gpsError}</p>
-              </div>
-            )}
-            {coords && !gpsError && (
-              <div className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                <MapPin size={12} className="shrink-0 text-green-600" />
-                <p className="text-xs text-green-700 font-medium">
-                  Location captured: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-                </p>
-              </div>
-            )}
-            {/* OSM-style street map */}
-            <div className="relative overflow-hidden rounded-lg border border-gray-200" style={{ height: '405px' }}>
-              <svg
-                className="absolute inset-0 h-full w-full"
-                viewBox={`${270 - 270 / zoom} ${142.5 - 142.5 / zoom} ${540 / zoom} ${285 / zoom}`}
-                preserveAspectRatio="xMidYMid slice"
-              >
-                {/* OSM tile background */}
-                <rect width="540" height="285" fill="#eae6df" />
-                {/* ── Building blocks (tan/cream rectangles) ── */}
-                <rect x="8"   y="8"   width="68" height="40" rx="1" fill="#d9d4cb" />
-                <rect x="84"  y="8"   width="52" height="40" rx="1" fill="#d5cfca" />
-                <rect x="8"   y="54"  width="60" height="32" rx="1" fill="#d9d4cb" />
-                <rect x="76"  y="56"  width="58" height="28" rx="1" fill="#d5cfca" />
-                <rect x="8"   y="92"  width="68" height="36" rx="1" fill="#d9d4cb" />
-                <rect x="84"  y="94"  width="50" height="32" rx="1" fill="#d5cfca" />
-                <rect x="8"   y="156" width="66" height="38" rx="1" fill="#d9d4cb" />
-                <rect x="82"  y="160" width="52" height="34" rx="1" fill="#d5cfca" />
-                <rect x="8"   y="202" width="64" height="40" rx="1" fill="#d9d4cb" />
-                <rect x="80"  y="206" width="54" height="36" rx="1" fill="#d5cfca" />
-                <rect x="8"   y="250" width="76" height="28" rx="1" fill="#d9d4cb" />
-                <rect x="398" y="8"   width="62" height="40" rx="1" fill="#d9d4cb" />
-                <rect x="468" y="8"   width="64" height="40" rx="1" fill="#d5cfca" />
-                <rect x="400" y="54"  width="58" height="32" rx="1" fill="#d9d4cb" />
-                <rect x="466" y="56"  width="66" height="28" rx="1" fill="#d5cfca" />
-                <rect x="400" y="92"  width="64" height="36" rx="1" fill="#d9d4cb" />
-                <rect x="472" y="94"  width="60" height="32" rx="1" fill="#d5cfca" />
-                <rect x="398" y="156" width="64" height="38" rx="1" fill="#d9d4cb" />
-                <rect x="470" y="160" width="62" height="34" rx="1" fill="#d5cfca" />
-                <rect x="400" y="202" width="62" height="40" rx="1" fill="#d9d4cb" />
-                <rect x="470" y="206" width="62" height="36" rx="1" fill="#d5cfca" />
-                <rect x="396" y="252" width="72" height="26" rx="1" fill="#d9d4cb" />
-                <rect x="164" y="8"   width="88" height="60" rx="1" fill="#d9d4cb" />
-                {/* Park / green area (top-center-right) */}
-                <rect x="282" y="6"   width="104" height="62" rx="3" fill="#c8e6b0" />
-                <rect x="288" y="10"  width="94"  height="54" rx="2" fill="#b6d89c" />
-                {/* Center-mid blocks */}
-                <rect x="164" y="156" width="86"  height="40" rx="1" fill="#d5cfca" />
-                <rect x="282" y="156" width="102" height="40" rx="1" fill="#d9d4cb" />
-                <rect x="166" y="204" width="82"  height="40" rx="1" fill="#d9d4cb" />
-                <rect x="284" y="206" width="100" height="38" rx="1" fill="#d5cfca" />
-                <rect x="166" y="252" width="80"  height="26" rx="1" fill="#d9d4cb" />
-                <rect x="286" y="254" width="98"  height="24" rx="1" fill="#d5cfca" />
-                {/* Small water body */}
-                <ellipse cx="44" cy="260" rx="34" ry="17" fill="#aad3df" opacity="0.9" />
-                {/* ── Road casings ── */}
-                <path d="M 0,258 L 540,50"     stroke="#c09800" strokeWidth="14" fill="none" />
-                <rect x="0"   y="134" width="540" height="14" fill="#c0bab2" />
-                <rect x="263" y="0"   width="14"  height="285" fill="#c0bab2" />
-                <rect x="0"   y="76"  width="256" height="9"  fill="#cac4bc" />
-                <rect x="277" y="76"  width="263" height="9"  fill="#cac4bc" />
-                <rect x="0"   y="200" width="256" height="9"  fill="#cac4bc" />
-                <rect x="277" y="200" width="263" height="9"  fill="#cac4bc" />
-                <rect x="147" y="0"   width="9"   height="127" fill="#cac4bc" />
-                <rect x="147" y="148" width="9"   height="137" fill="#cac4bc" />
-                <rect x="384" y="0"   width="9"   height="127" fill="#cac4bc" />
-                <rect x="384" y="148" width="9"   height="137" fill="#cac4bc" />
-                {/* ── Road fills ── */}
-                <path d="M 0,258 L 540,50"     stroke="#fbbf24" strokeWidth="9" fill="none" />
-                <rect x="0"   y="137" width="540" height="8"   fill="#ffffff" />
-                <rect x="266" y="0"   width="8"   height="285" fill="#ffffff" />
-                <rect x="0"   y="78"  width="256" height="5"   fill="#ffffff" />
-                <rect x="277" y="78"  width="263" height="5"   fill="#ffffff" />
-                <rect x="0"   y="202" width="256" height="5"   fill="#ffffff" />
-                <rect x="277" y="202" width="263" height="5"   fill="#ffffff" />
-                <rect x="149" y="0"   width="5"   height="127" fill="#ffffff" />
-                <rect x="149" y="148" width="5"   height="137" fill="#ffffff" />
-                <rect x="386" y="0"   width="5"   height="127" fill="#ffffff" />
-                <rect x="386" y="148" width="5"   height="137" fill="#ffffff" />
-                {/* Tertiary lanes */}
-                <line x1="0"   y1="36"  x2="140" y2="36"  stroke="#f0ece5" strokeWidth="3" />
-                <line x1="156" y1="36"  x2="256" y2="36"  stroke="#f0ece5" strokeWidth="3" />
-                <line x1="277" y1="36"  x2="378" y2="36"  stroke="#f0ece5" strokeWidth="3" />
-                <line x1="393" y1="36"  x2="540" y2="36"  stroke="#f0ece5" strokeWidth="3" />
-                <line x1="55"  y1="84"  x2="55"  y2="127" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="55"  y1="148" x2="55"  y2="194" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="478" y1="84"  x2="478" y2="127" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="478" y1="148" x2="478" y2="194" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="220" y1="84"  x2="220" y2="127" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="220" y1="148" x2="220" y2="194" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="322" y1="84"  x2="322" y2="127" stroke="#f0ece5" strokeWidth="3" />
-                <line x1="322" y1="148" x2="322" y2="194" stroke="#f0ece5" strokeWidth="3" />
-                {/* Road labels */}
-                <text x="20"  y="133" fontSize="7.5" fill="#888" fontFamily="sans-serif">Meskel Square Rd</text>
-                <text x="400" y="133" fontSize="7.5" fill="#888" fontFamily="sans-serif">Adama Road</text>
-                <text x="36"  y="247" fontSize="7"   fill="#8a6800" fontFamily="sans-serif" transform="rotate(-9,36,247)">Ring Road</text>
-                {/* Area labels */}
-                <text x="290" y="134" fontSize="9"   fill="#aaa"     fontFamily="sans-serif" fontStyle="italic">Bishoftu</text>
-                <text x="88"  y="186" fontSize="8"   fill="#bbb"     fontFamily="sans-serif">Tulubo</text>
-                <text x="400" y="184" fontSize="8"   fill="#bbb"     fontFamily="sans-serif">Hora Arsedi</text>
-                <text x="296" y="44"  fontSize="8"   fill="#5a8840"  fontFamily="sans-serif" fontStyle="italic">Hora Park</text>
-                {/* Blue Leaflet teardrop pin */}
-                <ellipse cx="270" cy="160" rx="8" ry="4" fill="rgba(0,0,0,0.18)" />
-                <path d="M270,120 C254,120 242,132 242,147 C242,161 270,163 270,163 C270,163 298,161 298,147 C298,132 286,120 270,120 Z" fill="#2563eb" />
-                <circle cx="270" cy="145" r="9" fill="white" />
-              </svg>
-              {/* Zoom controls */}
-              <div className="absolute left-2.5 top-2.5 flex flex-col overflow-hidden rounded border border-gray-300 shadow-sm">
-                <button
-                  onClick={() => setZoom((z) => Math.min(z + 0.5, 4))}
-                  className="flex h-6 w-6 items-center justify-center border-b border-gray-300 bg-white text-sm font-bold leading-none text-gray-700 hover:bg-gray-50"
-                >+</button>
-                <button
-                  onClick={() => setZoom((z) => Math.max(z - 0.5, 0.5))}
-                  className="flex h-6 w-6 items-center justify-center bg-white text-sm font-bold leading-none text-gray-600 hover:bg-gray-50"
-                >−</button>
-              </div>
-              {/* Coordinates */}
-              <div className="absolute bottom-1.5 left-2 flex items-center gap-1 rounded bg-white/95 px-1.5 py-0.5 text-[10.5px] text-gray-600 shadow-sm">
-                <MapPin size={9} className="text-blue-600" />
-                {coords ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : '—, —'}
-              </div>
-              {/* Attribution */}
-              <div className="absolute bottom-1.5 right-1.5 rounded bg-white/95 px-1.5 py-0.5 text-[9.5px] text-gray-500 shadow-sm">
-                🟦 Leaflet | © OpenStreetMap contributors
-              </div>
-            </div>
-            {/* Instructions */}
-            <p className="text-[11px] leading-relaxed text-gray-500">
-              Instructions: Click anywhere on the map to set location, use the GPS button to get current location, or search for an address. You can add custom pins using the + button and edit or delete them as needed.
-            </p>
-          </div>
-          <div className="flex flex-col gap-4 border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-base font-semibold text-text-primary">Farm Location & Land Details</h3>
-              <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"><Cloud size={11} /> Offline Ready</span>
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <SelectField id="farmRegion" label="Region" placeholder="Select Region" options={REGION_OPTIONS} value={form.farmRegion} onChange={setField('farmRegion')} required error={errors.farmRegion} />
-              <TextField id="farmZone" label="Zone" placeholder="Enter Zone" value={form.farmZone} onChange={setField('farmZone')} required error={errors.farmZone} />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField id="farmWoreda" label="Woreda" placeholder="Enter Woreda" value={form.farmWoreda} onChange={setField('farmWoreda')} required error={errors.farmWoreda} />
-              <TextField id="farmKebele" label="Kebele" placeholder="Enter Kebele" value={form.farmKebele} onChange={setField('farmKebele')} required error={errors.farmKebele} />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <SelectField id="landOwnership" label="Land Ownership" placeholder="Select Land Ownership" options={LAND_OWNERSHIP_OPTIONS} value={form.landOwnership} onChange={setField('landOwnership')} required error={errors.landOwnership} />
-              <TextField id="totalFarmSize" label="Total Farm Size (Hectares)" placeholder="e.g. 2.5" value={form.totalFarmSize} onChange={setField('totalFarmSize')} />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField id="landCertificateNo" label="Land Certificate No." placeholder="e.g. LC-00123" value={form.landCertificateNo} onChange={setField('landCertificateNo')} required error={errors.landCertificateNo} />
-              <TextField id="distanceToRoad" label="Distance to Nearest Main Road (km)" placeholder="e.g. 5" value={form.distanceToRoad} onChange={setField('distanceToRoad')} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">Land Certificate Upload</label>
-              <input
-                ref={certFileRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                className="hidden"
-                onChange={(e) => handleCertFile(e.target.files[0])}
-              />
-              {form.landCertificateFile ? (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText size={16} className="shrink-0 text-green-600" />
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium text-green-800">{form.landCertificateFile.name}</p>
-                      <p className="text-[10px] text-green-600">{(form.landCertificateFile.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => { setField('landCertificateFile')(null); if (certFileRef.current) certFileRef.current.value = ''; }}
-                    className="shrink-0 rounded px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50"
-                  >Remove</button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => certFileRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setCertDragging(true); }}
-                  onDragLeave={() => setCertDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setCertDragging(false); handleCertFile(e.dataTransfer.files[0]); }}
-                  className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors ${
-                    certDragging
-                      ? 'border-button bg-button/5'
-                      : 'border-border-subtle bg-gray-50 hover:border-button/50 hover:bg-gray-100'
-                  }`}
-                >
-                  <Cloud size={22} className="text-text-muted" />
-                  <p className="text-xs font-medium text-text-primary">Click or drag document to upload</p>
-                  <p className="text-xs text-text-muted">PDF, JPG or PNG (Max 5MB)</p>
-                  <p className="flex items-center gap-1 text-xs text-blue-600"><MapPin size={10} /> Use camera for offline capture</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Step 4 ───────────────────────────────────────────────────────────────────
-function Step4({ form, setField, errors }) {
-  function togglePractice(key) {
-    setField('farmingPractices')({ ...form.farmingPractices, [key]: !form.farmingPractices[key] });
-  }
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-        <h2 className="font-display text-lg font-semibold text-text-primary">Agricultural Profile</h2>
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Pending Verification</span>
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <h3 className="text-base font-semibold text-text-primary">Primary Crops</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="primaryCropType" label="Primary Crop Type" placeholder="Select Primary Crop Type" options={CROP_OPTIONS} value={form.primaryCropType} onChange={setField('primaryCropType')} required error={errors.primaryCropType} />
-            <SelectField id="secondaryCrop" label="Secondary Crop (Optional)" placeholder="Select Secondary Crop" options={CROP_OPTIONS} value={form.secondaryCrop} onChange={setField('secondaryCrop')} />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="farmingSeason" label="Farming Season" placeholder="Select Farming Season" options={FARMING_SEASON_OPTIONS} value={form.farmingSeason} onChange={setField('farmingSeason')} required error={errors.farmingSeason} />
-            <SelectField id="farmingSeasonYears" label="Farming Experience (Years)" placeholder="Select Years" options={YEARS_OPTIONS} value={form.farmingSeasonYears} onChange={setField('farmingSeasonYears')} required error={errors.farmingSeasonYears} />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="farmingSeasonYears2" label="Farming Season Years" placeholder="Select Years" options={YEARS_OPTIONS} value={form.farmingSeasonYears2} onChange={setField('farmingSeasonYears2')} />
-            <TextField id="expectedYield" label="Expected Yield (Quintals)" placeholder="e.g. 50" value={form.expectedYield} onChange={setField('expectedYield')} />
-          </div>
-          <TextAreaField id="purposeOfLoan" label="Purpose of Loan (Detailed)" placeholder="Describe exactly how the funds will be used..." value={form.purposeOfLoan} onChange={setField('purposeOfLoan')} rows={4} />
-        </div>
-        <div className="border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0">
-          <h3 className="mb-3 text-base font-semibold text-text-primary">Farming Practices (select all that apply)</h3>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-1">
-            {FARMING_PRACTICES.map(({ key, label }) => (
-              <div key={key} className="flex cursor-pointer items-center gap-2.5" onClick={() => togglePractice(key)}>
-                <AnimatedCheckbox checked={form.farmingPractices[key]} />
-                <span className="text-sm text-text-primary select-none">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 5 ───────────────────────────────────────────────────────────────────
-function Step5({ form, setField, errors }) {
-  const principal = form.requestedAmount ? parseFloat(String(form.requestedAmount).replace(/,/g, '')) : null;
-  const termMonths = form.proposedLoanTerm ? parseInt(form.proposedLoanTerm) : null;
-  let totalRepayment = null;
-  if (principal && !isNaN(principal) && termMonths) {
-    totalRepayment = principal + principal * 0.18 * (termMonths / 12) + principal * 0.02;
-  }
-  function fmtETB(n) {
-    return n != null ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' ETB' : '-- ETB';
-  }
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-        <h2 className="font-display text-lg font-semibold text-text-primary">Loan Request Details</h2>
-        <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"><Cloud size={11} /> Offline Ready</span>
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="loanType" label="Loan Type" placeholder="Select Loan Type" options={LOAN_TYPE_OPTIONS} value={form.loanType} onChange={setField('loanType')} required error={errors.loanType} />
-            <TextField id="requestedAmount" label="Requested Amount (ETB)" placeholder="e.g. 25000" value={form.requestedAmount} onChange={setField('requestedAmount')} required error={errors.requestedAmount} />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="repaymentFrequency" label="Repayment Frequency" placeholder="Select Frequency" options={REPAYMENT_OPTIONS} value={form.repaymentFrequency} onChange={setField('repaymentFrequency')} required error={errors.repaymentFrequency} />
-            <SelectField id="loanPurpose" label="Loan Purpose" placeholder="Select Loan Purpose" options={LOAN_PURPOSE_OPTIONS} value={form.loanPurpose} onChange={setField('loanPurpose')} required error={errors.loanPurpose} />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="proposedLoanTerm" label="Proposed Loan Term (Months)" placeholder="Select Loan Term" options={LOAN_TERM_OPTIONS} value={form.proposedLoanTerm} onChange={setField('proposedLoanTerm')} required error={errors.proposedLoanTerm} />
-            <SelectField id="preferredBank" label="Preferred Bank" placeholder="Select Preferred Bank" options={BANK_OPTIONS} value={form.preferredBank} onChange={setField('preferredBank')} required error={errors.preferredBank} />
-          </div>
-          <TextAreaField id="detailedUseOfFunds" label="Detailed Use of Funds" placeholder="Describe exactly how the funds will be used..." value={form.detailedUseOfFunds} onChange={setField('detailedUseOfFunds')} required error={errors.detailedUseOfFunds} rows={4} />
-        </div>
-        <div className="rounded-xl border border-border-subtle bg-gray-50 p-5">
-          <h3 className="mb-4 text-base font-semibold text-text-primary">Estimated Loan Summary</h3>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-muted">Principal Amount:</span>
-              <span className="text-sm font-medium text-text-primary">{fmtETB(principal)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-muted">Interest Rate (Annual):</span>
-              <span className="text-sm font-medium text-text-primary">18%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-muted">Processing Fee:</span>
-              <span className="text-sm font-medium text-text-primary">2%</span>
-            </div>
-            <div className="mt-2 flex items-center justify-between border-t border-border-subtle pt-3">
-              <span className="text-xs font-semibold text-text-primary">Estimated Total Repayment:</span>
-              <span className="text-sm font-bold text-[#1a2332]">{fmtETB(totalRepayment)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 6 ───────────────────────────────────────────────────────────────────
-function Step6({ form, setField, errors }) {
-  const totalIncome = INCOME_FIELDS.reduce((s, f) => s + (parseFloat(form[f.key]) || 0), 0);
-  const totalExpenditure = EXPENDITURE_FIELDS.reduce((s, f) => s + (parseFloat(form[f.key]) || 0), 0);
-  const netCashFlow = totalIncome - totalExpenditure;
-  function fmt(n) { return n.toFixed(2) + ' ETB'; }
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-          <h2 className="font-display text-lg font-semibold text-text-primary">Household Income & Expenditure</h2>
-          <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"><Cloud size={11} /> Offline Ready</span>
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-          <div className="flex flex-col">
-            <h3 className="mb-4 text-base font-semibold text-text-primary">Annual Income Sources (ETB)</h3>
-            <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-2 content-start">
-              {INCOME_FIELDS.map(({ key, label }) => (
-                <NumberField key={key} id={key} label={label} value={form[key] || ''} onChange={setField(key)} required error={errors[key]} />
-              ))}
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
-              <span className="text-xs font-medium text-text-primary">Total Estimated Income</span>
-              <span className="text-sm font-semibold text-text-primary">{fmt(totalIncome)}</span>
-            </div>
-          </div>
-          <div className="flex flex-col border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0">
-            <h3 className="mb-4 text-base font-semibold text-text-primary">Annual Household Expenditures (ETB)</h3>
-            <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-2 content-start">
-              {EXPENDITURE_FIELDS.map(({ key, label, wide }) => (
-                <div key={key} className={wide ? 'col-span-full' : ''}>
-                  <NumberField id={key} label={label} value={form[key] || ''} onChange={setField(key)} required error={errors[key]} />
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
-              <span className="text-xs font-medium text-text-primary">Total Estimated Expenditure</span>
-              <span className="text-sm font-semibold text-text-primary">{fmt(totalExpenditure)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
-        <div className="flex items-start gap-2">
-          <Info size={15} className="shrink-0 text-blue-600" />
-          <div>
-            <p className="text-sm font-semibold text-blue-800">Net Cash Flow Snapshot</p>
-            <p className="text-xs text-blue-700">Total Annual Income: ETB {totalIncome.toLocaleString()} · Total Annual Expenses: ETB {totalExpenditure.toLocaleString()}</p>
-          </div>
-        </div>
-        <span className={`text-sm font-semibold ${netCashFlow >= 0 ? 'text-green-700' : 'text-red-600'}`}>Net Cash Flow: ETB {netCashFlow.toLocaleString()}</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 7 ───────────────────────────────────────────────────────────────────
-function Step7({ form, setField, errors }) {
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-        <h2 className="font-display text-lg font-semibold text-text-primary">Collateral & Guarantor Information</h2>
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-        <div className="flex flex-col">
-          <h3 className="mb-4 text-base font-semibold text-text-primary">Collateral Information</h3>
-          <div className="flex flex-col gap-4">
-            <SelectField id="collateralType" label="Collateral Type" placeholder="Select Collateral Type" options={COLLATERAL_TYPE_OPTIONS} value={form.collateralType} onChange={setField('collateralType')} required error={errors.collateralType} />
-            <TextField id="estimatedValue" label="Estimated Value (ETB)" placeholder="e.g. 50000" value={form.estimatedValue} onChange={setField('estimatedValue')} required error={errors.estimatedValue} />
-            <div className="border-t border-border-subtle" />
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label htmlFor="descriptionCondition" className="text-sm font-medium text-text-primary">Description / Condition</label>
-              <textarea
-                id="descriptionCondition"
-                placeholder="Provide details about the collateral..."
-                value={form.descriptionCondition}
-                onChange={(e) => setField('descriptionCondition')(e.target.value)}
-                className="flex-1 min-h-[120px] w-full resize-none rounded-lg border border-border-subtle bg-white px-3 py-2.5 text-sm text-text-primary shadow-sm placeholder:text-text-muted focus:border-button focus:outline-none focus:ring-2 focus:ring-button/20"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0">
-          <h3 className="mb-4 text-base font-semibold text-text-primary">Personal Guarantor</h3>
-          <div className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField id="g1Name" label="Guarantor Name" placeholder="Full Name" value={form.guarantor1Name} onChange={setField('guarantor1Name')} required error={errors.guarantor1Name} />
-              <SelectField id="g1Relationship" label="Relationship" placeholder="Select Relationship" options={RELATIONSHIP_OPTIONS} value={form.guarantor1Relationship} onChange={setField('guarantor1Relationship')} required error={errors.guarantor1Relationship} />
-              <TextField id="g1Phone" label="Phone" placeholder="+251..." type="tel" value={form.guarantor1Phone} onChange={setField('guarantor1Phone')} required error={errors.guarantor1Phone} />
-              <TextField id="g1FaydaId" label="Fayda ID" placeholder="Kebele ID or Fayda" value={form.guarantor1FaydaId} onChange={setField('guarantor1FaydaId')} required error={errors.guarantor1FaydaId} />
-            </div>
-            <div className="border-t border-border-subtle" />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField id="g2Name" label="Guarantor Name" placeholder="Full Name" value={form.guarantor2Name} onChange={setField('guarantor2Name')} required error={errors.guarantor2Name} />
-              <SelectField id="g2Relationship" label="Relationship" placeholder="Select Relationship" options={RELATIONSHIP_OPTIONS} value={form.guarantor2Relationship} onChange={setField('guarantor2Relationship')} required error={errors.guarantor2Relationship} />
-              <TextField id="g2Phone" label="Phone" placeholder="+251..." type="tel" value={form.guarantor2Phone} onChange={setField('guarantor2Phone')} required error={errors.guarantor2Phone} />
-              <TextField id="g2FaydaId" label="Fayda ID" placeholder="Kebele ID or Fayda" value={form.guarantor2FaydaId} onChange={setField('guarantor2FaydaId')} required error={errors.guarantor2FaydaId} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 8 ───────────────────────────────────────────────────────────────────
-const SYSTEM_VERIFIED_AT = new Date();
-const REQUIRED_DOCS = [
-  { id: 'applicantId',  label: 'Applicant ID (Fayda)',        iconType: 'file-green', initialStatus: 'verified', verifiedAt: SYSTEM_VERIFIED_AT, systemDocInfo: 'PDF · Fayda System' },
-  { id: 'landCert',     label: 'Land Certificate',            iconType: 'file-green', initialStatus: 'verified', verifiedAt: SYSTEM_VERIFIED_AT, systemDocInfo: 'PDF · Fayda System' },
-  { id: 'farmerPhoto',  label: 'Photo of Farmer with Farm',   iconType: 'file-green', initialStatus: 'verified', verifiedAt: SYSTEM_VERIFIED_AT, systemDocInfo: 'JPG · Fayda System' },
-  { id: 'guarantorSig', label: 'Guarantor Signature Form',    iconType: 'file-green', initialStatus: 'verified', verifiedAt: SYSTEM_VERIFIED_AT, systemDocInfo: 'PDF · Fayda System' },
-  { id: 'loanAgreement',label: 'Loan Agreement Signature',    iconType: 'pending',    initialStatus: 'pending'  },
-];
-
-const OPTIONAL_DOCS = [
-  { id: 'cooperative',     label: 'Cooperative Membership Letter', iconType: 'users'  },
-  { id: 'collateralPhotos',label: 'Collateral Photos',             iconType: 'image'  },
-];
-
-const ACCEPTED_DOC_TYPES = '.pdf,.jpg,.jpeg,.png';
-
-function AnimatedCheckbox({ checked }) {
-  return (
-    <span className="pointer-events-none relative inline-flex shrink-0">
-      <span
-        className="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200"
-        style={{
-          borderColor: checked ? '#4a7c59' : '#d1d5db',
-          backgroundColor: checked ? '#4a7c59' : 'white',
-          boxShadow: checked ? '0 0 0 3px rgba(74,124,89,0.18)' : undefined,
-        }}
-      >
-        <svg
-          className={`transition-all duration-200 ${checked ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-          width="11" height="9" viewBox="0 0 11 9" fill="none"
-        >
+    <span className="pointer-events-none relative inline-flex shrink-0" onClick={onChange}>
+      <span className="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200"
+        style={{ borderColor: checked ? '#4a7c59' : '#d1d5db', backgroundColor: checked ? '#4a7c59' : 'white', boxShadow: checked ? '0 0 0 3px rgba(74,124,89,0.18)' : undefined }}>
+        <svg className={`transition-all duration-200 ${checked ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} width="11" height="9" viewBox="0 0 11 9" fill="none">
           <path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
@@ -1043,760 +61,842 @@ function AnimatedCheckbox({ checked }) {
   );
 }
 
-function DocTileIcon({ type }) {
-  if (type === 'file-green') return <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50"><FileText size={18} className="text-green-600" /></div>;
-  if (type === 'pending')    return <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50"><PenLine size={18} className="text-amber-600" /></div>;
-  if (type === 'users')      return <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100"><Users size={18} className="text-gray-500" /></div>;
-  if (type === 'image')      return <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100"><Image size={18} className="text-gray-500" /></div>;
+const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function DatePickerField({ id, label, value, onChange, required, error }) {
+  const today = new Date();
+  const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+  const selectedDate = value ? new Date(value + 'T00:00:00') : null;
+  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState('day');
+  const [viewYear, setViewYear] = useState(selectedDate ? selectedDate.getFullYear() : maxDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(selectedDate ? selectedDate.getMonth() : maxDate.getMonth());
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setMode('day'); } }
+    if (isOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [isOpen]);
+
+  const displayValue = selectedDate
+    ? `${String(selectedDate.getDate()).padStart(2,'0')} / ${MONTH_SHORT[selectedDate.getMonth()]} / ${selectedDate.getFullYear()}`
+    : '';
+
+  function isDisabled(y, m, d) {
+    const dt = new Date(y, m, d);
+    return dt > maxDate || dt < minDate;
+  }
+
+  function selectDay(d) {
+    if (isDisabled(viewYear, viewMonth, d)) return;
+    onChange(new Date(viewYear, viewMonth, d).toISOString().split('T')[0]);
+    setIsOpen(false); setMode('day');
+  }
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  // Build 6×7 grid
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prevDays = new Date(viewYear, viewMonth, 0).getDate();
+  const cells = [];
+  for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevDays - i, type: 'other' });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, type: 'cur' });
+  while (cells.length < 42) cells.push({ day: cells.length - firstDay - daysInMonth + 1, type: 'other' });
+
+  const yearRange = [];
+  for (let y = maxDate.getFullYear(); y >= minDate.getFullYear(); y--) yearRange.push(y);
+
+  return (
+    <div className="relative flex flex-col gap-1.5" ref={ref}>
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      <button id={id} type="button" onClick={() => { setIsOpen(o => !o); setMode('day'); }}
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none
+          ${error ? 'border-red-400 bg-red-50/40'
+          : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
+          : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+        <span className={`flex items-center gap-2 ${displayValue ? 'text-gray-900' : 'text-gray-400'}`}>
+          <Calendar size={14} className="shrink-0 text-gray-400" />
+          {displayValue || 'DD / MM / YYYY'}
+        </span>
+        <ChevronDown size={15} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 z-50 mt-1.5 w-72 rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
+          {/* Calendar header */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ background: '#4a7c59' }}>
+            <button type="button" onClick={prevMonth}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <button type="button" onClick={() => setMode(m => m === 'year' ? 'day' : 'year')}
+              className="flex items-center gap-1.5 text-sm font-semibold text-white hover:text-white/80 transition-colors">
+              {MONTH_FULL[viewMonth]} {viewYear}
+              <ChevronDown size={13} className={`transition-transform ${mode === 'year' ? 'rotate-180' : ''}`} />
+            </button>
+            <button type="button" onClick={nextMonth}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 transition-colors">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          {mode === 'year' ? (
+            <div className="h-56 overflow-y-auto px-2 py-2">
+              <div className="grid grid-cols-3 gap-1">
+                {yearRange.map(y => (
+                  <button key={y} type="button" onClick={() => { setViewYear(y); setMode('day'); }}
+                    className={`rounded-lg py-2 text-sm font-medium transition-colors
+                      ${y === viewYear ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                    style={y === viewYear ? { background: '#4a7c59' } : {}}>
+                    {y}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="px-3 pb-3 pt-2">
+              <div className="mb-1 grid grid-cols-7">
+                {DAY_NAMES.map(d => (
+                  <div key={d} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {cells.map((cell, idx) => {
+                  if (cell.type === 'other') {
+                    return <div key={idx} className="flex h-8 w-8 items-center justify-center mx-auto text-xs text-gray-300">{cell.day}</div>;
+                  }
+                  const disabled = isDisabled(viewYear, viewMonth, cell.day);
+                  const selected = selectedDate &&
+                    selectedDate.getFullYear() === viewYear &&
+                    selectedDate.getMonth() === viewMonth &&
+                    selectedDate.getDate() === cell.day;
+                  const isTodayCell = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === cell.day;
+                  return (
+                    <button key={idx} type="button" onClick={() => selectDay(cell.day)} disabled={disabled}
+                      className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all
+                        ${selected ? 'font-semibold text-white shadow'
+                        : disabled ? 'cursor-not-allowed text-gray-300'
+                        : isTodayCell ? 'font-semibold border-2 hover:bg-opacity-10'
+                        : 'text-gray-700 hover:bg-gray-100'}`}
+                      style={
+                        selected ? { background: '#4a7c59' }
+                        : isTodayCell ? { borderColor: '#4a7c59', color: '#4a7c59' }
+                        : {}
+                      }>
+                      {cell.day}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+                <button type="button" onClick={() => { onChange(''); setIsOpen(false); }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Clear</button>
+                <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                  <AlertTriangle size={9} /> Must be 18+
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function SelectField({ id, label, placeholder, options, value, onChange, required, error }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); }
+    if (isOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [isOpen]);
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <div ref={ref} className="relative">
+        <button id={id} type="button" onClick={() => setIsOpen(o => !o)}
+          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+          <span className={value ? 'text-gray-900' : 'text-gray-400'}>{value || placeholder}</span>
+          <ChevronDown size={15} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
+        </button>
+        <ul className={`absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
+          style={{ maxHeight: '200px', overflowY: 'auto', transformOrigin: 'top' }}>
+          {options.map(opt => {
+            const sel = value === opt;
+            return <li key={opt} onMouseDown={() => { onChange(opt); setIsOpen(false); }}
+              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'bg-[#4a7c59]/8 font-medium text-[#4a7c59]' : 'text-gray-800 hover:bg-gray-50'}`}>
+              {opt}{sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
+            </li>;
+          })}
+        </ul>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function TextField({ id, label, placeholder, value, onChange, type = 'text', hint, required, readOnly, error, icon, max, min }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <div className="relative">
+        {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>}
+        <input id={id} type={type} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} readOnly={readOnly} max={max} min={min}
+          className={`w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:ring-0' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'}`} />
+      </div>
+      {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function TextAreaField({ id, label, placeholder, value, onChange, required, rows = 4 }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <textarea id={id} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} rows={rows}
+        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#4a7c59] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
+    </div>
+  );
+}
+
+function StepProgressBar({ currentStep, completedSteps }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6 overflow-x-auto">
+      <div className="flex items-start gap-0 min-w-[540px] md:min-w-0">
+        {STEPS.map(step => {
+          const isDone = completedSteps.has(step.number) && step.number !== currentStep;
+          const isActive = step.number === currentStep;
+          return (
+            <div key={step.number} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+              <div className="flex w-full items-center">
+                <div className={`h-0.5 flex-1 transition-colors ${step.number === 1 ? 'opacity-0' : isDone || isActive ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold border-2 transition-all ${isActive ? 'border-[#4a7c59] bg-[#4a7c59] text-white' : isDone ? 'border-[#4a7c59] bg-[#4a7c59] text-white' : 'border-gray-300 bg-white text-gray-500'}`}>
+                  {isDone ? <Check size={13} strokeWidth={2.5} /> : step.number}
+                </span>
+                <div className={`h-0.5 flex-1 transition-colors ${step.number === STEPS.length ? 'opacity-0' : isDone ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-bold text-gray-500">Step {step.number}</p>
+                <p className={`text-[10px] leading-tight ${isActive ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{step.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Step1({ form, setField, errors }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">Applicant Personal Details</h2>
+        <button className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+          <Zap size={11} /> Prefilled from Lead
+        </button>
+      </div>
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TextField id="fullName" label="Full Name" placeholder="e.g. Tilahun" value={form.fullName} onChange={setField('fullName')} required error={errors.fullName} />
+          <TextField id="fatherName" label="Father's Name" placeholder="e.g. Alemu" value={form.fatherName} onChange={setField('fatherName')} required error={errors.fatherName} />
+          <TextField id="farmerId" label="Farmer ID" placeholder="FMR-2024-8921" value={form.farmerId} onChange={setField('farmerId')} required icon={<FileText size={14} />} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TextField id="nationalId" label="National ID (Optional)" placeholder="Enter Kebele ID or Passport" value={form.nationalId} onChange={setField('nationalId')} icon={<FileText size={14} />} />
+          <DatePickerField id="dateOfBirth" label="Date of Birth" value={form.dateOfBirth} onChange={setField('dateOfBirth')} required error={errors.dateOfBirth} />
+          <SelectField id="gender" label="Gender" placeholder="Select Gender" options={GENDER_OPTIONS} value={form.gender} onChange={setField('gender')} required error={errors.gender} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SelectField id="maritalStatus" label="Marital Status" placeholder="Select Marital" options={MARITAL_OPTIONS} value={form.maritalStatus} onChange={setField('maritalStatus')} required error={errors.maritalStatus} />
+          <TextField id="mobilePhone" label="Mobile Phone" placeholder="Enter Mobile No." type="tel" value={form.mobilePhone} onChange={setField('mobilePhone')} required error={errors.mobilePhone} hint="Ethiopian mobile number (+251...)" />
+          <SelectField id="educationLevel" label="Education Level" placeholder="Select Education" options={EDUCATION_OPTIONS} value={form.educationLevel} onChange={setField('educationLevel')} required error={errors.educationLevel} />
+        </div>
+        <div className="border-t border-gray-100 pt-4">
+          <h3 className="mb-4 text-sm font-semibold text-gray-800">Location Details</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <TextField id="region" label="Region" value={form.region} readOnly />
+            <TextField id="woreda" label="Woreda / District" value={form.woreda} readOnly />
+            <TextField id="kebele" label="Kebele" placeholder="Enter Kebele" value={form.kebele} onChange={setField('kebele')} />
+          </div>
+        </div>
+        <TextAreaField id="purposeOfLoan" label="Purpose of Loan (Detailed)" placeholder="Describe exactly how the funds will be used..." value={form.purposeOfLoan} onChange={setField('purposeOfLoan')} rows={4} />
+      </div>
+    </div>
+  );
+}
+
+function Step2({ form, setField, errors }) {
+  function toggleCrop(crop) {
+    const current = form.primaryCrops || [];
+    setField('primaryCrops')(current.includes(crop) ? current.filter(c => c !== crop) : [...current, crop]);
+  }
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">Loan Requirements</h2>
+      </div>
+      <div className="flex flex-col gap-6">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Loan Type <span className="text-red-500">*</span></label>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {LOAN_TYPE_OPTIONS.map(opt => {
+              const sel = form.loanType === opt.value;
+              return (
+                <button key={opt.value} type="button" onClick={() => setField('loanType')(opt.value)}
+                  className={`flex items-start gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${sel ? 'border-[#4a7c59] bg-[#4a7c59]/5' : 'border-gray-200 bg-white hover:border-[#4a7c59]/40'}`}>
+                  <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${sel ? 'border-[#4a7c59]' : 'border-gray-300'}`}>
+                    {sel && <span className="h-2 w-2 rounded-full bg-[#4a7c59]" />}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{opt.label}</p>
+                    <p className="text-xs text-gray-500">{opt.sub}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {errors.loanType && <p className="mt-1 text-xs text-red-500">{errors.loanType}</p>}
+        </div>
+        <SelectField id="loanPurpose" label="Purpose of Loan" placeholder="Agro-processing (e.g., milling grain)" options={PURPOSE_OPTIONS} value={form.loanPurpose} onChange={setField('loanPurpose')} required error={errors.loanPurpose} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">Requested Amount (ETB) <span className="text-red-500">*</span></label>
+            <div className="flex overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#4a7c59] focus-within:ring-2 focus-within:ring-[#4a7c59]/20">
+              <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-r border-gray-300">ETB</span>
+              <input type="number" placeholder="0.00" value={form.requestedAmount} onChange={e => setField('requestedAmount')(e.target.value)} className="flex-1 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+              <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-l border-gray-300">.00</span>
+            </div>
+            {errors.requestedAmount && <p className="text-xs text-red-500">{errors.requestedAmount}</p>}
+          </div>
+          <SelectField id="loanDuration" label="Loan Duration (Months)" placeholder="Select Duration" options={DURATION_OPTIONS} value={form.loanDuration} onChange={setField('loanDuration')} required error={errors.loanDuration} />
+        </div>
+        <div className="border-t border-gray-100 pt-4">
+          <h3 className="mb-4 text-sm font-semibold text-gray-800">Crop &amp; Land Information</h3>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Primary Crop <span className="text-red-500">*</span></label>
+              <div className="flex flex-wrap gap-2">
+                {CROP_OPTIONS.map(crop => {
+                  const sel = (form.primaryCrops || []).includes(crop);
+                  return <button key={crop} type="button" onClick={() => toggleCrop(crop)}
+                    className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-all ${sel ? 'border-[#4a7c59] bg-[#4a7c59] text-white' : 'border-gray-300 bg-white text-gray-700 hover:border-[#4a7c59]/50'}`}>{crop}</button>;
+                })}
+              </div>
+            </div>
+            <TextField id="cropVariety" label="Crop Variety" placeholder="Seed + S-Hela/Acherr + Stellar Star" value={form.cropVariety} onChange={setField('cropVariety')} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Land Size (Hectares) <span className="text-red-500">*</span></label>
+                <div className="flex overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#4a7c59] focus-within:ring-2 focus-within:ring-[#4a7c59]/20">
+                  <input type="number" placeholder="e.g., 2.5" value={form.landSize} onChange={e => setField('landSize')(e.target.value)} className="flex-1 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+                  <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-l border-gray-300">ha</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Expected Yield (Quintals/Hectare) <span className="text-red-500">*</span></label>
+                <div className="flex overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#4a7c59] focus-within:ring-2 focus-within:ring-[#4a7c59]/20">
+                  <input type="number" placeholder="e.g., 50" value={form.expectedYield} onChange={e => setField('expectedYield')(e.target.value)} className="flex-1 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+                  <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-l border-gray-300">Qtl/ha</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-gray-100 pt-4">
+          <h3 className="mb-4 text-sm font-semibold text-gray-800">Banking Information</h3>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TextField id="bankAccount" label="Bank Account Number" placeholder="e.g., 1000300143941" value={form.bankAccount} onChange={setField('bankAccount')} required error={errors.bankAccount} icon={<span className="text-xs">🏦</span>} hint="Must be a valid Coopbank account in the farmer's name." />
+              <TextField id="ifscCode" label="IFSC / FSC Code" placeholder="e.g., COOP0001234" value={form.ifscCode} onChange={setField('ifscCode')} required error={errors.ifscCode} hint="Branch-level bank routing code." />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TextField id="bankName" label="Bank Name" placeholder="e.g., Cooperative Bank of Oromia" value={form.bankName} onChange={setField('bankName')} required error={errors.bankName} />
+              <TextField id="accountHolderName" label="Account Holder Name" placeholder="e.g., Abebe Kebede" value={form.accountHolderName} onChange={setField('accountHolderName')} required error={errors.accountHolderName} hint="Must match the name on the bank account." />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step3({ form, setField, errors }) {
+  const otpRefs = useRef([]);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef(null);
+
+  function startCountdown(s = 102) {
+    setCountdown(s);
+    timerRef.current = setInterval(() => setCountdown(c => { if (c <= 1) { clearInterval(timerRef.current); return 0; } return c - 1; }), 1000);
+  }
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  function handleSendOtp() {
+    setOtpSent(true);
+    setOtpVerified(false);
+    setOtpError('');
+    setField('otpCode')(['', '', '', '', '', '']);
+    clearInterval(timerRef.current);
+    startCountdown(102);
+  }
+
+  function handleOtpChange(i, v) {
+    if (!/^\d?$/.test(v)) return;
+    const n = [...(form.otpCode || ['','','','','',''])];
+    n[i] = v;
+    setField('otpCode')(n);
+    setOtpError('');
+    if (v && i < 5) otpRefs.current[i + 1]?.focus();
+  }
+  function handleOtpKeyDown(i, e) {
+    if (e.key === 'Backspace' && !(form.otpCode || [])[i] && i > 0) otpRefs.current[i - 1]?.focus();
+  }
+
+  function handleVerify() {
+    const code = (form.otpCode || []).join('');
+    if (code.length < 6) {
+      setOtpError('Please enter all 6 digits of the OTP.');
+      return;
+    }
+    setVerifying(true);
+    setOtpError('');
+    // Simulate async verification (accepts any 6-digit code)
+    setTimeout(() => {
+      setVerifying(false);
+      setOtpVerified(true);
+      clearInterval(timerRef.current);
+      setCountdown(0);
+    }, 1200);
+  }
+
+  const otpCode = form.otpCode || ['','','','','',''];
+  const otpFilled = otpCode.every(d => d !== '');
+  const fmtCountdown = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">Consent &amp; OTP Verification</h2>
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <TextField id="faydaId" label="Farmer ID (Fayda)" placeholder="e.g. 722334455" value={form.faydaId} onChange={setField('faydaId')} required error={errors.faydaId} icon={<Fingerprint size={14} />} />
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Data Fields to Request <span className="text-red-500">*</span></label>
+            <div className="flex flex-col gap-2">
+              {DATA_FIELDS.map((field, idx) => {
+                const checked = (form.dataFields || DATA_FIELDS).includes(field);
+                return (
+                  <div key={field} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-all ${checked ? 'border-[#4a7c59] bg-[#4a7c59]/5' : 'border-gray-200 bg-white hover:border-[#4a7c59]/40'}`}
+                    onClick={() => { if (idx === 0) return; const cur = form.dataFields || DATA_FIELDS; setField('dataFields')(cur.includes(field) ? cur.filter(f => f !== field) : [...cur, field]); }}>
+                    <AnimatedCheckbox checked={checked} />
+                    <span className="text-sm text-gray-800">{field}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3">
+            <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
+            <div>
+              <p className="text-xs font-semibold text-blue-800">Consent Authorization</p>
+              <p className="text-xs text-blue-700">By requesting OTP, you confirm the farmer is present and has verbally agreed to share their registry data with AgriBank for the purpose of this loan application.</p>
+            </div>
+          </div>
+          <button onClick={handleSendOtp} disabled={otpVerified}
+            className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors ${otpVerified ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400' : 'bg-[#4a7c59] text-white hover:bg-[#3a6347]'}`}>
+            <Send size={15} /> {otpSent && !otpVerified ? 'Resend OTP Request' : 'Send OTP Request'}
+          </button>
+        </div>
+
+        <div className={`flex flex-col items-center gap-5 rounded-xl border px-6 py-8 transition-all
+          ${otpVerified ? 'border-green-200 bg-green-50/40'
+          : otpSent ? 'border-gray-200 bg-white'
+          : 'border-gray-100 bg-gray-50'}`}>
+
+          {otpVerified ? (
+            /* ── Verified state ── */
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <Check size={32} className="text-green-600" strokeWidth={2.5} />
+              </div>
+              <div>
+                <p className="text-base font-bold text-green-800">Identity Verified Successfully!</p>
+                <p className="mt-1 text-sm text-gray-500">Fayda ID <strong>{form.faydaId}</strong> has been verified.<br />Registry data access has been granted.</p>
+              </div>
+              <div className="w-full rounded-xl border border-green-200 bg-white px-4 py-3 text-left">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-green-700">Verification Details</p>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span className="text-gray-500">Status</span>
+                    <span className="flex items-center gap-1 font-semibold text-green-700"><Check size={11} strokeWidth={3} /> OTP Verified</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span className="text-gray-500">Phone</span>
+                    <span className="font-medium">091****645</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span className="text-gray-500">Time</span>
+                    <span className="font-medium">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : otpSent ? (
+            /* ── OTP entry state ── */
+            <>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl">📱</div>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-gray-800">Fayda OTP Verification</p>
+                <p className="mt-1 text-xs text-gray-500">OTP sent to 091****645.<br />Ask the farmer to provide the 6-digit code.</p>
+              </div>
+              <div className="flex gap-2">
+                {otpCode.map((digit, i) => (
+                  <input key={i} ref={el => (otpRefs.current[i] = el)} type="text" inputMode="numeric" maxLength={1} value={digit}
+                    onChange={e => handleOtpChange(i, e.target.value)} onKeyDown={e => handleOtpKeyDown(i, e)}
+                    className={`h-12 w-12 rounded-xl border-2 bg-white text-center text-lg font-semibold text-gray-900 shadow-sm transition-all focus:outline-none focus:ring-2
+                      ${otpError ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                      : digit ? 'border-[#4a7c59] focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'
+                      : 'border-gray-300 focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'}`} />
+                ))}
+              </div>
+              {otpError && (
+                <p className="flex items-center gap-1 text-xs text-red-500">
+                  <AlertTriangle size={12} /> {otpError}
+                </p>
+              )}
+              <button onClick={handleVerify} disabled={verifying}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors
+                  ${verifying ? 'cursor-not-allowed bg-[#4a7c59]/60 text-white' : 'bg-[#4a7c59] text-white hover:bg-[#3a6347]'}`}>
+                {verifying ? (
+                  <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Verifying…</>
+                ) : 'Verify Code'}
+              </button>
+              <p className="text-xs text-gray-500">
+                Didn't receive code?{' '}
+                {countdown > 0
+                  ? <span className="font-medium text-gray-700">Resend in {fmtCountdown(countdown)}</span>
+                  : <button className="font-semibold text-[#4a7c59] hover:underline" onClick={handleSendOtp}>Resend</button>}
+              </p>
+            </>
+          ) : (
+            /* ── Idle state ── */
+            <>
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-white text-3xl">📱</div>
+              <p className="text-center text-sm text-gray-500">Enter the Farmer ID and click<br /><strong>Send OTP Request</strong> to begin verification.</p>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REGISTRY_FIELDS_INIT = [
+  { key: 'legalName', label: 'Legal Name',             icon: '👤', appValue: 'Abebe Kebede',   registryValue: 'Abebe Kebede Tadesse',        locked: true,  status: 'match' },
+  { key: 'dob',       label: 'Date of Birth',           icon: '🗓', appValue: '12/05/1985',     registryValue: '12/05/1985',                  locked: true,  status: 'match' },
+  { key: 'gender',    label: 'Gender',                  icon: '⚧',  appValue: 'Male',           registryValue: 'Male',                        locked: true,  status: 'match' },
+  { key: 'address',   label: 'Address (Region/Woreda)', icon: '📍', appValue: 'Oromia / Jimma', registryValue: 'Oromia / Jimma / Limmu Kosa', locked: false, status: 'warn'  },
+  { key: 'landSize',  label: 'Land Size (Hectares)',    icon: '🌾', appValue: '2.5',            registryValue: '2.5',                         locked: false, status: 'match' },
+  { key: 'faydaId',   label: 'Fayda ID',                icon: '🪪', appValue: 'Not entered',    registryValue: '722334455',                   locked: true,  status: 'auto'  },
+];
+
+function RegistryStatusBadge({ status }) {
+  if (status === 'match') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-700 whitespace-nowrap">
+      <Check size={10} strokeWidth={3} /> Matched
+    </span>
+  );
+  if (status === 'warn') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 whitespace-nowrap">
+      <AlertTriangle size={10} /> Mismatch
+    </span>
+  );
+  if (status === 'auto') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+      <Zap size={10} /> Auto-filled
+    </span>
+  );
   return null;
 }
 
-// ─── Document View Modal ──────────────────────────────────────────────────────
-function formatFileSize(bytes) {
-  if (!bytes) return '0 KB';
-  if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / 1024).toFixed(1) + ' KB';
-}
+function Step4() {
+  const [fields, setFields] = useState(REGISTRY_FIELDS_INIT);
+  const [editing, setEditing] = useState(null);   // key of field being edited
+  const [editVal, setEditVal] = useState('');
+  const [savedKey, setSavedKey] = useState(null); // key of recently saved field (for toast)
+  const inputRef = useRef(null);
 
-function getFileFormat(file) {
-  const ext = file.name.split('.').pop();
-  return ext ? ext.toUpperCase() : 'FILE';
-}
+  const matchCount = fields.filter(f => f.status === 'match').length;
+  const warnCount  = fields.filter(f => f.status === 'warn').length;
+  const autoCount  = fields.filter(f => f.status === 'auto').length;
 
-function formatDateTime(date) {
-  if (!date) return '';
-  return date.toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
-  });
-}
+  function startEdit(field) {
+    setEditing(field.key);
+    setEditVal(field.registryValue);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
-function DocViewModal({ doc, file, uploadedAt, duration, onDurationChange, onClose }) {
-  const isImage   = file && file.type.startsWith('image/');
-  const isPdf     = file && file.type === 'application/pdf';
-  const objectUrl = file ? URL.createObjectURL(file) : null;
+  function cancelEdit() { setEditing(null); setEditVal(''); }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div
-        className="relative flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl"
-        style={{ maxHeight: '90vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-border-subtle px-5 py-4">
-          <div className="flex items-start gap-3">
-            <DocTileIcon type={file ? 'file-green' : doc.iconType} />
-            <div>
-              <p className="text-sm font-semibold text-text-primary">{doc.label}</p>
-              {file ? (
-                <>
-                  <p className="text-xs text-text-muted">{file.name} &middot; {(file.size / 1024).toFixed(1)} KB</p>
-                  {uploadedAt && (
-                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-text-muted">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                      Uploaded on {formatDateTime(uploadedAt)}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-xs text-green-600">Verified via Fayda system</p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted hover:bg-gray-100"
-          >✕</button>
-        </div>
-
-        {/* Body */}
-        <div className="flex flex-1 flex-col overflow-auto">
-          {/* Document preview */}
-          <div className="flex flex-1 items-center justify-center p-4">
-            {file ? (
-              isImage ? (
-                <img src={objectUrl} alt={doc.label} className="max-h-[40vh] max-w-full rounded-lg object-contain shadow" />
-              ) : isPdf ? (
-                <iframe src={objectUrl} title={doc.label} className="h-[40vh] w-full rounded-lg border border-border-subtle" />
-              ) : (
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <FileText size={48} className="text-gray-300" />
-                  <p className="text-sm text-text-muted">Preview not available for this file type.</p>
-                  <a href={objectUrl} download={file.name} className="rounded-lg bg-button px-4 py-2 text-sm font-medium text-white hover:bg-button-hover">Download</a>
-                </div>
-              )
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-center">
-                <Check size={40} className="text-green-500" />
-                <p className="text-sm font-semibold text-green-700">Document Verified</p>
-                <p className="text-xs text-text-muted">This document was verified via the Fayda system and is securely stored.</p>
-              </div>
-            )}
-          </div>
-
-
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between gap-2 border-t border-border-subtle px-5 py-3">
-          {uploadedAt ? (
-            <p className="text-[11px] text-text-muted">Submitted: {formatDateTime(uploadedAt)}</p>
-          ) : <span />}
-          <button onClick={onClose} className="rounded-lg bg-button px-4 py-2 text-sm font-medium text-white hover:bg-button-hover">Save &amp; Close</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Step8({ uploads, setUploads }) {
-  // uploads: { [docId]: { file: File, uploadedAt: Date, duration: { issuedDate, expiryDate } } }
-  const [viewDoc, setViewDoc]   = useState(null);
-  const fileRefs                = useRef({});
-
-  function handleFileSelect(docId, file) {
-    if (!file) return;
-    setUploads((prev) => ({
-      ...prev,
-      [docId]: { file, uploadedAt: new Date(), duration: prev[docId]?.duration || {} },
+  function saveEdit(key) {
+    setFields(prev => prev.map(f => {
+      if (f.key !== key) return f;
+      const newVal = editVal.trim() || f.registryValue;
+      const newStatus = newVal === f.appValue ? 'match' : f.status === 'auto' ? 'auto' : 'warn';
+      return { ...f, registryValue: newVal, status: newStatus };
     }));
+    setEditing(null);
+    setEditVal('');
+    setSavedKey(key);
+    setTimeout(() => setSavedKey(null), 2500);
   }
-
-  function updateDuration(docId, duration) {
-    setUploads((prev) => prev[docId] ? { ...prev, [docId]: { ...prev[docId], duration } } : prev);
-    setViewDoc((prev) => prev ? { ...prev, duration } : prev);
-  }
-
-  function removeUpload(docId) {
-    setUploads((prev) => { const n = { ...prev }; delete n[docId]; return n; });
-    if (fileRefs.current[docId]) fileRefs.current[docId].value = '';
-  }
-
-  function triggerPicker(docId) {
-    fileRefs.current[docId]?.click();
-  }
-
-  function getStatus(doc) {
-    if (uploads[doc.id]) return 'uploaded';
-    return doc.initialStatus || 'pending';
-  }
-
-  const uploadedRequired = REQUIRED_DOCS.filter((d) => getStatus(d) !== 'pending').length;
-  const uploadedOptional = OPTIONAL_DOCS.filter((d) => uploads[d.id]).length;
-  const totalUploaded    = uploadedRequired + uploadedOptional;
-  const totalDocs        = REQUIRED_DOCS.length + OPTIONAL_DOCS.length;
 
   return (
-    <>
-      {/* Hidden file inputs */}
-      {[...REQUIRED_DOCS, ...OPTIONAL_DOCS].map((doc) => (
-        <input
-          key={doc.id}
-          ref={(el) => (fileRefs.current[doc.id] = el)}
-          type="file"
-          accept={ACCEPTED_DOC_TYPES}
-          className="hidden"
-          onChange={(e) => handleFileSelect(doc.id, e.target.files[0])}
-        />
-      ))}
-
-      {/* View modal */}
-      {viewDoc && (
-        <DocViewModal
-          doc={viewDoc.doc}
-          file={viewDoc.file}
-          uploadedAt={viewDoc.uploadedAt}
-          duration={viewDoc.duration}
-          onDurationChange={(dur) => updateDuration(viewDoc.doc.id, dur)}
-          onClose={() => setViewDoc(null)}
-        />
-      )}
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-          <Info size={15} className="mt-0.5 shrink-0 text-blue-600" />
-          <div>
-            <p className="text-sm font-semibold text-blue-800">Document upload</p>
-            <p className="text-xs text-blue-700">Tap Upload to capture or attach a file. Click View to preview uploaded or verified documents.</p>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-            <h2 className="font-display text-lg font-semibold text-text-primary">Document Verification Checklist</h2>
-            <span className="text-sm font-medium text-text-muted">{totalUploaded} of {totalDocs} Uploaded</span>
-          </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Required */}
+    <div className="flex flex-col gap-4">
+      {/* Summary strip */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { count: matchCount, label: 'Matched',    color: 'green', Icon: Check,         iconClass: 'text-green-600',  bg: 'bg-green-100',  border: 'border-green-200', textBig: 'text-green-700', textSm: 'text-green-600' },
+          { count: warnCount,  label: 'Mismatches', color: 'amber', Icon: AlertTriangle,  iconClass: 'text-amber-600',  bg: 'bg-amber-100',  border: 'border-amber-200', textBig: 'text-amber-700', textSm: 'text-amber-600' },
+          { count: autoCount,  label: 'Auto-filled',color: 'blue',  Icon: Zap,            iconClass: 'text-blue-600',   bg: 'bg-blue-100',   border: 'border-blue-200',  textBig: 'text-blue-700',  textSm: 'text-blue-600'  },
+        ].map(({ count, label, bg, border, Icon, iconClass, textBig, textSm }) => (
+          <div key={label} className={`flex items-center gap-3 rounded-2xl border ${border} bg-white px-4 py-3 shadow-sm`}>
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
+              <Icon size={16} className={iconClass} strokeWidth={2.5} />
+            </div>
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Required Documents</h3>
-              <div className="flex flex-col gap-3">
-                {REQUIRED_DOCS.map((doc) => {
-                  const status      = getStatus(doc);
-                  const isDone      = status !== 'pending';
-                  const entry       = uploads[doc.id];
-                  const isVerified  = status === 'verified' && !entry; // pre-verified via Fayda
-                  const isUploaded  = status === 'uploaded' && !!entry;
-                  return (
-                    <div
-                      key={doc.id}
-                      className={`flex flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:gap-3 ${
-                        status === 'pending'
-                          ? 'border-amber-200 bg-amber-50'
-                          : 'border-border-subtle bg-white'
-                      }`}
-                    >
-                      <div className="flex min-w-0 flex-1 items-start gap-3">
-                        <DocTileIcon type={isDone ? 'file-green' : doc.iconType} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-text-primary">{doc.label}</p>
-                          {isDone ? (
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                              <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                                <Check size={11} strokeWidth={3} />
-                                {isVerified && !entry ? 'Verified' : 'Uploaded'}
-                              </span>
-                              <span className="flex items-center gap-1 text-[10px] text-text-muted">
-                                <Clock size={10} />
-                                {entry ? formatDateTime(entry.uploadedAt) : formatDateTime(doc.verifiedAt)}
-                              </span>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-amber-600">⚠ Pending Upload</p>
-                          )}
-                          {/* File / format info — shown for all completed rows */}
-                          {entry ? (
-                            <p className="mt-0.5 flex items-center gap-1 text-[10px] text-text-muted">
-                              <FileText size={10} className="shrink-0" />
-                              <span className="shrink-0 font-medium">{getFileFormat(entry.file)} &middot; {formatFileSize(entry.file.size)}</span>
-                            </p>
-                          ) : isDone && doc.systemDocInfo ? (
-                            <p className="mt-0.5 flex items-center gap-1 text-[10px] text-text-muted">
-                              <FileText size={10} className="shrink-0" />
-                              <span>{doc.systemDocInfo}</span>
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5 self-end sm:self-auto">
-                        {isDone && (
-                          <>
-                            <button
-                              onClick={() => setViewDoc({ doc, file: entry?.file || null, uploadedAt: entry?.uploadedAt || null, duration: entry?.duration || {} })}
-                              className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50"
-                            ><Eye size={12} /> View</button>
-                            <button
-                              onClick={() => triggerPicker(doc.id)}
-                              className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                            ><Upload size={12} /> Re-upload</button>
-                          </>
-                        )}
-                        {!isDone && (
-                          <button
-                            onClick={() => triggerPicker(doc.id)}
-                            className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50"
-                          ><Upload size={12} /> Upload</button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {/* Optional */}
-            <div className="border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Optional / Supporting Documents</h3>
-              <div className="flex flex-col gap-3">
-                {OPTIONAL_DOCS.map((doc) => {
-                  const entry    = uploads[doc.id];
-                  const uploaded = !!entry;
-                  return (
-                    <div key={doc.id} className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-white px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-                      <div className="flex min-w-0 flex-1 items-start gap-3">
-                        <DocTileIcon type={uploaded ? 'file-green' : doc.iconType} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-text-primary">{doc.label}</p>
-                          {uploaded ? (
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                              <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                                <Check size={11} strokeWidth={3} /> Uploaded
-                              </span>
-                              <span className="flex items-center gap-1 text-[10px] text-text-muted">
-                                <Clock size={10} /> {formatDateTime(entry.uploadedAt)}
-                              </span>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-text-muted">Optional</p>
-                          )}
-                          {/* File / format info */}
-                          {entry ? (
-                            <p className="mt-0.5 flex items-center gap-1 text-[10px] text-text-muted">
-                              <FileText size={10} className="shrink-0" />
-                              <span className="shrink-0 font-medium">{getFileFormat(entry.file)} &middot; {formatFileSize(entry.file.size)}</span>
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                      {uploaded ? (
-                        <div className="flex shrink-0 items-center gap-1.5 self-end sm:self-auto">
-                          <button
-                            onClick={() => setViewDoc({ doc, file: entry.file, uploadedAt: entry.uploadedAt, duration: entry.duration || {} })}
-                            className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50"
-                          ><Eye size={12} /> View</button>
-                          <button
-                            onClick={() => triggerPicker(doc.id)}
-                            className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                          ><Upload size={12} /> Re-upload</button>
-                          <button
-                            onClick={() => removeUpload(doc.id)}
-                            className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >Remove</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => triggerPicker(doc.id)}
-                          className="flex shrink-0 items-center gap-1 self-end rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50 sm:self-auto"
-                        ><Upload size={12} /> Upload</button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <p className={`text-2xl font-bold leading-none ${textBig}`}>{count}</p>
+              <p className={`mt-0.5 text-xs font-medium ${textSm}`}>{label}</p>
             </div>
           </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Step 9 ───────────────────────────────────────────────────────────────────
-function Step9({ form, setField, errors, uploads = {} }) {
-  const [sigFile, setSigFile]         = useState(null);
-  const [sigUploadedAt, setSigUploadedAt] = useState(null);
-  const [sigViewOpen, setSigViewOpen]  = useState(false);
-  const sigInputRef                    = useRef(null);
-
-  const sigDoc = { id: 'farmerSig', label: 'Farmer Digital Signature', iconType: 'pending' };
-
-  function handleSigFile(file) {
-    if (!file) return;
-    setSigFile(file);
-    setSigUploadedAt(new Date());
-  }
-  function getDocStatus(doc) {
-    if (uploads[doc.id]) return 'uploaded';
-    return doc.initialStatus || 'pending';
-  }
-  const allDocs = [
-    ...REQUIRED_DOCS.map((d) => ({ ...d, section: 'Required' })),
-    ...OPTIONAL_DOCS.map((d) => ({ ...d, section: 'Optional', initialStatus: 'optional' })),
-  ];
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 sm:py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
-        <h2 className="font-display text-lg font-semibold text-text-primary">Final Review & Declaration</h2>
-      </div>
-      <div className="mb-6 rounded-xl border border-border-subtle bg-gray-50 px-4 py-4 sm:px-5">
-        <h3 className="mb-3 text-base font-semibold text-text-primary">Application Summary</h3>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div>
-            <p className="text-xs text-text-muted">Applicant Name</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{form.fullName || 'Abebe Bikila'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-text-muted">Loan Type</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{form.loanType || 'Input Financing'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-text-muted">Requested Amount</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{form.requestedAmount ? `${form.requestedAmount} ETB` : '25,000 ETB'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-text-muted">Term</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{form.proposedLoanTerm ? `${form.proposedLoanTerm} Months` : '6 Months'}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      <p className="mb-6 text-sm leading-relaxed text-text-muted">
-        I, the applicant, declare that all information provided in this application is true and complete to the best of my knowledge. I authorize OpenAgriNet and the partner financial institution to verify the information, share my data with the bank for credit assessment, and contact me regarding this application. I understand that providing false information may result in rejection of my application and legal action.
-      </p>
-      <div className="mb-6 flex flex-col gap-4">
-        <div className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${errors.declaration ? 'border-red-300 bg-red-50/40' : 'border-border-subtle bg-white hover:bg-gray-50'}`}
-          onClick={() => setField('declaration')(!(form.declaration || false))}>
-          <AnimatedCheckbox checked={form.declaration || false} />
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Applicant Declaration</p>
-            <p className="mt-0.5 text-xs text-text-muted">I confirm that all information provided in this application is true and accurate to the best of my knowledge. I understand that false information may result in the rejection of this loan application.</p>
-          </div>
+      {/* Table */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="grid grid-cols-[200px_1fr_1fr_140px] border-b border-gray-100 bg-gray-50/80 px-5 py-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Field</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Application Data</span>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#4a7c59]">
+            <FileText size={10} /> Fayda Registry
+          </span>
+          <span className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</span>
         </div>
-        {errors.declaration && <p className="-mt-2 text-xs text-red-500">{errors.declaration}</p>}
-        <div className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${errors.agentVerified ? 'border-red-300 bg-red-50/40' : 'border-border-subtle bg-white hover:bg-gray-50'}`}
-          onClick={() => setField('agentVerified')(!(form.agentVerified || false))}>
-          <AnimatedCheckbox checked={form.agentVerified || false} />
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Development Agent Verification</p>
-            <p className="mt-0.5 text-xs text-text-muted">I, as the Development Agent, have reviewed this application and verified the identity and farm details of the applicant in person.</p>
-          </div>
-        </div>
-        {errors.agentVerified && <p className="-mt-2 text-xs text-red-500">{errors.agentVerified}</p>}
-      </div>
-      <input
-        ref={sigInputRef}
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={(e) => handleSigFile(e.target.files[0])}
-      />
 
-      {/* Signature view modal */}
-      {sigViewOpen && sigFile && (
-        <DocViewModal
-          doc={sigDoc}
-          file={sigFile}
-          uploadedAt={sigUploadedAt}
-          duration={{}}
-          onDurationChange={() => {}}
-          onClose={() => setSigViewOpen(false)}
-        />
-      )}
+        {/* Rows */}
+        <div className="divide-y divide-gray-100">
+          {fields.map((field) => {
+            const { key, label, icon, appValue, registryValue, locked, status } = field;
+            const isWarn    = status === 'warn';
+            const isEditing = editing === key;
+            const justSaved = savedKey === key;
 
-      <div className="flex justify-center">
-        {sigFile ? (
-          <div className="flex w-full max-w-sm flex-col gap-3 rounded-xl border border-green-200 bg-white px-5 py-4 sm:max-w-md">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50">
-                <FileText size={20} className="text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-text-primary">Farmer Digital Signature</p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0">
-                  <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                    <Check size={11} strokeWidth={3} /> Uploaded
-                  </span>
-                  <span className="flex items-center gap-1 text-[10px] text-text-muted">
-                    <Clock size={10} /> {formatDateTime(sigUploadedAt)}
-                  </span>
-                </div>
-                <p className="mt-0.5 flex items-center gap-1 text-[10px] text-text-muted">
-                  <FileText size={9} className="shrink-0" />
-                  <span className="font-medium">{getFileFormat(sigFile)} &middot; {formatFileSize(sigFile.size)}</span>
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSigViewOpen(true)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-subtle bg-white px-4 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50"
-              ><Eye size={12} /> View</button>
-              <button
-                onClick={() => sigInputRef.current?.click()}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-              ><Upload size={12} /> Re-upload</button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 px-4 py-5 sm:px-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-              <PenLine size={20} className="text-amber-600" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-text-primary">Farmer Digital Signature</p>
-              <p className="mt-0.5 text-xs text-amber-600">&#x26A0; Pending Upload</p>
-            </div>
-            <button
-              onClick={() => sigInputRef.current?.click()}
-              className="rounded-lg border border-border-subtle bg-white px-4 py-1.5 text-xs font-medium text-text-primary hover:bg-gray-50"
-            >Upload</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-function NewLoanApplication() {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [autoSaved] = useState(true);
-  const [errors, setErrors] = useState({});
-  const [step8Uploads, setStep8Uploads] = useState({});
-
-  const [form, setForm] = useState({
-    fullName: '', fatherName: '', grandfatherName: '',
-    dateOfBirth: '', gender: '', maritalStatus: '',
-    mobilePhone: '', alternatePhone: '', educationLevel: '',
-    region: 'Oromia', zone: 'East Shewa', woreda: 'Bishoftu', kebele: '',
-    faydaId: '', otpCode: ['', '', '', '', '', ''],
-    farmRegion: '', farmZone: '', farmWoreda: '', farmKebele: '',
-    landOwnership: '', totalFarmSize: '', landCertificateNo: '', distanceToRoad: '',
-    landCertificateFile: null,
-    primaryCropType: '', secondaryCrop: '',
-    farmingSeason: '', farmingSeasonYears: '', farmingSeasonYears2: '',
-    expectedYield: '', purposeOfLoan: '',
-    farmingPractices: {
-      usesIrrigation: false, usesImprovedSeeds: true, usesFertilizers: true,
-      memberOfCooperative: false, improvedSeeds: false, fertilizerUse: false,
-      irrigation: false, cropRotation: false, pesticides: false, mechanization: false,
-    },
-    loanType: '', requestedAmount: '',
-    repaymentFrequency: '', loanPurpose: '',
-    proposedLoanTerm: '', preferredBank: '',
-    detailedUseOfFunds: '',
-    primaryCropSales: '', livestockSales: '',
-    secondaryCropSalesIncome: '', farmingIncome: '',
-    offFarmWage: '', otherIncome: '',
-    foodLivingCosts: '', educationCost: '',
-    healthCost: '', farmingInputsSelf: '',
-    existingDebtRepayments: '', existingLoanRepayments: '',
-    otherExpenditure: '',
-    collateralType: '', estimatedValue: '', descriptionCondition: '',
-    guarantor1Name: '', guarantor1Relationship: '', guarantor1Phone: '', guarantor1FaydaId: '',
-    guarantor2Name: '', guarantor2Relationship: '', guarantor2Phone: '', guarantor2FaydaId: '',
-    declaration: false,
-    agentVerified: false,
-  });
-
-  function setField(key) {
-    return (val) => setForm((prev) => ({ ...prev, [key]: val }));
-  }
-
-  function goNext() {
-    const errs = validateStep(currentStep, form);
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    setErrors({});
-    setCompletedSteps((prev) => new Set([...prev, currentStep]));
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function goBack() {
-    setErrors({});
-    if (currentStep === 1) {
-      navigate('/loans/applications');    } else {
-      const prevStep = currentStep - 1;
-      setCompletedSteps((prev) => {
-        const next = new Set(prev);
-        // Clear the destination step and everything after it so the
-        // stepper only shows green for steps that were fully passed.
-        for (let i = prevStep; i <= STEPS.length; i++) {
-          next.delete(i);
-        }
-        return next;
-      });
-      setCurrentStep(prevStep);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
-  const [submittedAt, setSubmittedAt]             = useState(null);
-
-  function handleSubmit() {
-    const errs = validateStep(9, form);
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    setErrors({});
-    setShowSubmitConfirm(true);
-  }
-
-  function confirmSubmit() {
-    const now = new Date();
-    setShowSubmitConfirm(false);
-    setSubmittedAt(now);
-
-    // Persist submitted application to localStorage
-    const appId = 'APP-' + String(Math.floor(Math.random() * 9000) + 1000);
-    const MONTHS = ['January','February','March','April','May','June','July','August',
-                    'September','October','November','December'];
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const formattedDate = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} · ${timeStr}`;
-
-    // Exclude non-serialisable fields (File objects, OTP digits)
-    const { landCertificateFile, otpCode, ...serializableForm } = form;
-
-    const newEntry = {
-      id: appId,
-      applicant: form.fullName || 'Unknown Applicant',
-      type: form.loanType || 'Agricultural Loan',
-      status: 'Pending Review',
-      statusTone: 'info',
-      updated: formattedDate,
-      action: 'View',
-      amount: form.requestedAmount || '',
-      phone: form.mobilePhone || '',
-      region: form.farmRegion || form.region || '',
-      proposedLoanTerm: form.proposedLoanTerm || '',
-      submittedAt: now.toISOString(),
-      formData: serializableForm,
-    };
-    try {
-      const existing = JSON.parse(localStorage.getItem('a2c_submitted_loans') || '[]');
-      localStorage.setItem('a2c_submitted_loans', JSON.stringify([newEntry, ...existing]));
-    } catch { /* ignore storage errors */ }
-
-    setShowSubmitSuccess(true);
-  }
-
-  const meta = STEP_META[currentStep - 1];
-  const isLastStep = currentStep === STEPS.length;
-  const errorCount = Object.keys(errors).length;
-
-  return (
-    <div className="flex flex-col gap-5 pb-6">
-      {/* Submit confirmation modal */}
-      {showSubmitConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <Check size={24} className="text-green-600" strokeWidth={2.5} />
-            </div>
-            <h2 className="mb-1 text-base font-semibold text-text-primary">Submit Application?</h2>
-            <p className="mb-6 text-sm text-text-muted">Are you sure you want to submit this loan application? Once submitted, you will not be able to make changes.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSubmitConfirm(false)}
-                className="flex-1 rounded-lg border border-border-subtle bg-white py-2 text-sm font-medium text-text-primary hover:bg-gray-50"
-              >No, Cancel</button>
-              <button
-                onClick={confirmSubmit}
-                className="flex-1 rounded-lg bg-[#4a7c59] py-2 text-sm font-medium text-white hover:bg-[#3a6347]"
-              >Yes, Submit</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Submit success modal */}
-      {showSubmitSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <Check size={32} className="text-green-600" strokeWidth={2.5} />
-            </div>
-            <h2 className="mb-1 text-lg font-semibold text-text-primary">Application Submitted!</h2>
-            <p className="mb-1 text-sm text-text-muted">Your loan application has been successfully submitted and is now under review.</p>
-            <p className="mb-1 text-xs text-text-muted">
-              Applicant: <span className="font-semibold text-text-primary">{form.fullName || 'Abebe Bikila'}</span>
-            </p>
-            <p className="mb-1 text-xs text-text-muted">
-              Loan Type: <span className="font-semibold text-text-primary">{form.loanType || 'Input Financing'}</span> &middot; Amount: <span className="font-semibold text-text-primary">{form.requestedAmount ? `${Number(form.requestedAmount).toLocaleString()} ETB` : '25,000 ETB'}</span>
-            </p>
-            {submittedAt && (
-              <p className="mb-4 flex items-center justify-center gap-1 text-xs text-text-muted">
-                <Clock size={11} /> Submitted on {formatDateTime(submittedAt)}
-              </p>
-            )}
-            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 mb-5">
-              <p className="text-xs text-green-700">You will be notified once your application has been reviewed by the assigned development agent and financial institution.</p>
-            </div>
-            <button
-              onClick={() => { setShowSubmitSuccess(false); navigate('/loans/applications'); }}
-              className="w-full rounded-lg bg-[#4a7c59] py-2.5 text-sm font-medium text-white hover:bg-[#3a6347]"
-            >Done</button>
-          </div>
-        </div>
-      )}
-      <button onClick={goBack} className="flex w-fit items-center gap-1.5 text-sm font-medium text-text-muted transition-colors hover:text-text-primary">
-        <ArrowLeft size={16} /> Back
-      </button>
-
-      {/* Page header */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="flex items-center gap-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a7c59] text-sm font-semibold text-white">{currentStep}</span>
-          <div>
-            <h1 className="font-display text-xl font-semibold text-text-primary">{meta.title}</h1>
-            <p className="text-sm text-text-muted">{meta.subtitle}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <button onClick={() => navigate('/loans/applications')} className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Cancel</button>
-          <button className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Save Draft</button>
-        </div>
-      </div>
-
-      {/* Validation error banner */}
-      {errorCount > 0 && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-500" />
-          <p className="text-sm font-medium text-red-700">
-            Please fix {errorCount} error{errorCount > 1 ? 's' : ''} before continuing.
-          </p>
-        </div>
-      )}
-
-      {/* Step progress */}
-      <div className="rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-6 overflow-x-auto">
-        <div className="flex items-start gap-0 min-w-[480px] md:min-w-0">
-          {STEPS.map((step) => {
-            const isCompleted = completedSteps.has(step.number);
-            const isActive = step.number === currentStep;
             return (
-              <div key={step.number} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                <div className="flex w-full items-center">
-                  <div className={`h-px flex-1 ${step.number === 1 ? 'opacity-0' : isCompleted || isActive ? 'bg-[#4a7c59]' : 'bg-border-subtle'}`} />
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all ${isActive ? 'bg-button text-white' : isCompleted ? 'bg-[#4a7c59] text-white' : 'border border-border-subtle bg-white text-text-muted'}`}>
-                    {isActive ? step.number : isCompleted ? <Check size={13} strokeWidth={2.5} /> : step.number}
-                  </span>
-                  <div className={`h-px flex-1 ${step.number === STEPS.length ? 'opacity-0' : isCompleted ? 'bg-[#4a7c59]' : 'bg-border-subtle'}`} />
+              <div key={key}
+                className={`grid grid-cols-[200px_1fr_1fr_140px] items-center gap-0 px-5 py-4 transition-all duration-200
+                  ${isEditing ? 'bg-[#4a7c59]/5 ring-1 ring-inset ring-[#4a7c59]/20'
+                  : isWarn    ? 'bg-amber-50/30 hover:bg-amber-50/60'
+                  : 'hover:bg-gray-50/60'}`}>
+
+                {/* Field label */}
+                <div className="flex items-center gap-3 pr-4">
+                  <span className="text-lg leading-none">{icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{label}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {locked
+                        ? <><Lock size={9} className="text-gray-400" /><span className="text-[10px] text-gray-400">Registry-locked</span></>
+                        : <><Edit2 size={9} className="text-[#4a7c59]" /><span className="text-[10px] text-[#4a7c59]">Editable</span></>
+                      }
+                    </div>
+                  </div>
                 </div>
-                <p className={`text-center text-[10px] leading-snug ${isActive ? 'font-semibold text-text-primary' : 'text-text-muted'}`}>
-                  <span className="block font-bold text-[10px]">Step {step.number}</span>
-                  {step.shortLabel}
-                </p>
+
+                {/* Application value */}
+                <div className="pr-4">
+                  <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <span className="text-sm text-gray-600 truncate">{appValue}</span>
+                  </div>
+                </div>
+
+                {/* Registry value — view or edit */}
+                <div className="pr-4">
+                  {isEditing ? (
+                    <div className="flex flex-col gap-1.5">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={editVal}
+                        onChange={e => setEditVal(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(key); if (e.key === 'Escape') cancelEdit(); }}
+                        className="w-full rounded-lg border-2 border-[#4a7c59] bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20"
+                      />
+                      <div className="flex gap-1.5">
+                        <button onClick={() => saveEdit(key)}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#4a7c59] px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-[#3a6347] transition-colors">
+                          <Check size={10} strokeWidth={3} /> Save
+                        </button>
+                        <button onClick={cancelEdit}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                          <X size={10} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`flex items-center rounded-lg border px-3 py-2.5
+                      ${justSaved ? 'border-[#4a7c59] bg-[#4a7c59]/5'
+                      : isWarn    ? 'border-amber-300 bg-amber-50'
+                      : 'border-green-200 bg-green-50/50'}`}>
+                      <span className={`flex-1 text-sm font-medium truncate
+                        ${justSaved ? 'text-[#4a7c59]'
+                        : isWarn    ? 'text-amber-800'
+                        : 'text-gray-800'}`}>
+                        {registryValue}
+                      </span>
+                      {justSaved && <Check size={13} className="shrink-0 text-[#4a7c59]" strokeWidth={3} />}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status + action */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <RegistryStatusBadge status={status} />
+                  {locked ? (
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-gray-400">
+                      <Lock size={9} /> Locked
+                    </span>
+                  ) : isEditing ? (
+                    <span className="text-[10px] font-semibold text-[#4a7c59]">Editing…</span>
+                  ) : (
+                    <button
+                      onClick={() => startEdit(field)}
+                      className="flex items-center gap-1 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-2.5 py-1 text-[11px] font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+                      <Edit2 size={10} /> Edit
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Step content */}
-      {currentStep === 1 && <Step1 form={form} setField={setField} errors={errors} />}
-      {currentStep === 2 && <Step2 form={form} setField={setField} errors={errors} />}
-      {currentStep === 3 && <Step3 form={form} setField={setField} errors={errors} />}
-      {currentStep === 4 && <Step4 form={form} setField={setField} errors={errors} />}
-      {currentStep === 5 && <Step5 form={form} setField={setField} errors={errors} />}
-      {currentStep === 6 && <Step6 form={form} setField={setField} errors={errors} />}
-      {currentStep === 7 && <Step7 form={form} setField={setField} errors={errors} />}
-      {currentStep === 8 && <Step8 uploads={step8Uploads} setUploads={setStep8Uploads} />}
-      {currentStep === 9 && <Step9 form={form} setField={setField} errors={errors} uploads={step8Uploads} />}
-
-      {/* Bottom action bar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-surface px-4 py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-          <button className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg border border-border-subtle bg-white px-4 py-2.5 sm:py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">Save Draft</button>
-          <span className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 sm:py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50 flex items-center gap-1.5 text-sm text-text-muted">
-            <Check size={14} className="text-[#4a7c59]" strokeWidth={2.5} />
-            {autoSaved ? 'Auto-saved' : 'Saving...'}
-          </span>
-          
+      {/* Policy note */}
+      <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
+          <Info size={13} className="text-blue-600" />
         </div>
-        <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-          {currentStep > 1 && (
-            <button onClick={goBack} className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg border border-border-subtle bg-white px-4 py-2.5 sm:py-2 text-sm font-medium text-text-primary transition-colors hover:bg-gray-50">
-              <ArrowLeft size={15} /> Previous
+        <div>
+          <p className="text-sm font-semibold text-blue-800">Data Override Policy</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-blue-700">
+            Fields marked as <strong>Locked</strong> are strictly synced with the Fayda registry and cannot be altered.
+            For unlocked fields, any manual overrides will be flagged for secondary review during the final approval process.
+            Edited values are highlighted in <strong className="text-[#4a7c59]">green</strong> after saving.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REQUIRED_DOCS = [
+  { id: 'identityDoc',    label: 'Identity Document',    sub: 'National ID, Passport, or Kebele ID' },
+  { id: 'consentForm',    label: 'Signed Consent Form',  sub: 'Physical copy signed by farmer' },
+  { id: 'landOwnerProof', label: 'Land Ownership Proof', sub: 'Title deed or Kebele certificate', required: true },
+  { id: 'marriageCert',   label: 'Marriage Certificate', sub: 'Required if applicant is married' },
+];
+
+function formatUploadTime(date) {
+  if (!date) return '';
+  return date.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function ViewFileModal({ entry, label, onClose }) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    if (!entry?.file) return;
+    const objectUrl = URL.createObjectURL(entry.file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [entry]);
+
+  if (!entry) return null;
+
+  const isImage = entry.file.type.startsWith('image/');
+  const isPdf   = entry.file.type === 'application/pdf';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800">{label}</p>
+            <p className="max-w-sm truncate text-xs text-gray-500">{entry.file.name}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {url && (
+              <a href={url} download={entry.file.name}
+                 className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <Download size={12} /> Download
+              </a>
+            )}
+            <button onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-100 transition-colors">
+              <X size={15} className="text-gray-600" />
             </button>
-          )}
-          {isLastStep ? (
-            <button onClick={handleSubmit} className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg bg-[#4a7c59] px-5 py-2.5 sm:py-2 text-sm font-medium text-white transition-colors hover:bg-[#3a6347]">
-              <Check size={15} strokeWidth={2.5} /> Submit Application
-            </button>
+          </div>
+        </div>
+        {/* Modal body */}
+        <div className="flex flex-1 items-center justify-center overflow-auto bg-gray-50 p-6 min-h-[200px]">
+          {!url ? (
+            <div className="flex flex-col items-center gap-2">
+              <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#4a7c59] border-t-transparent" />
+              <p className="text-xs text-gray-500">Loading preview…</p>
+            </div>
+          ) : isImage ? (
+            <img src={url} alt={entry.file.name} className="max-h-[65vh] max-w-full rounded-xl object-contain shadow" />
+          ) : isPdf ? (
+            <iframe src={url} title={entry.file.name} className="h-[65vh] w-full rounded-xl border border-gray-200" />
           ) : (
-            <button onClick={goNext} className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg bg-button px-5 py-2.5 sm:py-2 text-sm font-medium text-white transition-colors hover:bg-button-hover">
-              Next Step <ArrowRight size={15} />
-            </button>
+            <div className="flex flex-col items-center gap-4 py-10">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">
+                <FileText size={32} className="text-gray-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-700">{entry.file.name}</p>
+              <p className="text-xs text-gray-500">Preview not available for this file type.</p>
+              <a href={url} download={entry.file.name}
+                 className="flex items-center gap-1.5 rounded-lg bg-[#4a7c59] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
+                <Download size={14} /> Download File
+              </a>
+            </div>
           )}
         </div>
       </div>
@@ -1804,4 +904,1005 @@ function NewLoanApplication() {
   );
 }
 
-export default NewLoanApplication;
+function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress }) {
+  const fileRef   = useRef(null);
+  const cameraRef = useRef(null);
+  const [viewing, setViewing] = useState(false);
+  const isUploaded  = !!entry;
+  const isUploading = uploadProgress != null && uploadProgress < 100;
+
+  function handleFileChange(e) {
+    if (e.target.files[0]) { onUpload(e.target.files[0]); e.target.value = ''; }
+  }
+
+  return (
+    <>
+      {viewing && <ViewFileModal entry={entry} label={doc.label} onClose={() => setViewing(false)} />}
+      <div className={`relative flex flex-col rounded-xl border p-4 transition-all ${
+        isUploaded ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'
+      }`}>
+        {/* Card header */}
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">{doc.label}</p>
+            <p className="text-xs text-gray-500">{doc.sub}</p>
+          </div>
+          {isUploading ? (
+            <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" /> Uploading
+            </span>
+          ) : isUploaded ? (
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+              <Check size={10} strokeWidth={3} /> Uploaded
+            </span>
+          ) : null}
+        </div>
+
+        {/* Upload progress bar */}
+        {isUploading && (
+          <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+            <div className="h-full bg-[#4a7c59] transition-all" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+
+        {/* Uploaded state */}
+        {isUploaded && !isUploading && entry && (
+          <div className="flex flex-col gap-2.5">
+            {/* File name row */}
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <Image size={13} className="shrink-0 text-gray-400" />
+              <span className="flex-1 truncate text-xs font-medium text-gray-700">{entry.file.name}</span>
+            </div>
+            {/* Date-time row */}
+            <div className="flex items-center gap-1.5 px-1">
+              <Clock size={11} className="shrink-0 text-gray-400" />
+              <span className="text-[11px] text-gray-500">Uploaded {formatUploadTime(entry.uploadedAt)}</span>
+            </div>
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewing(true)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#4a7c59]/40 bg-[#4a7c59]/5 px-3 py-2 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+                <Eye size={12} /> View
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                <Upload size={12} /> Re-Upload
+              </button>
+              <button
+                onClick={() => onRemove && onRemove()}
+                className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-500 hover:bg-red-100 transition-colors">
+                <X size={13} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty / not-yet-uploaded state */}
+        {!isUploaded && !isUploading && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-gray-300 bg-white">
+              <Upload size={16} className="text-gray-400" />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Browse Files
+              </button>
+              <button
+                onClick={() => cameraRef.current?.click()}
+                className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                📷 Camera
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* File inputs */}
+        <input ref={fileRef}   type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+      </div>
+    </>
+  );
+}
+
+function Step5({ uploads, setUploads }) {
+  const [progress, setProgress]     = useState({});
+  const [extraDocs, setExtraDocs]   = useState([]);   // { id, file, uploadedAt }
+  const [viewingExtra, setViewingExtra] = useState(null); // entry object
+  const extraInputRef = useRef(null);
+
+  function handleUpload(docId, file) {
+    setProgress(p => ({ ...p, [docId]: 0 }));
+    setUploads(prev => ({ ...prev, [docId]: { file, uploadedAt: new Date() } }));
+    let v = 0;
+    const iv = setInterval(() => {
+      v += Math.random() * 30 + 10;
+      if (v >= 100) { clearInterval(iv); setProgress(p => { const n = { ...p }; delete n[docId]; return n; }); }
+      else setProgress(p => ({ ...p, [docId]: Math.min(v, 99) }));
+    }, 300);
+  }
+
+  function removeUpload(docId) {
+    setUploads(prev => { const n = { ...prev }; delete n[docId]; return n; });
+  }
+
+  function handleExtraUpload(file) {
+    setExtraDocs(prev => [...prev, { id: Date.now(), file, uploadedAt: new Date() }]);
+  }
+
+  function removeExtraDoc(id) {
+    setExtraDocs(prev => prev.filter(d => d.id !== id));
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Required Documents */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div className="mb-5 flex items-center gap-1 border-b border-gray-100 pb-4">
+          <span className="text-red-500 text-sm">*</span>
+          <h2 className="text-base font-semibold text-gray-800">Required Documents</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {REQUIRED_DOCS.map(doc => (
+            <DocUploadCard key={doc.id} doc={doc} entry={uploads[doc.id]} uploadProgress={progress[doc.id]}
+              onUpload={f => handleUpload(doc.id, f)} onRemove={() => removeUpload(doc.id)} />
+          ))}
+        </div>
+      </div>
+
+      {/* Additional Supporting Documents */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        {viewingExtra && (
+          <ViewFileModal entry={viewingExtra} label={viewingExtra.file.name} onClose={() => setViewingExtra(null)} />
+        )}
+        <h2 className="mb-4 text-base font-semibold text-gray-800">Additional Supporting Documents</h2>
+
+        {/* Uploaded extra docs list */}
+        {extraDocs.length > 0 && (
+          <div className="mb-4 flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+            {extraDocs.map(doc => (
+              <div key={doc.id} className="flex items-center gap-3 px-4 py-3 hover:bg-white transition-colors">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white">
+                  <FileText size={14} className="text-gray-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-gray-800">{doc.file.name}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Clock size={10} className="text-gray-400" />
+                    <span className="text-[11px] text-gray-400">{formatUploadTime(doc.uploadedAt)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setViewingExtra(doc)}
+                    className="flex items-center gap-1 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-2.5 py-1.5 text-[11px] font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+                    <Eye size={11} /> View
+                  </button>
+                  <button
+                    onClick={() => removeExtraDoc(doc.id)}
+                    className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-1.5 text-red-400 hover:bg-red-100 transition-colors">
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Drop zone */}
+        <div
+          onClick={() => extraInputRef.current?.click()}
+          className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-10 cursor-pointer hover:border-[#4a7c59]/40 hover:bg-green-50/30 transition-colors">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white">
+            <Upload size={20} className="text-gray-400" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-700">Drag and drop additional files here</p>
+            <p className="text-xs text-gray-500">Guarantor IDs, Business licenses, or other relevant docs.</p>
+          </div>
+          <span className="text-sm font-medium text-[#4a7c59]">+ Add Document</span>
+        </div>
+        <input ref={extraInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="hidden"
+          onChange={e => {
+            Array.from(e.target.files || []).forEach(f => handleExtraUpload(f));
+            e.target.value = '';
+          }} />
+      </div>
+    </div>
+  );
+}
+
+const REVIEW_SECTIONS = [
+  { key: 'farmer',    icon: '👤', title: 'Farmer Details',   sub: 'Personal and contact information', status: 'complete', tone: 'green' },
+  { key: 'loan',      icon: '🔒', title: 'Loan Details',     sub: 'Amount, purpose, and terms',       status: 'complete', tone: 'green' },
+  { key: 'consent',   icon: '🛡', title: 'Consent Status',   sub: 'Digital verification',             status: 'verified', tone: 'green' },
+  { key: 'registry',  icon: '🗃', title: 'Registry Data',    sub: 'Fayda profile matching',           status: 'mismatch', tone: 'amber' },
+  { key: 'documents', icon: '📁', title: 'Documents',        sub: 'Supporting files',                 status: 'complete', tone: 'green' },
+];
+
+const REQUIRED_DOC_LABELS = {
+  identityDoc:    'Identity Document',
+  consentForm:    'Signed Consent Form',
+  landOwnerProof: 'Land Ownership Proof',
+  marriageCert:   'Marriage Certificate',
+};
+
+function ReviewField({ label, value }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-gray-800 break-words">{value || '—'}</p>
+    </div>
+  );
+}
+
+function ReviewSection({ section, expanded, onToggle, form, uploads, goToStep, registryAck, setRegistryAck }) {
+  const isAmber = section.tone === 'amber';
+  return (
+    <div className={`rounded-xl border transition-all ${isAmber ? 'border-amber-300 bg-amber-50/40' : 'border-gray-200 bg-white'}`}>
+      {/* Header */}
+      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 px-4 py-4 text-left">
+        <span className="text-lg leading-none">{section.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800">{section.title}</p>
+          <p className="text-xs text-gray-500">{section.sub}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {section.status === 'complete' && (
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+              <Check size={11} strokeWidth={3} /> Complete
+            </span>
+          )}
+          {section.status === 'verified' && (
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+              <Check size={11} strokeWidth={3} /> Verified
+            </span>
+          )}
+          {section.status === 'mismatch' && (
+            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+              <AlertTriangle size={11} /> Mismatch Found
+            </span>
+          )}
+          <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      {/* Expanded body */}
+      {expanded && (
+        <div className={`border-t ${isAmber ? 'border-amber-200' : 'border-gray-100'} px-4 py-4`}>
+
+          {/* FARMER DETAILS */}
+          {section.key === 'farmer' && (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                <ReviewField label="Full Name"       value={form.fullName} />
+                <ReviewField label="Father's Name"   value={form.fatherName} />
+                <ReviewField label="Farmer ID"       value={form.farmerId} />
+                <ReviewField label="Date of Birth"   value={form.dateOfBirth} />
+                <ReviewField label="Gender"          value={form.gender} />
+                <ReviewField label="Marital Status"  value={form.maritalStatus} />
+                <ReviewField label="Mobile Phone"    value={form.mobilePhone} />
+                <ReviewField label="Education Level" value={form.educationLevel} />
+                <ReviewField label="National ID"     value={form.nationalId} />
+                <ReviewField label="Region"          value={form.region} />
+                <ReviewField label="Woreda"          value={form.woreda} />
+                <ReviewField label="Kebele"          value={form.kebele} />
+              </div>
+              <div className="flex justify-end pt-1">
+                <button onClick={() => goToStep(1)} className="flex items-center gap-1 text-xs font-medium text-[#4a7c59] hover:underline">
+                  <Edit2 size={11} /> Edit Section
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* LOAN DETAILS */}
+          {section.key === 'loan' && (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                <ReviewField label="Loan Type"            value={form.loanType} />
+                <ReviewField label="Purpose of Loan"      value={form.loanPurpose} />
+                <ReviewField label="Requested Amount"     value={form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : ''} />
+                <ReviewField label="Loan Duration"        value={form.loanDuration} />
+                <ReviewField label="Primary Crops"        value={(form.primaryCrops || []).join(', ')} />
+                <ReviewField label="Crop Variety"         value={form.cropVariety} />
+                <ReviewField label="Land Size"            value={form.landSize ? `${form.landSize} Ha` : ''} />
+                <ReviewField label="Expected Yield"       value={form.expectedYield ? `${form.expectedYield} Qt` : ''} />
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Banking Information</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                  <ReviewField label="Bank Account No." value={form.bankAccount} />
+                  <ReviewField label="IFSC / FSC Code"  value={form.ifscCode} />
+                  <ReviewField label="Bank Name"        value={form.bankName} />
+                  <ReviewField label="Account Holder"  value={form.accountHolderName} />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => goToStep(2)} className="flex items-center gap-1 text-xs font-medium text-[#4a7c59] hover:underline">
+                  <Edit2 size={11} /> Edit Section
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CONSENT STATUS */}
+          {section.key === 'consent' && (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                <ReviewField label="Fayda ID"          value={form.faydaId} />
+                <ReviewField label="OTP Verification"  value="Verified" />
+                <ReviewField
+                  label="Consented Data Fields"
+                  value={(form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ')}
+                />
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+                <Check size={14} className="shrink-0 text-green-600" strokeWidth={3} />
+                <p className="text-xs font-medium text-green-700">Farmer identity successfully verified via Fayda OTP.</p>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => goToStep(3)} className="flex items-center gap-1 text-xs font-medium text-[#4a7c59] hover:underline">
+                  <Edit2 size={11} /> Edit Section
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* REGISTRY DATA */}
+          {section.key === 'registry' && (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-xs font-semibold text-amber-800">⚠ Address Mismatch</p>
+                <p className="text-xs text-amber-700 mt-0.5">The address in the application (Jimma) does not exactly match the registry data (Agaro). Please confirm which is currently accurate.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Application Data</p>
+                  <p className="text-sm text-gray-800">Oromia, Jimma, Gomma</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Registry Data</p>
+                  <p className="text-sm text-gray-800">Oromia, Agaro, 01</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <label
+                  className="flex cursor-pointer items-center gap-2"
+                  onClick={() => setRegistryAck(v => !v)}>
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                    registryAck ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-300 bg-white'
+                  }`}>
+                    {registryAck && <Check size={10} strokeWidth={3} className="text-white" />}
+                  </span>
+                  <span className="text-xs text-gray-700">I acknowledge this discrepancy and confirm application data is correct.</span>
+                </label>
+                <button
+                  onClick={() => goToStep(4)}
+                  className="flex shrink-0 items-center gap-1 text-xs font-medium text-[#4a7c59] hover:underline">
+                  <Edit2 size={11} /> Edit Section
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* DOCUMENTS */}
+          {section.key === 'documents' && (
+            <div className="flex flex-col gap-3">
+              {Object.keys(uploads || {}).length === 0 ? (
+                <p className="text-xs text-gray-500">No documents uploaded yet.</p>
+              ) : (
+                <div className="flex flex-col divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                  {Object.entries(uploads || {}).map(([id, entry]) => (
+                    <div key={id} className="flex items-center gap-3 px-3 py-2.5">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-green-100 bg-green-50">
+                        <Check size={12} className="text-green-600" strokeWidth={3} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-gray-800">{REQUIRED_DOC_LABELS[id] || id}</p>
+                        <p className="truncate text-[11px] text-gray-400">{entry.file?.name}</p>
+                      </div>
+                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                        <Check size={9} strokeWidth={3} /> Uploaded
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-end pt-1">
+                <button onClick={() => goToStep(5)} className="flex items-center gap-1 text-xs font-medium text-[#4a7c59] hover:underline">
+                  <Edit2 size={11} /> Edit Section
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Step6({ form, uploads, goToStep }) {
+  const [expanded, setExpanded] = useState({ registry: true });
+  const [registryAck, setRegistryAck] = useState(false);
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">Review Application</h2>
+      </div>
+      <div className="flex flex-col gap-3">
+        {REVIEW_SECTIONS.map(section => (
+          <ReviewSection
+            key={section.key}
+            section={section}
+            expanded={!!expanded[section.key]}
+            onToggle={() => setExpanded(p => ({ ...p, [section.key]: !p[section.key] }))}
+            form={form}
+            uploads={uploads}
+            goToStep={goToStep}
+            registryAck={registryAck}
+            setRegistryAck={setRegistryAck}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const STATUS_TRACKING = [
+  { label: 'Application Submitted',        icon: '📤', done: true,  note: 'Securely transmitted to Cooperative Bank of Oromia via SFTP.' },
+  { label: 'Under Review',                 icon: '🔍', done: false, note: 'Loan officer will verify documents and applicant details.' },
+  { label: 'Credit Scoring',               icon: '📊', done: false, note: 'Automated credit assessment based on farm data and history.' },
+  { label: 'Decision (Approved/Rejected)', icon: '⚖️', done: false, note: 'Final approval or rejection communicated to applicant.' },
+  { label: 'Loan Disbursed',               icon: '💰', done: false, note: 'Approved funds transferred to the farmer\'s bank account.' },
+];
+
+function SummaryModal({ form, displayId, dateStr, timeStr, onClose }) {
+  const farmerName = form.fullName || 'Abebe Kebede';
+  const Section = ({ title, icon, children }) => (
+    <div className="mb-5">
+      <div className="mb-3 flex items-center gap-2 border-b border-gray-100 pb-2">
+        <span className="text-base leading-none">{icon}</span>
+        <p className="text-sm font-bold text-gray-800">{title}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">{children}</div>
+    </div>
+  );
+  const F = ({ label, value }) => (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-gray-800 break-words">{value || '—'}</p>
+    </div>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-8" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-[#4a7c59] to-[#3a6347] px-6 py-5">
+          <div>
+            <p className="text-lg font-bold text-white">Application Summary</p>
+            <p className="text-xs text-white/70">ID: {displayId} · Submitted {dateStr} at {timeStr}</p>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+            <X size={16} className="text-white" />
+          </button>
+        </div>
+
+        {/* Status strip */}
+        <div className="flex items-center gap-3 bg-green-50 border-b border-green-100 px-6 py-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500">
+            <Check size={13} strokeWidth={3} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-green-800">Submitted &amp; Pending Review</p>
+            <p className="text-xs text-green-600">Transmitted to Cooperative Bank of Oromia via SFTP</p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-5">
+          <Section title="Farmer Information" icon="👤">
+            <F label="Full Name"       value={form.fullName} />
+            <F label="Father's Name"   value={form.fatherName} />
+            <F label="Farmer ID"       value={form.farmerId} />
+            <F label="Date of Birth"   value={form.dateOfBirth} />
+            <F label="Gender"          value={form.gender} />
+            <F label="Marital Status"  value={form.maritalStatus} />
+            <F label="Mobile Phone"    value={form.mobilePhone} />
+            <F label="Education Level" value={form.educationLevel} />
+            <F label="National ID"     value={form.nationalId} />
+            <F label="Region"          value={form.region} />
+            <F label="Woreda"          value={form.woreda} />
+            <F label="Kebele"          value={form.kebele} />
+          </Section>
+          <Section title="Loan Details" icon="🔒">
+            <F label="Loan Type"         value={form.loanType} />
+            <F label="Purpose"           value={form.loanPurpose} />
+            <F label="Requested Amount"  value={form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : ''} />
+            <F label="Duration"          value={form.loanDuration} />
+            <F label="Primary Crops"     value={(form.primaryCrops || []).join(', ')} />
+            <F label="Crop Variety"      value={form.cropVariety} />
+            <F label="Land Size"         value={form.landSize ? `${form.landSize} Ha` : ''} />
+            <F label="Expected Yield"    value={form.expectedYield ? `${form.expectedYield} Qt` : ''} />
+          </Section>
+          <Section title="Banking Information" icon="🏦">
+            <F label="Bank Account No." value={form.bankAccount} />
+            <F label="IFSC / FSC Code"  value={form.ifscCode} />
+            <F label="Bank Name"        value={form.bankName} />
+            <F label="Account Holder"   value={form.accountHolderName} />
+          </Section>
+          <Section title="Consent &amp; Fayda" icon="🛡">
+            <F label="Fayda ID"         value={form.faydaId} />
+            <F label="OTP Verification" value="Verified" />
+            <F label="Consented Fields" value={(form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ')} />
+          </Section>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
+          <p className="text-xs text-gray-400">Generated on {dateStr} · {timeStr}</p>
+          <button onClick={onClose} className="rounded-xl bg-[#4a7c59] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3a6347] transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const UPDATE_STATUS_OPTIONS = [
+  { value: 'submitted',  label: 'Application Submitted', icon: '📤' },
+  { value: 'review',     label: 'Under Review',           icon: '🔍' },
+  { value: 'scoring',    label: 'Credit Scoring',         icon: '📊' },
+  { value: 'decision',   label: 'Decision Made',          icon: '⚖️' },
+  { value: 'disbursed',  label: 'Loan Disbursed',         icon: '💰' },
+];
+
+function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }) {
+  const [selected, setSelected] = useState(currentDoneCount - 1);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <div>
+            <p className="text-sm font-bold text-gray-800">Update Application Status</p>
+            <p className="text-xs text-gray-400">Select the latest completed stage</p>
+          </div>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+            <X size={15} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-2 px-5 py-4">
+          {UPDATE_STATUS_OPTIONS.map((opt, idx) => {
+            const isSelected = selected === idx;
+            const isPast     = idx < selected;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setSelected(idx)}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                  isSelected
+                    ? 'border-[#4a7c59] bg-[#4a7c59]/5 ring-1 ring-[#4a7c59]/30'
+                    : isPast
+                    ? 'border-green-100 bg-green-50/50'
+                    : 'border-gray-100 bg-white hover:bg-gray-50'
+                }`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
+                  isSelected || isPast ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-200 bg-white'
+                }`}>
+                  {isSelected || isPast
+                    ? <Check size={12} strokeWidth={3} className="text-white" />
+                    : <span className="text-xs">{opt.icon}</span>}
+                </div>
+                <span className={`text-sm font-medium ${isSelected || isPast ? 'text-gray-900' : 'text-gray-400'}`}>
+                  {opt.label}
+                </span>
+                {isSelected && (
+                  <span className="ml-auto rounded-full bg-[#4a7c59] px-2 py-0.5 text-[10px] font-bold text-white">Current</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex gap-3 border-t border-gray-100 px-5 py-4">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button
+            onClick={() => { onUpdate(selected + 1); onClose(); }}
+            className="flex-1 rounded-xl bg-[#4a7c59] py-2.5 text-sm font-semibold text-white hover:bg-[#3a6347] transition-colors">
+            Save Status
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step7({ form, submittedAt, appId }) {
+  const navigate = useNavigate();
+  const now        = submittedAt || new Date();
+  const dateStr    = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const timeStr    = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const displayId  = appId || 'APP-2026-8921';
+  const farmerName = form.fullName || 'Abebe Kebede';
+
+  const [showSummary, setShowSummary]   = useState(false);
+  const [showUpdate,  setShowUpdate]    = useState(false);
+  const [doneCount,   setDoneCount]     = useState(1); // 1 = only "Submitted" done initially
+
+  // Build live tracking list from doneCount
+  const trackingItems = STATUS_TRACKING.map((item, idx) => ({ ...item, done: idx < doneCount }));
+
+  function handleDownloadPDF() {
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return;
+    const crops = (form.primaryCrops || []).join(', ');
+    const consented = (form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ');
+    const amount = form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : '—';
+    const rows = (items) => items.map(([l, v]) =>
+      `<tr><td style="padding:6px 12px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;width:40%;border-bottom:1px solid #f3f4f6">${l}</td>
+       <td style="padding:6px 12px;font-size:13px;color:#111827;border-bottom:1px solid #f3f4f6">${v || '—'}</td></tr>`
+    ).join('');
+    const section = (title, icon, items) =>
+      `<div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;">
+          <span style="font-size:16px">${icon}</span>
+          <span style="font-size:13px;font-weight:700;color:#374151">${title}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #f3f4f6;border-radius:8px;overflow:hidden">${rows(items)}</table>
+       </div>`;
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>Loan Application – ${displayId}</title>
+      <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background:#fff; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+      </style>
+    </head><body>
+      <div style="background:linear-gradient(135deg,#4a7c59,#3a6347);padding:28px 32px;border-radius:12px;margin-bottom:24px;color:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:20px;font-weight:800;margin-bottom:4px;">Loan Application Summary</div>
+            <div style="font-size:12px;opacity:.8;">Access to Credit System — Cooperative Bank of Oromia</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;">${displayId}</div>
+            <div style="font-size:11px;opacity:.75;">${dateStr} · ${timeStr}</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.2);padding:6px 14px;border-radius:99px;">
+          <span style="font-size:13px">✓</span>
+          <span style="font-size:12px;font-weight:600;">Submitted &amp; Pending Review</span>
+        </div>
+      </div>
+      ${section('Farmer Information','👤',[['Full Name',form.fullName],["Father's Name",form.fatherName],['Farmer ID',form.farmerId],['Date of Birth',form.dateOfBirth],['Gender',form.gender],['Marital Status',form.maritalStatus],['Mobile Phone',form.mobilePhone],['Education Level',form.educationLevel],['National ID',form.nationalId],['Region',form.region],['Woreda',form.woreda],['Kebele',form.kebele]])}
+      ${section('Loan Details','🔒',[['Loan Type',form.loanType],['Purpose',form.loanPurpose],['Requested Amount',amount],['Duration',form.loanDuration],['Primary Crops',crops],['Crop Variety',form.cropVariety],['Land Size',form.landSize?form.landSize+' Ha':''],['Expected Yield',form.expectedYield?form.expectedYield+' Qt':'']])}
+      ${section('Banking Information','🏦',[['Bank Account No.',form.bankAccount],['IFSC / FSC Code',form.ifscCode],['Bank Name',form.bankName],['Account Holder',form.accountHolderName]])}
+      ${section('Consent & Fayda','🛡',[['Fayda ID',form.faydaId],['OTP Verification','Verified'],['Consented Fields',consented]])}
+      <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;color:#9ca3af;">Generated by A2C System · ${dateStr} ${timeStr}</span>
+        <span style="font-size:10px;color:#9ca3af;">CONFIDENTIAL — For internal bank use only</span>
+      </div>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    w.document.close();
+  }
+
+  return (
+    <>
+      {showSummary && (
+        <SummaryModal form={form} displayId={displayId} dateStr={dateStr} timeStr={timeStr} onClose={() => setShowSummary(false)} />
+      )}
+      {showUpdate && (
+        <UpdateStatusModal
+          currentDoneCount={doneCount}
+          onUpdate={n => setDoneCount(n)}
+          onClose={() => setShowUpdate(false)}
+        />
+      )}
+
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+
+      {/* ── Left / Success card ── */}
+      <div className="lg:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+        {/* Green header banner */}
+        <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#4a7c59] to-[#3a6347] px-6 py-10 text-center">
+          <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
+          <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/5" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+            <Check size={30} className="text-white" strokeWidth={2.5} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Application Submitted Successfully!</h2>
+            <p className="mt-1 text-sm text-white/80">
+              The loan application for <span className="font-semibold text-white">{farmerName}</span> has been
+              securely transmitted to Coop Bank for review.
+            </p>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+            <Check size={11} strokeWidth={3} /> Verified &amp; Submitted
+          </span>
+        </div>
+
+        {/* Meta cards */}
+        <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-3">
+          {[
+            { label: 'Application ID',  value: displayId,               icon: <FileText size={15} className="text-[#4a7c59]" /> },
+            { label: 'Submitted On',    value: `${dateStr} ${timeStr}`,  icon: <Calendar size={15} className="text-[#4a7c59]" /> },
+            { label: 'Transfer Method', value: 'SFTP Sync',              icon: <Send size={15} className="text-[#4a7c59]" /> },
+          ].map(({ label, value, icon }) => (
+            <div key={label} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4a7c59]/10">{icon}</div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                <p className="mt-0.5 truncate text-sm font-bold text-gray-800">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Farmer strip */}
+        <div className="mx-6 mb-5 flex items-center gap-3 rounded-xl border border-[#4a7c59]/20 bg-[#4a7c59]/5 px-4 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a7c59]/15 text-base">👤</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">{farmerName}</p>
+            <p className="text-xs text-gray-500">
+              {form.loanType || 'Agricultural'} Loan
+              {form.requestedAmount ? ` · ETB ${Number(form.requestedAmount).toLocaleString()}` : ''}
+              {form.loanDuration    ? ` · ${form.loanDuration}` : ''}
+            </p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+            <Check size={10} strokeWidth={3} /> Pending Review
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            <Download size={14} /> Download PDF
+          </button>
+          <button
+            onClick={() => setShowSummary(true)}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            <Eye size={14} /> View Summary
+          </button>
+          <button
+            onClick={() => navigate('/loans/applications')}
+            className="flex items-center gap-2 rounded-xl bg-[#4a7c59] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3a6347] transition-colors">
+            <LayoutDashboard size={14} /> Return to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* ── Right / Status tracking card ── */}
+      <div className="lg:col-span-2 flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800">Status Tracking</h3>
+            <p className="text-[11px] text-gray-400">Real-time application progress</p>
+          </div>
+          <button
+            onClick={() => setShowUpdate(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-2.5 py-1.5 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+            <Edit2 size={11} /> Update
+          </button>
+        </div>
+
+        <div className="flex flex-col px-5 py-4">
+          {trackingItems.map((item, idx) => {
+            const isLast = idx === trackingItems.length - 1;
+            return (
+              <div key={item.label} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                    item.done ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-200 bg-white'
+                  }`}>
+                    {item.done
+                      ? <Check size={13} strokeWidth={3} className="text-white" />
+                      : <span className="text-xs leading-none">{item.icon}</span>}
+                  </div>
+                  {!isLast && (
+                    <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+                  )}
+                </div>
+                <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-semibold ${item.done ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</p>
+                    {item.done && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Done</span>}
+                  </div>
+                  {item.done && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Clock size={10} className="text-gray-400" />
+                      <p className="text-[11px] text-gray-400">{dateStr} · {timeStr}</p>
+                    </div>
+                  )}
+                  {item.note && (
+                    <p className={`mt-1 text-xs leading-relaxed ${item.done ? 'text-gray-600' : 'text-gray-400'}`}>{item.note}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-auto border-t border-gray-100 bg-blue-50/60 px-5 py-3.5">
+          <div className="flex items-start gap-2">
+            <Info size={12} className="mt-0.5 shrink-0 text-blue-500" />
+            <p className="text-[11px] leading-relaxed text-blue-700">
+              Status updates are synced automatically with Cooperative Bank. You will be notified at each stage.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </>
+  );
+}
+
+export default function NewLoanApplication() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [errors, setErrors] = useState({});
+  const [step5Uploads, setStep5Uploads] = useState({});
+  const [submittedAt, setSubmittedAt] = useState(null);
+  const [appId, setAppId] = useState(null);
+
+
+  const [form, setForm] = useState({
+    fullName: '', fatherName: '', farmerId: 'FMR-2024-8921',
+    nationalId: '', dateOfBirth: '', gender: '', maritalStatus: '',
+    mobilePhone: '', educationLevel: '', kebele: '',
+    region: 'Oromia', woreda: 'Bishoftu', purposeOfLoan: '',
+    loanType: 'input', loanPurpose: 'Agro-processing (e.g., milling grain)',
+    requestedAmount: '', loanDuration: '12 Months (1 Year)',
+    primaryCrops: ['Teff'], cropVariety: 'Seed + S-Hela/Acherr + Stellar Star',
+    landSize: '', expectedYield: '', bankAccount: '', ifscCode: '', bankName: '', accountHolderName: '',
+    faydaId: '722334455', dataFields: [...DATA_FIELDS],
+    otpCode: ['', '', '', '', '', ''],
+  });
+
+  function setField(key) { return val => setForm(prev => ({ ...prev, [key]: val })); }
+
+  function goNext() {
+    const errs = {};
+    if (currentStep === 1) {
+      if (form.dateOfBirth) {
+        const dob = new Date(form.dateOfBirth);
+        const today = new Date();
+        const age18 = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+        if (age18 > today) {
+          errs.dateOfBirth = 'Farmer must be at least 18 years old.';
+        }
+      }
+    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
+    setCompletedSteps(prev => new Set([...prev, currentStep]));
+    setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goBack() {
+    setErrors({});
+    if (currentStep === 1) { navigate('/loans/applications'); return; }
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleSubmit() {
+    const now = new Date();
+    const id = 'APP-' + now.getFullYear() + '-' + (Math.floor(Math.random() * 9000) + 1000);
+    setSubmittedAt(now); setAppId(id);
+    const { otpCode, ...serializable } = form;
+    const loanTypeLabel = form.loanType === 'input' ? 'Input Financing'
+      : form.loanType === 'machinery' ? 'Machinery / Equipment'
+      : form.loanType || 'Agricultural Loan';
+    const updatedFmt = now.toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true,
+    });
+    try {
+      const existing = JSON.parse(localStorage.getItem('a2c_submitted_loans') || '[]');
+      localStorage.setItem('a2c_submitted_loans', JSON.stringify([{
+        id,
+        applicant: form.fullName || 'Unknown Applicant',
+        type: loanTypeLabel,
+        status: 'Pending Review',
+        statusTone: 'info',
+        updated: updatedFmt,
+        action: 'View',
+        amount: form.requestedAmount,
+        phone: form.mobilePhone,
+        region: form.region,
+        loanTerm: form.loanDuration,
+        submittedAt: now.toISOString(),
+        formData: serializable,
+      }, ...existing]));
+    } catch { /* ignore */ }
+    setCompletedSteps(prev => new Set([...prev, 6]));
+    setCurrentStep(7);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const meta = STEP_META[currentStep - 1];
+  const isSubmitStep = currentStep === 6;
+  const isLastStep = currentStep === STEPS.length;
+  const showFaydaBadge = currentStep >= 4;
+
+  return (
+    <div className="flex flex-col gap-4 pb-8">
+      {!isLastStep && (
+        <button onClick={goBack} className="flex w-fit items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
+          <ArrowLeft size={16} /> Back
+        </button>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex items-center gap-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#4a7c59] text-sm font-bold text-white">
+            {isLastStep ? <Check size={18} strokeWidth={2.5} /> : currentStep}
+          </span>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold text-gray-900">{meta.title}</h1>
+              {showFaydaBadge && (
+                <span className="flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                  <Check size={10} strokeWidth={3} /> Verified via Fayda
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">{meta.subtitle}</p>
+          </div>
+        </div>
+        {!isLastStep && (
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button onClick={() => navigate('/loans/applications')} className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Save Draft</button>
+          </div>
+        )}
+      </div>
+
+      <StepProgressBar currentStep={currentStep} completedSteps={completedSteps} />
+
+      {currentStep === 1 && <Step1 form={form} setField={setField} errors={errors} />}
+      {currentStep === 2 && <Step2 form={form} setField={setField} errors={errors} />}
+      {currentStep === 3 && <Step3 form={form} setField={setField} errors={errors} />}
+      {currentStep === 4 && <Step4 form={form} />}
+      {currentStep === 5 && <Step5 uploads={step5Uploads} setUploads={setStep5Uploads} />}
+      {currentStep === 6 && <Step6 form={form} uploads={step5Uploads} goToStep={setCurrentStep} />}
+      {currentStep === 7 && <Step7 form={form} submittedAt={submittedAt} appId={appId} />}
+
+      {!isLastStep && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <button className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors self-start sm:self-auto">Save Draft</button>
+          <div className="flex items-center gap-2">
+            {currentStep > 1 && (
+              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <ArrowLeft size={14} /> Previous Step
+              </button>
+            )}
+            {isSubmitStep ? (
+              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#4a7c59] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
+                Submit Application <Send size={14} />
+              </button>
+            ) : (
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#4a7c59] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
+                Next Step <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -59,7 +59,7 @@ function Login() {
   const [activeHeaderAction, setActiveHeaderAction] = useState('login');
   const [activeLanguage, setActiveLanguage] = useState(languages[0]);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
-  const [portalMode, setPortalMode] = useState('selection');
+  const [portalMode, setPortalMode] = useState('signin');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const languageMenuRef = useRef(null);
 
@@ -195,16 +195,7 @@ function Login() {
             <div className="portal-panel">
               <div className="portal-panel__top">
                 <div className="portal-panel__topbar">
-                  {portalMode === 'signin' ? (
-                    <button
-                      className="portal-panel__back-button"
-                      type="button"
-                      onClick={handleReturnToSelection}
-                    >
-                      <ArrowLeft size={14} strokeWidth={2.2} />
-                      <span>Back</span>
-                    </button>
-                  ) : null}
+
 
                   <div className="portal-panel__locale-row">
                     <div className="portal-panel__locale" ref={languageMenuRef}>
