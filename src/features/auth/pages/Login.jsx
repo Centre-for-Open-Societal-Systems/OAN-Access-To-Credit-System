@@ -366,13 +366,13 @@ function Login() {
                       </span>
                     </label>
 
-                    <div className="sign-in-form__meta">
-                      <label className="sign-in-form__checkbox">
+                    <div className="mt-6 flex items-center justify-between gap-2 text-[0.84rem]">
+                      <label className="inline-flex cursor-pointer select-none items-center gap-2 text-slate-700">
                         <input type="checkbox" />
                         <span>Remember me</span>
                       </label>
 
-                      <a className="sign-in-form__help" href="#">
+                      <a className="font-semibold text-[color:var(--button-bg)] hover:underline" href="#">
                         Forgot password?
                       </a>
                     </div>
