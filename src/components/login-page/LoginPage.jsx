@@ -16,8 +16,6 @@ import {
   Users,
 } from 'lucide-react';
 
-import './LoginPage.scss';
-
 const roles = [
   {
     id: 'farmer-applicant',
@@ -101,23 +99,35 @@ function LoginPage({ onSignIn }) {
   };
 
   return (
-    <div className="app-shell">
-      <header className="header-shell">
-        <div className="header-bar">
-          <div className="brand-mark">
-            <div className="brand-icon" aria-hidden="true">
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      <style>{`
+        @keyframes portal-scene-pop {
+          0% { opacity: 0; transform: translateY(0.65rem) scale(0.99); }
+          70% { opacity: 1; transform: translateY(-0.08rem) scale(1.005); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-portal-scene-pop {
+          animation: portal-scene-pop 260ms ease-out forwards;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-portal-scene-pop { animation: none !important; }
+        }
+      `}</style>
+      <header className="w-full pt-0">
+        <div className="flex items-center justify-between rounded-[0.5rem] border border-slate-200 bg-white px-4 py-2.5 shadow-[0_4px_12px_rgba(15,23,42,0.08)] sm:px-5 max-sm:flex-col max-sm:items-start max-sm:gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-8 w-8 place-items-center rounded-[0.45rem] text-white shadow-[0_10px_22px_rgba(15,33,60,0.2)] bg-[linear-gradient(180deg,var(--panel-bg)_0%,var(--panel-bg-deep)_100%)]" aria-hidden="true">
               <Sprout size={22} strokeWidth={2.2} />
             </div>
-            <div className="brand-copy">
-              <span className="brand-title">Open Agri</span>
-              <span className="brand-subtitle">ACCESS CREDIT SYSTEM</span>
+            <div className="flex flex-col leading-none">
+              <span className="text-[0.9rem] font-semibold tracking-tight text-slate-900">Open Agri</span>
+              <span className="text-[0.5rem] font-semibold uppercase tracking-[0.18em] text-slate-500 leading-4">ACCESS CREDIT SYSTEM</span>
             </div>
           </div>
 
-          <div className="header-actions" aria-label="Header actions">
+          <div className="inline-flex items-stretch gap-1 rounded-[0.65rem] border border-slate-200 bg-slate-50 p-1 max-sm:w-full" aria-label="Header actions">
             <button
-              className="header-tab"
-              data-active={activeHeaderAction === 'login'}
+              className={`inline-flex min-w-[5.1rem] items-center justify-center gap-2 rounded-[0.45rem] px-4 py-2 text-[0.78rem] font-semibold leading-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(16,185,129,0.22)] max-sm:min-w-0 max-sm:flex-1 max-sm:px-3 max-sm:py-2 max-sm:text-[0.75rem] ${activeHeaderAction === 'login' ? 'bg-emerald-600 text-white shadow-[0_8px_16px_rgba(16,185,129,0.24)] scale-100' : 'bg-white text-emerald-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(15,23,42,0.08)] scale-[0.98] hover:scale-100'}`}
               type="button"
               aria-pressed={activeHeaderAction === 'login'}
               onClick={() => setActiveHeaderAction('login')}
@@ -125,8 +135,7 @@ function LoginPage({ onSignIn }) {
               Login
             </button>
             <button
-              className="header-tab"
-              data-active={activeHeaderAction === 'get-started'}
+              className={`inline-flex min-w-[5.1rem] items-center justify-center gap-2 rounded-[0.45rem] px-4 py-2 text-[0.78rem] font-semibold leading-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(16,185,129,0.22)] max-sm:min-w-0 max-sm:flex-1 max-sm:px-3 max-sm:py-2 max-sm:text-[0.75rem] ${activeHeaderAction === 'get-started' ? 'bg-emerald-600 text-white shadow-[0_8px_16px_rgba(16,185,129,0.24)] scale-100' : 'bg-white text-emerald-600 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:-translate-y-[1px] hover:shadow-[0_4px_10px_rgba(15,23,42,0.08)] scale-[0.98] hover:scale-100'}`}
               type="button"
               aria-pressed={activeHeaderAction === 'get-started'}
               onClick={() => setActiveHeaderAction('get-started')}
@@ -138,21 +147,21 @@ function LoginPage({ onSignIn }) {
         </div>
       </header>
 
-      <main className="content-wrap">
-        <section className="page-frame w-full">
-          <div className="card-shell">
-            <div className="hero-panel">
-              <div className="hero-panel__top">
-                <div className="hero-brand">
-                  <div className="hero-brand__icon" aria-hidden="true">
+      <main className="flex flex-1 items-center py-5 lg:py-6">
+        <section className="mx-auto w-full max-w-[1200px] px-4 sm:px-6">
+          <div className="mx-auto grid w-full max-w-[980px] overflow-hidden rounded-[1.1rem] border border-white/80 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.14)] lg:h-[48rem] lg:grid-cols-2 max-lg:grid-cols-1">
+            <div className="relative flex flex-col justify-between text-white overflow-hidden pt-[2.1rem] px-[2rem] pb-[2rem] bg-[linear-gradient(180deg,var(--panel-bg)_0%,var(--panel-bg-deep)_100%)] max-lg:min-h-auto max-sm:p-6 before:content-[''] before:absolute before:rounded-[999px] before:pointer-events-none before:-right-[4rem] before:-top-[4.5rem] before:w-[12rem] before:h-[12rem] before:bg-[radial-gradient(circle,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0)_72%)] after:content-[''] after:absolute after:rounded-[999px] after:pointer-events-none after:-left-[4.5rem] after:bottom-[4rem] after:w-[10rem] after:h-[10rem] after:bg-[radial-gradient(circle,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_72%)]">
+              <div className="relative z-10">
+                <div className="flex items-center gap-3.5">
+                  <div className="grid h-10 w-10 place-items-center rounded-[0.5rem] bg-white text-[color:var(--panel-bg)] shadow-[0_8px_18px_rgba(0,0,0,0.12)]" aria-hidden="true">
                     <Sprout size={18} strokeWidth={2.4} />
                   </div>
-                  <span className="hero-brand__name">Open AgriNet</span>
+                  <span className="text-[1.05rem] font-semibold tracking-tight">Open AgriNet</span>
                 </div>
 
-                <span className="hero-pill">Field Agent Portal</span>
+                <span className="mt-8 inline-flex w-fit rounded-full border border-white/10 px-3 py-[0.28rem] text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-emerald-200/75 bg-[rgba(112,183,116,0.09)]">Field Agent Portal</span>
 
-                <h1 className="hero-title font-display">
+                <h1 className="mt-5 max-w-[15rem] text-[clamp(2.35rem,3.25vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.07em] text-white font-display">
                   Empowering
                   <br />
                   Ethiopian
@@ -160,18 +169,18 @@ function LoginPage({ onSignIn }) {
                   Agriculture
                 </h1>
 
-                <p className="hero-copy">
+                <p className="mt-5 max-w-[18rem] text-[0.95rem] leading-[1.55] text-slate-200/90 sm:text-[0.98rem]">
                   Facilitating seamless credit access for millions of farmers through
                   data-driven financial infrastructure. Secure, transparent, and resilient.
                 </p>
               </div>
 
-              <div className="hero-panel__bottom">
-                <div className="avatar-stack" aria-hidden="true">
+              <div className="mt-8 flex items-center gap-3 text-sm text-slate-200/90 relative z-10 max-sm:flex-col max-sm:items-start">
+                <div className="flex items-center" aria-hidden="true">
                   {activeAgents.map((agent, index) => (
                     <span
                       key={agent.initials}
-                      className="avatar-stack__item"
+                      className="grid h-8 w-8 place-items-center rounded-full border border-white/60 text-[0.62rem] font-semibold text-white shadow-[0_8px_16px_rgba(0,0,0,0.16)]"
                       style={{
                         background: agent.tone,
                         marginLeft: index === 0 ? 0 : '-0.55rem',
@@ -181,21 +190,21 @@ function LoginPage({ onSignIn }) {
                       {agent.initials}
                     </span>
                   ))}
-                  <span className="avatar-stack__item avatar-stack__item--count">+2k</span>
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-white/60 text-[0.62rem] font-semibold text-white shadow-[0_8px_16px_rgba(0,0,0,0.16)] ml-[-0.55rem] bg-slate-950/70 text-[0.64rem] tracking-tight">+2k</span>
                 </div>
 
-                <p className="hero-footnote">
+                <p className="text-[0.8rem] text-slate-200/85">
                   <span>Active agents in the field today</span>
                 </p>
               </div>
             </div>
 
-            <div className="portal-panel">
-              <div className="portal-panel__top">
-                <div className="portal-panel__topbar">
+            <div className="relative z-10 flex h-full flex-col justify-between bg-white px-5 py-6 sm:px-7 sm:py-7 lg:px-8 max-sm:p-6">
+              <div className="mx-auto flex w-full max-w-[28rem] flex-col items-center text-center">
+                <div className="flex w-full items-center gap-3">
                   {portalMode === 'signin' ? (
                     <button
-                      className="portal-panel__back-button"
+                      className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-[0.8rem] font-semibold text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-emerald-600/30 hover:text-emerald-600 hover:shadow-[0_4px_10px_rgba(15,23,42,0.08)] active:scale-95"
                       type="button"
                       onClick={handleReturnToSelection}
                     >
@@ -204,30 +213,29 @@ function LoginPage({ onSignIn }) {
                     </button>
                   ) : null}
 
-                  <div className="portal-panel__locale-row">
-                  <div className="portal-panel__locale" ref={languageMenuRef}>
+                  <div className="flex flex-1 justify-end">
+                  <div className="relative" ref={languageMenuRef}>
                     <button
-                      className="portal-panel__locale-button"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-[0.8rem] font-semibold text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-emerald-600/30 hover:text-emerald-600 hover:shadow-[0_4px_10px_rgba(15,23,42,0.08)] active:scale-95"
                       type="button"
                       aria-haspopup="menu"
                       aria-expanded={isLanguageMenuOpen}
                       onClick={() => setIsLanguageMenuOpen((current) => !current)}
                     >
-                      <span className="portal-panel__locale-button-content">
-                        <span className="portal-panel__locale-flag" aria-hidden="true">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-[0.95rem] leading-none" aria-hidden="true">
                           {activeLanguage.flag}
                         </span>
-                        <span className="portal-panel__locale-text">{activeLanguage.label}</span>
+                        <span className="leading-none">{activeLanguage.label}</span>
                       </span>
                       <ChevronDown size={14} strokeWidth={2.2} />
                     </button>
 
-                    <div className="portal-panel__locale-menu" data-open={isLanguageMenuOpen} role="menu">
+                    <div className={`absolute right-0 top-[calc(100%+0.45rem)] z-10 w-[12rem] max-sm:w-[9rem] overflow-hidden rounded-[0.9rem] border border-slate-200 bg-white p-1 shadow-[0_14px_32px_rgba(15,23,42,0.12)] origin-top-right transition-all duration-200 ease-out ${isLanguageMenuOpen ? 'opacity-100 pointer-events-auto translate-y-0 scale-100' : 'opacity-0 pointer-events-none -translate-y-2 scale-95'}`} role="menu">
                       {languages.map((language) => (
                         <button
                           key={language.code}
-                          className="portal-panel__locale-option"
-                          data-active={activeLanguage.code === language.code}
+                          className={`flex w-full items-center justify-between gap-3 rounded-[0.65rem] px-3 py-2 text-left text-[0.8rem] font-medium transition duration-150 ${activeLanguage.code === language.code ? 'text-emerald-600 bg-emerald-600/10' : 'text-slate-600 hover:bg-emerald-600/5 hover:text-emerald-600'}`}
                           type="button"
                           role="menuitemradio"
                           aria-checked={activeLanguage.code === language.code}
@@ -236,16 +244,16 @@ function LoginPage({ onSignIn }) {
                             setIsLanguageMenuOpen(false);
                           }}
                         >
-                          <span className="portal-panel__locale-option-main">
-                            <span className="portal-panel__locale-option-flag" aria-hidden="true">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="text-[0.95rem] leading-none" aria-hidden="true">
                               {language.flag}
                             </span>
 
-                            <span className="portal-panel__locale-option-copy">
-                              <span className="portal-panel__locale-option-label">
+                            <span className="flex min-w-0 flex-col">
+                              <span className="truncate text-[0.8rem] font-semibold text-slate-700">
                                 {language.label}
                               </span>
-                              <span className="portal-panel__locale-option-country">
+                              <span className="truncate text-[0.62rem] text-slate-500">
                                 {language.country}
                               </span>
                             </span>
@@ -260,30 +268,30 @@ function LoginPage({ onSignIn }) {
                   </div>
                 </div>
 
-                <div className="portal-panel__heading">
-                  <h2 className="font-display">Welcome to the Portal</h2>
-                  <p>{portalSubtitle}</p>
+                <div className="mt-8">
+                  <h2 className="text-[clamp(1.65rem,2.45vw,2.1rem)] font-semibold leading-[1.04] tracking-[-0.05em] text-slate-900 font-display">Welcome to the Portal</h2>
+                  <p className="mt-0 text-[0.88rem] leading-[1.45] text-slate-500 sm:text-[0.9rem]">{portalSubtitle}</p>
                 </div>
               </div>
 
-              <div className="portal-panel__body" data-mode={portalMode} key={portalMode}>
+              <div className="flex w-full flex-1 mt-12 flex-col animate-portal-scene-pop" data-mode={portalMode} key={portalMode}>
                 {portalMode === 'selection' ? (
                   <>
-                    <div className="connect-banner">
-                      <div className="connect-banner__icon" aria-hidden="true">
+                    <div className="mx-auto mt-[0.2rem] flex w-full max-w-[28rem] gap-3 rounded-[0.85rem] border px-4 py-2.5 shadow-[0_8px_24px_rgba(18,31,54,0.05)] border-[rgba(238,123,53,0.35)] bg-[color:var(--accent-soft)]">
+                      <div className="mt-[0.1rem] grid h-7 w-7 place-items-center rounded-full text-[color:var(--accent)] bg-[rgba(238,123,53,0.12)]" aria-hidden="true">
                         <ShieldAlert size={16} strokeWidth={2.25} />
                       </div>
 
-                      <div className="connect-banner__copy">
-                        <strong>Low Connectivity Detected</strong>
-                        <p>
+                      <div>
+                        <strong className="block text-[0.9rem] font-semibold text-[color:var(--accent)]">Low Connectivity Detected</strong>
+                        <p className="mt-1 text-[0.76rem] leading-5 text-[#a65c28]">
                           The system is operating in offline-optimized mode. Some features may sync
                           later.
                         </p>
                       </div>
                     </div>
 
-                    <div className="role-list">
+                    <div className="mx-auto mt-[2.5rem] flex w-full max-w-[28rem] flex-col gap-4">
                       {roles.map((role) => {
                         const Icon = role.icon;
                         const isActive = selectedRole.id === role.id;
@@ -291,21 +299,20 @@ function LoginPage({ onSignIn }) {
                         return (
                           <button
                             key={role.id}
-                            className="role-card"
-                            data-active={isActive}
+                            className={`flex w-full min-h-[4.5rem] items-center gap-4 rounded-[0.95rem] border px-4 py-[0.95rem] text-left transition-all duration-200 ${isActive ? 'border-emerald-600 shadow-[0_18px_34px_rgba(16,185,129,0.12)] scale-[1.02]' : 'bg-white border-[color:var(--border-subtle)] shadow-[0_1px_3px_rgba(18,31,54,0.05)] hover:-translate-y-[2px] hover:shadow-[0_14px_28px_rgba(18,31,54,0.09)]'}`}
                             type="button"
                             onClick={() => setSelectedRole(role)}
                           >
-                            <span className="role-card__icon" aria-hidden="true">
+                            <span className="grid h-9 w-9 place-items-center rounded-full text-emerald-600 bg-[linear-gradient(180deg,rgba(16,185,129,0.08)_0%,rgba(16,185,129,0.04)_100%)]" aria-hidden="true">
                               <Icon size={18} strokeWidth={2.2} />
                             </span>
 
-                            <span className="role-card__copy">
-                              <span className="role-card__title">{role.title}</span>
-                              <span className="role-card__description">{role.description}</span>
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="text-[0.96rem] font-semibold text-slate-900">{role.title}</span>
+                              <span className="mt-0.5 text-[0.68rem] leading-[1.35] text-slate-500">{role.description}</span>
                             </span>
 
-                            <span className="role-card__radio" aria-hidden="true">
+                            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border bg-white text-emerald-600 ${isActive ? 'border-emerald-600' : 'border-[color:var(--border-subtle)]'}`} aria-hidden="true">
                               {isActive ? <Check size={12} strokeWidth={3} /> : null}
                             </span>
                           </button>
@@ -313,25 +320,25 @@ function LoginPage({ onSignIn }) {
                       })}
                     </div>
 
-                    <button className="primary-cta" type="button" onClick={handleContinueToSignIn}>
+                    <button className="mx-auto mt-[2.4rem] inline-flex w-full max-w-[28rem] min-h-[3.25rem] items-center justify-center gap-2 rounded-[0.85rem] px-4 py-3 sm:px-6 sm:py-3.5 text-[0.8rem] font-semibold text-white transition-all duration-200 bg-emerald-600 shadow-[0_14px_26px_rgba(16,185,129,0.25)] hover:bg-emerald-700 hover:shadow-[0_18px_32px_rgba(16,185,129,0.35)] hover:-translate-y-1 active:translate-y-0 active:scale-95" type="button" onClick={handleContinueToSignIn}>
                       <span>Continue to Sign In</span>
                       <ArrowRight size={16} strokeWidth={2.25} />
                     </button>
 
-                    <p className="signup-line">
-                      Need a new account? <a href="#">Register here</a>
+                    <p className="mx-auto mt-3 w-full max-w-[28rem] text-center text-[0.85rem] text-slate-500">
+                      Need a new account? <a href="#" className="font-semibold text-emerald-600 hover:text-emerald-700">Register here</a>
                     </p>
                   </>
                 ) : (
-                  <form className="sign-in-form" onSubmit={handleSignInSubmit}>
-                    <label className="sign-in-field">
-                      <span className="sign-in-field__label">Phone Number or Email</span>
-                      <span className="sign-in-field__control">
-                        <span className="sign-in-field__icon" aria-hidden="true">
+                  <form className="mx-auto mt-10 flex h-full w-full max-w-[28rem] flex-1 flex-col" onSubmit={handleSignInSubmit}>
+                    <label className="flex flex-col gap-2">
+                      <span className="text-[0.86rem] font-semibold text-slate-700">Phone Number or Email</span>
+                      <span className="flex items-center gap-2 rounded-[0.65rem] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 focus-within:border-emerald-600/40 focus-within:shadow-[0_0_0_3px_rgba(16,185,129,0.12)]">
+                        <span className="grid h-5 w-5 shrink-0 place-items-center text-slate-400" aria-hidden="true">
                           <UserRound size={16} strokeWidth={2.2} />
                         </span>
                         <input
-                          className="sign-in-field__input"
+                          className="min-w-0 flex-1 border-0 bg-transparent text-[0.9rem] text-slate-700 placeholder:text-slate-300 focus:outline-none"
                           type="text"
                           placeholder="+251 911 234 567"
                           autoComplete="username"
@@ -339,20 +346,20 @@ function LoginPage({ onSignIn }) {
                       </span>
                     </label>
 
-                    <label className="sign-in-field">
-                      <span className="sign-in-field__label">Password</span>
-                      <span className="sign-in-field__control">
-                        <span className="sign-in-field__icon" aria-hidden="true">
+                    <label className="flex flex-col gap-2 mt-6">
+                      <span className="text-[0.86rem] font-semibold text-slate-700">Password</span>
+                      <span className="flex items-center gap-2 rounded-[0.65rem] border border-slate-200 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 focus-within:border-emerald-600/40 focus-within:shadow-[0_0_0_3px_rgba(16,185,129,0.12)]">
+                        <span className="grid h-5 w-5 shrink-0 place-items-center text-slate-400" aria-hidden="true">
                           <Lock size={16} strokeWidth={2.2} />
                         </span>
                         <input
-                          className="sign-in-field__input"
+                          className="min-w-0 flex-1 border-0 bg-transparent text-[0.9rem] text-slate-700 placeholder:text-slate-300 focus:outline-none"
                           type={isPasswordVisible ? 'text' : 'password'}
                           placeholder="•••••••"
                           autoComplete="current-password"
                         />
                         <button
-                          className="sign-in-field__toggle"
+                          className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-slate-400 transition duration-150 hover:bg-slate-100 hover:text-slate-600"
                           type="button"
                           aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
                           onClick={() => setIsPasswordVisible((current) => !current)}
@@ -366,25 +373,30 @@ function LoginPage({ onSignIn }) {
                       </span>
                     </label>
 
-                    <div className="sign-in-form__meta">
-                      <label className="sign-in-form__checkbox">
-                        <input type="checkbox" />
+                    <div className="mt-6 flex items-center justify-between gap-4 text-[0.84rem] max-sm:flex-col max-sm:items-start max-sm:gap-3">
+                      <label className="inline-flex cursor-pointer items-center gap-2.5 text-slate-700 select-none group">
+                        <span className="relative flex h-[1.05rem] w-[1.05rem] shrink-0">
+                          <input type="checkbox" className="peer absolute inset-0 opacity-0 cursor-pointer" />
+                          <span className="pointer-events-none flex h-full w-full items-center justify-center rounded-[0.28rem] border-2 border-slate-300 bg-white transition-all duration-150 peer-checked:border-emerald-600 peer-checked:bg-emerald-600 group-hover:border-emerald-400 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+                            <svg className="hidden peer-checked:block w-2.5 h-2.5 text-white" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </span>
+                        </span>
                         <span>Remember me</span>
                       </label>
 
-                      <a className="sign-in-form__help" href="#">
+                      <a className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors" href="#">
                         Forgot password?
                       </a>
                     </div>
 
-                    <button className="sign-in-submit" type="submit">
+                    <button className="mx-auto mt-auto inline-flex w-full max-w-[28rem] items-center justify-center gap-2 rounded-[0.85rem] px-4 py-3 sm:px-6 sm:py-3.5 text-[0.9rem] font-semibold text-white transition-all duration-200 bg-emerald-600 shadow-[0_14px_26px_rgba(16,185,129,0.25)] hover:bg-emerald-700 hover:shadow-[0_18px_32px_rgba(16,185,129,0.35)] hover:-translate-y-1 active:translate-y-0 active:scale-95" type="submit">
                       Sign In
                     </button>
 
-
-
-                    <p className="signup-line">
-                      Need a new account? <a href="#">Register here</a>
+                    <p className="mx-auto mt-5 w-full max-w-[28rem] text-center text-[0.85rem] text-slate-500">
+                      Need a new account? <a href="#" className="font-semibold text-emerald-600 hover:text-emerald-700">Register here</a>
                     </p>
                   </form>
                 )}
