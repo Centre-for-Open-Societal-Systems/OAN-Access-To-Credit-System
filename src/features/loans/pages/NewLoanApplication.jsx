@@ -268,7 +268,7 @@ function TextField({ id, label, placeholder, value, onChange, type = 'text', hin
       <div className="relative">
         {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>}
         <input id={id} type={type} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} readOnly={readOnly} max={max} min={min}
-          className={`w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:ring-0' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+          className={`w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
       </div>
       {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -297,7 +297,7 @@ function StepProgressBar({ currentStep, completedSteps }) {
             <div key={step.number} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
               <div className="flex w-full items-center">
                 <div className={`h-0.5 flex-1 transition-colors ${step.number === 1 ? 'opacity-0' : isDone || isActive ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold border-2 transition-all ${isActive ? 'border-[#4B5563] bg-[#4B5563] text-white' : isDone ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-gray-300 bg-white text-gray-500'}`}>
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold border-2 transition-all ${isActive ? 'border-[#4B5563] bg-[#4B5563] text-white' : isDone ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-gray-300 bg-white text-gray-500'}`}>
                   {isDone ? <Check size={13} strokeWidth={2.5} /> : step.number}
                 </span>
                 <div className={`h-0.5 flex-1 transition-colors ${step.number === STEPS.length ? 'opacity-0' : isDone ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
@@ -1554,7 +1554,7 @@ function Step6({ form, uploads, goToStep }) {
               ${acknowledged ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-300 bg-white'}`}>
             {acknowledged && <Check size={12} className="text-white" strokeWidth={3} />}
           </div>
-          <span className={`text-sm transition-colors ${acknowledged ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+          <span className={`text-sm transition-colors ${acknowledged ? 'font-sm text-gray-900' : 'text-gray-700'}`}>
             I confirm that all information provided in this application is accurate and complete. I understand that providing false information may lead to rejection or legal action.
           </span>
         </label>
@@ -1592,7 +1592,7 @@ function SummaryModal({ form, displayId, dateStr, timeStr, onClose }) {
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-8" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Modal header */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-[#4a7c59] to-[#3a6347] px-6 py-5">
+        <div className="flex items-center justify-between bg-gradient-to-r from-[#16A34A] to-[#10883c] px-6 py-5">
           <div>
             <p className="text-lg font-bold text-white">Application Summary</p>
             <p className="text-xs text-white/70">ID: {displayId} · Submitted {dateStr} at {timeStr}</p>
@@ -1608,7 +1608,7 @@ function SummaryModal({ form, displayId, dateStr, timeStr, onClose }) {
             <Check size={13} strokeWidth={3} className="text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-green-800">Submitted &amp; Pending Review</p>
+            <p className="text-sm font-semibold text-[#10883c]">Submitted &amp; Pending Review</p>
             <p className="text-xs text-green-600">Transmitted to Cooperative Bank of Oromia via SFTP</p>
           </div>
         </div>
@@ -1655,7 +1655,7 @@ function SummaryModal({ form, displayId, dateStr, timeStr, onClose }) {
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
           <p className="text-xs text-gray-400">Generated on {dateStr} · {timeStr}</p>
-          <button onClick={onClose} className="rounded-xl bg-[#4a7c59] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3a6347] transition-colors">
+          <button onClick={onClose} className="rounded-xl bg-[#16A34A] px-5 py-2 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
             Close
           </button>
         </div>
@@ -1696,13 +1696,13 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }) {
                 onClick={() => setSelected(idx)}
                 className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                   isSelected
-                    ? 'border-[#4a7c59] bg-[#4a7c59]/5 ring-1 ring-[#4a7c59]/30'
+                    ? 'border-[#16A34A] bg-[#16A34A]/5 ring-1 ring-[#16A34A]/30'
                     : isPast
                     ? 'border-green-100 bg-green-50/50'
                     : 'border-gray-100 bg-white hover:bg-gray-50'
                 }`}>
                 <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
-                  isSelected || isPast ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-200 bg-white'
+                  isSelected || isPast ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
                 }`}>
                   {isSelected || isPast
                     ? <Check size={12} strokeWidth={3} className="text-white" />
@@ -1712,7 +1712,7 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }) {
                   {opt.label}
                 </span>
                 {isSelected && (
-                  <span className="ml-auto rounded-full bg-[#4a7c59] px-2 py-0.5 text-[10px] font-bold text-white">Current</span>
+                  <span className="ml-auto rounded-full bg-[#16A34A] px-2 py-0.5 text-[10px] font-bold text-white">Current</span>
                 )}
               </button>
             );
@@ -1722,7 +1722,7 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }) {
           <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
           <button
             onClick={() => { onUpdate(selected + 1); onClose(); }}
-            className="flex-1 rounded-xl bg-[#4a7c59] py-2.5 text-sm font-semibold text-white hover:bg-[#3a6347] transition-colors">
+            className="flex-1 rounded-xl bg-[#16A34A] py-2.5 text-sm font-semibold text-white hover:bg-[#16A34A] transition-colors">
             Save Status
           </button>
         </div>
@@ -1821,7 +1821,7 @@ function Step7({ form, submittedAt, appId }) {
       <div className="lg:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
         {/* Green header banner */}
-        <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#4a7c59] to-[#3a6347] px-6 py-10 text-center">
+        <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#10883c] px-6 py-10 text-center">
           <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
           <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/5" />
           <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
@@ -1867,7 +1867,7 @@ function Step7({ form, submittedAt, appId }) {
               {form.loanDuration    ? ` · ${form.loanDuration}` : ''}
             </p>
           </div>
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-[green-100] px-2.5 py-1 text-xs font-semibold text-[#16A34A]">
             <Check size={10} strokeWidth={3} /> Pending Review
           </span>
         </div>
@@ -1886,7 +1886,7 @@ function Step7({ form, submittedAt, appId }) {
           </button>
           <button
             onClick={() => navigate('/loans/applications')}
-            className="flex items-center gap-2 rounded-xl bg-[#4a7c59] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3a6347] transition-colors">
+            className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
             <LayoutDashboard size={14} /> Return to Dashboard
           </button>
         </div>
@@ -1901,7 +1901,7 @@ function Step7({ form, submittedAt, appId }) {
           </div>
           <button
             onClick={() => setShowUpdate(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-2.5 py-1.5 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+            className="flex items-center gap-1.5 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-2.5 py-1.5 text-xs font-semibold text-[#16A34A] hover:bg-[#16A34A]/10 transition-colors">
             <Edit2 size={11} /> Update
           </button>
         </div>
@@ -1913,14 +1913,14 @@ function Step7({ form, submittedAt, appId }) {
               <div key={item.label} className="flex gap-3">
                 <div className="flex flex-col items-center">
                   <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                    item.done ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-200 bg-white'
+                    item.done ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
                   }`}>
                     {item.done
                       ? <Check size={13} strokeWidth={3} className="text-white" />
                       : <span className="text-xs leading-none">{item.icon}</span>}
                   </div>
                   {!isLast && (
-                    <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+                    <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#16A34A]' : 'bg-gray-200'}`} />
                   )}
                 </div>
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
@@ -1969,19 +1969,19 @@ export default function NewLoanApplication() {
 
 
   const [form, setForm] = useState({
-    fullName: 'Amit', fatherName: '', farmerId: 'FMR-2024-8921',
-    nationalId: '', dateOfBirth: '1990-01-15', gender: 'Male', maritalStatus: 'Married',
+    fullName: 'Amit', fatherName: 'Kumar', farmerId: 'FMR-2024-8921',
+    nationalId: 'ETH-293829823', dateOfBirth: '1990-01-15', gender: 'Male', maritalStatus: 'Married',
     mobilePhone: '+251 9876543210', educationLevel: 'Graduation', kebele: 'Bishoftu',
     region: 'Oromia', woreda: 'Bishoftu', purposeOfLoan: '',
-    loanType: 'input', loanPurpose: 'Agro-processing (e.g., milling grain)',
-    requestedAmount: '', loanDuration: '12 Months (1 Year)',
+    loanType: 'Input Financing', loanPurpose: 'Agro-processing (e.g., milling grain)',
+    requestedAmount: '50000', loanDuration: '12 Months (1 Year)',
     primaryCrops: ['Teff'], cropVariety: 'Seed + S-Hela/Acherr + Stellar Star',
-    cropAddress: '', landSize: '', expectedYield: '',
+    cropAddress: '', landSize: '12', expectedYield: '45',
     farmerGroup: '', fertilizerUsed: '', animalReared: '', farmEquipment: '',
-    bankAccountName: '', bankAccount: '', bankName: '', bankSwiftCode: '',
+    bankAccountName: 'Amit Sharma', bankAccount: '1000245789032', bankName: 'Cooperative Bank of Oromia', bankSwiftCode: 'CBOAETH',
     mobileAccountName: '', mobilePaymentsNumber: '',
     totalBorrowingAmount: '', taxId: '',
-    accountHolderName: '', ifscCode: '',
+    accountHolderName: 'Amit Sharma', ifscCode: 'CBOA0001234',
     faydaId: '722334455', dataFields: [...DATA_FIELDS],
     otpCode: ['', '', '', '', '', ''],
     // Step 2 – Supporting Documents
@@ -2084,7 +2084,7 @@ export default function NewLoanApplication() {
 
       <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#4B5563] text-sm font-bold text-white">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${isLastStep ? 'bg-[#16A34A]' : 'bg-[#4B5563]'}`}>
             {isLastStep ? <Check size={18} strokeWidth={2.5} /> : currentStep}
           </span>
           <div>
@@ -2118,8 +2118,8 @@ export default function NewLoanApplication() {
 
       {!isLastStep && (
         <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          {/* Left: Save Draft + Auto-saved */}
-          <div className="flex items-center gap-3 self-start sm:self-auto">
+          {/* Row 1 on mobile / Left on desktop: Save Draft + Auto-saved */}
+          <div className="flex items-center gap-3">
             <button className="rounded-xl border border-gray-600 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               Save Draft
             </button>
@@ -2127,13 +2127,13 @@ export default function NewLoanApplication() {
               <Check size={13} className="text-[#4a7c59]" strokeWidth={2.5} /> Auto-saved
             </span>
           </div>
-          {/* Right: Previous Step (steps 2+) + Next / Submit */}
-          <div className="flex items-center gap-2">
-            {currentStep > 1 && (
+          {/* Row 2 on mobile / Right on desktop: Previous Step + Next / Submit */}
+          <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+            {currentStep > 1 ? (
               <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 <ArrowLeft size={14} /> Previous Step
               </button>
-            )}
+            ) : <div />}
             {isSubmitStep ? (
               <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
                 Submit Application <Send size={14} />

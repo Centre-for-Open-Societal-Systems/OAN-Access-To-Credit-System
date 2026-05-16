@@ -222,7 +222,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
     const isFrom  = pendingFrom && d.toDateString() === pendingFrom.toDateString();
     const isTo    = pendingTo   && d.toDateString() === pendingTo.toDateString();
     const inRange = pendingFrom && pendingTo && d > pendingFrom && d < pendingTo;
-    if (isFrom || isTo) return 'bg-[#4a7c59] text-white rounded-full';
+    if (isFrom || isTo) return 'bg-[#16A34A] text-white rounded-full';
     if (inRange)        return 'bg-[#4a7c59]/15 text-[#3a6347] rounded-sm';
     return 'hover:bg-gray-100 rounded-full cursor-pointer text-gray-700';
   }
@@ -244,7 +244,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
         type="button"
         onClick={() => setOpen(o => !o)}
         className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold border cursor-pointer transition-all ' +
-          (isActive ? 'bg-[#4a7c59] text-white border-[#4a7c59] shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50')}
+          (isActive ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50')}
       >
         <Calendar size={14} strokeWidth={2.2} />
         <span>{isActive && activeFilter === 'custom' ? fmtCustomLabel() : isActive ? activeOption?.label : 'Date Filter'}</span>
@@ -260,7 +260,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
                 type="button"
                 onClick={() => handlePreset(opt.id)}
                 className={'flex items-center justify-between w-full px-3 py-2 rounded-xl text-[13px] font-semibold text-left cursor-pointer border-0 transition-colors ' +
-                  (activeFilter === opt.id ? 'bg-[#4a7c59]/10 text-[#4a7c59]' : 'bg-transparent text-gray-700 hover:bg-gray-50')}
+                  (activeFilter === opt.id ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-transparent text-gray-700 hover:bg-gray-50')}
               >
                 <span>{opt.label}</span>
                 {activeFilter === opt.id && <Check size={12} strokeWidth={2.5} />}
@@ -270,7 +270,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
 
           {activeFilter === 'custom' && (
             <div className="border-t border-gray-100 p-3">
-              <p className="text-center text-[11px] font-semibold text-[#4a7c59] mb-2 bg-[#4a7c59]/5 rounded-lg py-1">
+              <p className="text-center text-[11px] font-semibold text-[#16A34A] mb-2 bg-[#4a7c59]/5 rounded-lg py-1">
                 {step === 'from' ? '\u2460 Pick start date' : '\u2461 Pick end date'}
               </p>
               <div className="flex items-center justify-between mb-2">
@@ -319,7 +319,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
                   disabled={!pendingFrom}
                   onClick={() => { if (pendingFrom) { onCustomApply(pendingFrom, pendingTo || pendingFrom); setOpen(false); } }}
                   className={'flex-1 py-1.5 rounded-lg text-[12px] font-semibold border-0 cursor-pointer transition-colors ' +
-                    (pendingFrom ? 'bg-[#4a7c59] text-white hover:bg-[#3a6347]' : 'bg-gray-100 text-gray-300 cursor-not-allowed')}
+                    (pendingFrom ? 'bg-[#16A34A] text-white hover:bg-[#3a6347]' : 'bg-gray-100 text-gray-300 cursor-not-allowed')}
                 >
                   Apply
                 </button>
@@ -373,7 +373,7 @@ function F({ label, value }) {
 function StatusBadge({ tone, label }) {
   const cls = {
     info:    'bg-blue-50 text-blue-800 border-blue-200',
-    success: 'bg-green-50 text-green-800 border-green-200',
+    success: 'bg-green-50 text-[#16A34A] border-green-200',
     danger:  'bg-red-50 text-red-700 border-red-200',
     neutral: 'bg-gray-100 text-gray-600 border-gray-200',
   };
@@ -1004,7 +1004,7 @@ function NewLoanApplicationDashboard() {
             onCustomApply={(f, t) => { setCustomFrom(f); setCustomTo(t); setDateFilter('custom'); setPage(1); }}
           />
           <button
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#4a7c59] text-white hover:bg-[#3a6347] transition-colors cursor-pointer border-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#16A34A] text-white hover:bg-[#10883c] transition-colors cursor-pointer border-0"
             onClick={() => navigate('/loans/new')}
           >
             <Plus size={15} strokeWidth={2.5} />
@@ -1082,9 +1082,9 @@ function NewLoanApplicationDashboard() {
                 onClick={() => setFilterOpen((o) => !o)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
                   isFiltered
-                    ? 'bg-[#4a7c59] text-white border-[#4a7c59]'
+                    ? 'bg-[#4a7c59] text-white border-[#16A34A]'
                     : filterOpen
-                    ? 'bg-[#4a7c59]/5 text-[#4a7c59] border-[#4a7c59]'
+                    ? 'bg-[#4a7c59]/5 text-[#16A34A] border-[#16A34A]'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -1098,9 +1098,9 @@ function NewLoanApplicationDashboard() {
                   <button
                     type="button"
                     onClick={toggleAll}
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${allChecked ? 'bg-[#4a7c59]/10 text-[#4a7c59] font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${allChecked ? 'bg-[#16A34A]/10 text-gray-900 font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
                   >
-                    <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${allChecked ? 'bg-[#4a7c59] border-[#4a7c59] text-white' : 'border-gray-300'}`}>
+                    <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${allChecked ? 'bg-[#16A34A] border-[#16A34A] text-white' : 'border-gray-300'}`}>
                       {allChecked && <Check size={9} strokeWidth={3} />}
                     </span>
                     All Statuses
@@ -1112,9 +1112,9 @@ function NewLoanApplicationDashboard() {
                         key={opt.value}
                         type="button"
                         onClick={() => toggleStatus(opt.value)}
-                        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${checked ? 'bg-[#4a7c59]/10 text-[#4a7c59] font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${checked ? 'bg-[#16A34A]/10 text-gray-900 font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
                       >
-                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${checked ? 'bg-[#4a7c59] border-[#4a7c59] text-white' : 'border-gray-300'}`}>
+                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${checked ? 'bg-[#16A34A] border-[#16A34A] text-white' : 'border-gray-300'}`}>
                           {checked && <Check size={9} strokeWidth={3} />}
                         </span>
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor[opt.value] || 'bg-gray-400'}`} />
@@ -1191,7 +1191,7 @@ function NewLoanApplicationDashboard() {
                           <div className="flex items-center gap-2.5">
                             <span className={'flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-extrabold shrink-0 ' + avatarColor}>{initials}</span>
                             <div>
-                              <strong className="block text-[12.5px] font-bold text-[#4a7c59] leading-tight">{app.id}</strong>
+                              <strong className="block text-[12.5px] font-bold text-[#10883c] leading-tight">{app.id}</strong>
                               <span className="text-[11px] text-gray-400 leading-tight">{app.applicant}</span>
                             </div>
                           </div>
@@ -1239,7 +1239,7 @@ function NewLoanApplicationDashboard() {
                         <td className="px-4 py-3.5">
                           <button
                             onClick={() => setViewApp(app)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold bg-[#4a7c59]/8 border border-[#4a7c59]/20 text-[#4a7c59] hover:bg-[#4a7c59] hover:text-white transition-all duration-150 cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold bg-[#16A34A]/8 border border-[#4a7c59]/20 text-[#16A34A] hover:bg-[#10883c] hover:text-white transition-all duration-150 cursor-pointer"
                           >
                             <Eye size={12} strokeWidth={2.2} />
                             View
@@ -1274,7 +1274,7 @@ function NewLoanApplicationDashboard() {
                       aria-current={pg === page ? 'page' : undefined}
                       className={`grid place-items-center min-w-[2rem] h-8 px-1 rounded-lg border text-xs font-semibold cursor-pointer transition-colors ${
                         pg === page
-                          ? 'bg-[#4a7c59] border-[#4a7c59] text-white'
+                          ? 'bg-[#16A34A] border-[#16A34A] text-white'
                           : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
