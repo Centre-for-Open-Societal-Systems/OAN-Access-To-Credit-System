@@ -15,7 +15,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
         // ── Mobile (<900px): fixed off-canvas drawer ─────────────────────
         // top-0 + bottom-0 stretches to the true full screen height without
         // any explicit height value (avoids 100vh/100dvh browser quirks).
-        'fixed top-0 bottom-0 left-0 z-[200] w-80 overflow-y-auto',
+        'fixed top-0 bottom-0 left-0 z-[200] w-[calc(100vw-1rem)] max-w-[20rem] overflow-y-auto',
         'transition-[transform,box-shadow] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
         isMobileOpen
           ? 'translate-x-0 shadow-[8px_0_40px_rgba(0,0,0,0.3)]'
@@ -28,8 +28,8 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
         'min-[900px]:h-screen min-[900px]:translate-x-0 min-[900px]:overflow-y-auto',
         'min-[900px]:shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]',
         isCollapsed
-          ? 'min-[900px]:w-[4.5rem] min-[900px]:px-[0.35rem]'
-          : 'min-[900px]:w-80 min-[900px]:px-[0.65rem]',
+          ? 'min-[900px]:w-[var(--dashboard-sidebar-width-collapsed)] min-[900px]:px-[0.35rem]'
+          : 'min-[900px]:w-[var(--dashboard-sidebar-width)] min-[900px]:px-[0.65rem]',
       ].join(' ')}
     >
       {/* ── Brand ────────────────────────────────────────────────────────── */}
@@ -78,7 +78,8 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
             <div className="flex flex-col gap-[0.15rem]">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+                const activePaths = item.activePaths ?? [item.path];
+                const isActive = activePaths.includes(location.pathname);
 
                 return (
                   <button

@@ -9,14 +9,16 @@ import { useNavigate } from 'react-router-dom';
 
 const STEPS = [
   { number: 1, label: 'Loan Details' },
-  { number: 2, label: 'Supporting Documents' },
-  { number: 3, label: 'Consent & OTP Verification' },
-  { number: 4, label: 'Farmer Details' },
-  { number: 5, label: 'Review Application' },
+  { number: 2, label: 'Bank Details' },
+  { number: 3, label: 'Supporting Documents' },
+  { number: 4, label: 'Consent & OTP Verification' },
+  { number: 5, label: 'Farmer Details' },
+  { number: 6, label: 'Review Application' },
 ];
 
 const STEP_META = [
   { title: 'Loan Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
+  { title: 'Bank Details',               subtitle: 'Capture bank account and settlement details for the loan application.' },
   { title: 'Supporting Documents',       subtitle: 'Upload all required supporting documents for the loan application.' },
   { title: 'Consent & OTP Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
   { title: 'Farmer Details',             subtitle: "Please verify or enter the farmer's personal details." },
@@ -29,10 +31,21 @@ const EDUCATION_OPTIONS = ['No Formal Education', 'Primary School', 'Secondary S
 const LOAN_TYPE_OPTIONS = [
   { value: 'input',     label: 'Input Financing',     sub: 'Seeds, fertilizers, chemicals' },
   { value: 'machinery', label: 'Machinery/Equipment',  sub: 'Tractors, harvesters, irrigation' },
+  { value: 'conventional', label: 'Conventional', sub: 'Tractors, harvesters, irrigation' },
+  { value: 'alhuda', label: 'Alhuda (Islamic Financing)', sub: 'Sharia-compliant agricultural credit' },
 ];
 const PURPOSE_OPTIONS  = ['Agro-processing (e.g., milling grain)', 'Crop Production', 'Livestock', 'Equipment Purchase', 'Land Development', 'Input Purchase'];
 const DURATION_OPTIONS = ['6 Months', '12 Months (1 Year)', '18 Months', '24 Months (2 Years)', '36 Months (3 Years)'];
-const CROP_OPTIONS     = ['Barley', 'Teff', 'Maize', 'Soybeans', 'Wheat', 'Sorghum', 'Coffee'];
+const CROP_OPTIONS     = ['Barley', 'Wheat', 'Soybeans', 'Maize', 'Other Variety'];
+const CROP_VARIETY_OPTIONS = ['Seed + S-Hela/Achen + Stellar Star', 'Hybrid Maize BH-546', 'Soybean Pawe-03', 'Barley HB-1307', 'Other Variety'];
+const OTHER_FARMING_ACTIVITY_OPTIONS = ['Cattle, Poultry, Sheep/Goats, Other Income Sources', 'Cattle', 'Poultry', 'Sheep/Goats', 'Other Income Sources'];
+const HARVEST_AGGREGATOR_OPTIONS = [
+  { value: 'primaryCooperative', label: 'Primary Cooperative', sub: 'Member-based produce collection and marketing' },
+  { value: 'nucleusFarmer', label: 'Nucleus Farmer', sub: 'Lead farmer coordinating outgrower harvests' },
+];
+const FERTILIZER_PRICE_OPTIONS = ['ETB 850 / Bag', 'ETB 900 / Bag', 'ETB 950 / Bag'];
+const AGROCHEMICAL_OPTIONS = ['A', 'B', 'C', 'D'];
+const CROP_PROTECTION_COST_OPTIONS = ['ETB 5,000', 'ETB 10,000', 'ETB 15,000'];
 const DATA_FIELDS      = ['Basic Profile (Required)', 'Phone Number', 'Farm Details & Location'];
 
 const CONSENT_TYPE_OPTIONS     = ['Specific (Single Farmer)', 'Group', 'Cooperative'];
@@ -133,7 +146,7 @@ function DatePickerField({ id, label, value, onChange, required, error, disabled
         </label>
       )}
       <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); setMode('day'); }}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none
           ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default'
           : error ? 'border-red-400 bg-red-50/40'
           : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
@@ -241,7 +254,7 @@ function SelectField({ id, label, placeholder, options, value, onChange, require
       {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
       <div ref={ref} className="relative">
         <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); }}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default' : error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default' : error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
           <span className={disabled ? 'text-gray-500' : value ? 'text-gray-900' : 'text-gray-400'}>{value || placeholder}</span>
           <ChevronDown size={15} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
         </button>
@@ -268,7 +281,7 @@ function TextField({ id, label, placeholder, value, onChange, type = 'text', hin
       <div className="relative">
         {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>}
         <input id={id} type={type} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} readOnly={readOnly} max={max} min={min}
-          className={`w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+          className={`w-full rounded-lg border px-3 py-3 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
       </div>
       {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -281,17 +294,28 @@ function TextAreaField({ id, label, placeholder, value, onChange, required, rows
     <div className="flex flex-col gap-1.5">
       {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
       <textarea id={id} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} rows={rows}
-        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
+        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
     </div>
   );
 }
 
-function StepProgressBar({ currentStep, completedSteps }) {
+function FormSectionCard({ title, children }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function StepProgressBar({ currentStep }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6 overflow-x-auto">
-      <div className="flex items-start gap-0 min-w-[540px] md:min-w-0">
+      <div className="flex items-start gap-0 min-w-[720px] md:min-w-0">
         {STEPS.map(step => {
-          const isDone = completedSteps.has(step.number) && step.number !== currentStep;
+          const isDone = step.number < currentStep;
           const isActive = step.number === currentStep;
           return (
             <div key={step.number} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
@@ -320,92 +344,76 @@ function StepFarmerDetails({ form, setField, errors }) {
       <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
     </div>
   );
+
   return (
     <div className="flex flex-col gap-5">
-      {/* Basic Information */}
       <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
         <SectionHeader title="Basic Information" />
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TextField id="fullName"    label="Full Name"     placeholder="Amit"           value={form.fullName}    onChange={setField('fullName')}    required error={errors.fullName} readOnly />
-            <TextField id="lastName"    label="Last Name"     placeholder="Sharma"         value={form.lastName}    onChange={setField('lastName')}    required readOnly />
-            <TextField id="mobilePhone" label="Mobile Phone"  placeholder="+251 9876543210"     value={form.mobilePhone} onChange={setField('mobilePhone')} required type="tel" error={errors.mobilePhone} readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <TextField id="fullName" label="Full Name" placeholder="Amit" value={form.fullName} onChange={setField('fullName')} required error={errors.fullName} readOnly />
+            <TextField id="lastName" label="Last Name" placeholder="Sharma" value={form.lastName} onChange={setField('lastName')} required readOnly />
+            <TextField id="mobilePhone" label="Mobile Phone" placeholder="+251 9876543210" value={form.mobilePhone} onChange={setField('mobilePhone')} required type="tel" error={errors.mobilePhone} readOnly />
             <DatePickerField id="dateOfBirth" label="Date of Birth" value={form.dateOfBirth} onChange={setField('dateOfBirth')} required error={errors.dateOfBirth} disabled />
             <SelectField id="gender" label="Gender" placeholder="Select Gender" options={GENDER_OPTIONS} value={form.gender} onChange={setField('gender')} required error={errors.gender} disabled />
             <TextField id="woreda" label="Woreda" placeholder="Bishoftu" value={form.woreda} onChange={setField('woreda')} required readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TextField id="kebele"   label="Kebele"    placeholder="Bishoftu"      value={form.kebele}   onChange={setField('kebele')}   required readOnly />
-            <SelectField id="idType" label="ID Type"   placeholder="Select ID Type" options={ID_TYPE_OPTIONS} value={form.idType} onChange={setField('idType')} required disabled />
-            <TextField id="idNumber" label="ID Number" placeholder="29838928923"   value={form.idNumber} onChange={setField('idNumber')} required readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <TextField id="kebele" label="Kebele" placeholder="Bishoftu" value={form.kebele} onChange={setField('kebele')} required readOnly />
+            <SelectField id="idType" label="National ID / Fayda ID Number" placeholder="Select ID Type" options={ID_TYPE_OPTIONS} value={form.idType} onChange={setField('idType')} required disabled />
+            <TextField id="idNumber" label="ID Number" placeholder="29838928923" value={form.idNumber} onChange={setField('idNumber')} required readOnly />
             <SelectField id="language" label="Language" placeholder="Select Language" options={LANGUAGE_OPTIONS} value={form.language} onChange={setField('language')} required disabled />
           </div>
         </div>
       </div>
 
-      {/* Land and Crop Information */}
       <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
         <SectionHeader title="Land and Crop Information" />
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TextField id="landSizeAcres" label="Land Size (Acres)" placeholder="12"           type="number" value={form.landSizeAcres} onChange={setField('landSizeAcres')} required readOnly />
-            <TextField id="farmId"        label="Farm ID"           placeholder="29838928923"            value={form.farmId}        onChange={setField('farmId')}        required readOnly />
-            <TextField id="farmPolygon"   label="Farm Polygon"      placeholder="Farm Polygon"           value={form.farmPolygon}   onChange={setField('farmPolygon')}   required readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField id="landAcreage"    label="Land Acreage"     placeholder="Land Acreage"  value={form.landAcreage}    onChange={setField('landAcreage')}    required readOnly />
-            <TextField id="farmLandNumber" label="Farm Land Number" placeholder="29838928923"  value={form.farmLandNumber} onChange={setField('farmLandNumber')} required readOnly />
+            <TextField id="landSizeAcres" label="Land Size (Acres)" placeholder="12" type="number" value={form.landSizeAcres} onChange={setField('landSizeAcres')} required readOnly />
+            <TextField id="farmId" label="Farm ID" placeholder="29838928923" value={form.farmId} onChange={setField('farmId')} required readOnly />
+            <TextField id="farmPolygon" label="Farm Polygon" placeholder="Farm Polygon" value={form.farmPolygon} onChange={setField('farmPolygon')} required readOnly />
+            <TextField id="landAcreage" label="Land Acreage" placeholder="Land Acreage" value={form.landAcreage} onChange={setField('landAcreage')} required readOnly />
+            <TextField id="farmLandNumber" label="Farm Land Number" placeholder="29838928923" value={form.farmLandNumber} onChange={setField('farmLandNumber')} required readOnly />
           </div>
         </div>
       </div>
 
-      {/* Socio-Economic Information */}
       <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
         <SectionHeader title="Socio-Economic Information" />
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SelectField id="maritalStatus"    label="Marital Status"        placeholder="Married"   options={MARITAL_OPTIONS}         value={form.maritalStatus}    onChange={setField('maritalStatus')}    required disabled />
-            <TextField   id="sizeOfFamily"     label="Size of Family"        placeholder="4"         type="number" value={form.sizeOfFamily}     onChange={setField('sizeOfFamily')}     required readOnly />
-            <TextField   id="numberOfChildren" label="Number of Children"    placeholder="3"         type="number" value={form.numberOfChildren} onChange={setField('numberOfChildren')} required readOnly />
-            <TextField   id="noOfFemalesFamily" label="No. of Females (Family)" placeholder="3"      type="number" value={form.noOfFemalesFamily} onChange={setField('noOfFemalesFamily')} required readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <TextField   id="noOfMalesFamily"       label="No. of Males (Family)"                    placeholder="3" type="number" value={form.noOfMalesFamily}       onChange={setField('noOfMalesFamily')}       required readOnly />
-            <TextField   id="familyMemberOwnsLand"  label="A Family Member Owns Land Independently"  placeholder="3" type="number" value={form.familyMemberOwnsLand}  onChange={setField('familyMemberOwnsLand')}  required readOnly />
-            <SelectField id="sourceOfIncome"        label="Source of Income"    placeholder="Salary"         options={SOURCE_OF_INCOME_OPTIONS} value={form.sourceOfIncome}   onChange={setField('sourceOfIncome')}   required disabled />
-            <SelectField id="educationLevel"        label="Education Level"     placeholder="Graduation"     options={EDUCATION_OPTIONS}        value={form.educationLevel}   onChange={setField('educationLevel')}   required disabled />
+            <SelectField id="maritalStatus" label="Marital Status" placeholder="Married" options={MARITAL_OPTIONS} value={form.maritalStatus} onChange={setField('maritalStatus')} required disabled />
+            <TextField id="sizeOfFamily" label="Size of Family" placeholder="4" type="number" value={form.sizeOfFamily} onChange={setField('sizeOfFamily')} required readOnly />
+            <TextField id="numberOfChildren" label="Number of Children" placeholder="3" type="number" value={form.numberOfChildren} onChange={setField('numberOfChildren')} required readOnly />
+            <TextField id="noOfFemalesFamily" label="No. of Females (Family)" placeholder="3" type="number" value={form.noOfFemalesFamily} onChange={setField('noOfFemalesFamily')} required readOnly />
+            <TextField id="noOfMalesFamily" label="No. of Males (Family)" placeholder="3" type="number" value={form.noOfMalesFamily} onChange={setField('noOfMalesFamily')} required readOnly />
+            <TextField id="familyMemberOwnsLand" label="A Family Member Owns Land Independently" placeholder="3" type="number" value={form.familyMemberOwnsLand} onChange={setField('familyMemberOwnsLand')} required readOnly />
+            <SelectField id="sourceOfIncome" label="Source of Income" placeholder="Salary" options={SOURCE_OF_INCOME_OPTIONS} value={form.sourceOfIncome} onChange={setField('sourceOfIncome')} required disabled />
+            <SelectField id="educationLevel" label="Education Level" placeholder="Graduation" options={EDUCATION_OPTIONS} value={form.educationLevel} onChange={setField('educationLevel')} required disabled />
           </div>
         </div>
       </div>
 
-      {/* Land, Crop and Livestock Information */}
       <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
         <SectionHeader title="Land, Crop and Livestock Information" />
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <TextField id="totalFarmlandLandowner"   label="Total Farmland Size as Landowner"    placeholder="3" type="number" value={form.totalFarmlandLandowner}   onChange={setField('totalFarmlandLandowner')}   required readOnly />
+            <TextField id="totalFarmlandLandowner" label="Total Farmland Size as Landowner" placeholder="3" type="number" value={form.totalFarmlandLandowner} onChange={setField('totalFarmlandLandowner')} required readOnly />
             <TextField id="totalFarmlandCropSharing" label="Total Farmland Size as Crop Sharing" placeholder="4" type="number" value={form.totalFarmlandCropSharing} onChange={setField('totalFarmlandCropSharing')} required readOnly />
-            <TextField id="totalFarmlandRented"      label="Total Farmland Size as Rented"       placeholder="3" type="number" value={form.totalFarmlandRented}      onChange={setField('totalFarmlandRented')}      required readOnly />
-            <TextField id="certificationId"          label="Certification ID"                    placeholder="29838928923"  value={form.certificationId}          onChange={setField('certificationId')}          required readOnly />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <TextField id="totalFarmlandRented" label="Total Farmland Size as Rented" placeholder="3" type="number" value={form.totalFarmlandRented} onChange={setField('totalFarmlandRented')} required readOnly />
+            <TextField id="certificationId" label="Certification ID" placeholder="29838928923" value={form.certificationId} onChange={setField('certificationId')} required readOnly />
             <SelectField id="certificationPhoto" label="Certification Photo" placeholder="Yes" options={['Yes', 'No']} value={form.certificationPhoto} onChange={setField('certificationPhoto')} required disabled />
           </div>
         </div>
       </div>
 
-      {/* Agronomic Data */}
       <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
         <SectionHeader title="Agronomic Data" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <SelectField id="farmlandSizeHectares" label="Farmland Size (Hectares)"   placeholder="Capacity for production"  options={AGRONOMIC_FARMLAND_OPTIONS} value={form.farmlandSizeHectares} onChange={setField('farmlandSizeHectares')} required disabled />
-          <SelectField id="landOwnershipStatus"  label="Land Ownership Status"      placeholder="Security of access"       options={LAND_OWNERSHIP_OPTIONS}     value={form.landOwnershipStatus}  onChange={setField('landOwnershipStatus')}  required disabled />
-          <SelectField id="soilFertility"        label="Soil Fertility / Minerals"  placeholder="Future yield potential"   options={SOIL_FERTILITY_OPTIONS}     value={form.soilFertility}        onChange={setField('soilFertility')}        required disabled />
-          <SelectField id="moistureLevels"       label="Moisture Levels"            placeholder="Irrigation / drought risks" options={MOISTURE_LEVEL_OPTIONS}   value={form.moistureLevels}       onChange={setField('moistureLevels')}       required disabled />
+          <SelectField id="farmlandSizeHectares" label="Farmland Size (Hectares)" placeholder="Capacity for production" options={AGRONOMIC_FARMLAND_OPTIONS} value={form.farmlandSizeHectares} onChange={setField('farmlandSizeHectares')} required disabled />
+          <SelectField id="landOwnershipStatus" label="Land Ownership Status" placeholder="Security of access" options={LAND_OWNERSHIP_OPTIONS} value={form.landOwnershipStatus} onChange={setField('landOwnershipStatus')} required disabled />
+          <SelectField id="soilFertility" label="Soil Fertility / Minerals" placeholder="Future yield potential" options={SOIL_FERTILITY_OPTIONS} value={form.soilFertility} onChange={setField('soilFertility')} required disabled />
+          <SelectField id="moistureLevels" label="Moisture Levels" placeholder="Irrigation / drought risks" options={MOISTURE_LEVEL_OPTIONS} value={form.moistureLevels} onChange={setField('moistureLevels')} required disabled />
         </div>
       </div>
     </div>
@@ -418,45 +426,71 @@ function Step1({ form, setField, errors }) {
     setField('primaryCrops')(current.includes(crop) ? current.filter(c => c !== crop) : [...current, crop]);
   }
 
-  const UnitInput = ({ id, label, placeholder, value, onChange, unit, required }) => (
+  const UnitInput = ({ id, label, placeholder, value, onChange, unit, required, error, type = 'number' }) => (
+    <div className="flex flex-col gap-1.5">
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
+        <input id={id} type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+        <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">{unit}</span>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+
+  const CurrencyInput = ({ id, label, placeholder, value, onChange, required, error }) => (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium text-gray-700">
         {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
-      <div className="flex overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#16A34A] focus-within:ring-2 focus-within:ring-[#16A34A]/20">
-        <input id={id} type="number" placeholder={placeholder} value={value}
-          onChange={e => onChange(e.target.value)}
-          className="flex-1 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
-        <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-l border-gray-300">{unit}</span>
+      <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
+        <span className="flex shrink-0 items-center border-r border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">ETB</span>
+        <input id={id} type="number" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+        <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">.00</span>
       </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+
+  const DateInputField = ({ id, label, value, onChange, required, error }) => (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <input id={id} type="date" value={value} onChange={e => onChange(e.target.value)}
+          className={`w-full appearance-none rounded-lg border px-3 py-3 pr-10 text-sm shadow-sm focus:outline-none focus:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+        <Calendar size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
-
-      {/* ── Loan Requirements ── */}
-      <div className="mb-6 border-b border-gray-100 pb-6">
-        <h2 className="mb-5 text-base font-semibold text-gray-800">Loan Requirements</h2>
+    <div className="flex flex-col gap-5">
+      <FormSectionCard title="Loan Requirements">
         <div className="flex flex-col gap-5">
-
-          {/* Loan Type */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Loan Type <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {LOAN_TYPE_OPTIONS.map(opt => {
-                const sel = form.loanType === opt.value;
+                const selected = form.loanType === opt.value;
                 return (
                   <button key={opt.value} type="button" onClick={() => setField('loanType')(opt.value)}
-                    className={`flex items-start gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${sel ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-gray-200 bg-white hover:border-[#22C55E]/40'}`}>
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${sel ? 'border-[#22C55E] bg-white' : 'border-gray-300 bg-white'}`}>
-                      {sel && <span className="h-2 w-2 rounded-full bg-[#22C55E]" />}
+                    className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-[#22C55E]/40'}`}>
+                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? 'border-[#22C55E]' : 'border-gray-300'}`}>
+                      {selected && <span className="h-2 w-2 rounded-full bg-[#22C55E]" />}
                     </span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{opt.label}</p>
-                      <p className="text-xs text-gray-500">{opt.sub}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                      <p className="mt-0.5 text-xs text-gray-500">{opt.sub}</p>
                     </div>
                   </button>
                 );
@@ -465,47 +499,26 @@ function Step1({ form, setField, errors }) {
             {errors.loanType && <p className="mt-1 text-xs text-red-500">{errors.loanType}</p>}
           </div>
 
-          {/* Purpose of Loan */}
-          <SelectField id="loanPurpose" label="Purpose of Loan" placeholder="Agro-processing (e.g., milling grain)"
-            options={PURPOSE_OPTIONS} value={form.loanPurpose} onChange={setField('loanPurpose')} required error={errors.loanPurpose} />
-
-          {/* Requested Amount & Loan Duration */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                Requested Amount (ETB) <span className="text-red-500">*</span>
-              </label>
-              <div className="flex overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-[#4a7c59] focus-within:ring-2 focus-within:ring-[#4a7c59]/20">
-                <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-r border-gray-300">ETB</span>
-                <input type="number" placeholder="0.00" value={form.requestedAmount}
-                  onChange={e => setField('requestedAmount')(e.target.value)}
-                  className="flex-1 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
-                <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-l border-gray-300">.00</span>
-              </div>
-              {errors.requestedAmount && <p className="text-xs text-red-500">{errors.requestedAmount}</p>}
-            </div>
-            <SelectField id="loanDuration" label="Loan Duration (Months)" placeholder="Select Duration"
-              options={DURATION_OPTIONS} value={form.loanDuration} onChange={setField('loanDuration')} required error={errors.loanDuration} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <SelectField id="loanPurpose" label="Purpose of Loan" placeholder="Select Purpose of Loan" options={PURPOSE_OPTIONS} value={form.loanPurpose} onChange={setField('loanPurpose')} required error={errors.loanPurpose} />
+            <CurrencyInput id="requestedAmount" label="Requested Loan Amount (ETB)" placeholder="0.00" value={form.requestedAmount} onChange={setField('requestedAmount')} required error={errors.requestedAmount} />
+            <SelectField id="loanDuration" label="Loan Duration (Months)" placeholder="Select Loan Duration" options={DURATION_OPTIONS} value={form.loanDuration} onChange={setField('loanDuration')} required error={errors.loanDuration} />
+            <TextField id="nearestBranch" label="Nearest Branch Responsible for Loan Administration" placeholder="Enter Nearest Branch Responsible for Loan Administration" value={form.nearestBranch} onChange={setField('nearestBranch')} required />
           </div>
         </div>
-      </div>
+      </FormSectionCard>
 
-      {/* ── Crop & Land Information ── */}
-      <div className="mb-6 border-b border-gray-100 pb-6">
-        <h2 className="mb-5 text-base font-semibold text-gray-800">Crop &amp; Land Information</h2>
-        <div className="flex flex-col gap-4">
-
-          {/* Primary Crop */}
+      <FormSectionCard title="Crop & Land Information">
+        <div className="flex flex-col gap-5">
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Primary Crop <span className="text-red-500">*</span>
+              Primary Crop/Seed Variety <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {CROP_OPTIONS.slice(0, 5).map(crop => {
-                const sel = (form.primaryCrops || []).includes(crop);
+              {CROP_OPTIONS.map(crop => {
+                const selected = (form.primaryCrops || []).includes(crop);
                 return (
-                  <button key={crop} type="button" onClick={() => toggleCrop(crop)}
-                    className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-all ${sel ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#4a7c59]' : 'border-gray-300 bg-white text-gray-700 hover:border-[#22C55E]/50'}`}>
+                  <button key={crop} type="button" onClick={() => toggleCrop(crop)} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 text-[#15803D]' : 'border-gray-300 bg-white text-gray-700 hover:border-[#22C55E]/40'}`}>
                     {crop}
                   </button>
                 );
@@ -514,86 +527,111 @@ function Step1({ form, setField, errors }) {
             {errors.primaryCrops && <p className="mt-1 text-xs text-red-500">{errors.primaryCrops}</p>}
           </div>
 
-          {/* Crop Variety & Address */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField id="cropVariety" label="Crop Variety" placeholder="e.g., Seed + S-Hela / Stellar Star"
-              value={form.cropVariety} onChange={setField('cropVariety')} required />
-            <TextField id="cropAddress" label="Address" placeholder="Enter Address"
-              value={form.cropAddress} onChange={setField('cropAddress')} required error={errors.cropAddress} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <SelectField id="cropVariety" label="Crop Variety" placeholder="Select Crop Variety" options={CROP_VARIETY_OPTIONS} value={form.cropVariety} onChange={setField('cropVariety')} required />
+            <TextField id="cropAddress" label="Address" placeholder="Enter Address" value={form.cropAddress} onChange={setField('cropAddress')} required error={errors.cropAddress} />
+            <UnitInput id="quantityRequested" label="Quantity Requested (Kg)" placeholder="Enter Quantity Requested (Kg)" value={form.quantityRequested} onChange={setField('quantityRequested')} unit="kg" required />
+            <TextField id="unitPrice" label="Unit Price" placeholder="Enter Unit Price" value={form.unitPrice} onChange={setField('unitPrice')} required type="number" />
+            <TextField id="totalSeedCost" label="Total Seed Cost" placeholder="Enter Total Seed Cost" value={form.totalSeedCost} onChange={setField('totalSeedCost')} required type="number" />
+            <UnitInput id="landSize" label="Land Size (Hectares)" placeholder="Enter Land Size" value={form.landSize} onChange={setField('landSize')} unit="ha" required />
+            <UnitInput id="expectedYield" label="Expected Yield (Quintals/Hectare)" placeholder="Enter Expected Yield" value={form.expectedYield} onChange={setField('expectedYield')} unit="Qtl/ha" required />
+            <DateInputField id="expectedHarvestDate" label="Expected Harvest Date" value={form.expectedHarvestDate} onChange={setField('expectedHarvestDate')} required />
+            <UnitInput id="fertilizerUsed" label="Fertilizer Used" placeholder="Enter Fertilizer Used" value={form.fertilizerUsed} onChange={setField('fertilizerUsed')} unit="kg" required />
+            <SelectField id="otherFarmingActivities" label="Other Farming Activities" placeholder="Select Other Farming Activities" options={OTHER_FARMING_ACTIVITY_OPTIONS} value={form.otherFarmingActivities} onChange={setField('otherFarmingActivities')} required />
+            <UnitInput id="farmerGroup" label="Farmer Group" placeholder="Enter Farmer Group" value={form.farmerGroup} onChange={setField('farmerGroup')} unit="members" required />
+            <UnitInput id="animalReared" label="Animal Reared" placeholder="Enter Animal Reared" value={form.animalReared} onChange={setField('animalReared')} unit="heads" required />
+            <UnitInput id="farmEquipment" label="Farm Equipment" placeholder="Enter Farm Equipment" value={form.farmEquipment} onChange={setField('farmEquipment')} unit="units" required />
+            <UnitInput id="farmSizeHectares" label="Farm Size (Hectares)" placeholder="Enter Farm Size (Hectares)" value={form.farmSizeHectares} onChange={setField('farmSizeHectares')} unit="ha" required />
+            <TextField id="region" label="Region" placeholder="Enter Region" value={form.region} onChange={setField('region')} required />
+            <TextField id="zone" label="Zone" placeholder="Enter Zone" value={form.zone} onChange={setField('zone')} required />
+            <TextField id="woreda" label="Woreda / District" placeholder="Enter Woreda / District" value={form.woreda} onChange={setField('woreda')} required />
+            <TextField id="kebele" label="Kebele" placeholder="Enter Kebele" value={form.kebele} onChange={setField('kebele')} required />
           </div>
 
-          {/* Land Size & Expected Yield */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UnitInput id="landSize" label="Land Size (Hectares)" placeholder="Enter Land Size"
-              value={form.landSize} onChange={setField('landSize')} unit="ha" required />
-            <UnitInput id="expectedYield" label="Expected Yield (Quintals/Hectare)" placeholder="Enter Expected Yield "
-              value={form.expectedYield} onChange={setField('expectedYield')} unit="Qtl/ha" required />
-          </div>
-
-          {/* Farmer Group & Fertilizer Used */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UnitInput id="farmerGroup" label="Farmer Group" placeholder="Enter Farmer Group Size"
-              value={form.farmerGroup} onChange={setField('farmerGroup')} unit="members" required />
-            <UnitInput id="fertilizerUsed" label="Fertilizer Used" placeholder="Enter Fertillizer Used"
-              value={form.fertilizerUsed} onChange={setField('fertilizerUsed')} unit="kg" required />
-          </div>
-
-          {/* Animal Reared & Farm Equipment */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UnitInput id="animalReared" label="Animal Reared" placeholder="Enter Animal Reared"
-              value={form.animalReared} onChange={setField('animalReared')} unit="heads" required />
-            <UnitInput id="farmEquipment" label="Farm Equipment" placeholder="Enter Farm Equipment"
-              value={form.farmEquipment} onChange={setField('farmEquipment')} unit="units" required />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">
+                Harvest Aggregator Type <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {HARVEST_AGGREGATOR_OPTIONS.map(opt => {
+                  const selected = form.harvestAggregatorType === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setField('harvestAggregatorType')(opt.value)} className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-[#22C55E]/40'}`}>
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? 'border-[#22C55E]' : 'border-gray-300'}`}>
+                        {selected && <span className="h-2 w-2 rounded-full bg-[#22C55E]" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                        <p className="mt-0.5 text-xs text-gray-500">{opt.sub}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <TextField id="cooperativeName" label="Name of Cooperative / Nucleus Farmer" placeholder="Enter Name of Cooperative / Nucleus Farmer" value={form.cooperativeName} onChange={setField('cooperativeName')} required />
           </div>
         </div>
-      </div>
+      </FormSectionCard>
 
-      {/* ── Banking Information ── */}
-      <div className="mb-6 border-b border-gray-100 pb-6">
-        <h2 className="mb-5 text-base font-semibold text-gray-800">Banking Information</h2>
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField id="bankAccountName" label="Bank Account Name" placeholder="Enter Bank Account Name"
-              value={form.bankAccountName} onChange={setField('bankAccountName')} required
-              error={errors.bankAccountName} icon={<Landmark size={14} />}
-              hint="Must be a valid Coopbank account in the farmer's name." />
-            <TextField id="bankAccount" label="Bank Account Number" placeholder="Enter Bank Account Number"
-              value={form.bankAccount} onChange={setField('bankAccount')} required
-              error={errors.bankAccount} icon={<Landmark size={14} />}
-              hint="Must be a valid Coopbank account in the farmer's name." />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField id="bankName" label="Bank Name" placeholder="Enter Bank Name"
-              value={form.bankName} onChange={setField('bankName')} required
-              error={errors.bankName} icon={<Landmark size={14} />} />
-            <TextField id="bankSwiftCode" label="Bank SWIFT/IFSC Code" placeholder="Enter Bank SWIFT/IFSC Code"
-              value={form.bankSwiftCode} onChange={setField('bankSwiftCode')} required
-              error={errors.bankSwiftCode} icon={<Landmark size={14} />} />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField id="mobileAccountName" label="Mobile Account Name" placeholder="Enter Mobile Account Name"
-              value={form.mobileAccountName} onChange={setField('mobileAccountName')} required
-              error={errors.mobileAccountName} icon={<Landmark size={14} />} />
-            <TextField id="mobilePaymentsNumber" label="Mobile Payments Number" placeholder="Enter Mobile Payments Number"
-              value={form.mobilePaymentsNumber} onChange={setField('mobilePaymentsNumber')} required
-              error={errors.mobilePaymentsNumber} icon={<Landmark size={14} />} />
-          </div>
+      <FormSectionCard title="Fertilizer Requirement">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <UnitInput id="dapQuantity" label="DAP Quantity (Kg)" placeholder="Enter DAP Quantity (Kg)" value={form.dapQuantity} onChange={setField('dapQuantity')} unit="kg" required />
+          <UnitInput id="ureaQuantity" label="UREA Quantity (Kg)" placeholder="Enter UREA Quantity (Kg)" value={form.ureaQuantity} onChange={setField('ureaQuantity')} unit="kg" required />
+          <SelectField id="fertilizerUnitPrice" label="Unit Price per Fertilizer Type" placeholder="Select Unit Price per Fertilizer Type" options={FERTILIZER_PRICE_OPTIONS} value={form.fertilizerUnitPrice} onChange={setField('fertilizerUnitPrice')} required />
+          <TextField id="totalFertilizerCost" label="Total Fertilizer Cost" placeholder="Enter Total Fertilizer Cost" value={form.totalFertilizerCost} onChange={setField('totalFertilizerCost')} required type="number" />
         </div>
-      </div>
+      </FormSectionCard>
 
-      {/* ── Borrowing Amount ── */}
-      <div>
-        <h2 className="mb-5 text-base font-semibold text-gray-800">Borrowing Amount</h2>
+      <FormSectionCard title="Crop Protection Requirement">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SelectField id="agrochemicalType" label="Type of Agrochemical Requested" placeholder="Select Agrochemical Type" options={AGROCHEMICAL_OPTIONS} value={form.agrochemicalType} onChange={setField('agrochemicalType')} required />
+          <UnitInput id="cropProtectionQuantity" label="Quantity Requested" placeholder="Enter Quantity Requested" value={form.cropProtectionQuantity} onChange={setField('cropProtectionQuantity')} unit="kg" required />
+          <TextField id="cropProtectionUnitPrice" label="Unit Price" placeholder="Enter Unit Price" value={form.cropProtectionUnitPrice} onChange={setField('cropProtectionUnitPrice')} required type="number" />
+          <SelectField id="totalCropProtectionCost" label="Total Crop Protection Cost" placeholder="Select Total Crop Protection Cost" options={CROP_PROTECTION_COST_OPTIONS} value={form.totalCropProtectionCost} onChange={setField('totalCropProtectionCost')} required />
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Financing & Pricing Information">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <TextField id="selectedInputSupplier" label="Selected Input Supplier" placeholder="Enter Selected Input Supplier" value={form.selectedInputSupplier} onChange={setField('selectedInputSupplier')} required />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">
+              Upfront Contribution <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <UnitInput id="maleFarmerContribution" placeholder="Enter Male Farmer" value={form.maleFarmerContribution} onChange={setField('maleFarmerContribution')} unit="% for Male Farmers" required />
+              <UnitInput id="femaleFarmerContribution" placeholder="Enter Female Farmer" value={form.femaleFarmerContribution} onChange={setField('femaleFarmerContribution')} unit="% for Female Farmers" required />
+            </div>
+          </div>
+          <UnitInput id="cropInsurancePremium" label="Crop Insurance premium (%)" placeholder="Enter Crop Insurance premium" value={form.cropInsurancePremium} onChange={setField('cropInsurancePremium')} unit="%" required />
+        </div>
+      </FormSectionCard>
+    </div>
+  );
+}
+
+function StepBankDetails({ form, setField, errors }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <FormSectionCard title="Banking Information">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextField id="totalBorrowingAmount" label="Total Amount You Are Borrowing" placeholder="Enter Total Amount You Are Borrowing"
-            value={form.totalBorrowingAmount} onChange={setField('totalBorrowingAmount')} required
-            error={errors.totalBorrowingAmount} icon={<Landmark size={14} />}
-            hint="Adjust the quantities below based on what you need. You can reduce or remove items you don't want." />
-          <TextField id="taxId" label="Tax ID" placeholder="Enter Tax ID"
-            value={form.taxId} onChange={setField('taxId')} icon={<Landmark size={14} />}
-            hint="Above ETB 1,00,000/-" />
+          <TextField id="bankAccountName" label="Bank Account Name" placeholder="Enter Bank Account Name" value={form.bankAccountName} onChange={setField('bankAccountName')} required error={errors.bankAccountName} icon={<Landmark size={14} />} hint="Must be a valid Coopbank account in the farmer's name." />
+          <TextField id="bankAccount" label="Bank Account Number" placeholder="Enter Bank Account Number" value={form.bankAccount} onChange={setField('bankAccount')} required error={errors.bankAccount} icon={<Landmark size={14} />} hint="Must be a valid Coopbank account in the farmer's name." />
+          <TextField id="bankName" label="Bank Name" placeholder="Enter Bank Name" value={form.bankName} onChange={setField('bankName')} required error={errors.bankName} icon={<Landmark size={14} />} />
+          <TextField id="bankSwiftCode" label="Bank SWIFT/IFSC Code" placeholder="Enter Bank SWIFT/IFSC Code" value={form.bankSwiftCode} onChange={setField('bankSwiftCode')} required error={errors.bankSwiftCode} icon={<Landmark size={14} />} />
+          <TextField id="mobileAccountName" label="Mobile Account Name" placeholder="Enter Mobile Account Name" value={form.mobileAccountName} onChange={setField('mobileAccountName')} required error={errors.mobileAccountName} icon={<Landmark size={14} />} />
+          <TextField id="mobilePaymentsNumber" label="Mobile Payments Number" placeholder="Enter Mobile Payments Number" value={form.mobilePaymentsNumber} onChange={setField('mobilePaymentsNumber')} required error={errors.mobilePaymentsNumber} icon={<Landmark size={14} />} />
         </div>
-      </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Borrowing Amount">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TextField id="totalBorrowingAmount" label="Total Amount You Are Borrowing" placeholder="Enter Total Amount You Are Borrowing" value={form.totalBorrowingAmount} onChange={setField('totalBorrowingAmount')} required error={errors.totalBorrowingAmount} icon={<Landmark size={14} />} hint="Adjust the quantities below based on what you need. You can reduce or remove items you don't want." />
+          <TextField id="taxId" label="Tax ID" placeholder="Enter Tax ID" value={form.taxId} onChange={setField('taxId')} icon={<Landmark size={14} />} hint="Above ETB 1,00,000/-" />
+        </div>
+      </FormSectionCard>
     </div>
   );
 }
@@ -688,9 +726,9 @@ function Step3({ form, setField, errors }) {
                   placeholder="Search by Farmer ID or National ID"
                   value={form.farmerSearch || ''}
                   onChange={e => setField('farmerSearch')(e.target.value)}
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm shadow-sm focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-3 text-sm shadow-sm focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20"
                 />
-                <button className="flex items-center gap-1.5 rounded-lg bg-[#16A34A] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#10883c] transition-colors">
+                <button className="flex items-center gap-1.5 rounded-lg bg-[#16A34A] px-4 py-3 text-sm font-medium text-white hover:bg-[#10883c] transition-colors">
                   Search
                 </button>
               </div>
@@ -788,7 +826,7 @@ function Step3({ form, setField, errors }) {
                   const checked = (form.dataFields || DATA_FIELDS).includes(field);
                   return (
                     <div key={field}
-                      className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 transition-all ${checked ? 'border-[#16A34A] bg-[#16A34A]/5' : 'border-gray-200 bg-white hover:border-[#4a7c59]/40'}`}
+                      className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 transition-all ${checked ? 'border-[#16A34A] bg-[#16A34A]/5' : 'border-gray-200 bg-white hover:border-[#4a7c59]/40'}`}
                       onClick={() => { if (idx === 0) return; const cur = form.dataFields || DATA_FIELDS; setField('dataFields')(cur.includes(field) ? cur.filter(f => f !== field) : [...cur, field]); }}>
                       <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${checked ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-300 bg-white'}`}>
                         {checked && <Check size={11} className="text-white" strokeWidth={3} />}
@@ -1036,7 +1074,7 @@ function Step4() {
 
                 {/* Application value */}
                 <div className="pr-4">
-                  <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
                     <span className="text-sm text-gray-600 truncate">{appValue}</span>
                   </div>
                 </div>
@@ -1065,7 +1103,7 @@ function Step4() {
                       </div>
                     </div>
                   ) : (
-                    <div className={`flex items-center rounded-lg border px-3 py-2.5
+                    <div className={`flex items-center rounded-lg border px-3 py-3
                       ${justSaved ? 'border-[#4a7c59] bg-[#4a7c59]/5'
                       : isWarn    ? 'border-amber-300 bg-amber-50'
                       : 'border-green-200 bg-green-50/50'}`}>
@@ -1359,7 +1397,7 @@ function Step5({ uploads, setUploads, form, setField }) {
         <div className="flex flex-wrap gap-3">
           {MARRIAGE_STATUSES.map(opt => (
             <label key={opt.value}
-              className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all
+              className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all
                 ${marriageStatus === opt.value
                   ? 'border-[#22C55E] bg-[#22C55E]/5 text-[#4a7c59]'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-[#4a7c59]/40'}`}>
@@ -1471,10 +1509,11 @@ function Step5({ uploads, setUploads, form, setField }) {
 }
 
 const REVIEW_SECTIONS = [
-  { key: 'loanRequirements', icon: '🔒', title: 'Loan Requirements',         sub: 'Capture information about the requested loan and farming activities.',  status: 'complete', goStep: 1 },
-  { key: 'supportingDocs',   icon: '🛡', title: 'Supporting Documents',       sub: "Obtain farmer's consent to access registry data via Fayda OTP",         status: 'verified', goStep: 2 },
-  { key: 'consentOtp',       icon: '👤', title: 'Consent & OTP Verification', sub: 'Verify farmer identity and capture consent for registry data access.',   status: 'complete', goStep: 3 },
-  { key: 'farmerDetails',    icon: '🧑‍🌾', title: 'Farmer Details',             sub: 'Capture information about the requested loan and farming activities.',  status: 'complete', goStep: 4 },
+  { key: 'loanDetails',      icon: '🌾', title: 'Loan Details',               sub: 'Capture the requested loan, crop, and pricing details.',                status: 'complete', goStep: 1 },
+  { key: 'bankDetails',      icon: '🏦', title: 'Bank Details',               sub: 'Provide payout accounts and borrowing information.',                    status: 'complete', goStep: 2 },
+  { key: 'supportingDocs',   icon: '🛡', title: 'Supporting Documents',       sub: 'Upload the documents required for review.',                            status: 'complete', goStep: 3 },
+  { key: 'consentOtp',       icon: '🔐', title: 'Consent & OTP Verification', sub: 'Verify farmer identity and capture consent for registry data access.', status: 'verified', goStep: 4 },
+  { key: 'farmerDetails',    icon: '🧑‍🌾', title: 'Farmer Details',            sub: 'Confirm the farmer profile and agronomic details.',                    status: 'complete', goStep: 5 },
 ];
 
 const REQUIRED_DOC_LABELS = {
@@ -1719,10 +1758,10 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }) {
           })}
         </div>
         <div className="flex gap-3 border-t border-gray-100 px-5 py-4">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
           <button
             onClick={() => { onUpdate(selected + 1); onClose(); }}
-            className="flex-1 rounded-xl bg-[#16A34A] py-2.5 text-sm font-semibold text-white hover:bg-[#16A34A] transition-colors">
+            className="flex-1 rounded-xl bg-[#16A34A] py-3 text-sm font-semibold text-white hover:bg-[#16A34A] transition-colors">
             Save Status
           </button>
         </div>
@@ -1876,17 +1915,17 @@ function Step7({ form, submittedAt, appId }) {
         <div className="flex flex-wrap items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
           <button
             onClick={handleDownloadPDF}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
             <Download size={14} /> Download PDF
           </button>
           <button
             onClick={() => setShowSummary(true)}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
             <Eye size={14} /> View Summary
           </button>
           <button
             onClick={() => navigate('/loans/applications')}
-            className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
+            className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
             <LayoutDashboard size={14} /> Return to Dashboard
           </button>
         </div>
@@ -1961,7 +2000,6 @@ function Step7({ form, submittedAt, appId }) {
 export default function NewLoanApplication() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
   const [errors, setErrors] = useState({});
   const [step5Uploads, setStep5Uploads] = useState({});
   const [submittedAt, setSubmittedAt] = useState(null);
@@ -1973,36 +2011,43 @@ export default function NewLoanApplication() {
     nationalId: 'ETH-293829823', dateOfBirth: '1990-01-15', gender: 'Male', maritalStatus: 'Married',
     mobilePhone: '+251 9876543210', educationLevel: 'Graduation', kebele: 'Bishoftu',
     region: 'Oromia', woreda: 'Bishoftu', purposeOfLoan: '',
-    loanType: 'Input Financing', loanPurpose: 'Agro-processing (e.g., milling grain)',
-    requestedAmount: '50000', loanDuration: '12 Months (1 Year)',
-    primaryCrops: ['Teff'], cropVariety: 'Seed + S-Hela/Acherr + Stellar Star',
-    cropAddress: '', landSize: '12', expectedYield: '45',
-    farmerGroup: '', fertilizerUsed: '', animalReared: '', farmEquipment: '',
+    zone: 'East Shewa',
+    loanType: 'input', loanPurpose: 'Agro-processing (e.g., milling grain)',
+    requestedAmount: '', loanDuration: '12 Months (1 Year)', nearestBranch: '',
+    primaryCrops: ['Wheat'], cropVariety: 'Seed + S-Hela/Achen + Stellar Star',
+    cropAddress: '', quantityRequested: '', unitPrice: '', totalSeedCost: '',
+    landSize: '', expectedYield: '', expectedHarvestDate: '',
+    fertilizerUsed: '', otherFarmingActivities: 'Cattle, Poultry, Sheep/Goats, Other Income Sources',
+    farmerGroup: '', animalReared: '', farmEquipment: '', farmSizeHectares: '',
+    harvestAggregatorType: 'primaryCooperative', cooperativeName: '',
+    dapQuantity: '', ureaQuantity: '', fertilizerUnitPrice: '', totalFertilizerCost: '',
+    agrochemicalType: 'A', cropProtectionQuantity: '', cropProtectionUnitPrice: '', totalCropProtectionCost: '',
+    selectedInputSupplier: '', maleFarmerContribution: '', femaleFarmerContribution: '', cropInsurancePremium: '',
     bankAccountName: 'Amit Sharma', bankAccount: '1000245789032', bankName: 'Cooperative Bank of Oromia', bankSwiftCode: 'CBOAETH',
     mobileAccountName: '', mobilePaymentsNumber: '',
     totalBorrowingAmount: '', taxId: '',
     accountHolderName: 'Amit Sharma', ifscCode: 'CBOA0001234',
     faydaId: '722334455', dataFields: [...DATA_FIELDS],
     otpCode: ['', '', '', '', '', ''],
-    // Step 2 – Supporting Documents
+    // Step 3 – Supporting Documents
     marriageStatus: 'married',
     acknowledgeDocDiscrepancy: false,
-    // Step 3 – Consent & OTP
+    // Step 4 – Consent & OTP
     farmerSearch: '',
     consentType: '', consentDuration: '', consentPurposeDetailed: '',
     consentFormFile: null, consentAttachment: null,
-    // Step 4 – Farmer Details (Basic Information)
+    // Step 5 – Farmer Details (Basic Information)
     lastName: 'Sharma', idType: 'Passport', idNumber: '29838928923', language: 'English',
-    // Step 4 – Land and Crop Information
+    // Step 5 – Land and Crop Information
     landSizeAcres: '12', farmId: '29838928923', farmPolygon: '',
     landAcreage: '', farmLandNumber: '29838928923',
-    // Step 4 – Socio-Economic Information
+    // Step 5 – Socio-Economic Information
     sizeOfFamily: '4', numberOfChildren: '3', noOfFemalesFamily: '3', noOfMalesFamily: '3',
     familyMemberOwnsLand: '3', sourceOfIncome: 'Salary',
-    // Step 4 – Land Crop and Livestock Information
+    // Step 5 – Land Crop and Livestock Information
     totalFarmlandLandowner: '3', totalFarmlandCropSharing: '4', totalFarmlandRented: '3',
     certificationId: '29838928923', certificationPhoto: 'Yes',
-    // Step 4 – Agronomic Data
+    // Step 5 – Agronomic Data
     farmlandSizeHectares: 'Capacity for production', landOwnershipStatus: 'Security of access', soilFertility: 'Future yield potential', moistureLevels: 'Irrigation / drought risks',
   });
 
@@ -2010,7 +2055,7 @@ export default function NewLoanApplication() {
 
   function goNext() {
     const errs = {};
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       if (form.dateOfBirth) {
         const dob = new Date(form.dateOfBirth);
         const today = new Date();
@@ -2022,7 +2067,6 @@ export default function NewLoanApplication() {
     }
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
-    setCompletedSteps(prev => new Set([...prev, currentStep]));
     setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2039,9 +2083,12 @@ export default function NewLoanApplication() {
     const id = 'APP-' + now.getFullYear() + '-' + (Math.floor(Math.random() * 9000) + 1000);
     setSubmittedAt(now); setAppId(id);
     const { otpCode, ...serializable } = form;
-    const loanTypeLabel = form.loanType === 'input' ? 'Input Financing'
-      : form.loanType === 'machinery' ? 'Machinery / Equipment'
-      : form.loanType || 'Agricultural Loan';
+    const loanTypeLabel = ({
+      input: 'Input Financing',
+      machinery: 'Machinery / Equipment',
+      conventional: 'Conventional',
+      alhuda: 'Alhuda (Islamic Financing)',
+    })[form.loanType] || form.loanType || 'Agricultural Loan';
     const updatedFmt = now.toLocaleString('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit', hour12: true,
@@ -2064,15 +2111,14 @@ export default function NewLoanApplication() {
         formData: serializable,
       }, ...existing]));
     } catch { /* ignore */ }
-    setCompletedSteps(prev => new Set([...prev, 5]));
-    setCurrentStep(6);
+    setCurrentStep(STEPS.length + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const meta = STEP_META[Math.min(currentStep, STEPS.length) - 1];
-  const isSubmitStep = currentStep === 5;
-  const isLastStep = currentStep === 6;
-  const showFaydaBadge = currentStep >= 2;
+  const isSubmitStep = currentStep === STEPS.length;
+  const isLastStep = currentStep === STEPS.length + 1;
+  const showFaydaBadge = currentStep >= 5 && currentStep <= STEPS.length;
 
   return (
     <div className="flex flex-col gap-4 pb-8">
@@ -2107,20 +2153,21 @@ export default function NewLoanApplication() {
         )}
       </div>
 
-      <StepProgressBar currentStep={currentStep} completedSteps={completedSteps} />
+      <StepProgressBar currentStep={currentStep} />
 
       {currentStep === 1 && <Step1 form={form} setField={setField} errors={errors} />}
-      {currentStep === 2 && <Step5 uploads={step5Uploads} setUploads={setStep5Uploads} form={form} setField={setField} />}
-      {currentStep === 3 && <Step3 form={form} setField={setField} errors={errors} />}
-      {currentStep === 4 && <StepFarmerDetails form={form} setField={setField} errors={errors} />}
-      {currentStep === 5 && <Step6 form={form} uploads={step5Uploads} goToStep={setCurrentStep} />}
-      {currentStep === 6 && <Step7 form={form} submittedAt={submittedAt} appId={appId} />}
+      {currentStep === 2 && <StepBankDetails form={form} setField={setField} errors={errors} />}
+      {currentStep === 3 && <Step5 uploads={step5Uploads} setUploads={setStep5Uploads} form={form} setField={setField} />}
+      {currentStep === 4 && <Step3 form={form} setField={setField} errors={errors} />}
+      {currentStep === 5 && <StepFarmerDetails form={form} setField={setField} errors={errors} />}
+      {currentStep === 6 && <Step6 form={form} uploads={step5Uploads} goToStep={setCurrentStep} />}
+      {currentStep === 7 && <Step7 form={form} submittedAt={submittedAt} appId={appId} />}
 
       {!isLastStep && (
         <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
           {/* Row 1 on mobile / Left on desktop: Save Draft + Auto-saved */}
           <div className="flex items-center gap-3">
-            <button className="rounded-xl border border-gray-600 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <button className="rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               Save Draft
             </button>
             <span className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -2130,20 +2177,20 @@ export default function NewLoanApplication() {
           {/* Row 2 on mobile / Right on desktop: Previous Step + Next / Submit */}
           <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
             {currentStep > 1 ? (
-              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 <ArrowLeft size={14} /> Previous Step
               </button>
             ) : <div />}
             {isSubmitStep ? (
-              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
                 Submit Application <Send size={14} />
               </button>
-            ) : currentStep === 3 ? (
-              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+            ) : currentStep === 4 ? (
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
                 Confirm &amp; Next <ArrowRight size={14} />
               </button>
             ) : (
-              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
                 Next Step <ArrowRight size={14} />
               </button>
             )}

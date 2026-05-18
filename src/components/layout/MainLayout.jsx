@@ -19,7 +19,12 @@ const navigationSections = [
     title: 'WORKFLOW',
     items: [
       { path: '/leads/new', label: 'New Lead Creation', icon: Plus },
-      { path: '/loans/applications', label: 'New Loan Application Creation', icon: ListChecks },
+      {
+        path: '/loans/applications',
+        activePaths: ['/loans/applications', '/loans/new'],
+        label: 'New Loan Application Creation',
+        icon: ListChecks,
+      },
       { path: '/loans/update-status', label: 'Update Loan Application Status', icon: Clock3 },
     ],
   },

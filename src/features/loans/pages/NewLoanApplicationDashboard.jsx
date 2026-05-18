@@ -243,7 +243,7 @@ function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCu
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold border cursor-pointer transition-all ' +
+        className={'inline-flex items-center gap-1.5 px-3.5 py-3 rounded-lg text-sm font-semibold border cursor-pointer transition-all ' +
           (isActive ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50')}
       >
         <Calendar size={14} strokeWidth={2.2} />
@@ -488,14 +488,52 @@ function DetailModal({ app, onClose }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-white rounded-3xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl"
-        style={{ animation: 'modalIn .22s cubic-bezier(.22,.68,0,1.15) both' }}
+        className="w-full max-w-2xl min-h-0 bg-white rounded-3xl flex flex-col overflow-hidden shadow-2xl"
+        style={{
+          animation: 'modalIn .22s cubic-bezier(.22,.68,0,1.15) both',
+          height: 'min(90vh, calc(100dvh - 2rem))',
+        }}
         onClick={e => e.stopPropagation()}
       >
-        <style>{`@keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }`}</style>
+        <style>{`
+          @keyframes modalIn {
+            from { opacity:0; transform:scale(.96) translateY(12px); }
+            to { opacity:1; transform:scale(1) translateY(0); }
+          }
 
-        {/* ── Hero header ── */}
-        <div className={`relative flex-shrink-0 bg-gradient-to-br ${statusGradient[app.statusTone] || statusGradient.neutral} px-6 pt-6 pb-5 overflow-hidden`}>
+          .detail-modal-tabs,
+          .detail-modal-body {
+            scrollbar-color: #cbd5e1 transparent;
+            scrollbar-width: thin;
+          }
+
+          .detail-modal-tabs::-webkit-scrollbar {
+            height: 8px;
+          }
+
+          .detail-modal-body::-webkit-scrollbar {
+            width: 10px;
+          }
+
+          .detail-modal-tabs::-webkit-scrollbar-track,
+          .detail-modal-body::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .detail-modal-tabs::-webkit-scrollbar-thumb,
+          .detail-modal-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+          }
+
+          .detail-modal-tabs::-webkit-scrollbar-thumb:hover,
+          .detail-modal-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+        `}</style>
+
+          {/* ── Hero header ── */}
+          <div className={`relative flex-shrink-0 bg-gradient-to-br ${statusGradient[app.statusTone] || statusGradient.neutral} px-6 pt-6 pb-5 overflow-hidden`}>
           {/* decorative circles */}
           <div className="pointer-events-none absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
           <div className="pointer-events-none absolute -bottom-10 -left-6 w-28 h-28 rounded-full bg-white/8" />
@@ -549,29 +587,35 @@ function DetailModal({ app, onClose }) {
               ))}
             </div>
           )}
-        </div>
-
-        {/* ── Pill tab bar ── */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-gray-100 overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}>
-          <div className="flex gap-1.5 w-max pb-0.5">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11.5px] font-bold whitespace-nowrap border-0 cursor-pointer transition-all ' +
-                  (tab === t.id
-                    ? 'bg-[#4a7c59] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700')}
-              >
-                <span className="text-sm leading-none">{t.emoji}</span>
-                {t.label}
-              </button>
-            ))}
           </div>
-        </div>
 
-        {/* ── Tab body ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+          {/* ── Pill tab bar ── */}
+          <div
+            className="detail-modal-tabs flex-shrink-0 overflow-x-scroll overflow-y-hidden border-b border-gray-100 px-4 py-3"
+            style={{ scrollbarGutter: 'stable' }}
+          >
+            <div className="flex gap-1.5 w-max pb-0.5">
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11.5px] font-bold whitespace-nowrap border-0 cursor-pointer transition-all ' +
+                    (tab === t.id
+                      ? 'bg-[#16A34A] text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700')}
+                >
+                  <span className="text-sm leading-none">{t.emoji}</span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Tab body ── */}
+          <div
+            className="detail-modal-body min-h-0 flex-1 overflow-y-scroll overflow-x-hidden px-5 pt-4 pb-10 flex flex-col gap-4 overscroll-contain"
+            style={{ scrollbarGutter: 'stable', WebkitOverflowScrolling: 'touch', scrollPaddingBottom: '2.5rem' }}
+          >
 
           {/* ── Overview ── */}
           {tab === 'overview' && (
@@ -603,11 +647,11 @@ function DetailModal({ app, onClose }) {
                   {timelineSteps.map(({ label, sub, done, Icon }, i, arr) => (
                     <div key={label} className="flex items-stretch gap-4">
                       <div className="flex flex-col items-center pt-0.5">
-                        <div className={`flex w-8 h-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${done ? 'bg-[#4a7c59] border-[#4a7c59]' : 'bg-white border-gray-200'}`}>
+                        <div className={`flex w-8 h-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${done ? 'bg-[#16A34A] border-[#16A34A]' : 'bg-white border-gray-200'}`}>
                           <Icon size={13} strokeWidth={2.8} className={done ? 'text-white' : 'text-gray-300'} />
                         </div>
                         {i < arr.length - 1 && (
-                          <div className={`w-0.5 flex-1 my-1 ${done ? 'bg-[#4a7c59]/30' : 'bg-gray-100'}`} />
+                          <div className={`w-0.5 flex-1 my-1 ${done ? 'bg-[#16A34A]/30' : 'bg-gray-100'}`} />
                         )}
                       </div>
                       <div className={`pb-4 flex-1 ${i < arr.length - 1 ? '' : 'pb-0'}`}>
@@ -840,19 +884,19 @@ function DetailModal({ app, onClose }) {
               </ModalSection>
             </>
           )}
-        </div>
+          </div>
 
-        {/* ── Footer ── */}
-        <div className="flex-shrink-0 px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
-          <span className="text-[11px] text-gray-400">Application ID: <strong className="text-gray-600">{app.id}</strong></span>
-          <button
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4a7c59] text-white text-sm font-bold hover:bg-[#3a6347] transition-colors border-0 cursor-pointer shadow-sm"
-            onClick={onClose}
-          >
-            <X size={14} strokeWidth={2.5} />
-            Close
-          </button>
-        </div>
+          {/* ── Footer ── */}
+          <div className="flex-shrink-0 px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-gray-400">Application ID: <strong className="text-gray-600">{app.id}</strong></span>
+            <button
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-bold hover:bg-[#10883c] transition-colors border-0 cursor-pointer shadow-sm"
+              onClick={onClose}
+            >
+              <X size={14} strokeWidth={2.5} />
+              Close
+            </button>
+          </div>
       </div>
     </div>
   );
@@ -1004,7 +1048,7 @@ function NewLoanApplicationDashboard() {
             onCustomApply={(f, t) => { setCustomFrom(f); setCustomTo(t); setDateFilter('custom'); setPage(1); }}
           />
           <button
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#16A34A] text-white hover:bg-[#10883c] transition-colors cursor-pointer border-0"
+            className="inline-flex items-center gap-1.5 px-4 py-3 rounded-lg text-sm font-semibold bg-[#16A34A] text-white hover:bg-[#10883c] transition-colors cursor-pointer border-0"
             onClick={() => navigate('/loans/new')}
           >
             <Plus size={15} strokeWidth={2.5} />

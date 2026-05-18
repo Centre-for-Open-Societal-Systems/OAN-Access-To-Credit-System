@@ -1,8 +1,10 @@
 :global {
   #dashboard-shell {
+    --dashboard-sidebar-width: 20rem;
+    --dashboard-sidebar-width-collapsed: 4.5rem;
     display: grid;
     min-height: 100vh;
-    grid-template-columns: 20rem minmax(0, 1fr);
+    grid-template-columns: var(--dashboard-sidebar-width) minmax(0, 1fr);
     background:
       radial-gradient(circle at top right, rgba(23, 53, 95, 0.05), transparent 30%),
       linear-gradient(180deg, #f8fbff 0%, var(--page-bg) 100%);
@@ -10,7 +12,7 @@
   }
 
   #dashboard-shell.dashboard-shell--collapsed {
-    grid-template-columns: 4.5rem minmax(0, 1fr);
+    grid-template-columns: var(--dashboard-sidebar-width-collapsed) minmax(0, 1fr);
   }
 
   #dashboard-main {
@@ -38,17 +40,22 @@
   }
 
   @media (max-width: 1220px) {
-    #dashboard-shell { grid-template-columns: 18.5rem minmax(0, 1fr); }
-    #dashboard-shell.dashboard-shell--collapsed { grid-template-columns: 4.5rem minmax(0, 1fr); }
+    #dashboard-shell { --dashboard-sidebar-width: 18.5rem; }
   }
 
   @media (max-width: 900px) {
     /* Sidebar is fixed/off-canvas — only one column needed for main content */
     #dashboard-shell,
-    #dashboard-shell.dashboard-shell--collapsed { grid-template-columns: minmax(0, 1fr); }
+    #dashboard-shell.dashboard-shell--collapsed {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    #dashboard-content {
+      padding: 1rem;
+    }
   }
 
   @media (max-width: 640px) {
-    #dashboard-content { padding-left: 0.9rem; padding-right: 0.9rem; }
+    #dashboard-content { padding: 0.9rem; }
   }
 }
