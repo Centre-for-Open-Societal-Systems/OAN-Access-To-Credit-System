@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight,
   Download, Plus, X, Phone, TrendingUp, TrendingDown, Minus,
   Users, PhoneCall, CheckCircle2, UserX, ClipboardCheck, CircleAlert,
-  Globe, Link2, Mail, Code2,
+  Mail, Code2, Filter, Share2, MousePointer2, Terminal, Megaphone, Check,
 } from 'lucide-react';
 
 import { kpiStats, leadRows as allLeads } from '../data/leads.mock.js';
@@ -18,20 +18,21 @@ const STATUS_CFG = {
 };
 
 const STATUS_OPTS = ['All', 'Initiated', 'Qualified', 'Processed', 'Disqualified', 'Rejected'];
-const SOURCE_OPTS = ['All', 'Organic Search', 'Paid Social', 'Referral', 'Direct Traffic', 'Email Campaign', 'API Integration'];
-const CALLST_OPTS = ['All', 'Connected', 'Missed', 'Callback'];
-const DATE_OPTS   = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'];
+const SOURCE_OPTS = ['All', 'Organic Search', 'Social Media', 'Referral', 'Direct Traffic', 'Email Campaign', 'API Integration'];
+const CALLST_OPTS      = ['All', 'Connected', 'Missed', 'Callback'];
+const DATE_OPTS        = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'];
+const LOAN_DETAIL_OPTS = ['All', 'Application Submitted', 'Under Review', 'Approved', 'Rejected', 'Disbursed'];
 const PAGE_SIZE   = 10;
 
 function getSourceIcon(source) {
   switch (source) {
-    case 'Organic Search':  return <Globe  size={18} className="text-slate-500" />;
-    case 'Paid Social':     return <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-sm bg-[#0A66C2] text-[9px] font-bold leading-none text-white">in</span>;
-    case 'Referral':        return <Link2  size={18} className="text-slate-500" />;
-    case 'Direct Traffic':  return <Globe  size={18} className="text-slate-400" />;
-    case 'Email Campaign':  return <Mail   size={18} className="text-slate-500" />;
-    case 'API Integration': return <Code2  size={18} className="text-slate-500" />;
-    default:                return <Globe  size={18} className="text-slate-400" />;
+    case 'Organic Search':  return <Search         size={16} className="text-slate-500" />;
+    case 'Social Media':     return <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-sm bg-[#0A66C2] text-[9px] font-bold leading-none text-white">in</span>;
+    case 'Referral':        return <Share2          size={16} className="text-slate-500" />;
+    case 'Direct Traffic':  return <MousePointer2   size={16} className="text-slate-400" />;
+    case 'Email Campaign':  return <Mail            size={16} className="text-slate-500" />;
+    case 'API Integration': return <Terminal        size={16} className="text-slate-500" />;
+    default:                return <Megaphone       size={16} className="text-slate-400" />;
   }
 }
 
@@ -47,16 +48,66 @@ function getKpiIconCfg(id) {
   }
 }
 
-function StatusBadge({ status, delay }) {
+function StatusBadge({ status, delay, onClick, isActive }) {
   const cfg = STATUS_CFG[status] ?? { dot: 'bg-slate-400', badge: 'bg-slate-50 text-slate-600 border-slate-200' };
   return (
     <span
-      className={`animate-badge-pop inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold transition-transform duration-150 hover:scale-105 ${cfg.badge}`}
+      className={`animate-badge-pop inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-150 ${cfg.badge} ${onClick ? 'cursor-pointer hover:scale-105' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-current' : ''}`}
       style={{ animationDelay: delay }}
+      onClick={onClick}
     >
       <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
       {status}
     </span>
+  );
+}
+
+function StatusTagPopup({ pos, selected, onToggle, onApply, onClose }) {
+  const ref = useRef(null);
+  const statuses = STATUS_OPTS.filter(s => s !== 'All');
+
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) onClose(); }
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
+      className="w-52 rounded-xl border border-gray-200 bg-white shadow-xl animate-scale-in"
+    >
+      <div className="border-b border-gray-100 px-3 py-2.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Filter by Status</p>
+      </div>
+      <ul className="py-1">
+        {statuses.map(s => {
+          const sel = selected.includes(s);
+          const cfg = STATUS_CFG[s];
+          return (
+            <li
+              key={s}
+              onMouseDown={e => { e.preventDefault(); onToggle(s); }}
+              className={`flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-gray-50 ${sel ? 'font-medium' : 'text-gray-700'}`}
+            >
+              <input
+                type="checkbox"
+                readOnly
+                checked={sel}
+                className="h-4 w-4 rounded border-gray-300 accent-green-600 pointer-events-none"
+              />
+              <span className={`h-2 w-2 shrink-0 rounded-full ${cfg?.dot ?? 'bg-slate-400'}`} />
+              <span className={sel ? 'text-[#16A34A]' : ''}>{s}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2">
+        <button type="button" onMouseDown={e => { e.preventDefault(); onApply([]); onClose(); }} className="text-xs font-medium text-gray-400 transition hover:text-red-500">Clear</button>
+        <button type="button" onMouseDown={e => { e.preventDefault(); onApply(selected); onClose(); }} className="rounded-lg bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#10883c]">Apply</button>
+      </div>
+    </div>
   );
 }
 
@@ -65,7 +116,7 @@ function KpiCard({ stat, index }) {
   const color     = stat.up === true ? 'text-green-600' : stat.up === false ? 'text-red-500' : 'text-orange-400';
   const TrendIcon = stat.up === true ? TrendingUp : stat.up === false ? TrendingDown : Minus;
   return (
-    <div className="relative bg-white border border-[#f4f4f4] rounded-2xl shadow-sm p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-start justify-between"
+    <div className="relative bg-white border border-[#e9e9e9] rounded-2xl shadow-sm p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-start justify-between"
   
       
       
@@ -82,6 +133,136 @@ function KpiCard({ stat, index }) {
       </div>
       <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${cfg.bg}`}>
         {cfg.icon}
+      </div>
+    </div>
+  );
+}
+
+const COL_FILTER_OPTS = {
+  'LEAD SOURCE':     SOURCE_OPTS.filter(o => o !== 'All'),
+  'STATUS':          STATUS_OPTS.filter(o => o !== 'All'),
+  'CALL START TIME': ['Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days'],
+};
+
+function parseCallDate(callStartTime) {
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (callStartTime.startsWith('Today'))     return new Date(today);
+  if (callStartTime.startsWith('Yesterday')) return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  const match = callStartTime.match(/^([A-Za-z]+ \d+)/);
+  if (match) return new Date(`${match[1]}, ${today.getFullYear()}`);
+  return null;
+}
+
+function DateSelect({ value, options, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); }
+    if (isOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [isOpen]);
+  return (
+    <div ref={ref} className="relative w-44">
+      <button
+        type="button"
+        onClick={() => setIsOpen(o => !o)}
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}
+      >
+        <span className="text-gray-900">{value}</span>
+        <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
+      </button>
+      <ul
+        className={`absolute right-0 z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
+        style={{ transformOrigin: 'top' }}
+      >
+        {options.map(opt => {
+          const sel = value === opt;
+          return (
+            <li
+              key={opt}
+              onMouseDown={() => { onChange(opt); setIsOpen(false); }}
+              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'font-medium text-[#16A34A]' : 'text-gray-800 hover:bg-gray-50'}`}
+            >
+              {opt}
+              {sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose }) {
+  const popupRef = useRef(null);
+  const [query,    setQuery]    = useState('');
+  const [selected, setSelected] = useState(initialSelected);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (popupRef.current && !popupRef.current.contains(e.target) &&
+          anchorRef.current && !anchorRef.current.contains(e.target)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [anchorRef, onClose]);
+
+  const opts = COL_FILTER_OPTS[col];
+  const toggle = v => setSelected(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
+
+  return (
+    <div
+      ref={popupRef}
+      className="absolute left-0 top-full z-50 mt-1 w-56 rounded-xl border border-gray-200 bg-white shadow-xl animate-scale-in"
+      style={{ transformOrigin: 'top left' }}
+    >
+      <div className="border-b border-gray-100 px-3 py-2.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{col}</p>
+      </div>
+
+      {opts ? (
+        <ul className="max-h-52 overflow-y-auto py-1">
+          {opts.map(o => {
+            const sel = selected.includes(o);
+            return (
+              <li
+                key={o}
+                onMouseDown={e => { e.preventDefault(); toggle(o); }}
+                className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  readOnly
+                  checked={sel}
+                  className="h-4 w-4 rounded border-gray-300 accent-green-600 pointer-events-none"
+                />
+                <span className={sel ? 'font-medium text-[#16A34A]' : 'text-gray-700'}>{o}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="px-3 py-2.5">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+            <Search size={14} className="shrink-0 text-text-muted" />
+            <input
+              type="text"
+              autoFocus
+              placeholder={`Search ${col.toLowerCase()}…`}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2">
+        <button type="button" onClick={() => { setSelected([]); setQuery(''); onApply([]); onClose(); }} className="text-xs font-medium text-gray-400 transition hover:text-red-500">Clear</button>
+        <button type="button" onClick={() => { onApply(selected); onClose(); }} className="rounded-lg bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#10883c]">Apply</button>
       </div>
     </div>
   );
@@ -160,9 +341,17 @@ function LeadCreation() {
   const [sourceFilter,   setSourceFilter]   = useState('All');
   const [callStFilter,   setCallStFilter]   = useState('All');
   const [dateFilter,     setDateFilter]     = useState('Last 30 Days');
+  const [loanDetailFilter, setLoanDetailFilter] = useState('All');
   const [currentPage,    setCurrentPage]    = useState(1);
   const [showAdvFilters, setShowAdvFilters] = useState(false);
   const [selectedRows,   setSelectedRows]   = useState([]);
+  const [openColFilter,  setOpenColFilter]  = useState(null);
+  const colFilterAnchorRefs = useRef({});
+  const [colSourceFilter,   setColSourceFilter]   = useState([]);
+  const [colStatusFilter,   setColStatusFilter]   = useState([]);
+  const [colCallTimeFilter, setColCallTimeFilter] = useState([]);
+  const [statusPopupPos,    setStatusPopupPos]    = useState(null);
+  const [tempStatusSel,     setTempStatusSel]     = useState([]);
   const [activeTags,     setActiveTags]     = useState([
     { key: 'date',   label: 'Date: Last 30 Days'   },
     { key: 'status', label: 'Status: Not Rejected' },
@@ -174,13 +363,34 @@ function LeadCreation() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const daysMap = { 'Last 7 Days': 7, 'Last 30 Days': 30, 'Last 90 Days': 90 };
+    const filterDays = daysMap[dateFilter] ?? null;
+    const now   = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const cutoff = filterDays ? new Date(today.getFullYear(), today.getMonth(), today.getDate() - (filterDays - 1)) : null;
+
     return baseLeads.filter(l => {
       if (q && !`${l.id} ${l.phone} ${l.source} ${l.status} ${l.location}`.toLowerCase().includes(q)) return false;
       if (statusFilter !== 'All' && l.status !== statusFilter) return false;
       if (sourceFilter !== 'All' && l.source !== sourceFilter) return false;
+      if (colSourceFilter.length > 0 && !colSourceFilter.includes(l.source)) return false;
+      if (colStatusFilter.length > 0 && !colStatusFilter.includes(l.status)) return false;
+      if (cutoff) {
+        const leadDate = parseCallDate(l.callStartTime);
+        if (!leadDate || leadDate < cutoff) return false;
+      }
+      if (colCallTimeFilter.length > 0) {
+        const t = l.callStartTime ?? '';
+        const matches = colCallTimeFilter.some(period => {
+          if (period === 'Today')     return t.startsWith('Today');
+          if (period === 'Yesterday') return t.startsWith('Yesterday');
+          return true;
+        });
+        if (!matches) return false;
+      }
       return true;
     });
-  }, [baseLeads, search, statusFilter, sourceFilter]);
+  }, [baseLeads, search, statusFilter, sourceFilter, dateFilter, colSourceFilter, colStatusFilter, colCallTimeFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage   = Math.min(currentPage, totalPages);
@@ -203,10 +413,9 @@ function LeadCreation() {
 
       {/* welcome header */}
 
-{/* relative bg-white border border-[#f4f4f4] rounded-2xl shadow-sm p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-start justify-between */}
 
 
-      <div className="relative bg-white  hover:-translate-y-0.5 hover:shadow-lg transition-all flex items-center justify-between rounded-2xl border border-border-subtle bg-white px-6 py-5 shadow-sm">
+      <div className="relative bg-white hover:-translate-y-0.5 hover:shadow-lg transition-all flex items-center justify-between rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Welcome back, Agent</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
@@ -228,11 +437,12 @@ function LeadCreation() {
         {kpiStats.map((s, i) => <KpiCard key={s.id} stat={s} index={i} />)}
       </div>
 
-      {/* search + filters */}
-      <div className="animate-fade-in-up space-y-3 rounded-2xl border border-border-subtle bg-white px-5 py-4 shadow-sm" style={{ animationDelay: '0.42s' }}>
+      {/* search + table merged card */}
+      <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm">
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-slate-50 px-4 py-2.5">
+        {/* search row */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-5 py-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-[#f4f4f4] px-4 py-2.5">
             <Search size={18} className="shrink-0 text-text-muted" />
             <input
               type="text"
@@ -242,66 +452,41 @@ function LeadCreation() {
               className="min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
             />
           </div>
-          <button type="button" className="rounded-xl bg-gray-900 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-gray-800 active:scale-95">Search</button>
-          <button type="button" className="inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">▼ All Active (12k)</button>
-          <button type="button" className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle px-4 py-2 text-sm font-medium text-text-muted transition hover:bg-slate-50">Needs Action (342)</button>
+          <button type="button" className="rounded-xl bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95">Search</button>
+          <button type="button" className="inline-flex items-center gap-1.5 rounded-full border border-[#16A34A] bg-[#EDFAF2] px-4 py-2 text-sm font-semibold text-[#16A34A] transition hover:bg-[#d6f5e5]">
+            <ChevronDown size={14} strokeWidth={2.5} /> All Active (12k)
+          </button>
           <button type="button" onClick={() => setShowAdvFilters(true)} className="inline-flex items-center gap-2 rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-medium text-text-muted transition hover:bg-slate-50">
             <SlidersHorizontal size={16} />
             Advanced Filters
           </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="mr-1 text-sm font-medium text-text-muted">Filter by:</span>
-          {[
-            { label: 'Status',      value: statusFilter, opts: STATUS_OPTS, set: v => { setStatusFilter(v); setCurrentPage(1); } },
-            { label: 'Source',      value: sourceFilter, opts: SOURCE_OPTS, set: v => { setSourceFilter(v); setCurrentPage(1); } },
-            { label: 'Call Status', value: callStFilter, opts: CALLST_OPTS, set: v => { setCallStFilter(v); setCurrentPage(1); } },
-            { label: 'Date',        value: dateFilter,   opts: DATE_OPTS,   set: v => { setDateFilter(v);   setCurrentPage(1); } },
-          ].map(({ label, value, opts, set }, i) => (
-            <span key={label} className="inline-flex items-center">
-              {i > 0 && <span className="mx-2 select-none text-slate-300">|</span>}
-              <span className="text-sm text-text-muted">{label}:&nbsp;</span>
-              <div className="relative inline-flex items-center">
-                <select value={value} onChange={e => set(e.target.value)} className="appearance-none border-0 bg-transparent py-0.5 pr-5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer">
-                  {opts.map(o => <option key={o}>{o}</option>)}
-                </select>
-                <ChevronDown size={14} className="pointer-events-none absolute right-0 text-text-muted" />
-              </div>
-            </span>
-          ))}
-          <button type="button" onClick={() => { setStatusFilter('All'); setSourceFilter('All'); setCallStFilter('All'); setDateFilter('Last 30 Days'); setActiveTags([]); setCurrentPage(1); }} className="ml-auto text-sm font-semibold text-teal-600 transition hover:text-teal-700">
+          <button type="button" onClick={() => { setStatusFilter('All'); setSourceFilter('All'); setCallStFilter('All'); setDateFilter('Last 30 Days'); setLoanDetailFilter('All'); setColSourceFilter([]); setColStatusFilter([]); setColCallTimeFilter([]); setActiveTags([]); setCurrentPage(1); }} className="text-sm font-semibold text-[#16A34A] transition hover:text-[#10883c]">
             Clear Filters
           </button>
         </div>
 
-        {activeTags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-text-muted">Active:</span>
-            {activeTags.map(t => (
-              <span key={t.key} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm text-text-primary">
+        {/* tabs row + date filter */}
+        <div className="flex items-center justify-between border-b border-border-subtle px-5">
+          <div className="flex items-center gap-6">
+            {[
+              { key: 'all',        label: 'All Leads',  count: '12.4k'               },
+              { key: 'my',         label: 'My Leads',   count: myLeads.length        },
+              { key: 'unassigned', label: 'Unassigned', count: unassignedLeads.length },
+            ].map(t => (
+              <button key={t.key} type="button" onClick={() => { setActiveTab(t.key); setCurrentPage(1); }} className={`flex items-center gap-2 border-b-2 py-4 text-base font-medium transition ${activeTab === t.key ? 'border-green-600 text-green-600' : 'border-transparent text-text-muted hover:text-text-primary'}`}>
                 {t.label}
-                <button type="button" onClick={() => removeTag(t.key)} className="ml-0.5 transition hover:text-red-500"><X size={12} /></button>
-              </span>
+                <span className={`rounded-full px-2 py-0.5 text-sm font-semibold ${activeTab === t.key ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-text-muted'}`}>{t.count}</span>
+              </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* table card */}
-      <div className="animate-scale-in overflow-hidden rounded-2xl border border-border-subtle bg-white shadow-sm" style={{ animationDelay: '0.52s' }}>
-
-        <div className="flex items-center gap-6 border-b border-border-subtle px-5">
-          {[
-            { key: 'all',        label: 'All Leads',  count: '12.4k'               },
-            { key: 'my',         label: 'My Leads',   count: myLeads.length        },
-            { key: 'unassigned', label: 'Unassigned', count: unassignedLeads.length },
-          ].map(t => (
-            <button key={t.key} type="button" onClick={() => { setActiveTab(t.key); setCurrentPage(1); }} className={`flex items-center gap-2 border-b-2 py-4 text-base font-medium transition ${activeTab === t.key ? 'border-green-600 text-green-600' : 'border-transparent text-text-muted hover:text-text-primary'}`}>
-              {t.label}
-              <span className={`rounded-full px-2 py-0.5 text-sm font-semibold ${activeTab === t.key ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-text-muted'}`}>{t.count}</span>
-            </button>
-          ))}
+          <div className="flex flex-row items-center gap-1 py-3 ">
+            <span className="text-base font-medium text-text-muted">Date &nbsp;</span>
+            <DateSelect
+              value={dateFilter}
+              options={DATE_OPTS}
+              onChange={v => { setDateFilter(v); setCurrentPage(1); }}
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -311,13 +496,48 @@ function LeadCreation() {
                 <th className="w-12 px-5 py-4">
                   <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-4 w-4 rounded border-border-subtle accent-green-600" />
                 </th>
-                {['LEAD ID', 'PHONE NUMBER', 'LEAD SOURCE', 'STATUS', 'CALL START TIME', 'ACTIONS'].map(col => (
-                  <th key={col} className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">
-                    {col !== 'ACTIONS'
-                      ? <span className="inline-flex cursor-pointer items-center gap-1 hover:text-text-primary">{col} <span className="text-[11px]">⇅</span></span>
-                      : col}
+                {['LEAD ID', 'PHONE NUMBER', 'LEAD SOURCE', 'STATUS', 'CALL START TIME', 'ACTIONS'].map(col => {
+                  const hasFilter = !['LEAD ID', 'PHONE NUMBER', 'ACTIONS'].includes(col);
+                  const colFilterCfg = {
+                    'LEAD SOURCE':     { value: colSourceFilter,   set: setColSourceFilter   },
+                    'STATUS':          { value: colStatusFilter,   set: setColStatusFilter   },
+                    'CALL START TIME': { value: colCallTimeFilter, set: setColCallTimeFilter },
+                  };
+                  const isActive = hasFilter && (colFilterCfg[col]?.value.length > 0);
+                  return (
+                  <th key={col} className={`whitespace-nowrap px-5 py-4 text-xs font-semibold uppercase tracking-wide text-text-muted ${col === 'ACTIONS' ? 'text-left' : 'text-left'}`}>
+                    {col !== 'ACTIONS' ? (
+                      <div className="relative inline-flex items-center gap-1.5">
+                        <span className="inline-flex cursor-pointer items-center gap-1 hover:text-text-primary">
+                          {col} <span className="text-[11px]"></span>
+                        </span>
+                        {hasFilter && (
+                          <>
+                            <button
+                              ref={el => { colFilterAnchorRefs.current[col] = { current: el }; }}
+                              type="button"
+                              onClick={() => setOpenColFilter(prev => prev === col ? null : col)}
+                              className={`rounded p-0.5 transition hover:bg-slate-200 ${openColFilter === col || isActive ? 'bg-slate-200 text-green-600' : 'text-text-muted'}`}
+                            >
+                              <Filter size={12} strokeWidth={2.5} />
+                            </button>
+                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-green-500" />}
+                            {openColFilter === col && (
+                              <ColFilterPopup
+                                col={col}
+                                anchorRef={{ current: colFilterAnchorRefs.current[col]?.current }}
+                                initialSelected={colFilterCfg[col]?.value ?? []}
+                                onApply={colFilterCfg[col]?.set ?? (() => {})}
+                                onClose={() => setOpenColFilter(null)}
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ) : col}
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -346,19 +566,28 @@ function LeadCreation() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <StatusBadge status={lead.status} delay={delay} />
+                      <StatusBadge
+                        status={lead.status}
+                        delay={delay}
+                        isActive={colStatusFilter.includes(lead.status)}
+                        onClick={e => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTempStatusSel([...colStatusFilter]);
+                          setStatusPopupPos({ top: rect.bottom + 6, left: rect.left });
+                        }}
+                      />
                     </td>
                     <td className="px-5 py-4">
                       <div className="text-sm text-text-primary">{lead.callStartTime}</div>
                       <div className="mt-0.5 text-sm text-text-muted">Duration: {lead.callDuration}</div>
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-4">
                       {lead.applicationSubmitted ? (
                         <span className="inline-flex items-center rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-sm">
-                          Application Submitted
+                          Submitted
                         </span>
                       ) : (
-                        <button type="button" onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)} className="rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-sm transition-all duration-150 hover:scale-105 hover:shadow">
+                        <button type="button" onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)} className="inline-flex items-center rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-sm transition-all duration-150 hover:scale-105 hover:shadow">
                           View
                         </button>
                       )}
@@ -392,6 +621,15 @@ function LeadCreation() {
         </div>
       </div>
 
+      {statusPopupPos && (
+        <StatusTagPopup
+          pos={statusPopupPos}
+          selected={tempStatusSel}
+          onToggle={s => setTempStatusSel(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}
+          onApply={sel => { setColStatusFilter(sel); setCurrentPage(1); }}
+          onClose={() => setStatusPopupPos(null)}
+        />
+      )}
       {showAdvFilters && <AdvancedFiltersPanel onClose={() => setShowAdvFilters(false)} />}
     </div>
   );
