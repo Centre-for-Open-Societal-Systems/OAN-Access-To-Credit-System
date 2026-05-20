@@ -18,11 +18,11 @@ const navigationSections = [
   {
     title: 'WORKFLOW',
     items: [
-      { path: '/leads/new', label: 'New Lead Creation', icon: Plus },
+      { path: '/leads/lead', label: 'Lead Creation', icon: Plus },
       {
         path: '/loans/applications',
-        activePaths: ['/loans/applications', '/loans/new'],
-        label: 'New Loan Application Creation',
+        activePaths: ['/loans/applications', '/loans/lead'],
+        label: 'Loan Application Creation',
         icon: ListChecks,
       },
       { path: '/loans/update-status', label: 'Update Loan Application Status', icon: Clock3 },
@@ -32,10 +32,10 @@ const navigationSections = [
 
 const PAGE_TITLES = {
   '/leads': 'Leads Dashboard',
-  '/leads/new': 'New Lead Creation',
+  '/leads/lead': 'Lead Creation',
   '/loanApplicationDashboard': 'Loan Application Dashboard',
-  '/loans/new': 'New Loan Application Creation',
-  '/loans/applications': 'New Loan Application Creation',
+  '/loans/lead': 'Loan Application Creation',
+  '/loans/applications': 'Loan Application Creation',
   '/loans/update-status': 'Update Loan Application Status',
 };
 
