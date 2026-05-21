@@ -28,6 +28,41 @@ module.exports = {
       backgroundImage: {
         'hero-orb': 'radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 68%)',
       },
+      keyframes: {
+        'fade-in-down': {
+          '0%':   { opacity: '0', transform: 'translateY(-20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-up': {
+          '0%':   { opacity: '0', transform: 'translateY(24px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-left': {
+          '0%':   { opacity: '0', transform: 'translateX(-14px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'scale-in': {
+          '0%':   { opacity: '0', transform: 'scale(0.94)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'badge-pop': {
+          '0%':   { opacity: '0', transform: 'scale(0.8)' },
+          '70%':  { opacity: '1', transform: 'scale(1.08)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'card-rise': {
+          '0%':   { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in-down': 'fade-in-down 0.5s cubic-bezier(0.22,1,0.36,1) both',
+        'fade-in-up':   'fade-in-up 0.55s cubic-bezier(0.22,1,0.36,1) both',
+        'fade-in-left': 'fade-in-left 0.42s cubic-bezier(0.22,1,0.36,1) both',
+        'scale-in':     'scale-in 0.5s cubic-bezier(0.22,1,0.36,1) both',
+        'badge-pop':    'badge-pop 0.35s cubic-bezier(0.22,1,0.36,1) both',
+        'card-rise':    'card-rise 0.35s cubic-bezier(0.22,0.68,0,1.2) both',
+      },
     },
   },
   plugins: [],
