@@ -673,7 +673,7 @@ function LeadCreation() {
       </div>
 
       {/* search + table merged card */}
-      <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
 
         {/* search row */}
         <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-5 py-4">
