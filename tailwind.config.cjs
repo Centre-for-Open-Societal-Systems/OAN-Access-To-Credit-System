@@ -54,6 +54,10 @@ module.exports = {
           '0%':   { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%':      { transform: 'translateY(-10px)' },
+        },
       },
       animation: {
         'fade-in-down': 'fade-in-down 0.5s cubic-bezier(0.22,1,0.36,1) both',
@@ -62,6 +66,7 @@ module.exports = {
         'scale-in':     'scale-in 0.5s cubic-bezier(0.22,1,0.36,1) both',
         'badge-pop':    'badge-pop 0.35s cubic-bezier(0.22,1,0.36,1) both',
         'card-rise':    'card-rise 0.35s cubic-bezier(0.22,0.68,0,1.2) both',
+        'float':        'float 3.2s ease-in-out infinite',
       },
     },
   },

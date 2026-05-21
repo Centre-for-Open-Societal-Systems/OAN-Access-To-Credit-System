@@ -5,6 +5,7 @@ import {
   Download, Plus, X, Phone, TrendingUp, TrendingDown, Minus,
   Users, PhoneCall, CheckCircle2, UserX, ClipboardCheck, CircleAlert,
   Mail, Code2, Filter, Share2, MousePointer2, Terminal, Megaphone, Check,
+  SearchX, Calendar,
 } from 'lucide-react';
 
 import { kpiStats, leadRows as allLeads } from '../data/leads.mock.js';
@@ -198,6 +199,14 @@ function ColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose
   const popupRef = useRef(null);
   const [query,    setQuery]    = useState('');
   const [selected, setSelected] = useState(initialSelected);
+  const [pos,      setPos]      = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (anchorRef?.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -216,8 +225,8 @@ function ColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose
   return (
     <div
       ref={popupRef}
-      className="absolute left-0 top-full z-50 mt-1 w-56 rounded-xl border border-gray-200 bg-white shadow-xl animate-scale-in"
-      style={{ transformOrigin: 'top left' }}
+      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
+      className="w-56 rounded-xl border border-gray-200 bg-white shadow-xl animate-scale-in"
     >
       <div className="border-b border-gray-100 px-3 py-2.5">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{col}</p>
@@ -268,63 +277,280 @@ function ColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose
   );
 }
 
+function TableEmptyState({ hasFilters, onClearFilters }) {
+  return (
+    <tr>
+      <td colSpan={7}>
+        <div className="flex flex-col items-center gap-5 py-20 animate-fade-in-up">
+          <div className="relative flex h-24 w-24 items-center justify-center">
+            <span
+              className="absolute inset-0 rounded-full bg-slate-100 opacity-60 animate-ping"
+              style={{ animationDuration: '2.8s' }}
+            />
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-50 shadow-inner animate-float">
+              {hasFilters
+                ? <SearchX size={40} className="text-slate-400" strokeWidth={1.5} />
+                : <Users   size={40} className="text-slate-400" strokeWidth={1.5} />
+              }
+            </div>
+          </div>
+          <div className="space-y-2 text-center">
+            <h3 className="text-lg font-semibold text-text-primary">
+              {hasFilters ? 'No leads match your filters' : 'No leads yet'}
+            </h3>
+            <p className="mx-auto max-w-xs text-sm text-text-muted leading-relaxed">
+              {hasFilters
+                ? 'Try adjusting or clearing your active filters to see more results.'
+                : 'Create your first lead to get started with the pipeline.'
+              }
+            </p>
+          </div>
+          {hasFilters ? (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-2.5 text-sm font-medium text-text-primary shadow-sm transition hover:bg-slate-50 active:scale-95"
+            >
+              <X size={14} />
+              Clear Filters
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse" />
+              <span className="text-xs font-medium text-text-muted">Waiting for new leads</span>
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function AdvancedFiltersPanel({ onClose }) {
+  const CALL_STATUS_OPTS = ['All', 'Completed', 'Missed', 'Voicemail'];
+  const QUICK_DATE_OPTS  = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
+
   const [selStatuses, setSelStatuses] = useState([]);
+  const [selSources,  setSelSources]  = useState([]);
+  const [sourceOpen,  setSourceOpen]  = useState(false);
   const [callSt,      setCallSt]      = useState('All');
+  const [quickDate,   setQuickDate]   = useState('Last 30 Days');
   const [dateFrom,    setDateFrom]    = useState('');
   const [dateTo,      setDateTo]      = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const sourceDropRef = useRef(null);
 
-  const toggle      = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
-  const activeCount = selStatuses.length + (callSt !== 'All' ? 1 : 0) + (dateFrom ? 1 : 0);
+  useEffect(() => {
+    function h(e) {
+      if (sourceDropRef.current && !sourceDropRef.current.contains(e.target)) setSourceOpen(false);
+    }
+    if (sourceOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [sourceOpen]);
+
+  const toggleStatus = s => setSelStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+  const toggleSource = s => setSelSources(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+
+  const activeCount =
+    (selStatuses.length > 0 ? 1 : 0) +
+    (selSources.length  > 0 ? 1 : 0) +
+    (callSt !== 'All'       ? 1 : 0) +
+    (quickDate || dateFrom  ? 1 : 0) +
+    (phoneNumber.trim()     ? 1 : 0);
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col border-l border-border-subtle bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
-          <h3 className="text-base font-semibold text-text-primary">Advanced Filters</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 hover:bg-slate-100">
-            <X size={18} className="text-text-muted" />
+      <div className="fixed inset-0 z-40 bg-black/25" onClick={onClose} />
+      <aside className="fixed right-0 top-0 z-50 flex h-full w-[540px] flex-col bg-white shadow-2xl animate-fade-in-left">
+
+        {/* header */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <SlidersHorizontal size={20} className="text-text-primary" strokeWidth={2} />
+            <h3 className="text-lg font-semibold text-text-primary">Advanced Filters</h3>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-text-muted transition hover:bg-slate-100">
+            <X size={18} />
           </button>
         </div>
-        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Status</p>
-            <div className="space-y-2">
-              {STATUS_OPTS.filter(s => s !== 'All').map(s => (
-                <label key={s} className="flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={selStatuses.includes(s)} onChange={() => toggle(selStatuses, setSelStatuses, s)} className="h-4 w-4 rounded border-border-subtle accent-green-600" />
-                  <span className="text-sm text-text-primary">{s}</span>
-                </label>
-              ))}
+
+        {/* scrollable body */}
+        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+
+          {/* Status */}
+          <section>
+            <p className="mb-3 text-base font-semibold text-text-primary">Status</p>
+            <div className="grid grid-cols-2 gap-2">
+              {STATUS_OPTS.filter(s => s !== 'All').map(s => {
+                const sel = selStatuses.includes(s);
+                const dot = STATUS_CFG[s]?.dot ?? 'bg-slate-400';
+                return (
+                  <div
+                    key={s}
+                    onClick={() => toggleStatus(s)}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${
+                      sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${
+                        sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
+                      }`}>
+                        {sel && <Check size={12} strokeWidth={3} className="text-white" />}
+                      </div>
+                      <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-text-primary'}`}>{s}</span>
+                    </div>
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+                  </div>
+                );
+              })}
             </div>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Call Status</p>
+          </section>
+
+          {/* Lead Source */}
+          <section>
+            <p className="mb-3 text-base font-semibold text-text-primary">Lead Source</p>
+            <div ref={sourceDropRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setSourceOpen(o => !o)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-base shadow-sm transition hover:border-gray-300 focus:outline-none"
+              >
+                <span className="text-text-muted">All Sources</span>
+                <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${sourceOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {sourceOpen && (
+                <ul className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                  {SOURCE_OPTS.filter(o => o !== 'All').map(o => {
+                    const sel = selSources.includes(o);
+                    return (
+                      <li
+                        key={o}
+                        onMouseDown={e => { e.preventDefault(); toggleSource(o); }}
+                        className={`flex cursor-pointer items-center justify-between px-4 py-3 text-base transition hover:bg-slate-50 ${sel ? 'font-medium text-green-700' : 'text-text-primary'}`}
+                      >
+                        {o}
+                        {sel && <Check size={15} strokeWidth={2.5} className="text-green-600" />}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            {selSources.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {selSources.map(s => (
+                  <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-text-primary shadow-sm">
+                    {s}
+                    <button type="button" onClick={() => toggleSource(s)} className="text-gray-400 transition hover:text-red-500">
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Call Status */}
+          <section>
+            <p className="mb-3 text-base font-semibold text-text-primary">Call Status</p>
             <div className="flex flex-wrap gap-2">
-              {CALLST_OPTS.map(o => (
-                <button key={o} type="button" onClick={() => setCallSt(o)} className={`rounded-full border px-3 py-1 text-sm font-medium transition ${callSt === o ? 'border-green-600 bg-green-50 text-green-700' : 'border-border-subtle text-text-muted hover:border-green-400'}`}>{o}</button>
+              {CALL_STATUS_OPTS.map(o => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => setCallSt(o)}
+                  className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${
+                    callSt === o
+                      ? 'border-green-600 bg-green-50 text-green-700'
+                      : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
+                  }`}
+                >
+                  {o}
+                </button>
               ))}
             </div>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Date Range</p>
-            <div className="flex gap-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="flex-1 rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500" />
-              <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   className="flex-1 rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500" />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {DATE_OPTS.map(o => (
-                <button key={o} type="button" className="rounded-full border border-border-subtle px-3 py-1 text-sm text-text-muted transition hover:border-green-400 hover:text-green-700">{o}</button>
+          </section>
+
+          {/* Date Range */}
+          <section>
+            <p className="mb-3 text-base font-semibold text-text-primary">Date Range</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'From', val: dateFrom, set: v => { setDateFrom(v); setQuickDate(''); } },
+                { label: 'To',   val: dateTo,   set: v => { setDateTo(v);   setQuickDate(''); } },
+              ].map(({ label, val, set }) => (
+                <div key={label}>
+                  <p className="mb-1 text-sm text-text-muted">{label}</p>
+                  <div className="relative">
+                    <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="date"
+                      value={val}
+                      onChange={e => set(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-9 pr-3 text-base text-text-primary focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {QUICK_DATE_OPTS.map(o => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => { setQuickDate(o); setDateFrom(''); setDateTo(''); }}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                    quickDate === o
+                      ? 'border-green-600 bg-green-50 text-green-700'
+                      : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
+                  }`}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Phone Number */}
+          <section>
+            <p className="mb-3 text-base font-semibold text-text-primary">Phone Number</p>
+            <div className="relative">
+              <Phone size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={e => setPhoneNumber(e.target.value)}
+                placeholder="e.g. +1 555 123 4567"
+                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-base text-text-primary placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              />
+            </div>
+          </section>
         </div>
-        <div className="flex gap-3 border-t border-border-subtle px-5 py-4">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border-subtle py-2.5 text-sm font-medium text-text-primary transition hover:bg-slate-50">Reset Filters</button>
-          <button type="button" onClick={onClose} className="relative flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700">
+
+        {/* footer */}
+        <div className="flex gap-3 border-t border-gray-300 px-5 py-6 bg-gray-100">
+          <button
+            type="button"
+            onClick={() => {
+              setSelStatuses([]); setSelSources([]); setCallSt('All');
+              setQuickDate('Last 30 Days'); setDateFrom(''); setDateTo(''); setPhoneNumber('');
+            }}
+            className="flex-1 rounded-xl border border-gray-200 bg-white py-4 mb-3 text-md font-bolder text-text-primary transition hover:bg-slate-50"
+          >
+            Reset Filters
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#16A34A]  mb-3 py-3 text-sm font-semibold text-white transition hover:bg-[#10883c]"
+          >
             Apply Filters
-            {activeCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{activeCount}</span>}
+            {activeCount > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/25 text-xs font-bold">
+                {activeCount}
+              </span>
+            )}
           </button>
         </div>
       </aside>
@@ -380,10 +606,19 @@ function LeadCreation() {
         if (!leadDate || leadDate < cutoff) return false;
       }
       if (colCallTimeFilter.length > 0) {
+        const leadDate = parseCallDate(l.callStartTime ?? '');
         const t = l.callStartTime ?? '';
         const matches = colCallTimeFilter.some(period => {
           if (period === 'Today')     return t.startsWith('Today');
           if (period === 'Yesterday') return t.startsWith('Yesterday');
+          if (period === 'Last 7 Days') {
+            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+            return leadDate != null && leadDate >= c;
+          }
+          if (period === 'Last 30 Days') {
+            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+            return leadDate != null && leadDate >= c;
+          }
           return true;
         });
         if (!matches) return false;
@@ -438,7 +673,7 @@ function LeadCreation() {
       </div>
 
       {/* search + table merged card */}
-      <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
 
         {/* search row */}
         <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-5 py-4">
@@ -469,7 +704,7 @@ function LeadCreation() {
         <div className="flex items-center justify-between border-b border-border-subtle px-5">
           <div className="flex items-center gap-6">
             {[
-              { key: 'all',        label: 'All Leads',  count: '12.4k'               },
+              { key: 'all',        label: 'All Leads',  count: '16'               },
               { key: 'my',         label: 'My Leads',   count: myLeads.length        },
               { key: 'unassigned', label: 'Unassigned', count: unassignedLeads.length },
             ].map(t => (
@@ -541,7 +776,16 @@ function LeadCreation() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {visible.map((lead, i) => {
+              {visible.length === 0 ? (
+                <TableEmptyState
+                  hasFilters={!!(search.trim() || colSourceFilter.length || colStatusFilter.length || colCallTimeFilter.length)}
+                  onClearFilters={() => {
+                    setSearch(''); setStatusFilter('All'); setSourceFilter('All');
+                    setColSourceFilter([]); setColStatusFilter([]); setColCallTimeFilter([]);
+                    setCurrentPage(1);
+                  }}
+                />
+              ) : visible.map((lead, i) => {
                 const delay = `${0.56 + i * 0.055}s`;
                 return (
                   <tr key={lead.id} className={`animate-fade-in-left transition-colors ${selectedRows.includes(lead.id) ? 'bg-green-50/40' : 'hover:bg-slate-50'}`} style={{ animationDelay: delay }}>
@@ -601,7 +845,7 @@ function LeadCreation() {
 
         <div className="flex items-center justify-between border-t border-border-subtle px-5 py-4">
           <p className="text-sm text-text-muted">
-            Showing <span className="font-semibold">{visible.length}</span> of <span className="font-semibold">12,493</span> entries
+            Showing <span className="font-semibold">{visible.length}</span> of <span className="font-semibold">16</span> entries
           </p>
           <div className="flex items-center gap-1.5">
             <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm text-text-muted transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
