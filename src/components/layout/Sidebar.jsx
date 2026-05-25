@@ -1,9 +1,34 @@
+import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 
 function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Find the single most-specifically matched nav item for the current path.
+  // Longer prefix wins, so /leads/lead beats /leads when visiting /leads/lead.
+  const activeItem = useMemo(() => {
+    let best = null;
+    let bestLen = -1;
+    for (const section of sections) {
+      for (const item of section.items) {
+        const paths = item.activePaths ?? [item.path];
+        for (const ap of paths) {
+          if (
+            location.pathname === ap ||
+            location.pathname.startsWith(ap + '/')
+          ) {
+            if (ap.length > bestLen) {
+              bestLen = ap.length;
+              best = item;
+            }
+          }
+        }
+      }
+    }
+    return best;
+  }, [sections, location.pathname]);
 
   return (
     <aside
@@ -78,8 +103,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
             <div className="flex flex-col gap-[0.15rem]">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const activePaths = item.activePaths ?? [item.path];
-                const isActive = activePaths.includes(location.pathname);
+                const isActive = activeItem === item;
 
                 return (
                   <button

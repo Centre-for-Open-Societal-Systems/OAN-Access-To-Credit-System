@@ -24,6 +24,7 @@ function AppRoutes() {
         <Route path="leads/:id/schedule" element={<ScheduleVisit />} />
         <Route path="loanApplicationDashboard" element={<LoanApplicationDashboard />} />
         <Route path="loans/new" element={<NewLoanApplication />} />
+        <Route path="loans/credit-request" element={<NewLoanApplication />} />
         <Route path="loans/applications" element={<NewLoanApplicationDashboard />} />
         <Route path="loans/update-status" element={<UpdateLoanStatus />} />
       </Route>
