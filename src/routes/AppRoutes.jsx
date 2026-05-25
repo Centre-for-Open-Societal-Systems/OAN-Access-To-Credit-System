@@ -16,18 +16,17 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<MainLayout />}>
-        <Route index element={<Navigate to="/leads" replace />} />
-        <Route path="leads" element={<LeadsDashboard />} />
-        <Route path="leads/lead" element={<NewLeadCreation />} />
-        <Route path="leads/new" element={<NewLeadCreation />} />
+        <Route index element={<Navigate to="/leads-dashboard" replace />} />
+        <Route path="leads-dashboard" element={<LeadsDashboard />} />
+        <Route path="new-lead-creation" element={<NewLeadCreation />} />
         <Route path="leads/:id" element={<LeadDetails />} />
         <Route path="leads/:id/schedule" element={<ScheduleVisit />} />
-        <Route path="loanApplicationDashboard" element={<LoanApplicationDashboard />} />
-        <Route path="loans/new" element={<NewLoanApplication />} />
-        <Route path="loans/applications" element={<NewLoanApplicationDashboard />} />
-        <Route path="loans/update-status" element={<UpdateLoanStatus />} />
+        <Route path="loans/loan-application-dashboard" element={<LoanApplicationDashboard />} />
+        <Route path="loans/new-loan-application-creation" element={<NewLoanApplicationDashboard />} />
+        <Route path="loans/create-new-credit-request" element={<NewLoanApplication />} />
+        <Route path="loans/update-loan-application-status" element={<UpdateLoanStatus />} />
       </Route>
-      <Route path="*" element={<Navigate to="/leads" replace />} />
+      <Route path="*" element={<Navigate to="/leads-dashboard" replace />} />
     </Routes>
   );
 }

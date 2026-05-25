@@ -1,14 +1,10 @@
-const STATUS_STYLES = {
-  Approved: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  Pending: 'border-amber-200 bg-amber-50 text-amber-700',
-  Rejected: 'border-rose-200 bg-rose-50 text-rose-700',
-};
+import { STATUS_CFG } from '../constants/leads.constants.js';
 
 function LeadStatusBadge({ status }) {
+  const cfg = STATUS_CFG[status] ?? { dot: 'bg-slate-400', badge: 'bg-slate-50 text-slate-600 border-slate-200' };
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[status] ?? 'border-slate-200 bg-slate-50 text-slate-600'}`}
-    >
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${cfg.badge}`}>
+      <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
       {status}
     </span>
   );

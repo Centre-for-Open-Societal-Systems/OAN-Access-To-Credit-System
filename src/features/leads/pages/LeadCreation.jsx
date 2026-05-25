@@ -660,7 +660,7 @@ function LeadCreation() {
             <Download size={18} />
             Export CSV
           </button>
-          <button type="button" onClick={() => navigate('/leads/new')} className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95">
+          <button type="button" onClick={() => navigate('/new-lead-creation')} className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95">
             <Plus size={18} strokeWidth={2.5} />
             Create New Lead
           </button>

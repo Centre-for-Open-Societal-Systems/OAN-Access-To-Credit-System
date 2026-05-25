@@ -1049,7 +1049,7 @@ function NewLoanApplicationDashboard() {
           />
           <button
             className="inline-flex items-center gap-1.5 px-4 py-3 rounded-lg text-sm font-semibold bg-[#16A34A] text-white hover:bg-[#10883c] transition-colors cursor-pointer border-0"
-            onClick={() => navigate('/loans/new')}
+            onClick={() => navigate('/loans/create-new-credit-request')}
           >
             <Plus size={15} strokeWidth={2.5} />
             New Application
@@ -1184,7 +1184,7 @@ function NewLoanApplicationDashboard() {
             </p>
             <button
               className="inline-flex items-center gap-1.5 mt-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#4a7c59] text-white hover:bg-[#3a6347] transition-colors border-0 cursor-pointer"
-              onClick={() => navigate('/loans/new')}
+              onClick={() => navigate('/loans/create-new-credit-request')}
             >
               <Plus size={15} strokeWidth={2.5} />
               Start New Application

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock3, FileText, ListChecks, Plus, Users } from 'lucide-react';
+import { Clock3, FileText, ListChecks, Plus, SquarePen, Users } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import Sidebar from './Sidebar.jsx';
@@ -11,32 +11,42 @@ const navigationSections = [
   {
     title: 'DASHBOARDS',
     items: [
-      { path: '/leads', label: 'Leads Dashboard', icon: Users },
-      { path: '/loanApplicationDashboard', label: 'Loan Application Dashboard', icon: FileText },
+      { path: '/leads-dashboard', label: 'Leads Dashboard', icon: Users },
+      { path: '/loans/loan-application-dashboard', label: 'Loan Application Dashboard', icon: FileText },
     ],
   },
   {
     title: 'WORKFLOW',
     items: [
-      { path: '/leads/lead', label: 'Lead Creation', icon: Plus },
       {
-        path: '/loans/applications',
-        activePaths: ['/loans/applications', '/loans/lead'],
-        label: 'Loan Application Creation',
+        path: '/new-lead-creation',
+        activePaths: ['/new-lead-creation'],
+        label: 'New Lead Creation',
+        icon: Plus,
+      },
+      {
+        path: '/loans/new-loan-application-creation',
+        activePaths: ['/loans/new-loan-application-creation'],
+        label: 'New Loan Application Creation',
         icon: ListChecks,
       },
-      { path: '/loans/update-status', label: 'Update Loan Application Status', icon: Clock3 },
+      {
+        path: '/loans/create-new-credit-request',
+        label: 'Create New Credit Request',
+        icon: SquarePen,
+      },
+      { path: '/loans/update-loan-application-status', label: 'Update Loan Application Status', icon: Clock3 },
     ],
   },
 ];
 
 const PAGE_TITLES = {
-  '/leads': 'Leads Dashboard',
-  '/leads/lead': 'Lead Creation',
-  '/loanApplicationDashboard': 'Loan Application Dashboard',
-  '/loans/lead': 'Loan Application Creation',
-  '/loans/applications': 'Loan Application Creation',
-  '/loans/update-status': 'Update Loan Application Status',
+  '/leads-dashboard': 'Leads Dashboard',
+  '/new-lead-creation': 'New Lead Creation',
+  '/loans/loan-application-dashboard': 'Loan Application Dashboard',
+  '/loans/new-loan-application-creation': 'New Loan Application Creation',
+  '/loans/create-new-credit-request': 'Create New Credit Request',
+  '/loans/update-loan-application-status': 'Update Loan Application Status',
 };
 
 function MainLayout() {
@@ -45,6 +55,11 @@ function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard';
+
+  // Update document/tab title on route change
+  useEffect(() => {
+    document.title = `${pageTitle} | Open AgriNet`;
+  }, [pageTitle]);
 
   // Close mobile drawer on route change
   useEffect(() => {

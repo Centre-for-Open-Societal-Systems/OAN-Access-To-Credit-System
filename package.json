@@ -11,9 +11,11 @@
   "dependencies": {
     "@fontsource/dm-sans": "^5.0.20",
     "@fontsource/space-grotesk": "^5.0.20",
+    "@reduxjs/toolkit": "^2.12.0",
     "lucide-react": "^0.475.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-redux": "^9.3.0",
     "react-router-dom": "^7.15.0"
   },
   "devDependencies": {
