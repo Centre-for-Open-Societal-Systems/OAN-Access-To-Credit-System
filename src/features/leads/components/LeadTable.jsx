@@ -1,70 +1,144 @@
-import { ArrowUpRight } from 'lucide-react';
+import { useRef } from 'react';
+import { Phone, Filter } from 'lucide-react';
 import LeadStatusBadge from './LeadStatusBadge.jsx';
+import LeadActionCell from './LeadActionCell.jsx';
+import LeadEmptyState from './LeadEmptyState.jsx';
+import { LeadColFilterPopup } from './LeadColFilterPopup.jsx';
 
-const COL_HEADERS = [
-  'Lead',
-  'Source',
-  'Product',
-  'Status',
-  'Amount',
-  'Owner',
-  'Updated',
-  '',
-];
+const TABLE_COLS = ['LEAD ID', 'PHONE NUMBER', 'STATUS', 'CALL START TIME', 'ACTIONS'];
+const FILTERABLE = ['STATUS', 'CALL START TIME'];
 
-function LeadTable({ rows = [] }) {
+function LeadTable({
+  visible,
+  selectedRows,
+  allChecked,
+  openColFilter,
+  colStatusFilter,
+  colCallTimeFilter,
+  navigate,
+  hasFilters,
+  onToggleAll,
+  onToggleRow,
+  onSetOpenColFilter,
+  onApplyStatusFilter,
+  onApplyCallTimeFilter,
+  onClearFilters,
+}) {
+  const anchorRefs = useRef({});
+
+  const colFilterCfg = {
+    'STATUS':          { value: colStatusFilter,   onApply: onApplyStatusFilter   },
+    'CALL START TIME': { value: colCallTimeFilter, onApply: onApplyCallTimeFilter },
+  };
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" aria-label="Leads table">
-          <thead>
-            <tr className="border-b border-border-subtle bg-page">
-              {COL_HEADERS.map((header, i) => (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[700px]">
+        <thead>
+          <tr className="border-b border-border-subtle bg-slate-50">
+            <th className="w-12 px-5 py-4">
+              <input
+                type="checkbox"
+                checked={allChecked}
+                onChange={onToggleAll}
+                className="h-4 w-4 rounded border-border-subtle accent-green-600"
+              />
+            </th>
+            {TABLE_COLS.map(col => {
+              const hasFilter = FILTERABLE.includes(col);
+              const isActive  = hasFilter && (colFilterCfg[col]?.value.length > 0);
+              return (
                 <th
-                  key={i}
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.22em] text-text-muted first:pl-5 last:pr-5"
-                  scope="col"
+                  key={col}
+                  className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"
                 >
-                  {header}
+                  {col !== 'ACTIONS' ? (
+                    <div className="relative inline-flex items-center gap-1.5">
+                      <span className="inline-flex cursor-pointer items-center gap-1 hover:text-text-primary">
+                        {col} <span className="text-[11px]">⇅</span>
+                      </span>
+                      {hasFilter && (
+                        <>
+                          <button
+                            ref={el => { anchorRefs.current[col] = { current: el }; }}
+                            type="button"
+                            onClick={() => onSetOpenColFilter(prev => prev === col ? null : col)}
+                            className={`rounded p-0.5 transition hover:bg-slate-200 ${
+                              openColFilter === col || isActive ? 'bg-slate-200 text-green-600' : 'text-text-muted'
+                            }`}
+                          >
+                            <Filter size={12} strokeWidth={2.5} />
+                          </button>
+                          {isActive && <span className="h-1.5 w-1.5 rounded-full bg-green-500" />}
+                          {openColFilter === col && (
+                            <LeadColFilterPopup
+                              col={col}
+                              anchorRef={{ current: anchorRefs.current[col]?.current }}
+                              initialSelected={colFilterCfg[col]?.value ?? []}
+                              onApply={colFilterCfg[col]?.onApply ?? (() => {})}
+                              onClose={() => onSetOpenColFilter(null)}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ) : col}
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-subtle">
-            {rows.map((row) => (
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border-subtle">
+          {visible.length === 0 ? (
+            <LeadEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />
+          ) : visible.map((lead, i) => {
+            const rowKey = lead.id + lead.phone;
+            return (
               <tr
-                key={row.id}
-                className="transition hover:bg-slate-50/60"
+                key={rowKey}
+                className={`transition-colors ${
+                  selectedRows.includes(rowKey) ? 'bg-green-50/40' : 'hover:bg-slate-50'
+                }`}
+                style={{ animationDelay: `${i * 40}ms` }}
               >
-                <td className="pl-5 pr-4 py-3.5">
-                  <p className="font-semibold text-text-primary">{row.name}</p>
-                  <p className="mt-0.5 text-xs text-text-muted">{row.id} · {row.region}</p>
+                <td className="px-5 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.includes(rowKey)}
+                    onChange={() => onToggleRow(rowKey)}
+                    className="h-4 w-4 rounded border-border-subtle accent-green-600"
+                  />
                 </td>
-                <td className="px-4 py-3.5 text-text-muted">{row.source}</td>
-                <td className="px-4 py-3.5">
-                  <span className="font-medium text-text-primary">{row.product}</span>
-                </td>
-                <td className="px-4 py-3.5">
-                  <LeadStatusBadge status={row.status} />
-                </td>
-                <td className="px-4 py-3.5 font-semibold text-text-primary">{row.amount}</td>
-                <td className="px-4 py-3.5 text-text-muted">{row.owner}</td>
-                <td className="px-4 py-3.5 text-xs text-text-muted">{row.updatedAt}</td>
-                <td className="pr-5 pl-4 py-3.5">
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-border-subtle bg-page px-3 py-1.5 text-xs font-semibold text-text-muted transition hover:border-slate-300 hover:bg-white hover:text-text-primary"
-                    type="button"
-                    aria-label={`View lead ${row.id}`}
+                <td className="px-5 py-4">
+                  <div
+                    className="cursor-pointer text-base font-bold text-[#16A34A] hover:underline"
+                    onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
                   >
-                    View
-                    <ArrowUpRight size={12} strokeWidth={2.5} aria-hidden="true" />
-                  </button>
+                    {lead.id}
+                  </div>
+                  <div className="mt-0.5 text-sm text-text-muted">{lead.location}</div>
+                </td>
+                <td className="px-5 py-4">
+                  <div className="inline-flex items-center gap-1.5 text-sm text-text-primary">
+                    <Phone size={14} className="text-text-muted" />
+                    {lead.phone}
+                  </div>
+                </td>
+                <td className="px-5 py-4">
+                  <LeadStatusBadge status={lead.status} />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="text-sm text-text-primary">{lead.callStartTime}</div>
+                  <div className="mt-0.5 text-sm text-text-muted">Duration: {lead.callDuration}</div>
+                </td>
+                <td className="px-5 py-4">
+                  <LeadActionCell lead={lead} navigate={navigate} />
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

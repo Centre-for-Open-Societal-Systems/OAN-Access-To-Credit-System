@@ -57,6 +57,11 @@ function MainLayout() {
   const navigate = useNavigate();
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard';
 
+  // Update document/tab title on route change
+  useEffect(() => {
+    document.title = `${pageTitle} | Open AgriNet`;
+  }, [pageTitle]);
+
   // Close mobile drawer on route change
   useEffect(() => {
     setIsMobileOpen(false);

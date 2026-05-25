@@ -1,558 +1,19 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight,
-  Download, Plus, X, Phone, TrendingUp, TrendingDown, Minus,
-  FileText, CheckCircle2, XCircle, Users,
-  Eye, CalendarPlus, CalendarCheck, Settings, CheckCircle,
-  Calendar, Check, Filter, SearchX,
-} from 'lucide-react';
-
+import { Download, Plus } from 'lucide-react';
 import { kpiStats, leadRows as allLeads } from '../data/leads.mock.js';
+import { PAGE_SIZE } from '../constants/leads.constants.js';
+import LeadKpiCard from '../components/LeadKpiCard.jsx';
+import LeadToolbar from '../components/LeadToolbar.jsx';
+import LeadTable from '../components/LeadTable.jsx';
+import LeadPagination from '../components/LeadPagination.jsx';
+import LeadAdvancedFilters from '../components/LeadAdvancedFilters.jsx';
 
-/* ── status styles ──────────────────────────────────────────────────── */
-const STATUS_CFG = {
-  Initiated:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border-blue-200'         },
-  Qualified:    { dot: 'bg-green-500',   badge: 'bg-green-50 text-green-700 border-green-200'       },
-  Processed:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  Disqualified: { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 border-red-200'             },
-  Rejected:     { dot: 'bg-orange-400',  badge: 'bg-orange-50 text-orange-700 border-orange-200'    },
-};
 
-const STATUS_OPTS = ['All', 'Initiated', 'Qualified', 'Processed', 'Disqualified', 'Rejected'];
-const DATE_OPTS   = ['All Time', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'];
-const PAGE_SIZE   = 10;
 
-/* ── KPI icon config ────────────────────────────────────────────────── */
-function getKpiIconCfg(id) {
-  switch (id) {
-    case 'total':     return { bg: 'bg-blue-500',   icon: <Users        size={22} className="text-white" /> };
-    case 'initiated': return { bg: 'bg-violet-500', icon: <Phone        size={22} className="text-white" /> };
-    case 'qualified': return { bg: 'bg-green-500',  icon: <CheckCircle2 size={22} className="text-white" /> };
-    case 'processed': return { bg: 'bg-teal-500',   icon: <CheckCircle  size={22} className="text-white" /> };
-    case 'rejected':  return { bg: 'bg-red-500',    icon: <XCircle      size={22} className="text-white" /> };
-    default:          return { bg: 'bg-slate-500',  icon: <FileText     size={22} className="text-white" /> };
-  }
-}
 
-/* ─── KpiCard ───────────────────────────────────────────────────────── */
-function KpiCard({ stat, index }) {
-  const cfg        = getKpiIconCfg(stat.id);
-  const TrendIcon  = stat.up === true ? TrendingUp : stat.up === false ? TrendingDown : Minus;
-  const trendPill  = stat.up === true
-    ? 'bg-green-100 text-green-700'
-    : stat.up === false
-    ? 'bg-red-100 text-red-600'
-    : 'bg-orange-100 text-orange-600';
-  return (
-    <div
-      className="relative bg-white border border-[#e9e9e9] rounded-2xl shadow-sm p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-start justify-between"
-      style={{ animationDelay: `${index * 60}ms` }}
-    >
-      <div>
-        <p className="text-sm text-text-muted">{stat.label}</p>
-        <p className="mt-1.5 text-3xl font-bold text-text-primary">{stat.display}</p>
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold ${trendPill}`}>
-            <TrendIcon size={11} strokeWidth={2.5} />
-            {stat.trend.toFixed(1)}%
-          </span>
-          <span className="text-xs text-text-muted">vs last month</span>
-        </div>
-      </div>
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${cfg.bg}`}>
-        {cfg.icon}
-      </div>
-    </div>
-  );
-}
 
-/* ─── StatusBadge ───────────────────────────────────────────────────── */
-function StatusBadge({ status }) {
-  const cfg = STATUS_CFG[status] ?? { dot: 'bg-slate-400', badge: 'bg-slate-50 text-slate-600 border-slate-200' };
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${cfg.badge}`}>
-      <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
-      {status}
-    </span>
-  );
-}
 
-/* ─── ActionCell ────────────────────────────────────────────────────── */
-function ActionCell({ lead, navigate }) {
-  switch (lead.actionType) {
-    case 'view':
-      return (
-        <div className="flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-50 active:scale-95"
-          >
-            <Eye size={14} />
-            View
-          </button>
-          {lead.actionNote && (
-            <p className="max-w-[200px] text-xs leading-snug text-text-muted">{lead.actionNote}</p>
-          )}
-        </div>
-      );
-
-    case 'schedule-visit':
-      return (
-        <div className="flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}/schedule`)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-blue-500 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50 active:scale-95"
-          >
-            <CalendarPlus size={14} />
-            Schedule Visit
-          </button>
-          {lead.visitDate && (
-            <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-              <Calendar size={12} />
-              {lead.visitDate}
-            </span>
-          )}
-        </div>
-      );
-
-    case 'visit-scheduled':
-      return (
-        <div className="flex flex-col gap-1.5">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-blue-500 bg-white px-3 py-1.5 text-sm font-medium text-blue-700">
-            <CalendarCheck size={14} />
-            Visit Scheduled
-          </span>
-          {lead.visitDate && (
-            <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-              <Calendar size={12} />
-              {lead.visitDate}
-            </span>
-          )}
-        </div>
-      );
-
-    case 'application-processing':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500 bg-white px-3 py-1.5 text-sm font-medium text-amber-700">
-          <Settings size={14} className="text-amber-500" />
-          Application Processing
-        </span>
-      );
-
-    case 'application-submitted':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700">
-          <CheckCircle size={14} className="text-emerald-500" />
-          Application Submitted
-        </span>
-      );
-
-    case 'rejected':
-      return (
-        <div className="flex flex-col gap-1.5">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-red-400 bg-white px-3 py-1.5 text-sm font-medium text-red-600">
-            <XCircle size={14} />
-            Rejected
-          </span>
-          {lead.actionNote && (
-            <p className="max-w-[200px] text-xs leading-snug text-text-muted">{lead.actionNote}</p>
-          )}
-        </div>
-      );
-
-    default:
-      return (
-        <button
-          type="button"
-          onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
-        >
-          <Eye size={14} />
-          View
-        </button>
-      );
-  }
-}
-
-/* ─── DateSelect ────────────────────────────────────────────────────── */
-function DateSelect({ value, options, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    function h(e) { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); }
-    if (isOpen) document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [isOpen]);
-  return (
-    <div ref={ref} className="relative w-44">
-      <button
-        type="button"
-        onClick={() => setIsOpen(o => !o)}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}
-      >
-        <span className="text-gray-900">{value}</span>
-        <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
-      </button>
-      <ul
-        className={`absolute right-0 z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
-        style={{ transformOrigin: 'top' }}
-      >
-        {options.map(opt => {
-          const sel = value === opt;
-          return (
-            <li
-              key={opt}
-              onMouseDown={() => { onChange(opt); setIsOpen(false); }}
-              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'font-medium text-[#16A34A]' : 'text-gray-800 hover:bg-gray-50'}`}
-            >
-              {opt}
-              {sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-/* ─── ColFilterPopup ────────────────────────────────────────────────── */
-const COL_FILTER_OPTS = {
-  'STATUS':          STATUS_OPTS.filter(o => o !== 'All' && o !== 'Disqualified'),
-  'CALL START TIME': ['Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'],
-};
-
-function ColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose }) {
-  const popupRef = useRef(null);
-  const [selected, setSelected] = useState(initialSelected);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (anchorRef?.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      const th = anchorRef.current.closest('th');
-      const thRect = th ? th.getBoundingClientRect() : rect;
-      const popupWidth = 224; // w-56
-      // Align popup's left edge to the column header's left edge (px-5 = 20px padding)
-      const preferredLeft = thRect.left + 20;
-      const left = preferredLeft + popupWidth > window.innerWidth
-        ? Math.max(4, window.innerWidth - popupWidth - 8)
-        : preferredLeft;
-      setPos({ top: rect.bottom + 6, left });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (popupRef.current && !popupRef.current.contains(e.target) &&
-          anchorRef.current && !anchorRef.current.contains(e.target)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [anchorRef, onClose]);
-
-  const opts = COL_FILTER_OPTS[col];
-  const toggle = v => setSelected(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
-
-  return createPortal(
-    <div
-      ref={popupRef}
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-      className="w-56 rounded-xl border border-gray-200 bg-white shadow-xl"
-    >
-      <div className="border-b border-gray-100 px-3 py-2.5">
-        <div className="flex items-center gap-1.5">
-          <Filter size={13} className="text-green-600" strokeWidth={2.5} />
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            {col === 'CALL START TIME' ? 'Filter by Date' : `Filter by ${col}`}
-          </p>
-        </div>
-      </div>
-      <ul className="max-h-52 overflow-y-auto py-1">
-        {opts.map(o => {
-          const sel = selected.includes(o);
-          return (
-            <li
-              key={o}
-              onMouseDown={e => { e.preventDefault(); toggle(o); }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-gray-50"
-            >
-              <input
-                type="checkbox"
-                readOnly
-                checked={sel}
-                className="h-4 w-4 rounded border-gray-300 accent-green-600 pointer-events-none"
-              />
-              <span className={sel ? 'font-medium text-[#16A34A]' : 'text-gray-700'}>{o}</span>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2">
-        <button
-          type="button"
-          onClick={() => { setSelected([]); onApply([]); onClose(); }}
-          className="text-xs font-medium text-gray-400 transition hover:text-red-500"
-        >
-          Clear
-        </button>
-        <button
-          type="button"
-          onClick={() => { onApply(selected); onClose(); }}
-          className="rounded-lg bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#10883c]"
-        >
-          Apply
-        </button>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-/* ─── TableEmptyState ───────────────────────────────────────────────── */
-function TableEmptyState({ hasFilters, onClearFilters }) {
-  return (
-    <tr>
-      <td colSpan={6}>
-        <div className="flex flex-col items-center gap-4 py-16">
-          {/* animated icon rings */}
-          <div className="relative flex h-32 w-32 items-center justify-center">
-            <span className="absolute inset-0 rounded-full bg-slate-100 animate-ping opacity-30" style={{ animationDuration: '2.4s' }} />
-            <span className="absolute inset-3 rounded-full bg-slate-100 animate-ping opacity-25" style={{ animationDuration: '2.4s', animationDelay: '0.4s' }} />
-            <span className="absolute inset-6 rounded-full bg-slate-100 animate-ping opacity-20" style={{ animationDuration: '2.4s', animationDelay: '0.8s' }} />
-            <div
-              className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md border border-slate-100"
-              style={{ animation: 'float 3s ease-in-out infinite' }}
-            >
-              <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`}</style>
-              {hasFilters
-                ? <SearchX size={36} className="text-slate-400" strokeWidth={1.5} />
-                : <Users   size={36} className="text-slate-400" strokeWidth={1.5} />
-              }
-            </div>
-          </div>
-
-          <div className="space-y-1.5 text-center">
-            <h3 className="text-lg font-semibold text-text-primary">
-              {hasFilters ? 'No leads match your filters' : 'No leads yet'}
-            </h3>
-            <p className="mx-auto max-w-xs text-sm text-text-muted leading-relaxed">
-              {hasFilters
-                ? 'Try adjusting or clearing your active filters to see more results.'
-                : 'Create your first lead to get started with the pipeline.'
-              }
-            </p>
-          </div>
-
-          {/* bouncing dots */}
-          <div className="flex items-center gap-1.5">
-            {[0, 150, 300].map(delay => (
-              <span
-                key={delay}
-                className={`h-2 w-2 rounded-full animate-bounce ${
-                  hasFilters ? 'bg-orange-300' : 'bg-slate-300'
-                }`}
-                style={{ animationDelay: `${delay}ms`, animationDuration: '1.2s' }}
-              />
-            ))}
-          </div>
-
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={onClearFilters}
-              className="inline-flex items-center gap-2 rounded-xl border border-green-600 bg-white px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm transition hover:bg-green-50 active:scale-95"
-            >
-              <X size={14} />
-              Clear Filters
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-/* ─── AdvancedFiltersPanel ──────────────────────────────────────────── */
-function AdvancedFiltersPanel({ onClose }) {
-  const CALL_STATUS_OPTS = ['All', 'Completed', 'Missed', 'Voicemail'];
-  const QUICK_DATE_OPTS  = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
-
-  const [selStatuses, setSelStatuses] = useState([]);
-  const [callSt,      setCallSt]      = useState('All');
-  const [quickDate,   setQuickDate]   = useState('Last 30 Days');
-  const [dateFrom,    setDateFrom]    = useState('');
-  const [dateTo,      setDateTo]      = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-
-  const toggleStatus = s => setSelStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
-
-  const activeCount =
-    (selStatuses.length > 0 ? 1 : 0) +
-    (callSt !== 'All'       ? 1 : 0) +
-    (quickDate || dateFrom  ? 1 : 0) +
-    (phoneNumber.trim()     ? 1 : 0);
-
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/25" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 flex h-full w-[540px] flex-col bg-white shadow-2xl">
-
-        {/* header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <SlidersHorizontal size={20} className="text-text-primary" strokeWidth={2} />
-            <h3 className="text-lg font-semibold text-text-primary">Advanced Filters</h3>
-          </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-text-muted transition hover:bg-slate-100">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* scrollable body */}
-        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-
-          {/* Status */}
-          <section>
-            <p className="mb-3 text-base font-semibold text-text-primary">Status</p>
-            <div className="grid grid-cols-2 gap-2">
-              {STATUS_OPTS.filter(s => s !== 'All' && s !== 'Disqualified').map(s => {
-                const sel = selStatuses.includes(s);
-                const dot = STATUS_CFG[s]?.dot ?? 'bg-slate-400';
-                return (
-                  <div
-                    key={s}
-                    onClick={() => toggleStatus(s)}
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${
-                      sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${
-                        sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
-                      }`}>
-                        {sel && <Check size={12} strokeWidth={3} className="text-white" />}
-                      </div>
-                      <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-text-primary'}`}>{s}</span>
-                    </div>
-                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Call Status */}
-          <section>
-            <p className="mb-3 text-base font-semibold text-text-primary">Call Status</p>
-            <div className="flex flex-wrap gap-2">
-              {CALL_STATUS_OPTS.map(o => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setCallSt(o)}
-                  className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${
-                    callSt === o
-                      ? 'border-green-600 bg-green-50 text-green-700'
-                      : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
-                  }`}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Date Range */}
-          <section>
-            <p className="mb-3 text-base font-semibold text-text-primary">Date Range</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'From', val: dateFrom, set: v => { setDateFrom(v); setQuickDate(''); } },
-                { label: 'To',   val: dateTo,   set: v => { setDateTo(v);   setQuickDate(''); } },
-              ].map(({ label, val, set }) => (
-                <div key={label}>
-                  <p className="mb-1 text-sm text-text-muted">{label}</p>
-                  <div className="relative">
-                    <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="date"
-                      value={val}
-                      onChange={e => set(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-9 pr-3 text-base text-text-primary focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {QUICK_DATE_OPTS.map(o => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => { setQuickDate(o); setDateFrom(''); setDateTo(''); }}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                    quickDate === o
-                      ? 'border-green-600 bg-green-50 text-green-700'
-                      : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
-                  }`}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Phone Number */}
-          <section>
-            <p className="mb-3 text-base font-semibold text-text-primary">Phone Number</p>
-            <div className="relative">
-              <Phone size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={e => setPhoneNumber(e.target.value)}
-                placeholder="e.g. +1 555 123 4567"
-                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-base text-text-primary placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              />
-            </div>
-          </section>
-        </div>
-
-        {/* footer */}
-        <div className="flex gap-3 border-t border-gray-300 px-5 py-6 bg-gray-100">
-          <button
-            type="button"
-            onClick={() => {
-              setSelStatuses([]); setCallSt('All');
-              setQuickDate('Last 30 Days'); setDateFrom(''); setDateTo(''); setPhoneNumber('');
-            }}
-            className="flex-1 rounded-xl border border-gray-200 bg-white py-4 mb-3 text-base font-medium text-text-primary transition hover:bg-slate-50"
-          >
-            Reset Filters
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#16A34A] mb-3 py-3 text-sm font-semibold text-white transition hover:bg-[#10883c]"
-          >
-            Apply Filters
-            {activeCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/25 text-xs font-bold">
-                {activeCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-}
 
 /* ─── LeadsDashboard ────────────────────────────────────────────────── */
 function LeadsDashboard() {
@@ -566,7 +27,6 @@ function LeadsDashboard() {
   const [showAdvFilters,    setShowAdvFilters]    = useState(false);
   const [selectedRows,      setSelectedRows]      = useState([]);
   const [openColFilter,     setOpenColFilter]     = useState(null);
-  const colFilterAnchorRefs = useRef({});
   const [colStatusFilter,   setColStatusFilter]   = useState([]);
   const [colCallTimeFilter, setColCallTimeFilter] = useState([]);
 
@@ -660,13 +120,10 @@ function LeadsDashboard() {
     setColStatusFilter([]); setColCallTimeFilter([]); setCurrentPage(1);
   };
 
-  const TABLE_COLS = ['LEAD ID', 'PHONE NUMBER', 'STATUS', 'CALL START TIME', 'ACTIONS'];
-  const filterable = ['STATUS', 'CALL START TIME'];
-
   return (
     <div className="space-y-4">
 
-      {/* ── welcome header ──────────────────────────────────────────── */}
+      {/* welcome header */}
       <div className="relative flex items-center justify-between rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Welcome back, Agent</h1>
@@ -691,253 +148,53 @@ function LeadsDashboard() {
         </div>
       </div>
 
-      {/* ── KPI cards ───────────────────────────────────────────────── */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        {liveKpiStats.map((s, i) => <KpiCard key={s.id} stat={s} index={i} />)}
+        {liveKpiStats.map((s, i) => <LeadKpiCard key={s.id} stat={s} index={i} />)}
       </div>
 
-      {/* ── search + table merged card ──────────────────────────────── */}
+      {/* table card */}
       <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
-
-        {/* search row */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-5 py-4">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-[#f4f4f4] px-4 py-2.5">
-            <Search size={18} className="shrink-0 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search by Lead ID or Phone Number..."
-              value={search}
-              onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
-            />
-          </div>
-          <button
-            type="button"
-            className="rounded-xl bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95"
-          >
-            Search
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#16A34A] bg-[#EDFAF2] px-4 py-2 text-sm font-semibold text-[#16A34A] transition hover:bg-[#d6f5e5]"
-          >
-            <ChevronDown size={14} strokeWidth={2.5} />
-            All Active (12k)
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAdvFilters(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-medium text-text-muted transition hover:bg-slate-50"
-          >
-            <SlidersHorizontal size={16} />
-            Advanced Filters
-          </button>
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="text-sm font-semibold text-[#16A34A] transition hover:text-[#10883c]"
-          >
-            Clear Filters
-          </button>
-        </div>
-
-        {/* tabs row + date filter */}
-        <div className="flex items-center justify-between border-b border-border-subtle px-5">
-          <div className="flex items-center gap-6">
-            {[
-              { key: 'all',        label: 'All Leads',  count: allLeads.length        },
-              { key: 'my',         label: 'My Leads',   count: myLeads.length         },
-              { key: 'unassigned', label: 'Unassigned', count: unassignedLeads.length },
-            ].map(t => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => { setActiveTab(t.key); setCurrentPage(1); }}
-                className={`flex items-center gap-2 border-b-2 py-4 text-base font-medium transition ${
-                  activeTab === t.key
-                    ? 'border-green-600 text-green-600'
-                    : 'border-transparent text-text-muted hover:text-text-primary'
-                }`}
-              >
-                {t.label}
-                <span className={`rounded-full px-2 py-0.5 text-sm font-semibold ${
-                  activeTab === t.key ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-text-muted'
-                }`}>
-                  {t.count}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1 py-3">
-            <span className="text-base font-medium text-text-muted">Date&nbsp;</span>
-            <DateSelect
-              value={dateFilter}
-              options={DATE_OPTS}
-              onChange={v => { setDateFilter(v); setCurrentPage(1); }}
-            />
-          </div>
-        </div>
-
-        {/* table */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="border-b border-border-subtle bg-slate-50">
-                <th className="w-12 px-5 py-4">
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    onChange={toggleAll}
-                    className="h-4 w-4 rounded border-border-subtle accent-green-600"
-                  />
-                </th>
-                {TABLE_COLS.map(col => {
-                  const hasFilter = filterable.includes(col);
-                  const colFilterCfg = {
-                    'STATUS':          { value: colStatusFilter,   set: setColStatusFilter   },
-                    'CALL START TIME': { value: colCallTimeFilter, set: setColCallTimeFilter },
-                  };
-                  const isActive = hasFilter && (colFilterCfg[col]?.value.length > 0);
-                  return (
-                    <th
-                      key={col}
-                      className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"
-                    >
-                      {col !== 'ACTIONS' ? (
-                        <div className="relative inline-flex items-center gap-1.5">
-                          <span className="inline-flex cursor-pointer items-center gap-1 hover:text-text-primary">
-                            {col} <span className="text-[11px]"></span>
-                          </span>
-                          {hasFilter && (
-                            <>
-                              <button
-                                ref={el => { colFilterAnchorRefs.current[col] = { current: el }; }}
-                                type="button"
-                                onClick={() => setOpenColFilter(prev => prev === col ? null : col)}
-                                className={`rounded p-0.5 transition hover:bg-slate-200 ${openColFilter === col || isActive ? 'bg-slate-200 text-green-600' : 'text-text-muted'}`}
-                              >
-                                <Filter size={12} strokeWidth={2.5} />
-                              </button>
-                              {isActive && <span className="h-1.5 w-1.5 rounded-full bg-green-500" />}
-                              {openColFilter === col && (
-                                <ColFilterPopup
-                                  col={col}
-                                  anchorRef={{ current: colFilterAnchorRefs.current[col]?.current }}
-                                  initialSelected={colFilterCfg[col]?.value ?? []}
-                                  onApply={colFilterCfg[col]?.set ?? (() => {})}
-                                  onClose={() => setOpenColFilter(null)}
-                                />
-                              )}
-                            </>
-                          )}
-                        </div>
-                      ) : col}
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {visible.length === 0 ? (
-                <TableEmptyState
-                  hasFilters={!!(search.trim() || colStatusFilter.length || colCallTimeFilter.length)}
-                  onClearFilters={clearAllFilters}
-                />
-              ) : visible.map((lead, i) => {
-                const rowKey = lead.id + lead.phone;
-                return (
-                  <tr
-                    key={rowKey}
-                    className={`transition-colors ${selectedRows.includes(rowKey) ? 'bg-green-50/40' : 'hover:bg-slate-50'}`}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  >
-                    <td className="px-5 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(rowKey)}
-                        onChange={() => toggleRow(rowKey)}
-                        className="h-4 w-4 rounded border-border-subtle accent-green-600"
-                      />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div
-                        className="cursor-pointer text-base font-bold text-[#16A34A] hover:underline"
-                        onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
-                      >
-                        {lead.id}
-                      </div>
-                      <div className="mt-0.5 text-sm text-text-muted">{lead.location}</div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="inline-flex items-center gap-1.5 text-sm text-text-primary">
-                        <Phone size={14} className="text-text-muted" />
-                        {lead.phone}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge status={lead.status} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="text-sm text-text-primary">{lead.callStartTime}</div>
-                      <div className="mt-0.5 text-sm text-text-muted">Duration: {lead.callDuration}</div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <ActionCell lead={lead} navigate={navigate} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* pagination footer */}
-        <div className="flex items-center justify-between border-t border-border-subtle px-5 py-4">
-          <p className="text-sm text-text-muted">
-            Showing <span className="font-semibold">{visible.length}</span>{' '}
-            of <span className="font-semibold">{filtered.length}</span> entries
-          </p>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm text-text-muted transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40"
-            >
-              <ChevronLeft size={16} /> Prev
-            </button>
-            {pageNums.map((p, i) =>
-              p === '…' ? (
-                <span key={`ell-${i}`} className="px-2 text-sm text-text-muted">…</span>
-              ) : (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setCurrentPage(p)}
-                  className={`h-8 w-8 rounded-lg text-sm font-medium transition ${
-                    safePage === p
-                      ? 'bg-green-600 text-white'
-                      : 'border border-border-subtle bg-white text-text-muted hover:bg-slate-50'
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-            <button
-              type="button"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-              className="flex items-center gap-1 rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm text-text-muted transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40"
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <LeadToolbar
+          search={search}
+          activeTab={activeTab}
+          allLeadsCount={allLeads.length}
+          myLeadsCount={myLeads.length}
+          unassignedLeadsCount={unassignedLeads.length}
+          dateFilter={dateFilter}
+          onSearchChange={v => { setSearch(v); setCurrentPage(1); }}
+          onTabChange={k => { setActiveTab(k); setCurrentPage(1); }}
+          onDateChange={v => { setDateFilter(v); setCurrentPage(1); }}
+          onShowAdvFilters={() => setShowAdvFilters(true)}
+          onClearFilters={clearAllFilters}
+        />
+        <LeadTable
+          visible={visible}
+          selectedRows={selectedRows}
+          allChecked={allChecked}
+          openColFilter={openColFilter}
+          colStatusFilter={colStatusFilter}
+          colCallTimeFilter={colCallTimeFilter}
+          navigate={navigate}
+          hasFilters={!!(search.trim() || colStatusFilter.length || colCallTimeFilter.length)}
+          onToggleAll={toggleAll}
+          onToggleRow={toggleRow}
+          onSetOpenColFilter={setOpenColFilter}
+          onApplyStatusFilter={setColStatusFilter}
+          onApplyCallTimeFilter={setColCallTimeFilter}
+          onClearFilters={clearAllFilters}
+        />
+        <LeadPagination
+          visibleCount={visible.length}
+          filteredCount={filtered.length}
+          safePage={safePage}
+          totalPages={totalPages}
+          pageNums={pageNums}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
-      {/* advanced filters slide-over */}
-      {showAdvFilters && <AdvancedFiltersPanel onClose={() => setShowAdvFilters(false)} />}
+      {showAdvFilters && <LeadAdvancedFilters onClose={() => setShowAdvFilters(false)} />}
     </div>
   );
 }
