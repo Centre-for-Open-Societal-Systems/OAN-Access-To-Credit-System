@@ -15,8 +15,10 @@ import {
   Tractor,
   Users,
 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { loginThunk, selectAuthError, selectAuthStatus, clearAuthError } from '../store/authSlice.js';
 import './Login.module.scss';
 
 const roles = [
@@ -55,12 +57,19 @@ const languages = [
 
 function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const authStatus = useSelector(selectAuthStatus);
+  const authError = useSelector(selectAuthError);
+  const isLoading = authStatus === 'loading';
+
   const [selectedRole, setSelectedRole] = useState(roles[1]);
   const [activeHeaderAction, setActiveHeaderAction] = useState('login');
   const [activeLanguage, setActiveLanguage] = useState(languages[0]);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [portalMode, setPortalMode] = useState('signin');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const languageMenuRef = useRef(null);
 
   const selectedRoleTitle = selectedRole.title;
@@ -97,9 +106,13 @@ function Login() {
     setIsLanguageMenuOpen(false);
   };
 
-  const handleSignInSubmit = (event) => {
+  const handleSignInSubmit = async (event) => {
     event.preventDefault();
-    navigate('/leads-dashboard');
+    dispatch(clearAuthError());
+    const result = await dispatch(loginThunk({ usr: username, pwd: password }));
+    if (loginThunk.fulfilled.match(result)) {
+      navigate('/leads-dashboard');
+    }
   };
 
   return (
@@ -335,6 +348,9 @@ function Login() {
                           type="text"
                           placeholder="+251 911 234 567"
                           autoComplete="username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          required
                         />
                       </span>
                     </label>
@@ -350,6 +366,9 @@ function Login() {
                           type={isPasswordVisible ? 'text' : 'password'}
                           placeholder="•••••••"
                           autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
                         />
                         <button
                           className="sign-in-field__toggle"
@@ -377,8 +396,14 @@ function Login() {
                       </a>
                     </div>
 
-                    <button className="sign-in-submit" type="submit">
-                      Sign In
+                    {authError && (
+                      <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-[0.85rem] font-medium text-red-600">
+                        {authError}
+                      </p>
+                    )}
+
+                    <button className="sign-in-submit" type="submit" disabled={isLoading}>
+                      {isLoading ? 'Signing in…' : 'Sign In'}
                     </button>
 
                     <p className="signup-line">

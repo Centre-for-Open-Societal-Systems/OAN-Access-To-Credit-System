@@ -375,6 +375,11 @@
     background:#10883c;
   }
 
+  .sign-in-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
   .sign-in-form .signup-line {
     @apply mt-5 text-[0.85rem];
   }
