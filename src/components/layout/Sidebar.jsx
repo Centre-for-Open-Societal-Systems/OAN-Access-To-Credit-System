@@ -92,7 +92,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
             {/* Section heading */}
             <h2
               className={[
-                'px-[0.45rem] text-[0.62rem] font-bold uppercase tracking-[0.16em] text-white/[0.48]',
+                'px-[0.45rem] text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white/[0.48]',
                 isCollapsed ? 'min-[900px]:hidden' : '',
               ].join(' ')}
             >
@@ -115,7 +115,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
                     onClick={() => navigate(item.path)}
                     className={[
                       'flex w-full items-center gap-[0.65rem] rounded-[0.55rem] border-0',
-                      'px-[0.68rem] py-[0.62rem] text-left text-[0.9rem] font-medium leading-[1.1]',
+                      'px-[0.68rem] py-[0.7rem] text-left text-[1rem] font-medium leading-[1.1]',
                       'transition-[background-color,color,transform] duration-150 ease-in-out',
                       'hover:translate-x-[1px] hover:bg-white/[0.06] hover:text-white',
                       isActive
@@ -127,10 +127,10 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }) {
                     ].join(' ')}
                   >
                     <span
-                      className="grid h-[0.9rem] w-[0.9rem] shrink-0 place-items-center"
+                      className="grid h-[1.1rem] w-[1.1rem] shrink-0 place-items-center"
                       aria-hidden="true"
                     >
-                      <Icon size={14} strokeWidth={2.3} />
+                      <Icon size={17} strokeWidth={2.3} />
                     </span>
                     <span
                       className={[

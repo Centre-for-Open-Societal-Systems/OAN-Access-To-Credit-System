@@ -99,7 +99,7 @@ function Login() {
 
   const handleSignInSubmit = (event) => {
     event.preventDefault();
-    navigate('/leads');
+    navigate('/leads-dashboard');
   };
 
   return (
@@ -108,7 +108,7 @@ function Login() {
         <div className="header-bar">
           <div className="brand-mark">
             <div className="brand-icon" aria-hidden="true">
-              <Sprout size={22} strokeWidth={2.2} />
+              <Sprout size={26} strokeWidth={2.2} />
             </div>
             <div className="brand-copy">
               <span className="brand-title">Open Agri</span>
@@ -134,7 +134,7 @@ function Login() {
               onClick={() => setActiveHeaderAction('get-started')}
             >
               <span>Get Started</span>
-              <ArrowRight size={16} strokeWidth={2.2} />
+              <ArrowRight size={18} strokeWidth={2.2} />
             </button>
           </div>
         </div>
@@ -147,7 +147,7 @@ function Login() {
               <div className="hero-panel__top">
                 <div className="hero-brand">
                   <div className="hero-brand__icon" aria-hidden="true">
-                    <Sprout size={18} strokeWidth={2.4} />
+                    <Sprout size={22} strokeWidth={2.4} />
                   </div>
                   <span className="hero-brand__name">Open AgriNet</span>
                 </div>

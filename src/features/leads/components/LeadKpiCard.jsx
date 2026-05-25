@@ -2,12 +2,12 @@ import { Phone, TrendingUp, TrendingDown, Minus, FileText, CheckCircle2, XCircle
 
 function getKpiIconCfg(id) {
   switch (id) {
-    case 'total':     return { bg: 'bg-blue-500',   icon: <Users        size={22} className="text-white" /> };
-    case 'initiated': return { bg: 'bg-violet-500', icon: <Phone        size={22} className="text-white" /> };
-    case 'qualified': return { bg: 'bg-green-500',  icon: <CheckCircle2 size={22} className="text-white" /> };
-    case 'processed': return { bg: 'bg-teal-500',   icon: <CheckCircle  size={22} className="text-white" /> };
-    case 'rejected':  return { bg: 'bg-red-500',    icon: <XCircle      size={22} className="text-white" /> };
-    default:          return { bg: 'bg-slate-500',  icon: <FileText     size={22} className="text-white" /> };
+    case 'total':     return { bg: 'bg-blue-100',   icon: <Users        size={28} className="text-blue-500" /> };
+    case 'initiated': return { bg: 'bg-violet-100', icon: <Phone        size={28} className="text-violet-500" /> };
+    case 'qualified': return { bg: 'bg-green-100',  icon: <CheckCircle2 size={28} className="text-green-500" /> };
+    case 'processed': return { bg: 'bg-teal-100',   icon: <CheckCircle  size={28} className="text-teal-500" /> };
+    case 'rejected':  return { bg: 'bg-red-100',    icon: <XCircle      size={28} className="text-red-500" /> };
+    default:          return { bg: 'bg-slate-100',  icon: <FileText     size={28} className="text-slate-500" /> };
   }
 }
 
@@ -35,7 +35,7 @@ function LeadKpiCard({ stat, index }) {
           <span className="text-xs text-text-muted">vs last month</span>
         </div>
       </div>
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${cfg.bg}`}>
+      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${cfg.bg}`}>
         {cfg.icon}
       </div>
     </div>
