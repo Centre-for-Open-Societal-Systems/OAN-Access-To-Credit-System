@@ -1,10 +1,11 @@
 export interface User {
-  username: string;
+  username?: string;
   officerName: string;
   email: string;
-  mobileNo: string;
-  userType: string;
+  mobileNo?: string;
+  userType?: string;
   homePage: string;
+  roles?: string[];
   [key: string]: any;
 }
 

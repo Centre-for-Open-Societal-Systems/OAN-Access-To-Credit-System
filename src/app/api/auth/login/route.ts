@@ -26,8 +26,17 @@ export async function POST(request: Request) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      let errorMessage = 'Invalid credentials. Please try again.';
+      if (typeof data.message === 'string') {
+        errorMessage = data.message;
+      } else if (data.message && typeof data.message === 'object') {
+        errorMessage = data.message.message || data.message.error || JSON.stringify(data.message);
+      } else if (data.exc_type || data.exception) {
+        errorMessage = data.exc_type || 'Authentication Error';
+      }
+
       return NextResponse.json(
-        { message: data.message || 'Invalid credentials. Please try again.' },
+        { message: errorMessage },
         { status: response.status }
       );
     }

@@ -15,7 +15,7 @@ body {
   min-height: 100%;
   overflow-x: hidden;
   color: var(--text-primary);
-  font-family: var(--font-body);
+  @apply font-body;
   background: #f7f8fb;
   isolation: isolate;
 }

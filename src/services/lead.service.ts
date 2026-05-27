@@ -1,12 +1,42 @@
-import { Lead } from '@/types/leads.types';
+import { Lead, GetLeadsParams } from '@/types/leads.types';
 
 export const leadService = {
-  async getLeads(): Promise<Lead[]> {
-    const response = await fetch('/api/leads');
+  async getLeads(params?: GetLeadsParams): Promise<Lead[]> {
+    const url = new URL(
+      '/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads',
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+    );
+    
+    url.searchParams.append('start', params?.start?.toString() || '0');
+    url.searchParams.append('page_length', params?.page_length?.toString() || '20');
+    url.searchParams.append('search_query', params?.search_query || '');
+    url.searchParams.append('status', params?.status || '');
+    url.searchParams.append('lead_source', params?.lead_source || '');
+    url.searchParams.append('start_date', params?.start_date || '');
+    url.searchParams.append('end_date', params?.end_date || '');
+
+    const response = await fetch(url.toString());
     if (!response.ok) {
       throw new Error('Failed to fetch leads');
     }
-    return response.json();
+    const data = await response.json();
+    
+    const rawLeads = data.message?.results || [];
+
+    return rawLeads.map((item: any): Lead => ({
+      id: item.name,
+      name: item.name,
+      phone: item.phone_number || '',
+      status: item.status || 'New',
+      location: item.location || 'Unknown',
+      cropFocus: item.crop_focus || 'Unknown',
+      farmSize: item.farm_size || 'Unknown',
+      source: item.lead_source || 'Unknown',
+      assignedTo: item.assigned_to,
+      owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
+      callStartTime: item.creation,
+      external_id: item.external_id,
+    }));
   },
 
   async getLead(id: string): Promise<Lead> {

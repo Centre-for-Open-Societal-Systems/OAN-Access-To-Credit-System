@@ -6,7 +6,7 @@ interface LoginCredentials {
 }
 
 export async function loginUser({ usr, pwd }: LoginCredentials): Promise<any> {
-  const res = await fetch(`${BASE_URL}/api/method/login`, {
+  const res = await fetch(`/api/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -22,5 +22,16 @@ export async function loginUser({ usr, pwd }: LoginCredentials): Promise<any> {
     throw new Error(data.message || 'Invalid credentials. Please try again.');
   }
 
-  return data;
+  let userPayload = data.user || data;
+  
+  // Frappe often nests data deeply, e.g., { message: { user: { full_name: ... } } }
+  if (userPayload?.message?.user) {
+    userPayload = userPayload.message.user;
+  } else if (userPayload?.message && typeof userPayload.message === 'object') {
+    userPayload = userPayload.message;
+  } else if (userPayload?.user) {
+    userPayload = userPayload.user;
+  }
+
+  return userPayload;
 }

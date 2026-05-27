@@ -1,25 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchLeadsThunk, selectAllLeads, selectLeadsStatus } from '../store/leadSlice';
+import type { AppDispatch } from '@/store';
 import { leadService } from '@/services/lead.service';
+import type { GetLeadsParams } from '@/types/leads.types';
 
-export const leadKeys = {
-  all: ['leads'] as const,
-  lists: () => [...leadKeys.all, 'list'] as const,
-  list: (filters: string) => [...leadKeys.lists(), { filters }] as const,
-  details: () => [...leadKeys.all, 'detail'] as const,
-  detail: (id: string) => [...leadKeys.details(), id] as const,
-};
+export function useLeads(params?: GetLeadsParams) {
+  const dispatch = useDispatch<AppDispatch>();
+  const leads = useSelector(selectAllLeads);
+  const status = useSelector(selectLeadsStatus);
 
-export function useLeads() {
-  return useQuery({
-    queryKey: leadKeys.lists(),
-    queryFn: leadService.getLeads,
-  });
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchLeadsThunk(params));
+    }
+  }, [status, dispatch, params]);
+
+  return {
+    data: leads,
+    isLoading: status === 'loading' || status === 'idle',
+    isError: status === 'failed',
+  };
 }
 
 export function useLead(id: string) {
-  return useQuery({
-    queryKey: leadKeys.detail(id),
-    queryFn: () => leadService.getLead(id),
-    enabled: !!id,
-  });
+  const leads = useSelector(selectAllLeads);
+  const lead = leads.find(l => l.id === id || l.name === id);
+  
+  return {
+    data: lead,
+    isLoading: false,
+    isError: false,
+  };
 }

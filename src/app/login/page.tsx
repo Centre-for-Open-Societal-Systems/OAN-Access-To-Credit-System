@@ -3,16 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
-  Building2,
   Check,
   ChevronDown,
   Eye,
   EyeOff,
-  ShieldAlert,
   Sprout,
-  Tractor,
   UserRound,
-  Users,
   Lock,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,26 +17,7 @@ import { useRouter } from 'next/navigation';
 import { loginThunk, selectAuthError, selectAuthStatus, clearAuthError } from '@/features/auth/store/authSlice';
 import type { AppDispatch } from '@/store';
 
-const roles = [
-  {
-    id: 'farmer-applicant',
-    title: 'Farmer Applicant',
-    description: 'Credit assessment, underwriting, approval',
-    icon: Tractor,
-  },
-  {
-    id: 'development-agent',
-    title: 'Development Agent',
-    description: 'Field operations, KYC, and application entry',
-    icon: Users,
-  },
-  {
-    id: 'bank-admin',
-    title: 'Bank Admin',
-    description: 'Credit assessment, underwriting, approval',
-    icon: Building2,
-  },
-];
+
 
 const activeAgents = [
   { initials: 'AM', tone: 'linear-gradient(135deg, #8bd0f7 0%, #2d6ea8 100%)' },
@@ -62,21 +39,14 @@ export default function Login() {
   const authError = useSelector(selectAuthError);
   const isLoading = authStatus === 'loading';
 
-  const [selectedRole, setSelectedRole] = useState(roles[1]);
-  const [activeHeaderAction, setActiveHeaderAction] = useState('login');
   const [activeLanguage, setActiveLanguage] = useState(languages[0]);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
-  const [portalMode, setPortalMode] = useState('signin');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const languageMenuRef = useRef<HTMLDivElement>(null);
 
-  const selectedRoleTitle = selectedRole.title;
-  const portalSubtitle =
-    portalMode === 'signin'
-      ? `Access the ${selectedRoleTitle}`
-      : 'Select your role to access the agricultural credit system network.';
+  const portalSubtitle = 'Access the agricultural credit system network.';
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -91,11 +61,7 @@ export default function Login() {
     return () => document.removeEventListener('mousedown', handleDocumentClick);
   }, []);
 
-  const handleContinueToSignIn = () => {
-    setPortalMode('signin');
-    setIsLanguageMenuOpen(false);
-    setIsPasswordVisible(false);
-  };
+
 
   const handleSignInSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -123,19 +89,17 @@ export default function Login() {
           <div className="header-actions" aria-label="Header actions">
             <button
               className="header-tab"
-              data-active={activeHeaderAction === 'login'}
+              data-active={true}
               type="button"
-              aria-pressed={activeHeaderAction === 'login'}
-              onClick={() => setActiveHeaderAction('login')}
+              aria-pressed={true}
             >
               Login
             </button>
             <button
               className="header-tab"
-              data-active={activeHeaderAction === 'get-started'}
+              data-active={false}
               type="button"
-              aria-pressed={activeHeaderAction === 'get-started'}
-              onClick={() => setActiveHeaderAction('get-started')}
+              aria-pressed={false}
             >
               <span>Get Started</span>
               <ArrowRight size={18} strokeWidth={2.2} />
@@ -268,63 +232,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="portal-panel__body" data-mode={portalMode} key={portalMode}>
-                {portalMode === 'selection' ? (
-                  <>
-                    <div className="connect-banner">
-                      <div className="connect-banner__icon" aria-hidden="true">
-                        <ShieldAlert size={16} strokeWidth={2.25} />
-                      </div>
-
-                      <div className="connect-banner__copy">
-                        <strong>Low Connectivity Detected</strong>
-                        <p>
-                          The system is operating in offline-optimized mode. Some features may sync
-                          later.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="role-list">
-                      {roles.map((role) => {
-                        const Icon = role.icon;
-                        const isActive = selectedRole.id === role.id;
-
-                        return (
-                          <button
-                            key={role.id}
-                            className="role-card"
-                            data-active={isActive}
-                            type="button"
-                            onClick={() => setSelectedRole(role)}
-                          >
-                            <span className="role-card__icon" aria-hidden="true">
-                              <Icon size={18} strokeWidth={2.2} />
-                            </span>
-
-                            <span className="role-card__copy">
-                              <span className="role-card__title">{role.title}</span>
-                              <span className="role-card__description">{role.description}</span>
-                            </span>
-
-                            <span className="role-card__radio" aria-hidden="true">
-                              {isActive ? <Check size={12} strokeWidth={3} /> : null}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <button className="primary-cta" type="button" onClick={handleContinueToSignIn}>
-                      <span>Continue to Sign In</span>
-                      <ArrowRight size={16} strokeWidth={2.25} />
-                    </button>
-
-                    <p className="signup-line">
-                      Need a new account? <a href="#">Register here</a>
-                    </p>
-                  </>
-                ) : (
+              <div className="portal-panel__body">
                   <form className="sign-in-form" onSubmit={handleSignInSubmit}>
                     <label className="sign-in-field">
                       <span className="sign-in-field__label">Phone Number or Email</span>
@@ -399,7 +307,6 @@ export default function Login() {
                       Need a new account? <a href="#">Register here</a>
                     </p>
                   </form>
-                )}
               </div>
             </div>
           </div>

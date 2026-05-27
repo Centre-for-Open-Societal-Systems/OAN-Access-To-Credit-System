@@ -50,7 +50,7 @@ const STEPS = [
 ];
 
 const STEP_META = [
-  { title: 'Loan Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
+  { title: 'Credit Request Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
   { title: 'Bank Details',               subtitle: 'Capture bank account and settlement details for the loan application.' },
   { title: 'Supporting Documents',       subtitle: 'Upload all required supporting documents for the loan application.' },
   { title: 'Consent & OTP Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
@@ -512,7 +512,7 @@ function Step1({ form, setField, errors }: StepProps) {
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Loan Type <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {LOAN_TYPE_OPTIONS.map(opt => {
                 const selected = form.loanType === opt.value;
                 return (

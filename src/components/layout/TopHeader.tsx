@@ -11,6 +11,8 @@ import {
   Settings,
   UserRound,
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectOfficerName, selectOfficerRole } from '@/features/auth/store/authSlice';
 
 import menuToggleArrow from './menu-toggle-arrow.svg';
 import menuToggleBars from './menu-toggle-bars.svg';
@@ -39,6 +41,13 @@ interface TopHeaderProps {
 function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 'Dashboard' }: TopHeaderProps) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  
+  const rawOfficerName = useSelector(selectOfficerName);
+  const rawOfficerRole = useSelector(selectOfficerRole);
+
+  const officerName = rawOfficerName || 'Guest User';
+  const officerRole = rawOfficerRole || 'Loan Officer';
+  const initials = officerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'GU';
 
   useEffect(() => {
     const handleDocumentPointerDown = (event: MouseEvent) => {
@@ -75,7 +84,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
         >
           <span className="relative block h-[1.4rem] w-[1.4rem]" aria-hidden="true">
             <img
-              src={menuToggleBars}
+              src={menuToggleBars.src || menuToggleBars}
               alt=""
               aria-hidden="true"
               className={[
@@ -87,7 +96,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
               ].join(' ')}
             />
             <img
-              src={menuToggleArrow}
+              src={menuToggleArrow.src || menuToggleArrow}
               alt=""
               aria-hidden="true"
               className={[
@@ -161,7 +170,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
               className="relative grid h-[2.25rem] w-[2.25rem] flex-[0_0_auto] place-items-center overflow-hidden rounded-full bg-[linear-gradient(135deg,#f5b27d_0%,#c8642d_100%)] text-[0.72rem] font-bold tracking-[0.08em] text-white"
               aria-hidden="true"
             >
-              DT
+              {initials}
               <span
                 className="absolute -right-[0.02rem] -top-[0.02rem] h-[0.58rem] w-[0.58rem] rounded-full border-2 border-white bg-[#38b869] animate-[dashboard-profile-status-pulse_2.3s_ease-in-out_infinite]"
                 aria-hidden="true"
@@ -170,8 +179,8 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
 
             {/* Name & role */}
             <span className="flex min-w-0 flex-col items-start gap-[0.08rem]">
-              <strong className="text-[0.8rem] font-bold tracking-[-0.02em] text-text-primary">Dawit Tadesse</strong>
-              <span className="text-[0.64rem] font-semibold text-text-muted max-[640px]:hidden">Loan Officer</span>
+              <strong className="text-[0.8rem] font-bold tracking-[-0.02em] text-text-primary">{officerName}</strong>
+              <span className="text-[0.64rem] font-semibold text-text-muted max-[640px]:hidden">{officerRole}</span>
             </span>
 
             <ChevronDown
@@ -202,11 +211,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
                 className="grid h-[2.7rem] w-[2.7rem] flex-[0_0_auto] place-items-center rounded-full bg-[linear-gradient(135deg,#f5b27d_0%,#c8642d_100%)] shadow-[0_14px_24px_rgba(200,100,45,0.22)] text-white text-[0.78rem] font-bold tracking-[0.08em]"
                 aria-hidden="true"
               >
-                DT
+                {initials}
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-[0.12rem]">
-                <strong className="text-[0.96rem] font-bold tracking-[-0.03em] text-text-primary">Dawit Tadesse</strong>
-                <span className="text-[0.72rem] text-text-muted">Loan Officer</span>
+                <strong className="text-[0.96rem] font-bold tracking-[-0.03em] text-text-primary">{officerName}</strong>
+                <span className="text-[0.72rem] text-text-muted">{officerRole}</span>
               </div>
               <span className="self-start rounded-full bg-[rgba(56,184,105,0.14)] px-[0.45rem] py-[0.2rem] text-[0.56rem] font-bold uppercase tracking-[0.12em] text-[#2f9a58] max-[640px]:hidden">
                 Online

@@ -5,7 +5,7 @@ import type { User, AuthState } from '../../../types/auth.types';
 
 export const loginThunk = createAsyncThunk<
   User,
-  Record<string, any>,
+  { usr: string; pwd: string },
   { rejectValue: string }
 >(
   'auth/login',
@@ -20,9 +20,12 @@ export const loginThunk = createAsyncThunk<
       return {
         officerName: loginData.full_name,
         homePage: loginData.home_page ?? '/',
+        roles: loginData.roles ?? [],
+        email: loginData.email ?? '',
       } as User;
-    } catch (err: any) {
-      return rejectWithValue(err.message ?? 'Login failed. Please try again.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      return rejectWithValue(message);
     }
   },
 );
@@ -66,8 +69,8 @@ const authSlice = createSlice({
 export const { logout, clearAuthError } = authSlice.actions;
 
 export const selectUser = (state: RootState) => state.auth.user;
-export const selectUsername = (state: RootState) => state.auth.user;
 export const selectOfficerName = (state: RootState) => state.auth.user?.officerName ?? null;
+export const selectOfficerRole = (state: RootState) => state.auth.user?.roles?.[0] ?? state.auth.user?.userType ?? null;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
 export const selectIsAuthenticated = (state: RootState) => state.auth.user !== null;

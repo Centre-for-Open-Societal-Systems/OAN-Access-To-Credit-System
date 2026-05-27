@@ -20,3 +20,13 @@ export interface KpiStat {
   trend?: string;
   trendUp?: boolean;
 }
+
+export interface GetLeadsParams {
+  start?: number;
+  page_length?: number;
+  search_query?: string;
+  status?: string;
+  lead_source?: string;
+  start_date?: string;
+  end_date?: string;
+}

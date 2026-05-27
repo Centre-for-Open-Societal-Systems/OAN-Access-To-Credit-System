@@ -5,12 +5,14 @@ const nextConfig = {
     includePaths: ['./src/assets/styles'],
   },
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://a2c-backend-development.oanstaging.com/api/:path*',
-      },
-    ];
+    return {
+      fallback: [
+        {
+          source: '/api/:path*',
+          destination: 'https://a2c-backend-development.oanstaging.com/api/:path*',
+        },
+      ],
+    };
   },
 };
 
