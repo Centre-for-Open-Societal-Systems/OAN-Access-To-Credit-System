@@ -15,26 +15,10 @@ export const loginThunk = createAsyncThunk<
     try {
       const loginData = await loginUser({ usr, pwd });
 
-      const sessionRes = await fetch(
-        `${BASE_URL}/api/method/frappe.auth.get_logged_user`,
-        { headers: { Accept: 'application/json' }, credentials: 'include' },
-      );
-      const sessionData = await sessionRes.json().catch(() => ({}));
-      const username = sessionData.message ?? usr;
 
-      const userRes = await fetch(
-        `${BASE_URL}/api/resource/User/${encodeURIComponent(username)}`,
-        { headers: { Accept: 'application/json' }, credentials: 'include' },
-      );
-      const userData = await userRes.json().catch(() => ({}));
-      const userDoc = userData.data ?? {};
 
       return {
-        username,
-        officerName: userDoc.full_name ?? loginData.full_name ?? username,
-        email: userDoc.email ?? username,
-        mobileNo: userDoc.mobile_no ?? '',
-        userType: userDoc.user_type ?? '',
+        officerName: loginData.full_name,
         homePage: loginData.home_page ?? '/',
       } as User;
     } catch (err: any) {
@@ -82,7 +66,7 @@ const authSlice = createSlice({
 export const { logout, clearAuthError } = authSlice.actions;
 
 export const selectUser = (state: RootState) => state.auth.user;
-export const selectUsername = (state: RootState) => state.auth.user?.username ?? null;
+export const selectUsername = (state: RootState) => state.auth.user;
 export const selectOfficerName = (state: RootState) => state.auth.user?.officerName ?? null;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
