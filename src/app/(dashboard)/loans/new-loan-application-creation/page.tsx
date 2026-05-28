@@ -12,6 +12,14 @@ import { ReactNode } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectLoanFormState, setStep, updateFormData, setApplicationId, resetForm } from '@/features/loans/store/loanFormSlice';
 import { useSaveLoanDetails, useSaveBankDetails, useSaveFarmerDetails, useSubmitApplication, useUploadDocument, useConsentApis } from '@/features/loans/hooks/useLoans';
+import {
+  STEP_META, GENDER_OPTIONS, MARITAL_OPTIONS, EDUCATION_OPTIONS, LOAN_TYPE_OPTIONS,
+  PURPOSE_OPTIONS, DURATION_OPTIONS, CROP_OPTIONS, CROP_VARIETY_OPTIONS,
+  OTHER_FARMING_ACTIVITY_OPTIONS, HARVEST_AGGREGATOR_OPTIONS, FERTILIZER_PRICE_OPTIONS,
+  AGROCHEMICAL_OPTIONS, CROP_PROTECTION_COST_OPTIONS, DATA_FIELDS, CONSENT_TYPE_OPTIONS,
+  CONSENT_DURATION_OPTIONS, LANGUAGE_OPTIONS, SOURCE_OF_INCOME_OPTIONS, ID_TYPE_OPTIONS,
+  AGRONOMIC_FARMLAND_OPTIONS, LAND_OWNERSHIP_OPTIONS, SOIL_FERTILITY_OPTIONS, MOISTURE_LEVEL_OPTIONS
+} from '@/features/loans/constants/loans.constants';
 
 export interface FormState {
   [key: string]: any;
@@ -51,47 +59,6 @@ const STEPS = [
   { number: 6, label: 'Review Application' },
 ];
 
-const STEP_META = [
-  { title: 'Loan Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
-  { title: 'Bank Details',               subtitle: 'Capture bank account and settlement details for the loan application.' },
-  { title: 'Supporting Documents',       subtitle: 'Upload all required supporting documents for the loan application.' },
-  { title: 'Consent & OTP Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
-  { title: 'Farmer Details',             subtitle: "Please verify or enter the farmer's personal details." },
-  { title: 'Review Application',         subtitle: 'Please review all information before final submission. Resolve any warnings or missing info.' },
-];
-
-const GENDER_OPTIONS    = ['Male', 'Female'];
-const MARITAL_OPTIONS   = ['Single', 'Married', 'Divorced', 'Widowed'];
-const EDUCATION_OPTIONS = ['No Formal Education', 'Primary School', 'Secondary School', 'Vocational / TVET', 'Diploma', "Bachelor's Degree", 'Postgraduate'];
-const LOAN_TYPE_OPTIONS = [
-  { value: 'input',     label: 'Input Financing',     sub: 'Seeds, fertilizers, chemicals' },
-  { value: 'machinery', label: 'Machinery/Equipment',  sub: 'Tractors, harvesters, irrigation' },
-  { value: 'conventional', label: 'Conventional', sub: 'Tractors, harvesters, irrigation' },
-  { value: 'alhuda', label: 'Alhuda (Islamic Financing)', sub: 'Sharia-compliant agricultural credit' },
-];
-const PURPOSE_OPTIONS  = ['Agro-processing (e.g., milling grain)', 'Crop Production', 'Livestock', 'Equipment Purchase', 'Land Development', 'Input Purchase'];
-const DURATION_OPTIONS = ['6 Months', '12 Months (1 Year)', '18 Months', '24 Months (2 Years)', '36 Months (3 Years)'];
-const CROP_OPTIONS     = ['Barley', 'Wheat', 'Soybeans', 'Maize', 'Other Variety'];
-const CROP_VARIETY_OPTIONS = ['Seed + S-Hela/Achen + Stellar Star', 'Hybrid Maize BH-546', 'Soybean Pawe-03', 'Barley HB-1307', 'Other Variety'];
-const OTHER_FARMING_ACTIVITY_OPTIONS = ['Cattle, Poultry, Sheep/Goats, Other Income Sources', 'Cattle', 'Poultry', 'Sheep/Goats', 'Other Income Sources'];
-const HARVEST_AGGREGATOR_OPTIONS = [
-  { value: 'primaryCooperative', label: 'Primary Cooperative', sub: 'Member-based produce collection and marketing' },
-  { value: 'nucleusFarmer', label: 'Nucleus Farmer', sub: 'Lead farmer coordinating outgrower harvests' },
-];
-const FERTILIZER_PRICE_OPTIONS = ['ETB 850 / Bag', 'ETB 900 / Bag', 'ETB 950 / Bag'];
-const AGROCHEMICAL_OPTIONS = ['A', 'B', 'C', 'D'];
-const CROP_PROTECTION_COST_OPTIONS = ['ETB 5,000', 'ETB 10,000', 'ETB 15,000'];
-const DATA_FIELDS      = ['Basic Profile (Required)', 'Phone Number', 'Farm Details & Location'];
-
-const CONSENT_TYPE_OPTIONS     = ['Specific (Single Farmer)', 'Group', 'Cooperative'];
-const CONSENT_DURATION_OPTIONS = ['6 Months', '12 Months', '18 Months', '24 Months'];
-const LANGUAGE_OPTIONS         = ['Amharic', 'English', 'Oromiffa', 'Tigrinya', 'Somali', 'Other'];
-const SOURCE_OF_INCOME_OPTIONS = ['Salary', 'Farming', 'Business', 'Pension', 'Other'];
-const ID_TYPE_OPTIONS          = ['National ID', 'Passport', 'Kebele ID', 'Driving License'];
-const AGRONOMIC_FARMLAND_OPTIONS = ['Capacity for production', 'Good', 'Average', 'Poor'];
-const LAND_OWNERSHIP_OPTIONS     = ['Security of access', 'Owned', 'Leased', 'Shared'];
-const SOIL_FERTILITY_OPTIONS     = ['Future yield potential', 'High', 'Medium', 'Low'];
-const MOISTURE_LEVEL_OPTIONS     = ['Irrigation / drought risks', 'Well-irrigated', 'Rain-fed', 'Drought-prone'];
 
 function formatDateTime(date: Date | string) {
   if (!date) return '';

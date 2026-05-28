@@ -5,10 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock3, FileText, ListChecks, Plus, SquarePen, Users } from 'lucide-react';
-import Sidebar from '@/components/layout/Sidebar';
-import TopHeader from '@/components/layout/TopHeader';
+import Sidebar from '@/components/Sidebar';
+import TopHeader from '@/components/TopHeader';
 import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
-import '@/assets/styles/main-layout.scss';
+import '@/styles/main-layout.scss';
 
 const navigationSections = [
   {

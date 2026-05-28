@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
-import '../assets/styles/main.scss';
-import '../assets/styles/login.scss';
+import '@/styles/main.scss';
+import '@/styles/login.scss';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],

@@ -25,9 +25,10 @@ import {
   Wifi,
 } from 'lucide-react';
 
-import '@/assets/styles/loan-dashboard.scss';
+import '@/styles/loan-dashboard.scss';
 import LoanKpiCard from '@/features/loans/components/LoanKpiCard';
 import { useLoans, useLoanSummary } from '@/features/loans/hooks/useLoans';
+import { PAGE_SIZE, DATE_RANGE_OPTIONS } from '@/features/loans/constants/loans.constants';
 
 const systemStatus = [
   { label: 'Network Status', value: 'Online', icon: Wifi, tone: 'success' },
@@ -83,18 +84,7 @@ const STATUS_OPTIONS = [
   { label: 'Draft', value: 'neutral' },
 ];
 
-const PAGE_SIZE = 5;
 const ALL_STATUS_VALUES = new Set(STATUS_OPTIONS.map((o) => o.value));
-
-const DATE_RANGE_OPTIONS = [
-  { label: 'Today',         value: 'today' },
-  { label: 'Yesterday',     value: 'yesterday' },
-  { label: 'Last 7 Days',   value: 'last7' },
-  { label: 'Last 30 Days',  value: 'last30' },
-  { label: 'Last 3 Months', value: 'last3m' },
-  { label: 'Last 6 Months', value: 'last6m' },
-  { label: 'Last Year',     value: 'last1y' },
-];
 
 const isWithinDateRange = (row: any, range: any) => {
   const datePart = row.updated.split(' · ')[0];
