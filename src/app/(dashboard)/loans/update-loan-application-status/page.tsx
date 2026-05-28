@@ -235,7 +235,7 @@ function UpdateLoanStatus() {
   // KPI counts
   const counts = useMemo(() => {
     const c = { total: loans.length };
-    loans.forEach((l) => { (c as any)[l.status] = ((c as any)[l.status] || 0) + 1; });
+    loans.forEach((l: any) => { (c as any)[l.status] = ((c as any)[l.status] || 0) + 1; });
     return c;
   }, [loans]);
 
@@ -243,7 +243,7 @@ function UpdateLoanStatus() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return loans.filter(
-      (l) =>
+      (l: any) =>
         (activeTab === 'All' || l.status === activeTab) &&
         (!q || `${l.id} ${l.applicant} ${l.region} ${l.type}`.toLowerCase().includes(q)),
     );
@@ -398,7 +398,7 @@ function UpdateLoanStatus() {
                   </td>
                 </tr>
               ) : (
-                visible.map((loan) => (
+                visible.map((loan: any) => (
                   <tr key={loan.id} className="transition-colors hover:bg-slate-50">
                     <td className="px-5 py-4">
                       <span className="font-bold text-[#16A34A]">{loan.id}</span>

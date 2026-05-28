@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable}`}>
-      <body>
+      <body className="font-body antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

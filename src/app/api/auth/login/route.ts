@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const baseUrl = 'https://a2c-backend-development.oanstaging.com';
 
     // Call external API using a clean slate (like Postman)
-    const response = await fetch(`${baseUrl}/api/method/login`, {
+    const response = await fetch(`${baseUrl}/api/method/oan_a2c.api.auth.login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

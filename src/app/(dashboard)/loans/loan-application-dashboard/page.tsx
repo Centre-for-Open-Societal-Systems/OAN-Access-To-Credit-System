@@ -27,7 +27,7 @@ import {
 
 import '@/assets/styles/loan-dashboard.scss';
 import LoanKpiCard from '@/features/loans/components/LoanKpiCard';
-import { useLoans } from '@/features/loans/hooks/useLoans';
+import { useLoans, useLoanSummary } from '@/features/loans/hooks/useLoans';
 
 const systemStatus = [
   { label: 'Network Status', value: 'Online', icon: Wifi, tone: 'success' },
@@ -142,7 +142,10 @@ const isWithinDateRange = (row: any, range: any) => {
 }
 
 function LoanApplicationDashboard() {
-  const { data: activityRows = [], isLoading } = useLoans();
+  const { data: rawActivityData, isLoading } = useLoans();
+  const { data: rawSummaryData } = useLoanSummary();
+  const activityRows = rawActivityData?.message || rawActivityData?.data || rawActivityData || [];
+  const summaryData = rawSummaryData?.message || rawSummaryData?.data || rawSummaryData || {};
   const [activityPage, setActivityPage] = useState(1);
   const [selectedStatuses, setSelectedStatuses] = useState(new Set(ALL_STATUS_VALUES));
   const [filterOpen, setFilterOpen] = useState(false);
@@ -186,7 +189,16 @@ function LoanApplicationDashboard() {
     setActivityPage(1);
   }
 
-  const rangeMetrics = (METRICS_BY_RANGE as any)[dateRange];
+  // Map API summary data to the metrics shape expected by the UI
+  const liveMetrics = useMemo(() => {
+    return {
+      total: { value: summaryData.total || '0', trend: '', dir: 'up' },
+      approved: { value: summaryData.approved || summaryData.Approved || '0', trend: '', dir: 'up' },
+      pending: { value: summaryData.pending || summaryData['Pending Review'] || summaryData.Draft || '0', trend: '', dir: 'up' },
+      rejected: { value: summaryData.rejected || summaryData.Rejected || '0', trend: '', dir: 'up' },
+    };
+  }, [summaryData]);
+
   const visibleNotifications = allNotifications.filter((n) => isWithinDateRange({ updated: n.time }, dateRange));
   const dateFilteredRows = activityRows.filter((r: any) => isWithinDateRange(r, dateRange));
   const filteredRows = selectedStatuses.size === 0 || allChecked
@@ -284,7 +296,7 @@ function LoanApplicationDashboard() {
 
       <section id="dashboard-metrics" className="dashboard-metrics-grid">
         {METRIC_CONFIG.map((cfg) => (
-          <LoanKpiCard key={cfg.label} cfg={cfg} stat={rangeMetrics[cfg.key]} />
+          <LoanKpiCard key={cfg.label} cfg={cfg} stat={(liveMetrics as any)[cfg.key]} />
         ))}
       </section>
 
@@ -365,7 +377,7 @@ function LoanApplicationDashboard() {
               <tbody>
                 {pagedRows.length === 0 ? (
                   <tr><td colSpan={5} className="dashboard-empty-state">No applications found for this period.</td></tr>
-                ) : pagedRows.map((row, index) => (
+                ) : pagedRows.map((row: any, index: number) => (
                   <tr key={`${row.id}-${index}`}>
                     <td>
                       <strong>{row.id}</strong>

@@ -11,11 +11,12 @@ import LeadTable from '@/features/leads/components/LeadTable';
 import LeadPagination from '@/features/leads/components/LeadPagination';
 import LeadAdvancedFilters from '@/features/leads/components/LeadAdvancedFilters';
 import LeadLoadingSkeleton from '@/features/leads/components/LeadLoadingSkeleton';
-import { useLeads } from '@/features/leads/hooks/useLeads';
+import { useLeads, useLeadSummary } from '@/features/leads/hooks/useLeads';
 
 export default function LeadsDashboard() {
   const router = useRouter();
   const { data: allLeads = [], isLoading } = useLeads();
+  const { data: leadSummary } = useLeadSummary();
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -33,17 +34,26 @@ export default function LeadsDashboard() {
   const baseLeads = activeTab === 'my' ? myLeads : activeTab === 'unassigned' ? unassignedLeads : allLeads;
 
   const liveKpiStats = useMemo(() => {
-    const counts: Record<string, number> = {};
-    allLeads.forEach((l: any) => { counts[l.status.toLowerCase()] = (counts[l.status.toLowerCase()] || 0) + 1; });
+    if (!leadSummary) return kpiStats.filter((s: any) => s.id !== 'disqualified');
+
+    const byStatus = leadSummary.by_status || {};
+    
     return kpiStats
       .filter((s: any) => s.id !== 'disqualified')
-      .map((s: any) => ({
-        ...s,
-        display: s.id === 'total'
-          ? allLeads.length.toLocaleString()
-          : (counts[s.id] || 0).toLocaleString(),
-      }));
-  }, [allLeads]);
+      .map((s: any) => {
+        let count = 0;
+        if (s.id === 'total') count = leadSummary.total || 0;
+        else if (s.id === 'initiated') count = byStatus['Initiated'] || 0;
+        else if (s.id === 'qualified') count = byStatus['Qualified'] || 0;
+        else if (s.id === 'processed') count = byStatus['Processed'] || 0;
+        else if (s.id === 'rejected') count = byStatus['Not Interested'] || byStatus['Rejected'] || 0;
+        
+        return {
+          ...s,
+          display: count.toLocaleString(),
+        };
+      });
+  }, [leadSummary]);
 
   function parseCallDate(callStartTime?: string): Date | null {
     if (!callStartTime) return null;

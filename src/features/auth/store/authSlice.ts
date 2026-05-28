@@ -15,16 +15,13 @@ export const loginThunk = createAsyncThunk<
     try {
       const loginData = await loginUser({ usr, pwd });
 
-
-
       return {
-        officerName: loginData.full_name,
+        officerName: loginData.full_name || usr,
         homePage: loginData.home_page ?? '/',
-        roles: loginData.roles ?? [],
-        email: loginData.email ?? '',
+        roles: Array.isArray(loginData.roles) ? loginData.roles : [],
       } as User;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      const message = err instanceof Error ? err.message : 'Unknown Cause. Please Try Again Later';
       return rejectWithValue(message);
     }
   },
@@ -40,6 +37,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    hydrate(state, action: PayloadAction<User>) {
+      state.user = action.payload;
+      state.status = 'succeeded';
+    },
     logout(state) {
       state.user = null;
       state.status = 'idle';
@@ -66,11 +67,10 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError } = authSlice.actions;
+export const { logout, clearAuthError, hydrate } = authSlice.actions;
 
-export const selectUser = (state: RootState) => state.auth.user;
 export const selectOfficerName = (state: RootState) => state.auth.user?.officerName ?? null;
-export const selectOfficerRole = (state: RootState) => state.auth.user?.roles?.[0] ?? state.auth.user?.userType ?? null;
+export const selectOfficerRole = (state: RootState) => state.auth.user?.roles?.[0] ?? null;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
 export const selectIsAuthenticated = (state: RootState) => state.auth.user !== null;

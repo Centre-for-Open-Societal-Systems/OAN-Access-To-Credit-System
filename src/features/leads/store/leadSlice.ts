@@ -1,69 +1,39 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { leadService } from '../../../services/lead.service';
-import type { Lead, GetLeadsParams } from '../../../types/leads.types';
+import { createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 
+// Keeping the slice minimal — leads data fetching is now handled by TanStack Query.
+// This slice can be used for client-side lead state if needed in the future
+// (e.g., selected leads, UI filters, etc.)
+
 interface LeadState {
-  leads: Lead[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  error: string | null;
+  selectedLeadIds: string[];
 }
 
 const initialState: LeadState = {
-  leads: [],
-  status: 'idle',
-  error: null,
+  selectedLeadIds: [],
 };
-
-export const fetchLeadsThunk = createAsyncThunk<
-  Lead[],
-  GetLeadsParams | undefined,
-  { rejectValue: string }
->(
-  'leads/fetchLeads',
-  async (params, { rejectWithValue }) => {
-    try {
-      const data = await leadService.getLeads(params);
-      return data;
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        return rejectWithValue(err.message || 'Failed to fetch leads.');
-      }
-      return rejectWithValue('Failed to fetch leads.');
-    }
-  }
-);
 
 const leadSlice = createSlice({
   name: 'leads',
   initialState,
   reducers: {
-    clearLeadsStatus(state) {
-      state.status = 'idle';
-      state.error = null;
-    }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchLeadsThunk.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
-      .addCase(fetchLeadsThunk.fulfilled, (state, action: PayloadAction<Lead[]>) => {
-        state.status = 'succeeded';
-        state.leads = action.payload;
-      })
-      .addCase(fetchLeadsThunk.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload ?? 'Something went wrong.';
-      });
+    toggleLeadSelection(state, action) {
+      const id = action.payload;
+      const idx = state.selectedLeadIds.indexOf(id);
+      if (idx >= 0) {
+        state.selectedLeadIds.splice(idx, 1);
+      } else {
+        state.selectedLeadIds.push(id);
+      }
+    },
+    clearLeadSelection(state) {
+      state.selectedLeadIds = [];
+    },
   },
 });
 
-export const { clearLeadsStatus } = leadSlice.actions;
+export const { toggleLeadSelection, clearLeadSelection } = leadSlice.actions;
 
-export const selectAllLeads = (state: RootState) => state.leads.leads;
-export const selectLeadsStatus = (state: RootState) => state.leads.status;
-export const selectLeadsError = (state: RootState) => state.leads.error;
+export const selectSelectedLeadIds = (state: RootState) => state.leads.selectedLeadIds;
 
 export default leadSlice.reducer;

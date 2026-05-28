@@ -1,0 +1,20 @@
+
+> a2c-react-project@0.0.0 typecheck /Users/arnav/Code/Access-to-Credit-System
+> tsc --noEmit
+
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(106,92): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(123,220): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(279,279): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(312,381): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(327,226): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(337,85): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(348,66): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(997,60): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1209,101): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1276,219): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1561,158): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1600,121): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1648,164): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1749,140): error TS1005: ',' expected.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1808,101): error TS1005: ',' expected.
+ ELIFECYCLE  Command failed with exit code 2.

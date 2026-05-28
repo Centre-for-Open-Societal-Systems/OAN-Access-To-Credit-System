@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useQueryClient } from '@tanstack/react-query';
 import { Clock3, FileText, ListChecks, Plus, SquarePen, Users } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import TopHeader from '@/components/layout/TopHeader';
-import { selectIsAuthenticated } from '@/features/auth/store/authSlice';
+import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
 import '@/assets/styles/main-layout.scss';
 
 const navigationSections = [
@@ -56,17 +57,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  // Secure Auth Guard
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login');
-    }
-  }, [isAuthenticated, router]);
-
   const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard';
+
+  useEffect(() => {
+    // Simple client-side auth guard. Server-side or middleware is preferred in prod, 
+    // but this pairs with the existing localStorage hydration and QueryCache error handler.
+    const cachedUser = localStorage.getItem('auth_user');
+    if (!cachedUser) {
+      router.push('/login');
+    }
+  }, [pathname, router]);
 
   useEffect(() => {
     document.title = `${pageTitle} | Open AgriNet`;
@@ -82,10 +87,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else {
       setIsSidebarCollapsed((prev) => !prev);
     }
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (
@@ -105,7 +106,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <TopHeader
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}
-          onLogout={() => router.push('/login')}
+          onLogout={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+            dispatch(logoutAction());
+            queryClient.clear();
+            router.push('/login');
+          }}
           pageTitle={pageTitle}
         />
         <div id="dashboard-content" className="dashboard-content">

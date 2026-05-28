@@ -1,0 +1,65 @@
+
+> a2c-react-project@0.0.0 typecheck /Users/arnav/Code/Access-to-Credit-System
+> tsc --noEmit
+
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(391,145): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(394,179): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(395,145): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(397,172): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(562,14): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(562,75): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(567,206): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(568,188): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(570,215): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(594,14): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(594,79): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(600,161): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(601,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(605,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(606,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(608,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; value: any; onChange: (val: any) => void; required: true; }' but required in type '{ id: any; label: any; value: any; onChange: any; required: any; error: any; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(609,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(612,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(613,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(615,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(616,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(653,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(654,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(664,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(679,16): error TS2739: Type '{ id: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' is missing the following properties from type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }': label, error
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(680,16): error TS2739: Type '{ id: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' is missing the following properties from type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }': label, error
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(684,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(697,191): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(698,183): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(700,154): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(701,191): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(703,201): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(704,216): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(711,232): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(779,28): error TS2345: Argument of type '0' is not assignable to parameter of type 'SetStateAction<null>'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(824,160): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(979,33): error TS7006: Parameter 'digit' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(979,40): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(980,36): error TS2322: Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type 'LegacyRef<HTMLInputElement> | undefined'.
+  Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type '(instance: HTMLInputElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'HTMLInputElement | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(980,48): error TS2322: Type 'HTMLInputElement | null' is not assignable to type 'never'.
+  Type 'null' is not assignable to type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1088,22): error TS2339: Property 'registryValue' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1536,98): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1581,82): error TS2339: Property 'file' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1585,87): error TS2339: Property 'uploadedAt' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1594,61): error TS2339: Property 'id' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1694,73): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1810,79): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1810,99): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1899,26): error TS2551: Property 'toLocaleTimeString' does not exist on type 'string | Date'. Did you mean 'toLocaleString'?
+  Property 'toLocaleTimeString' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2305,48): error TS2322: Type 'null' is not assignable to type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2305,74): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/loan.service.ts(1,10): error TS2305: Module '"@/types/loans.types"' has no exported member 'LoanApplication'.
+ ELIFECYCLE  Command failed with exit code 2.

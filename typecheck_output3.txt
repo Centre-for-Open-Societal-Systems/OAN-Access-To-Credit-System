@@ -1,0 +1,144 @@
+
+> a2c-react-project@0.0.0 typecheck /Users/arnav/Code/Access-to-Credit-System
+> tsc --noEmit
+
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(377,28): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(389,145): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(391,179): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(392,145): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(393,172): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(461,70): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,24): error TS7031: Binding element 'id' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,28): error TS7031: Binding element 'label' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,35): error TS7031: Binding element 'placeholder' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,48): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,55): error TS7031: Binding element 'onChange' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,65): error TS7031: Binding element 'unit' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,71): error TS7031: Binding element 'required' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(464,81): error TS7031: Binding element 'error' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,28): error TS7031: Binding element 'id' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,32): error TS7031: Binding element 'label' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,39): error TS7031: Binding element 'placeholder' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,52): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,59): error TS7031: Binding element 'onChange' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,69): error TS7031: Binding element 'required' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(480,79): error TS7031: Binding element 'error' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,29): error TS7031: Binding element 'id' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,33): error TS7031: Binding element 'label' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,40): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,47): error TS7031: Binding element 'onChange' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,57): error TS7031: Binding element 'required' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(495,67): error TS7031: Binding element 'error' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(534,14): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(534,75): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(538,206): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(539,188): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(540,215): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(562,14): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(562,79): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(567,161): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(568,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(571,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(572,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(573,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; value: any; onChange: (val: any) => void; required: true; }' but required in type '{ id: any; label: any; value: any; onChange: any; required: any; error: any; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(574,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(576,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(577,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(578,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(579,14): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(615,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(616,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(625,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(639,16): error TS2739: Type '{ id: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' is missing the following properties from type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }': label, error
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(640,16): error TS2739: Type '{ id: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' is missing the following properties from type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }': label, error
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(643,12): error TS2741: Property 'error' is missing in type '{ id: string; label: string; placeholder: string; value: any; onChange: (val: any) => void; unit: string; required: true; }' but required in type '{ id: any; label: any; placeholder: any; value: any; onChange: any; unit: any; required: any; error: any; type?: string | undefined; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(655,191): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(656,183): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(657,154): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(658,191): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(659,201): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(660,216): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(666,232): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(709,45): error TS2339: Property 'focus' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(712,93): error TS2339: Property 'focus' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(730,26): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type 'Date' provides no match for the signature '(prevState: null): null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(731,28): error TS2345: Argument of type '0' is not assignable to parameter of type 'SetStateAction<null>'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(736,35): error TS2345: Argument of type 'number' is not assignable to parameter of type 'SetStateAction<null>'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(741,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(773,160): error TS18048: 'errors' is possibly 'undefined'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(845,40): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(845,85): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(865,163): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(923,33): error TS7006: Parameter 'digit' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(923,40): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(924,36): error TS2322: Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type 'LegacyRef<HTMLInputElement> | undefined'.
+  Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type '(instance: HTMLInputElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'HTMLInputElement | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(924,48): error TS2322: Type 'HTMLInputElement | null' is not assignable to type 'never'.
+  Type 'null' is not assignable to type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(980,36): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(980,85): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1028,22): error TS2339: Property 'key' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1029,22): error TS2339: Property 'registryValue' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1044,17): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<null>'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1215,12): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<null>'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1284,9): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1284,39): error TS18047: 'e.target.files' is possibly 'null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1404,16): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1408,88): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1414,16): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1418,18): error TS2345: Argument of type '(prev: never[]) => { id: number; file: File; uploadedAt: Date; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => { id: number; file: File; uploadedAt: Date; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ id: number; file: File; uploadedAt: Date; }[]' is not assignable to type 'never[]'.
+      Type '{ id: number; file: File; uploadedAt: Date; }' is not assignable to type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1422,45): error TS2339: Property 'id' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1462,100): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1466,98): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1472,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1495,67): error TS2339: Property 'file' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1502,29): error TS2339: Property 'id' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1507,82): error TS2339: Property 'file' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1510,87): error TS2339: Property 'uploadedAt' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1518,61): error TS2339: Property 'id' does not exist on type 'never'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1568,15): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ complete: { label: string; bg: string; text: string; }; verified: { label: string; bg: string; text: string; }; mismatch: { label: string; bg: string; text: string; }; pending: { label: string; bg: string; text: string; }; }'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1615,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1616,73): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1650,22): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1650,29): error TS7031: Binding element 'icon' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1650,35): error TS7031: Binding element 'children' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1659,16): error TS7031: Binding element 'label' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1659,23): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1725,79): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1725,99): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1798,39): error TS2554: Expected 0 arguments, but got 1.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1811,26): error TS2551: Property 'toLocaleDateString' does not exist on type 'string | Date'. Did you mean 'toLocaleString'?
+  Property 'toLocaleDateString' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1812,26): error TS2551: Property 'toLocaleTimeString' does not exist on type 'string | Date'. Did you mean 'toLocaleString'?
+  Property 'toLocaleTimeString' does not exist on type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1827,54): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1827,74): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1829,19): error TS7006: Parameter 'items' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1829,41): error TS7031: Binding element 'l' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1829,44): error TS7031: Binding element 'v' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1833,22): error TS7006: Parameter 'title' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1833,29): error TS7006: Parameter 'icon' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1833,35): error TS7006: Parameter 'items' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1887,11): error TS2322: Type '(n: any) => void' is not assignable to type '() => void'.
+  Target signature provides too few arguments. Expected 1 or more, but got 0.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(1887,21): error TS7006: Parameter 'n' implicitly has an 'any' type.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2062,16): error TS2339: Property 'dateOfBirth' does not exist on type '{}'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2146,22): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type 'Date' provides no match for the signature '(prevState: null): null'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2204,48): error TS2322: Type 'null' is not assignable to type 'string'.
+src/app/(dashboard)/loans/new-loan-application-creation/page.tsx(2204,74): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/loan.service.ts(1,10): error TS2305: Module '"@/types/loans.types"' has no exported member 'LoanApplication'.
+ ELIFECYCLE  Command failed with exit code 2.

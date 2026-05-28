@@ -1,1268 +1,2379 @@
 // @ts-nocheck
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
-  Calendar,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  CheckCircle2,
-  Clock3,
-  CircleAlert,
-  Eye,
-  Filter,
-  Globe,
-  Plus,
-  Tag,
-  TrendingDown,
-  TrendingUp,
-  X,
+  ArrowLeft, ArrowRight, Check, AlertTriangle, ChevronDown, ChevronLeft, ChevronRight,
+  Info, Upload, Eye, Fingerprint, FileText, Image, PenLine,
+  Lock, Edit2, Send, X, Download, LayoutDashboard, Zap, Calendar, Clock, Landmark,
+  User, Hash, Key, Smartphone, Banknote,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useLoans } from '@/features/loans/hooks/useLoans';
+import { ReactNode } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectLoanFormState, setStep, updateFormData, setApplicationId, resetForm } from '@/features/loans/store/loanFormSlice';
+import { useSaveLoanDetails, useSaveBankDetails, useSaveFarmerDetails, useSubmitApplication, useUploadDocument } from '@/features/loans/hooks/useLoans';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const PAGE_SIZE = 10;
+export interface FormState {
+  [key: string]: any;
+}
 
-const STATUS_OPTIONS = [
-  { label: 'Pending Review', value: 'info' },
-  { label: 'Approved',       value: 'success' },
-  { label: 'Action Required',value: 'danger' },
-  { label: 'Draft',          value: 'neutral' },
+export interface StepProps {
+  form: FormState;
+  setField: (key: string) => (val: any) => void;
+  errors?: Record<string, string>;
+}
+
+export interface UploadEntry {
+  file: File;
+  name: string;
+  size: number;
+  time: string;
+  progress: number;
+  url?: string;
+}
+
+export interface UploadsState {
+  [key: string]: UploadEntry;
+}
+
+export interface Step5Props extends StepProps {
+  uploads: UploadsState;
+  setUploads: (val: any) => void;
+}
+
+
+const STEPS = [
+  { number: 1, label: 'Loan Details' },
+  { number: 2, label: 'Bank Details' },
+  { number: 3, label: 'Supporting Documents' },
+  { number: 4, label: 'Consent & OTP Verification' },
+  { number: 5, label: 'Farmer Details' },
+  { number: 6, label: 'Review Application' },
 ];
 
-const ALL_STATUS_VALUES = new Set(STATUS_OPTIONS.map((o) => o.value));
-
-// DUMMY_LOANS and readStoredLoans removed. Using TanStack Query instead.
-
-function fmtDate(str: any) {
-  if (!str) return '—';
-  // Already formatted (non-ISO) — return as-is
-  if (!/^\d{4}-\d{2}-\d{2}T/.test(str)) return str;
-  try {
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return str;
-    return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-  } catch { return str; }
-}
-
-function fmtType(t: any) {
-  if (!t) return '—';
-  if (t === 'input') return 'Input Financing';
-  if (t === 'machinery') return 'Machinery / Equipment';
-  return t;
-}
-
-function fmtAmount(val: any) {
-  if (!val) return '—';
-  const n = parseFloat(String(val).replace(/,/g, ''));
-  if (isNaN(n)) return val;
-  return n.toLocaleString() + ' ETB';
-}
-
-// ─── Date-filter helpers ──────────────────────────────────────────────────────
-const DATE_FILTER_OPTIONS = [
-  { id: 'all',        label: 'All Time'     },
-  { id: 'today',      label: 'Today'        },
-  { id: 'yesterday',  label: 'Yesterday'    },
-  { id: 'this_week',  label: 'This Week'    },
-  { id: 'this_month', label: 'This Month'   },
-  { id: 'custom',     label: 'Custom Range' },
+const STEP_META = [
+  { title: 'Loan Details',               subtitle: 'Capture information about the requested loan and farming activities.' },
+  { title: 'Bank Details',               subtitle: 'Capture bank account and settlement details for the loan application.' },
+  { title: 'Supporting Documents',       subtitle: 'Upload all required supporting documents for the loan application.' },
+  { title: 'Consent & OTP Verification', subtitle: "Obtain farmer's consent to access registry data via Fayda OTP." },
+  { title: 'Farmer Details',             subtitle: "Please verify or enter the farmer's personal details." },
+  { title: 'Review Application',         subtitle: 'Please review all information before final submission. Resolve any warnings or missing info.' },
 ];
 
-const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const WDAY = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const GENDER_OPTIONS    = ['Male', 'Female'];
+const MARITAL_OPTIONS   = ['Single', 'Married', 'Divorced', 'Widowed'];
+const EDUCATION_OPTIONS = ['No Formal Education', 'Primary School', 'Secondary School', 'Vocational / TVET', 'Diploma', "Bachelor's Degree", 'Postgraduate'];
+const LOAN_TYPE_OPTIONS = [
+  { value: 'input',     label: 'Input Financing',     sub: 'Seeds, fertilizers, chemicals' },
+  { value: 'machinery', label: 'Machinery/Equipment',  sub: 'Tractors, harvesters, irrigation' },
+  { value: 'conventional', label: 'Conventional', sub: 'Tractors, harvesters, irrigation' },
+  { value: 'alhuda', label: 'Alhuda (Islamic Financing)', sub: 'Sharia-compliant agricultural credit' },
+];
+const PURPOSE_OPTIONS  = ['Agro-processing (e.g., milling grain)', 'Crop Production', 'Livestock', 'Equipment Purchase', 'Land Development', 'Input Purchase'];
+const DURATION_OPTIONS = ['6 Months', '12 Months (1 Year)', '18 Months', '24 Months (2 Years)', '36 Months (3 Years)'];
+const CROP_OPTIONS     = ['Barley', 'Wheat', 'Soybeans', 'Maize', 'Other Variety'];
+const CROP_VARIETY_OPTIONS = ['Seed + S-Hela/Achen + Stellar Star', 'Hybrid Maize BH-546', 'Soybean Pawe-03', 'Barley HB-1307', 'Other Variety'];
+const OTHER_FARMING_ACTIVITY_OPTIONS = ['Cattle, Poultry, Sheep/Goats, Other Income Sources', 'Cattle', 'Poultry', 'Sheep/Goats', 'Other Income Sources'];
+const HARVEST_AGGREGATOR_OPTIONS = [
+  { value: 'primaryCooperative', label: 'Primary Cooperative', sub: 'Member-based produce collection and marketing' },
+  { value: 'nucleusFarmer', label: 'Nucleus Farmer', sub: 'Lead farmer coordinating outgrower harvests' },
+];
+const FERTILIZER_PRICE_OPTIONS = ['ETB 850 / Bag', 'ETB 900 / Bag', 'ETB 950 / Bag'];
+const AGROCHEMICAL_OPTIONS = ['A', 'B', 'C', 'D'];
+const CROP_PROTECTION_COST_OPTIONS = ['ETB 5,000', 'ETB 10,000', 'ETB 15,000'];
+const DATA_FIELDS      = ['Basic Profile (Required)', 'Phone Number', 'Farm Details & Location'];
 
-function sod(d: any) { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; }
-function eod(d: any) { const r = new Date(d); r.setHours(23, 59, 59, 999); return r; }
+const CONSENT_TYPE_OPTIONS     = ['Specific (Single Farmer)', 'Group', 'Cooperative'];
+const CONSENT_DURATION_OPTIONS = ['6 Months', '12 Months', '18 Months', '24 Months'];
+const LANGUAGE_OPTIONS         = ['Amharic', 'English', 'Oromiffa', 'Tigrinya', 'Somali', 'Other'];
+const SOURCE_OF_INCOME_OPTIONS = ['Salary', 'Farming', 'Business', 'Pension', 'Other'];
+const ID_TYPE_OPTIONS          = ['National ID', 'Passport', 'Kebele ID', 'Driving License'];
+const AGRONOMIC_FARMLAND_OPTIONS = ['Capacity for production', 'Good', 'Average', 'Poor'];
+const LAND_OWNERSHIP_OPTIONS     = ['Security of access', 'Owned', 'Leased', 'Shared'];
+const SOIL_FERTILITY_OPTIONS     = ['Future yield potential', 'High', 'Medium', 'Low'];
+const MOISTURE_LEVEL_OPTIONS     = ['Irrigation / drought risks', 'Well-irrigated', 'Rain-fed', 'Drought-prone'];
 
-function parseLoanDate(str: any) {
-  if (!str) return null;
-  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) { const d = new Date(str); return isNaN(d.getTime()) ? null : d; }
-  try { const d = new Date(str.replace(',', '')); return isNaN(d.getTime()) ? null : d; } catch { return null; }
+function formatDateTime(date: Date | string) {
+  if (!date) return '';
+  return date.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+}
+function formatFileSize(bytes: number) {
+  if (!bytes) return '0 KB';
+  if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / 1024).toFixed(1) + ' KB';
 }
 
-// ─── Date Filter Dropdown ─────────────────────────────────────────────────────
-function DateFilterDropdown({ activeFilter, customFrom, customTo, onSelect, onCustomApply }: any) {
+function AnimatedCheckbox({ checked, onChange }: { checked: boolean, onChange: () => void }) {
+  return (
+    <span className="pointer-events-none relative inline-flex shrink-0" onClick={onChange}>
+      <span className="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200"
+        style={{ borderColor: checked ? '#16A34A' : '#d1d5db', backgroundColor: checked ? '#16A34A' : 'white', boxShadow: checked ? '0 0 0 3px rgba(74,124,89,0.18)' : undefined }}>
+        <svg className={`transition-all duration-200 ${checked ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} width="11" height="9" viewBox="0 0 11 9" fill="none">
+          <path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function DatePickerField({ id, label, value, onChange, required, error, disabled }: { id?: string, label?: string, value: string, onChange: (val: string) => void, required?: boolean, error?: string, disabled?: boolean }) {
   const today = new Date();
-  const [open, setOpen] = useState(false);
-  const [pendingFrom, setPendingFrom] = useState(null);
-  const [pendingTo, setPendingTo] = useState(null);
-  const [step, setStep] = useState('from');
-  const [calYear, setCalYear] = useState(today.getFullYear());
-  const [calMonth, setCalMonth] = useState(today.getMonth());
-  const ref = useRef(null);
+  const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+  const selectedDate = value ? new Date(value + 'T00:00:00') : null;
+  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState('day');
+  const [viewYear, setViewYear] = useState(selectedDate ? selectedDate.getFullYear() : maxDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(selectedDate ? selectedDate.getMonth() : maxDate.getMonth());
+  const ref = useRef<any>(null);
 
   useEffect(() => {
-    function h(e: any) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-    document.addEventListener('mousedown', h);
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setMode('day'); } }
+    if (isOpen) document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
-  }, []);
+  }, [isOpen]);
 
-  useEffect(() => {
-    if (activeFilter !== 'custom') { setPendingFrom(null); setPendingTo(null); setStep('from'); }
-  }, [activeFilter]);
+  const displayValue = selectedDate
+    ? `${String(selectedDate.getDate()).padStart(2,'0')} / ${MONTH_SHORT[selectedDate.getMonth()]} / ${selectedDate.getFullYear()}`
+    : '';
 
-  function handlePreset(id: any) {
-    if (id !== 'custom') { onSelect(id); setOpen(false); }
-    else { onSelect('custom'); setPendingFrom(null); setPendingTo(null); setStep('from'); }
+  function isDisabled(y: number, m: number, d: number) {
+    const dt = new Date(y, m, d);
+    return dt > maxDate || dt < minDate;
   }
 
-  function handleDayClick(day: any) {
-    const clicked = new Date(calYear, calMonth, day);
-    if (clicked > today) return;
-    if (step === 'from') { setPendingFrom(clicked); setPendingTo(null); setStep('to'); }
-    else {
-      let f = pendingFrom, t = clicked;
-      if (t < f) { f = clicked; t = pendingFrom; }
-      setPendingFrom(f); setPendingTo(t); setStep('from');
-    }
+  function selectDay(d: number) {
+    if (isDisabled(viewYear, viewMonth, d)) return;
+    onChange(new Date(viewYear, viewMonth, d).toISOString().split('T')[0]);
+    setIsOpen(false); setMode('day');
   }
 
-  function prevCal() {
-    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1);
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
   }
-  function nextCal() {
-    if (calYear > today.getFullYear() || (calYear === today.getFullYear() && calMonth >= today.getMonth())) return;
-    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1);
-  }
-
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const firstDay    = new Date(calYear, calMonth, 1).getDay();
-  const nextDisabled = calYear > today.getFullYear() || (calYear === today.getFullYear() && calMonth >= today.getMonth());
-
-  function cellClass(day: any) {
-    const d = new Date(calYear, calMonth, day);
-    if (d > today) return 'text-gray-200 cursor-not-allowed';
-    const isFrom  = pendingFrom && d.toDateString() === pendingFrom.toDateString();
-    const isTo    = pendingTo   && d.toDateString() === pendingTo.toDateString();
-    const inRange = pendingFrom && pendingTo && d > pendingFrom && d < pendingTo;
-    if (isFrom || isTo) return 'bg-[#16A34A] text-white rounded-full';
-    if (inRange)        return 'bg-[#4a7c59]/15 text-[#3a6347] rounded-sm';
-    return 'hover:bg-gray-100 rounded-full cursor-pointer text-gray-700';
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
   }
 
-  const activeOption = DATE_FILTER_OPTIONS.find(o => o.id === activeFilter);
-  const isActive     = activeFilter !== 'all';
+  // Build 6×7 grid
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prevDays = new Date(viewYear, viewMonth, 0).getDate();
+  const cells = [];
+  for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevDays - i, type: 'other' });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, type: 'cur' });
+  while (cells.length < 42) cells.push({ day: cells.length - firstDay - daysInMonth + 1, type: 'other' });
 
-  function fmtCustomLabel() {
-    if (!customFrom) return 'Custom Range';
-    const opts = { day: '2-digit', month: 'short' };
-    const f = customFrom.toLocaleDateString('en-GB', opts);
-    const t = customTo ? customTo.toLocaleDateString('en-GB', opts) : f;
-    return f === t ? f : f + ' – ' + t;
-  }
+  const yearRange = [];
+  for (let y = maxDate.getFullYear(); y >= minDate.getFullYear(); y--) yearRange.push(y);
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={'inline-flex items-center gap-1.5 px-3.5 py-3 rounded-lg text-sm font-semibold border cursor-pointer transition-all ' +
-          (isActive ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50')}
-      >
-        <Calendar size={14} strokeWidth={2.2} />
-        <span>{isActive && activeFilter === 'custom' ? fmtCustomLabel() : isActive ? activeOption?.label : 'Date Filter'}</span>
-        <ChevronDown size={12} strokeWidth={2.5} className={'transition-transform duration-200 ' + (open ? 'rotate-180' : '')} />
+    <div className="relative flex flex-col gap-1.5" ref={ref}>
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); setMode('day'); }}
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none
+          ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default'
+          : error ? 'border-red-400 bg-red-50/40'
+          : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
+          : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+        <span className={`flex items-center gap-2 ${disabled ? 'text-gray-500' : displayValue ? 'text-gray-900' : 'text-gray-400'}`}>
+          <Calendar size={14} className="shrink-0 text-gray-400" />
+          {displayValue || 'DD / MM / YYYY'}
+        </span>
+        <Calendar size={15} className="shrink-0 text-gray-400" />
       </button>
 
-      {open && (
-        <div className="absolute top-[calc(100%+8px)] right-0 z-50 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden" style={{ minWidth: '220px' }}>
-          <div className="p-2 flex flex-col gap-0.5">
-            {DATE_FILTER_OPTIONS.map(opt => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => handlePreset(opt.id)}
-                className={'flex items-center justify-between w-full px-3 py-2 rounded-xl text-[13px] font-semibold text-left cursor-pointer border-0 transition-colors ' +
-                  (activeFilter === opt.id ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-transparent text-gray-700 hover:bg-gray-50')}
-              >
-                <span>{opt.label}</span>
-                {activeFilter === opt.id && <Check size={12} strokeWidth={2.5} />}
-              </button>
-            ))}
+      {isOpen && (
+        <div className="absolute top-full left-0 z-50 mt-1.5 w-72 rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
+          {/* Calendar header */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ background: '#16A34A' }}>
+            <button type="button" onClick={prevMonth}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <button type="button" onClick={() => setMode(m => m === 'year' ? 'day' : 'year')}
+              className="flex items-center gap-1.5 text-sm font-semibold text-white hover:text-white/80 transition-colors">
+              {MONTH_FULL[viewMonth]} {viewYear}
+              <ChevronDown size={13} className={`transition-transform ${mode === 'year' ? 'rotate-180' : ''}`} />
+            </button>
+            <button type="button" onClick={nextMonth}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 transition-colors">
+              <ChevronRight size={16} />
+            </button>
           </div>
 
-          {activeFilter === 'custom' && (
-            <div className="border-t border-gray-100 p-3">
-              <p className="text-center text-[11px] font-semibold text-[#16A34A] mb-2 bg-[#4a7c59]/5 rounded-lg py-1">
-                {step === 'from' ? '\u2460 Pick start date' : '\u2461 Pick end date'}
-              </p>
-              <div className="flex items-center justify-between mb-2">
-                <button type="button" onClick={prevCal} className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 border-0 cursor-pointer text-gray-500 transition-colors">
-                  <ChevronLeft size={14} strokeWidth={2.5} />
-                </button>
-                <span className="text-[12px] font-bold text-gray-800">{MONTHS_FULL[calMonth]} {calYear}</span>
-                <button type="button" onClick={nextCal} disabled={nextDisabled} className={'flex items-center justify-center w-7 h-7 rounded-lg border-0 cursor-pointer transition-colors ' + (nextDisabled ? 'text-gray-200 cursor-not-allowed' : 'hover:bg-gray-100 text-gray-500')}>
-                  <ChevronRight size={14} strokeWidth={2.5} />
-                </button>
-              </div>
-              <div className="grid grid-cols-7 mb-1">
-                {WDAY.map(d => <span key={d} className="text-center text-[10px] font-bold text-gray-400 py-1">{d}</span>)}
-              </div>
-              <div className="grid grid-cols-7 gap-y-0.5">
-                {Array.from({ length: firstDay }).map((_, i) => <span key={'e' + i} />)}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => handleDayClick(day)}
-                    className={'flex items-center justify-center text-[11.5px] font-medium border-0 w-full aspect-square transition-colors ' + cellClass(day)}
-                  >
-                    {day}
+          {mode === 'year' ? (
+            <div className="h-56 overflow-y-auto px-2 py-2">
+              <div className="grid grid-cols-3 gap-1">
+                {yearRange.map(y => (
+                  <button key={y} type="button" onClick={() => { setViewYear(y); setMode('day'); }}
+                    className={`rounded-lg py-2 text-sm font-medium transition-colors
+                      ${y === viewYear ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                    style={y === viewYear ? { background: '#16A34A' } : {}}>
+                    {y}
                   </button>
                 ))}
               </div>
-              {pendingFrom && (
-                <div className="mt-2 text-[10.5px] text-center text-gray-500 bg-gray-50 rounded-lg py-1 px-2">
-                  {pendingFrom.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  {pendingTo
-                    ? ' \u2192 ' + pendingTo.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : ' \u2192 ?'}
-                </div>
-              )}
-              <div className="flex gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={() => { setPendingFrom(null); setPendingTo(null); setStep('from'); onSelect('all'); setOpen(false); }}
-                  className="flex-1 py-1.5 rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 bg-white cursor-pointer transition-colors"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  disabled={!pendingFrom}
-                  onClick={() => { if (pendingFrom) { onCustomApply(pendingFrom, pendingTo || pendingFrom); setOpen(false); } }}
-                  className={'flex-1 py-1.5 rounded-lg text-[12px] font-semibold border-0 cursor-pointer transition-colors ' +
-                    (pendingFrom ? 'bg-[#16A34A] text-white hover:bg-[#3a6347]' : 'bg-gray-100 text-gray-300 cursor-not-allowed')}
-                >
-                  Apply
-                </button>
+            </div>
+          ) : (
+            <div className="px-3 pb-3 pt-2">
+              <div className="mb-1 grid grid-cols-7">
+                {DAY_NAMES.map(d => (
+                  <div key={d} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {cells.map((cell, idx) => {
+                  if (cell.type === 'other') {
+                    return <div key={idx} className="flex h-8 w-8 items-center justify-center mx-auto text-xs text-gray-300">{cell.day}</div>;
+                  }
+                  const disabled = isDisabled(viewYear, viewMonth, cell.day);
+                  const selected = selectedDate &&
+                    selectedDate.getFullYear() === viewYear &&
+                    selectedDate.getMonth() === viewMonth &&
+                    selectedDate.getDate() === cell.day;
+                  const isTodayCell = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === cell.day;
+                  return (
+                    <button key={idx} type="button" onClick={() => selectDay(cell.day)} disabled={disabled}
+                      className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all
+                        ${selected ? 'font-semibold text-white shadow'
+                        : disabled ? 'cursor-not-allowed text-gray-300'
+                        : isTodayCell ? 'font-semibold border-2 hover:bg-opacity-10'
+                        : 'text-gray-700 hover:bg-gray-100'}`}
+                      style={
+                        selected ? { background: '#4a7c59' }
+                        : isTodayCell ? { borderColor: '#4a7c59', color: '#4a7c59' }
+                        : {}
+                      }>
+                      {cell.day}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+                <button type="button" onClick={() => { onChange(''); setIsOpen(false); }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Clear</button>
+                <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                  <AlertTriangle size={9} /> Must be 18+
+                </span>
               </div>
             </div>
           )}
+        </div>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function SelectField({ id, label, placeholder, options, value, onChange, required, error, disabled }: { id?: string, label?: string, placeholder?: string, options: string[], value: string, onChange: (val: string) => void, required?: boolean, error?: string, disabled?: boolean }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<any>(null);
+  useEffect(() => {
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); }
+    if (isOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [isOpen]);
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <div ref={ref} className="relative">
+        <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); }}
+          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default' : error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+          <span className={disabled ? 'text-gray-500' : value ? 'text-gray-900' : 'text-gray-400'}>{value || placeholder}</span>
+          <ChevronDown size={15} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
+        </button>
+        <ul className={`absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
+          style={{ maxHeight: '200px', overflowY: 'auto', transformOrigin: 'top' }}>
+          {options.map(opt => {
+            const sel = value === opt;
+            return <li key={opt} onMouseDown={() => { onChange(opt); setIsOpen(false); }}
+              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'bg-[#4a7c59]/8 font-medium text-[#4a7c59]' : 'text-gray-800 hover:bg-gray-50'}`}>
+              {opt}{sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
+            </li>;
+          })}
+        </ul>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function TextField({ id, label, placeholder, value, onChange, type = 'text', hint, required, readOnly, error, icon, max, min }: { id?: string, label?: string, placeholder?: string, value: string, onChange?: (val: string) => void, type?: string, hint?: string, required?: boolean, readOnly?: boolean, error?: string, icon?: ReactNode, max?: string | number, min?: string | number }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <div className="relative">
+        {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>}
+        <input id={id} type={type} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} readOnly={readOnly} max={max} min={min}
+          className={`w-full rounded-lg border px-3 py-3 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+      </div>
+      {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function TextAreaField({ id, label, placeholder, value, onChange, required, rows = 4 }: { id?: string, label?: string, placeholder?: string, value: string, onChange?: (val: string) => void, required?: boolean, rows?: number }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
+      <textarea id={id} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} rows={rows}
+        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
+    </div>
+  );
+}
+
+function FormSectionCard({ title, children }: { title: string, children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+      <div className="mb-5 border-b border-gray-100 pb-4">
+        <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function StepProgressBar({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6 overflow-x-auto">
+      <div className="flex items-start gap-0 min-w-[720px] md:min-w-0">
+        {STEPS.map(step => {
+          const isDone = step.number < currentStep;
+          const isActive = step.number === currentStep;
+          return (
+            <div key={step.number} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+              <div className="flex w-full items-center">
+                <div className={`h-0.5 flex-1 transition-colors ${step.number === 1 ? 'opacity-0' : isDone || isActive ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold border-2 transition-all ${isActive ? 'border-[#4B5563] bg-[#4B5563] text-white' : isDone ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-gray-300 bg-white text-gray-500'}`}>
+                  {isDone ? <Check size={13} strokeWidth={2.5} /> : step.number}
+                </span>
+                <div className={`h-0.5 flex-1 transition-colors ${step.number === STEPS.length ? 'opacity-0' : isDone ? 'bg-[#4a7c59]' : 'bg-gray-200'}`} />
+              </div>
+              <div className="text-center">
+                <p className="text-[14px] font-bold text-gray-500">Step {step.number}</p>
+                <p className={`text-[12px] leading-tight ${isActive ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{step.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StepFarmerDetails({ form, setField, errors }: StepProps) {
+
+  const SectionHeader = ({ title }) => (
+    <div className="mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
+      <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <SectionHeader title="Basic Information" />
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            <TextField id="fullName" label="Full Name" placeholder="Amit" value={form.fullName} onChange={setField('fullName')} required error={errors?.fullName} readOnly />
+            <TextField id="lastName" label="Last Name" placeholder="Sharma" value={form.lastName} onChange={setField('lastName')} required readOnly />
+
+            <TextField id="mobilePhone" label="Mobile Phone" placeholder="+251 9876543210" value={form.mobilePhone} onChange={setField('mobilePhone')} required type="tel" error={errors?.mobilePhone} readOnly />
+
+            <DatePickerField id="dateOfBirth" label="Date of Birth" value={form.dateOfBirth} onChange={setField('dateOfBirth')} required error={errors?.dateOfBirth} disabled />
+
+            <SelectField id="gender" label="Gender" placeholder="Select Gender" options={GENDER_OPTIONS} value={form.gender} onChange={setField('gender')} required error={errors?.gender} disabled />
+            <TextField id="woreda" label="Woreda" placeholder="Bishoftu" value={form.woreda} onChange={setField('woreda')} required readOnly />
+            <TextField id="kebele" label="Kebele" placeholder="Bishoftu" value={form.kebele} onChange={setField('kebele')} required readOnly />
+            <SelectField id="idType" label="National ID / Fayda ID Number" placeholder="Select ID Type" options={ID_TYPE_OPTIONS} value={form.idType} onChange={setField('idType')} required disabled />
+            <TextField id="idNumber" label="ID Number" placeholder="29838928923" value={form.idNumber} onChange={setField('idNumber')} required readOnly />
+            <SelectField id="language" label="Language" placeholder="Select Language" options={LANGUAGE_OPTIONS} value={form.language} onChange={setField('language')} required disabled />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <SectionHeader title="Land and Crop Information" />
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <TextField id="landSizeAcres" label="Land Size (Acres)" placeholder="12" type="number" value={form.landSizeAcres} onChange={setField('landSizeAcres')} required readOnly />
+            <TextField id="farmId" label="Farm ID" placeholder="29838928923" value={form.farmId} onChange={setField('farmId')} required readOnly />
+            <TextField id="farmPolygon" label="Farm Polygon" placeholder="Farm Polygon" value={form.farmPolygon} onChange={setField('farmPolygon')} required readOnly />
+            <TextField id="landAcreage" label="Land Acreage" placeholder="Land Acreage" value={form.landAcreage} onChange={setField('landAcreage')} required readOnly />
+            <TextField id="farmLandNumber" label="Farm Land Number" placeholder="29838928923" value={form.farmLandNumber} onChange={setField('farmLandNumber')} required readOnly />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <SectionHeader title="Socio-Economic Information" />
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SelectField id="maritalStatus" label="Marital Status" placeholder="Married" options={MARITAL_OPTIONS} value={form.maritalStatus} onChange={setField('maritalStatus')} required disabled />
+            <TextField id="sizeOfFamily" label="Size of Family" placeholder="4" type="number" value={form.sizeOfFamily} onChange={setField('sizeOfFamily')} required readOnly />
+            <TextField id="numberOfChildren" label="Number of Children" placeholder="3" type="number" value={form.numberOfChildren} onChange={setField('numberOfChildren')} required readOnly />
+            <TextField id="noOfFemalesFamily" label="No. of Females (Family)" placeholder="3" type="number" value={form.noOfFemalesFamily} onChange={setField('noOfFemalesFamily')} required readOnly />
+            <TextField id="noOfMalesFamily" label="No. of Males (Family)" placeholder="3" type="number" value={form.noOfMalesFamily} onChange={setField('noOfMalesFamily')} required readOnly />
+            <TextField id="familyMemberOwnsLand" label="A Family Member Owns Land Independently" placeholder="3" type="number" value={form.familyMemberOwnsLand} onChange={setField('familyMemberOwnsLand')} required readOnly />
+            <SelectField id="sourceOfIncome" label="Source of Income" placeholder="Salary" options={SOURCE_OF_INCOME_OPTIONS} value={form.sourceOfIncome} onChange={setField('sourceOfIncome')} required disabled />
+            <SelectField id="educationLevel" label="Education Level" placeholder="Graduation" options={EDUCATION_OPTIONS} value={form.educationLevel} onChange={setField('educationLevel')} required disabled />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <SectionHeader title="Land, Crop and Livestock Information" />
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <TextField id="totalFarmlandLandowner" label="Total Farmland Size as Landowner" placeholder="3" type="number" value={form.totalFarmlandLandowner} onChange={setField('totalFarmlandLandowner')} required readOnly />
+            <TextField id="totalFarmlandCropSharing" label="Total Farmland Size as Crop Sharing" placeholder="4" type="number" value={form.totalFarmlandCropSharing} onChange={setField('totalFarmlandCropSharing')} required readOnly />
+            <TextField id="totalFarmlandRented" label="Total Farmland Size as Rented" placeholder="3" type="number" value={form.totalFarmlandRented} onChange={setField('totalFarmlandRented')} required readOnly />
+            <TextField id="certificationId" label="Certification ID" placeholder="29838928923" value={form.certificationId} onChange={setField('certificationId')} required readOnly />
+            <SelectField id="certificationPhoto" label="Certification Photo" placeholder="Yes" options={['Yes', 'No']} value={form.certificationPhoto} onChange={setField('certificationPhoto')} required disabled />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <SectionHeader title="Agronomic Data" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <SelectField id="farmlandSizeHectares" label="Farmland Size (Hectares)" placeholder="Capacity for production" options={AGRONOMIC_FARMLAND_OPTIONS} value={form.farmlandSizeHectares} onChange={setField('farmlandSizeHectares')} required disabled />
+          <SelectField id="landOwnershipStatus" label="Land Ownership Status" placeholder="Security of access" options={LAND_OWNERSHIP_OPTIONS} value={form.landOwnershipStatus} onChange={setField('landOwnershipStatus')} required disabled />
+          <SelectField id="soilFertility" label="Soil Fertility / Minerals" placeholder="Future yield potential" options={SOIL_FERTILITY_OPTIONS} value={form.soilFertility} onChange={setField('soilFertility')} required disabled />
+          <SelectField id="moistureLevels" label="Moisture Levels" placeholder="Irrigation / drought risks" options={MOISTURE_LEVEL_OPTIONS} value={form.moistureLevels} onChange={setField('moistureLevels')} required disabled />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step1({ form, setField, errors }: StepProps) {
+  function toggleCrop(crop: string) {
+    const current = form.primaryCrops || [];
+
+    setField('primaryCrops')(current.includes(crop) ? current.filter(c => c !== crop) : [...current, crop]);
+  }
+
+
+
+
+
+
+
+
+
+  const UnitInput = ({ id, label, placeholder, value, onChange, unit, required, error, type = 'number' }) => (
+    <div className="flex flex-col gap-1.5">
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
+        <input id={id} type={type} placeholder={placeholder} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange && onChange(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+        <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">{unit}</span>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+
+
+
+
+
+
+
+
+  const CurrencyInput = ({ id, label, placeholder, value, onChange, required, error }) => (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+      </label>
+      <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
+        <span className="flex shrink-0 items-center border-r border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">ETB</span>
+        <input id={id} type="number" placeholder={placeholder} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange && onChange(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+        <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">.00</span>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+
+
+
+
+
+
+
+  const DateInputField = ({ id, label, value, onChange, required, error }) => (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <input id={id} type="date" value={value} onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange && onChange(e.target.value)}
+          className={`w-full appearance-none rounded-lg border px-3 py-3 pr-10 text-sm shadow-sm focus:outline-none focus:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+        <Calendar size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-5">
+      <FormSectionCard title="Loan Requirements">
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Loan Type <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {LOAN_TYPE_OPTIONS.map(opt => {
+                const selected = form.loanType === opt.value;
+                return (
+                  <button key={opt.value} type="button" onClick={() => setField('loanType')(opt.value)}
+                    className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-[#22C55E]/40'}`}>
+                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? 'border-[#22C55E]' : 'border-gray-300'}`}>
+                      {selected && <span className="h-2 w-2 rounded-full bg-[#22C55E]" />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                      <p className="mt-0.5 text-xs text-gray-500">{opt.sub}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+
+            {errors?.loanType && <p className="mt-1 text-xs text-red-500">{errors?.loanType}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+            <SelectField id="loanPurpose" label="Purpose of Loan" placeholder="Select Purpose of Loan" options={PURPOSE_OPTIONS} value={form.loanPurpose} onChange={setField('loanPurpose')} required error={errors?.loanPurpose} />
+
+            <CurrencyInput id="requestedAmount" label="Requested Loan Amount (ETB)" placeholder="0.00" value={form.requestedAmount} onChange={setField('requestedAmount')} required error={errors?.requestedAmount} />
+
+            <SelectField id="loanDuration" label="Loan Duration (Months)" placeholder="Select Loan Duration" options={DURATION_OPTIONS} value={form.loanDuration} onChange={setField('loanDuration')} required error={errors?.loanDuration} />
+            <TextField id="nearestBranch" label="Nearest Branch Responsible for Loan Administration" placeholder="Enter Nearest Branch Responsible for Loan Administration" value={form.nearestBranch} onChange={setField('nearestBranch')} required />
+          </div>
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Crop & Land Information">
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Primary Crop/Seed Variety <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CROP_OPTIONS.map(crop => {
+                const selected = (form.primaryCrops || []).includes(crop);
+                return (
+                  <button key={crop} type="button" onClick={() => toggleCrop(crop)} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 text-[#15803D]' : 'border-gray-300 bg-white text-gray-700 hover:border-[#22C55E]/40'}`}>
+                    {crop}
+                  </button>
+                );
+              })}
+            </div>
+
+
+            {errors?.primaryCrops && <p className="mt-1 text-xs text-red-500">{errors?.primaryCrops}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <SelectField id="cropVariety" label="Crop Variety" placeholder="Select Crop Variety" options={CROP_VARIETY_OPTIONS} value={form.cropVariety} onChange={setField('cropVariety')} required />
+
+            <TextField id="cropAddress" label="Address" placeholder="Enter Address" value={form.cropAddress} onChange={setField('cropAddress')} required error={errors?.cropAddress} />
+
+            <UnitInput id="quantityRequested" label="Quantity Requested (Kg)" placeholder="Enter Quantity Requested (Kg)" value={form.quantityRequested} onChange={setField('quantityRequested')} unit="kg" required />
+            <TextField id="unitPrice" label="Unit Price" placeholder="Enter Unit Price" value={form.unitPrice} onChange={setField('unitPrice')} required type="number" />
+            <TextField id="totalSeedCost" label="Total Seed Cost" placeholder="Enter Total Seed Cost" value={form.totalSeedCost} onChange={setField('totalSeedCost')} required type="number" />
+
+            <UnitInput id="landSize" label="Land Size (Hectares)" placeholder="Enter Land Size" value={form.landSize} onChange={setField('landSize')} unit="ha" required />
+
+            <UnitInput id="expectedYield" label="Expected Yield (Quintals/Hectare)" placeholder="Enter Expected Yield" value={form.expectedYield} onChange={setField('expectedYield')} unit="Qtl/ha" required />
+
+            <DateInputField id="expectedHarvestDate" label="Expected Harvest Date" value={form.expectedHarvestDate} onChange={setField('expectedHarvestDate')} required />
+
+            <UnitInput id="fertilizerUsed" label="Fertilizer Used" placeholder="Enter Fertilizer Used" value={form.fertilizerUsed} onChange={setField('fertilizerUsed')} unit="kg" required />
+            <SelectField id="otherFarmingActivities" label="Other Farming Activities" placeholder="Select Other Farming Activities" options={OTHER_FARMING_ACTIVITY_OPTIONS} value={form.otherFarmingActivities} onChange={setField('otherFarmingActivities')} required />
+
+            <UnitInput id="farmerGroup" label="Farmer Group" placeholder="Enter Farmer Group" value={form.farmerGroup} onChange={setField('farmerGroup')} unit="members" required />
+
+            <UnitInput id="animalReared" label="Animal Reared" placeholder="Enter Animal Reared" value={form.animalReared} onChange={setField('animalReared')} unit="heads" required />
+
+            <UnitInput id="farmEquipment" label="Farm Equipment" placeholder="Enter Farm Equipment" value={form.farmEquipment} onChange={setField('farmEquipment')} unit="units" required />
+
+            <UnitInput id="farmSizeHectares" label="Farm Size (Hectares)" placeholder="Enter Farm Size (Hectares)" value={form.farmSizeHectares} onChange={setField('farmSizeHectares')} unit="ha" required />
+            <TextField id="region" label="Region" placeholder="Enter Region" value={form.region} onChange={setField('region')} required />
+            <TextField id="zone" label="Zone" placeholder="Enter Zone" value={form.zone} onChange={setField('zone')} required />
+            <TextField id="woreda" label="Woreda / District" placeholder="Enter Woreda / District" value={form.woreda} onChange={setField('woreda')} required />
+            <TextField id="kebele" label="Kebele" placeholder="Enter Kebele" value={form.kebele} onChange={setField('kebele')} required />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">
+                Harvest Aggregator Type <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {HARVEST_AGGREGATOR_OPTIONS.map(opt => {
+                  const selected = form.harvestAggregatorType === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setField('harvestAggregatorType')(opt.value)} className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selected ? 'border-[#22C55E] bg-[#22C55E]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-[#22C55E]/40'}`}>
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? 'border-[#22C55E]' : 'border-gray-300'}`}>
+                        {selected && <span className="h-2 w-2 rounded-full bg-[#22C55E]" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                        <p className="mt-0.5 text-xs text-gray-500">{opt.sub}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <TextField id="cooperativeName" label="Name of Cooperative / Nucleus Farmer" placeholder="Enter Name of Cooperative / Nucleus Farmer" value={form.cooperativeName} onChange={setField('cooperativeName')} required />
+          </div>
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Fertilizer Requirement">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+          <UnitInput id="dapQuantity" label="DAP Quantity (Kg)" placeholder="Enter DAP Quantity (Kg)" value={form.dapQuantity} onChange={setField('dapQuantity')} unit="kg" required />
+
+          <UnitInput id="ureaQuantity" label="UREA Quantity (Kg)" placeholder="Enter UREA Quantity (Kg)" value={form.ureaQuantity} onChange={setField('ureaQuantity')} unit="kg" required />
+          <SelectField id="fertilizerUnitPrice" label="Unit Price per Fertilizer Type" placeholder="Select Unit Price per Fertilizer Type" options={FERTILIZER_PRICE_OPTIONS} value={form.fertilizerUnitPrice} onChange={setField('fertilizerUnitPrice')} required />
+          <TextField id="totalFertilizerCost" label="Total Fertilizer Cost" placeholder="Enter Total Fertilizer Cost" value={form.totalFertilizerCost} onChange={setField('totalFertilizerCost')} required type="number" />
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Crop Protection Requirement">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SelectField id="agrochemicalType" label="Type of Agrochemical Requested" placeholder="Select Agrochemical Type" options={AGROCHEMICAL_OPTIONS} value={form.agrochemicalType} onChange={setField('agrochemicalType')} required />
+
+          <UnitInput id="cropProtectionQuantity" label="Quantity Requested" placeholder="Enter Quantity Requested" value={form.cropProtectionQuantity} onChange={setField('cropProtectionQuantity')} unit="kg" required />
+          <TextField id="cropProtectionUnitPrice" label="Unit Price" placeholder="Enter Unit Price" value={form.cropProtectionUnitPrice} onChange={setField('cropProtectionUnitPrice')} required type="number" />
+          <SelectField id="totalCropProtectionCost" label="Total Crop Protection Cost" placeholder="Select Total Crop Protection Cost" options={CROP_PROTECTION_COST_OPTIONS} value={form.totalCropProtectionCost} onChange={setField('totalCropProtectionCost')} required />
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Financing & Pricing Information">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <TextField id="selectedInputSupplier" label="Selected Input Supplier" placeholder="Enter Selected Input Supplier" value={form.selectedInputSupplier} onChange={setField('selectedInputSupplier')} required />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">
+              Upfront Contribution <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+              <UnitInput id="maleFarmerContribution" placeholder="Enter Male Farmer" value={form.maleFarmerContribution} onChange={setField('maleFarmerContribution')} unit="% for Male Farmers" required />
+
+              <UnitInput id="femaleFarmerContribution" placeholder="Enter Female Farmer" value={form.femaleFarmerContribution} onChange={setField('femaleFarmerContribution')} unit="% for Female Farmers" required />
+            </div>
+          </div>
+
+          <UnitInput id="cropInsurancePremium" label="Crop Insurance premium (%)" placeholder="Enter Crop Insurance premium" value={form.cropInsurancePremium} onChange={setField('cropInsurancePremium')} unit="%" required />
+        </div>
+      </FormSectionCard>
+    </div>
+  );
+}
+
+function StepBankDetails({ form, setField, errors }: StepProps) {
+  return (
+    <div className="flex flex-col gap-5">
+      <FormSectionCard title="Banking Information">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+          <TextField id="bankAccountName" label="Bank Account Name" placeholder="Enter Bank Account Name" value={form.bankAccountName} onChange={setField('bankAccountName')} required error={errors?.bankAccountName} icon={<Landmark size={14} />} hint="Must be a valid Coopbank account in the farmer's name." />
+
+          <TextField id="bankAccount" label="Bank Account Number" placeholder="Enter Bank Account Number" value={form.bankAccount} onChange={setField('bankAccount')} required error={errors?.bankAccount} icon={<Landmark size={14} />} hint="Must be a valid Coopbank account in the farmer's name." />
+
+          <TextField id="bankName" label="Bank Name" placeholder="Enter Bank Name" value={form.bankName} onChange={setField('bankName')} required error={errors?.bankName} icon={<Landmark size={14} />} />
+
+          <TextField id="bankSwiftCode" label="Bank SWIFT/IFSC Code" placeholder="Enter Bank SWIFT/IFSC Code" value={form.bankSwiftCode} onChange={setField('bankSwiftCode')} required error={errors?.bankSwiftCode} icon={<Landmark size={14} />} />
+
+          <TextField id="mobileAccountName" label="Mobile Account Name" placeholder="Enter Mobile Account Name" value={form.mobileAccountName} onChange={setField('mobileAccountName')} required error={errors?.mobileAccountName} icon={<Landmark size={14} />} />
+
+          <TextField id="mobilePaymentsNumber" label="Mobile Payments Number" placeholder="Enter Mobile Payments Number" value={form.mobilePaymentsNumber} onChange={setField('mobilePaymentsNumber')} required error={errors?.mobilePaymentsNumber} icon={<Landmark size={14} />} />
+        </div>
+      </FormSectionCard>
+
+      <FormSectionCard title="Borrowing Amount">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+          <TextField id="totalBorrowingAmount" label="Total Amount You Are Borrowing" placeholder="Enter Total Amount You Are Borrowing" value={form.totalBorrowingAmount} onChange={setField('totalBorrowingAmount')} required error={errors?.totalBorrowingAmount} icon={<Landmark size={14} />} hint="Adjust the quantities below based on what you need. You can reduce or remove items you don't want." />
+          <TextField id="taxId" label="Tax ID" placeholder="Enter Tax ID" value={form.taxId} onChange={setField('taxId')} icon={<Landmark size={14} />} hint="Above ETB 1,00,000/-" />
+        </div>
+      </FormSectionCard>
+    </div>
+  );
+}
+
+function Step3({ form, setField, errors }: StepProps) {
+  const otpRefs            = useRef([]);
+  const consentFileInputRef = useRef<any>(null);
+  const consentAttachRef    = useRef<any>(null);
+  const [otpSent,     setOtpSent]     = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpError,    setOtpError]    = useState('');
+  const [verifying,   setVerifying]   = useState(false);
+  const [countdown,   setCountdown]   = useState(0);
+  const timerRef = useRef<any>(null);
+  const [consentFileProgress, setConsentFileProgress] = useState(null);
+  const [consentUploadedAt, setConsentUploadedAt]     = useState(null);
+  const [viewingConsent, setViewingConsent]           = useState(false);
+
+  function startCountdown(s: number = 102) {
+    setCountdown(s);
+    timerRef.current = setInterval(() => setCountdown(c => { if (c <= 1) { clearInterval(timerRef.current); return 0; } return c - 1; }), 1000);
+  }
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  function handleSendOtp() {
+    setOtpSent(true);
+    setOtpVerified(false);
+    setOtpError('');
+    setField('otpCode')(['', '', '', '', '', '']);
+    clearInterval(timerRef.current);
+    startCountdown(102);
+  }
+
+  function handleOtpChange(i: number, v: string) {
+    if (!/^\d?$/.test(v)) return;
+    const n = [...(form.otpCode || ['','','','','',''])];
+    n[i] = v;
+    setField('otpCode')(n);
+    setOtpError('');
+
+    if (v && i < 5) otpRefs.current[i + 1]?.focus();
+  }
+  function handleOtpKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+
+    if (e.key === 'Backspace' && !(form.otpCode || [])[i] && i > 0) otpRefs.current[i - 1]?.focus();
+  }
+
+  function handleVerify() {
+    const code = (form.otpCode || []).join('');
+    if (code.length < 6) { setOtpError('Please enter all 6 digits of the OTP.'); return; }
+    setVerifying(true);
+    setOtpError('');
+    setTimeout(() => {
+      setVerifying(false);
+      setOtpVerified(true);
+      clearInterval(timerRef.current);
+      setCountdown(0);
+    }, 1200);
+  }
+
+  function handleConsentFileUpload(file: File) {
+    setField('consentFormFile')(file);
+
+    setConsentUploadedAt(new Date());
+
+    setConsentFileProgress(0);
+    let v = 0;
+    const iv = setInterval(() => {
+      v += Math.random() * 30 + 10;
+      if (v >= 100) { clearInterval(iv); setConsentFileProgress(null); }
+
+      else setConsentFileProgress(Math.min(v, 99));
+    }, 300);
+  }
+
+  const otpCode           = form.otpCode || ['','','','','',''];
+
+  const fmtCountdown      = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  const consentFile       = form.consentFormFile;
+  const isConsentUploading = consentFileProgress != null;
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* OTP Verification */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div className="mb-5 border-b border-gray-100 pb-4">
+          <h2 className="text-base font-semibold text-gray-800">OTP Verification</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Left panel */}
+          <div className="flex flex-col gap-4">
+            {/* Farmer search */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Farmer <span className="text-red-500">*</span></label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Search by Farmer ID or National ID"
+                  value={form.farmerSearch || ''}
+                  onChange={e => setField('farmerSearch')(e.target.value)}
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-3 text-sm shadow-sm focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20"
+                />
+                <button className="flex items-center gap-1.5 rounded-lg bg-[#16A34A] px-4 py-3 text-sm font-medium text-white hover:bg-[#10883c] transition-colors">
+                  Search
+                </button>
+              </div>
+            </div>
+
+            {/* Farmer ID (Fayda) */}
+
+            <TextField id="faydaId" label="Farmer ID (Fayda)" placeholder="e.g. 722334455" value={form.faydaId} onChange={setField('faydaId')} required error={errors?.faydaId} icon={<Fingerprint size={14} />} />
+
+            {/* Signed Consent Form upload */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Signed Consent Form</label>
+              <div className={`relative rounded-xl border p-4 transition-all ${consentFile && !isConsentUploading ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'}`}>
+                <div className="mb-2 flex flex-col items-center justify-between gap-2">
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-800">Signed Consent Form</p>
+                    <p className="text-xs text-gray-500">Physical copy signed by farmer</p>
+                  </div>
+                  {isConsentUploading ? (
+                    <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" /> Uploading
+                    </span>
+                  ) : consentFile ? (
+                    <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <Check size={10} strokeWidth={3} /> Uploaded
+                    </span>
+                  ) : null}
+                </div>
+                {isConsentUploading && (
+                  <>
+                    <p className="mb-1.5 text-xs text-gray-600">{consentFile?.name || 'consent_signed_2024.pdf'}</p>
+                    <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500">
+                      <span>{formatFileSize(consentFile?.size || 1258291)}</span>
+                      <span>{Math.round(consentFileProgress)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                      <div className="h-full bg-[#16A34A] transition-all" style={{ width: `${consentFileProgress}%` }} />
+                    </div>
+                  </>
+                )}
+                {consentFile && !isConsentUploading && (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                      <FileText size={13} className="shrink-0 text-gray-400" />
+                      <span className="flex-1 truncate text-xs font-medium text-gray-700">{consentFile.name}</span>
+                      <span className="text-[11px] text-gray-400">{formatFileSize(consentFile.size)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setViewingConsent(true)}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#16A34A]/40 bg-[#4a7c59]/5 px-3 py-2 text-xs font-semibold text-[#16A34A] hover:bg-[#10883c]/10 transition-colors">
+                        <Eye size={12} /> View
+                      </button>
+                      <button
+                        onClick={() => { setField('consentFormFile')(null); setConsentUploadedAt(null); }}
+                        className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-500 hover:bg-red-100 transition-colors">
+                        <X size={13} />
+                      </button>
+                    </div>
+                    {consentUploadedAt && (
+                      <div className="flex items-center gap-1.5 px-1">
+                        <Clock size={11} className="shrink-0 text-gray-400" />
+                        <span className="text-[11px] text-gray-500">Uploaded {formatUploadTime(consentUploadedAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!consentFile && !isConsentUploading && (
+                  <div className="flex flex-col items-center justify-center gap-3 py-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-gray-300 bg-white">
+                      <Upload size={16} className="text-gray-400" />
+                    </div>
+                    <button onClick={() => consentFileInputRef.current?.click()}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                      Browse Files
+                    </button>
+                  </div>
+                )}
+                <input ref={consentFileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+
+
+                  onChange={e => { if (e.target.files[0]) { handleConsentFileUpload(e.target.files[0]); } e.target.value = ''; }} />
+              </div>
+            </div>
+            {viewingConsent && consentFile && (
+              <ViewFileModal
+                entry={{ file: consentFile, uploadedAt: consentUploadedAt }}
+                label="Signed Consent Form"
+                onClose={() => setViewingConsent(false)}
+              />
+            )}
+
+            {/* Data Fields to Request */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Data Fields to Request <span className="text-red-500">*</span></label>
+              <div className="flex flex-wrap gap-2">
+                {DATA_FIELDS.map((field, idx) => {
+                  const checked = (form.dataFields || DATA_FIELDS).includes(field);
+                  return (
+                    <div key={field}
+                      className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 transition-all ${checked ? 'border-[#16A34A] bg-[#16A34A]/5' : 'border-gray-200 bg-white hover:border-[#4a7c59]/40'}`}
+
+                      onClick={() => { if (idx === 0) return; const cur = form.dataFields || DATA_FIELDS; setField('dataFields')(cur.includes(field) ? cur.filter(f => f !== field) : [...cur, field]); }}>
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${checked ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-300 bg-white'}`}>
+                        {checked && <Check size={11} className="text-white" strokeWidth={3} />}
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">{field}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Consent Authorization */}
+            <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3">
+              <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
+              <div>
+                <p className="text-xs font-semibold text-blue-800">Consent Authorization</p>
+                <p className="text-xs text-blue-700">By requesting OTP, you confirm the farmer is present and has verbally agreed to share their registry data with AgriBank for the purpose of this loan application.</p>
+              </div>
+            </div>
+
+            {/* Send OTP Request */}
+            <button onClick={handleSendOtp} disabled={otpVerified}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors ${otpVerified ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400' : 'bg-[#16A34A] text-white hover:bg-[#10883c]'}`}>
+              <Send size={15} /> {otpSent && !otpVerified ? 'Resend OTP Request' : 'Send OTP Request'}
+            </button>
+          </div>
+
+          {/* Right panel – OTP */}
+          <div className={`flex flex-col items-center justify-center gap-5 rounded-xl border px-6 py-8 transition-all
+            ${otpVerified ? 'border-green-200 bg-green-50/40' : otpSent ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50'}`}>
+            {otpVerified ? (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                  <Check size={32} className="text-green-600" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-green-800">Identity Verified Successfully!</p>
+                  <p className="mt-1 text-sm text-gray-500">Fayda ID <strong>{form.faydaId}</strong> has been verified.<br />Registry data access has been granted.</p>
+                </div>
+                <div className="w-full rounded-xl border border-green-200 bg-white px-4 py-3 text-left">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-green-700">Verification Details</p>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Status</span><span className="flex items-center gap-1 font-semibold text-green-700"><Check size={11} strokeWidth={3} /> OTP Verified</span></div>
+                    <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Phone</span><span className="font-medium">091****645</span></div>
+                    <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Time</span><span className="font-medium">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                  </div>
+                </div>
+              </div>
+            ) : otpSent ? (
+              <>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                  <Smartphone size={22} className="text-[#16A34A]" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-gray-800">Fayda OTP Verification</p>
+                  <p className="mt-1 text-xs text-gray-500">OTP sent to 091****645.<br />Ask the farmer to provide the 6-digit code.</p>
+                </div>
+                <div className="flex gap-2">
+
+
+                  {otpCode.map((digit, i) => (
+
+                    <input key={i} ref={el => (otpRefs.current[i] = el)} type="text" inputMode="numeric" maxLength={1} value={digit}
+                      onChange={e => handleOtpChange(i, e.target.value)} onKeyDown={e => handleOtpKeyDown(i, e)}
+                      className={`h-12 w-12 rounded-xl border-2 bg-white text-center text-lg font-semibold text-gray-900 shadow-sm transition-all focus:outline-none focus:ring-2
+                        ${otpError ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                        : digit ? 'border-[#4a7c59] focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'
+                        : 'border-gray-300 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+                  ))}
+                </div>
+                {otpError && <p className="flex items-center gap-1 text-xs text-red-500"><AlertTriangle size={12} /> {otpError}</p>}
+                <button onClick={handleVerify} disabled={verifying}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors ${verifying ? 'cursor-not-allowed bg-[#4a7c59]/60 text-white' : 'bg-[#16A34A] text-white hover:bg-[#10883c]'}`}>
+                  {verifying ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Verifying…</> : 'Verify Code'}
+                </button>
+                <p className="text-xs text-gray-500">
+                  Didn't receive code?{' '}
+                  {countdown > 0
+                    ? <span className="font-medium text-gray-700">Resend in {fmtCountdown(countdown)}</span>
+                    : <button className="font-semibold text-[#4a7c59] hover:underline" onClick={handleSendOtp}>Resend</button>}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-white">
+                  <Smartphone size={28} className="text-gray-400" />
+                </div>
+                <p className="text-center text-sm text-gray-500">Enter the Farmer ID and click<br /><strong>Send OTP Request</strong> to begin verification.</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Consent Request */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div className="mb-5 border-b border-gray-100 pb-4">
+          <h2 className="text-base font-semibold text-gray-800">Consent Request</h2>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <SelectField id="consentType"     label="Consent Type" placeholder="Specific (Single Farmer)" options={CONSENT_TYPE_OPTIONS}     value={form.consentType}     onChange={setField('consentType')}     required />
+            <SelectField id="consentDuration" label="Duration"     placeholder="12 Months"                options={CONSENT_DURATION_OPTIONS} value={form.consentDuration} onChange={setField('consentDuration')} required />
+          </div>
+          <TextAreaField id="consentPurposeDetailed" label="Purpose of Loan (Detailed)" placeholder="Describe exactly how the funds will be used..." value={form.consentPurposeDetailed} onChange={setField('consentPurposeDetailed')} rows={4} />
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Upload content form (Attachment) <span className="text-red-500">*</span></label>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 cursor-pointer hover:border-[#4a7c59]/40 hover:bg-green-50/20 transition-colors"
+              onClick={() => consentAttachRef.current?.click()}>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
+                <Upload size={20} className="text-gray-500" />
+              </div>
+              <p className="text-xs text-gray-500">content form</p>
+              <button type="button" className="rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Browse Files
+              </button>
+            </div>
+            <input ref={consentAttachRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+
+
+              onChange={e => { if (e.target.files[0]) setField('consentAttachment')(e.target.files[0]); e.target.value = ''; }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REGISTRY_FIELDS_INIT = [
+  { key: 'legalName', label: 'Legal Name',             icon: '👤', appValue: 'Abebe Kebede',   registryValue: 'Abebe Kebede Tadesse',        locked: true,  status: 'match' },
+  { key: 'dob',       label: 'Date of Birth',           icon: '🗓', appValue: '12/05/1985',     registryValue: '12/05/1985',                  locked: true,  status: 'match' },
+  { key: 'gender',    label: 'Gender',                  icon: '⚧',  appValue: 'Male',           registryValue: 'Male',                        locked: true,  status: 'match' },
+  { key: 'address',   label: 'Address (Region/Woreda)', icon: '📍', appValue: 'Oromia / Jimma', registryValue: 'Oromia / Jimma / Limmu Kosa', locked: false, status: 'warn'  },
+  { key: 'landSize',  label: 'Land Size (Hectares)',    icon: '🌾', appValue: '2.5',            registryValue: '2.5',                         locked: false, status: 'match' },
+  { key: 'faydaId',   label: 'Fayda ID',                icon: '🪪', appValue: 'Not entered',    registryValue: '722334455',                   locked: true,  status: 'auto'  },
+];
+
+function RegistryStatusBadge({ status }: { status: string }) {
+  if (status === 'match') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-700 whitespace-nowrap">
+      <Check size={10} strokeWidth={3} /> Matched
+    </span>
+  );
+  if (status === 'warn') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 whitespace-nowrap">
+      <AlertTriangle size={10} /> Mismatch
+    </span>
+  );
+  if (status === 'auto') return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+      <Zap size={10} /> Auto-filled
+    </span>
+  );
+  return null;
+}
+
+function Step4() {
+  const [fields, setFields] = useState(REGISTRY_FIELDS_INIT);
+  const [editing, setEditing] = useState(null);   // key of field being edited
+  const [editVal, setEditVal] = useState('');
+  const [savedKey, setSavedKey] = useState(null); // key of recently saved field (for toast)
+  const inputRef = useRef<any>(null);
+
+  const matchCount = fields.filter(f => f.status === 'match').length;
+  const warnCount  = fields.filter(f => f.status === 'warn').length;
+  const autoCount  = fields.filter(f => f.status === 'auto').length;
+
+  function startEdit(field: string) {
+
+    setEditing(field.key);
+
+    setEditVal(field.registryValue);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  function cancelEdit() { setEditing(null); setEditVal(''); }
+
+  function saveEdit(key: string) {
+    setFields(prev => prev.map(f => {
+      if (f.key !== key) return f;
+      const newVal = editVal.trim() || f.registryValue;
+      const newStatus = newVal === f.appValue ? 'match' : f.status === 'auto' ? 'auto' : 'warn';
+      return { ...f, registryValue: newVal, status: newStatus };
+    }));
+    setEditing(null);
+    setEditVal('');
+
+    setSavedKey(key);
+    setTimeout(() => setSavedKey(null), 2500);
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Summary strip */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { count: matchCount, label: 'Matched',    color: 'green', Icon: Check,         iconClass: 'text-green-600',  bg: 'bg-green-100',  border: 'border-green-200', textBig: 'text-green-700', textSm: 'text-green-600' },
+          { count: warnCount,  label: 'Mismatches', color: 'amber', Icon: AlertTriangle,  iconClass: 'text-amber-600',  bg: 'bg-amber-100',  border: 'border-amber-200', textBig: 'text-amber-700', textSm: 'text-amber-600' },
+          { count: autoCount,  label: 'Auto-filled',color: 'blue',  Icon: Zap,            iconClass: 'text-blue-600',   bg: 'bg-blue-100',   border: 'border-blue-200',  textBig: 'text-blue-700',  textSm: 'text-blue-600'  },
+        ].map(({ count, label, bg, border, Icon, iconClass, textBig, textSm }) => (
+          <div key={label} className={`flex items-center gap-3 rounded-2xl border ${border} bg-white px-4 py-3 shadow-sm`}>
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
+              <Icon size={16} className={iconClass} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold leading-none ${textBig}`}>{count}</p>
+              <p className={`mt-0.5 text-xs font-medium ${textSm}`}>{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="grid grid-cols-[200px_1fr_1fr_140px] border-b border-gray-100 bg-gray-50/80 px-5 py-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Field</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Application Data</span>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#4a7c59]">
+            <FileText size={10} /> Fayda Registry
+          </span>
+          <span className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</span>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y divide-gray-100">
+          {fields.map((field: any) => {
+            const { key, label, icon, appValue, registryValue, locked, status } = field;
+            const isWarn    = status === 'warn';
+            const isEditing = editing === key;
+            const justSaved = savedKey === key;
+
+            return (
+              <div key={key}
+                className={`grid grid-cols-[200px_1fr_1fr_140px] items-center gap-0 px-5 py-4 transition-all duration-200
+                  ${isEditing ? 'bg-[#4a7c59]/5 ring-1 ring-inset ring-[#4a7c59]/20'
+                  : isWarn    ? 'bg-amber-50/30 hover:bg-amber-50/60'
+                  : 'hover:bg-gray-50/60'}`}>
+
+                {/* Field label */}
+                <div className="flex items-center gap-3 pr-4">
+                  <span className="text-lg leading-none">{icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{label}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {locked
+                        ? <><Lock size={9} className="text-gray-400" /><span className="text-[10px] text-gray-400">Registry-locked</span></>
+                        : <><Edit2 size={9} className="text-[#4a7c59]" /><span className="text-[10px] text-[#4a7c59]">Editable</span></>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                {/* Application value */}
+                <div className="pr-4">
+                  <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <span className="text-sm text-gray-600 truncate">{appValue}</span>
+                  </div>
+                </div>
+
+                {/* Registry value — view or edit */}
+                <div className="pr-4">
+                  {isEditing ? (
+                    <div className="flex flex-col gap-1.5">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={editVal}
+                        onChange={e => setEditVal(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(key); if (e.key === 'Escape') cancelEdit(); }}
+                        className="w-full rounded-lg border-2 border-[#4a7c59] bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20"
+                      />
+                      <div className="flex gap-1.5">
+                        <button onClick={() => saveEdit(key)}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#4a7c59] px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-[#3a6347] transition-colors">
+                          <Check size={10} strokeWidth={3} /> Save
+                        </button>
+                        <button onClick={cancelEdit}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                          <X size={10} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`flex items-center rounded-lg border px-3 py-3
+                      ${justSaved ? 'border-[#4a7c59] bg-[#4a7c59]/5'
+                      : isWarn    ? 'border-amber-300 bg-amber-50'
+                      : 'border-green-200 bg-green-50/50'}`}>
+                      <span className={`flex-1 text-sm font-medium truncate
+                        ${justSaved ? 'text-[#4a7c59]'
+                        : isWarn    ? 'text-amber-800'
+                        : 'text-gray-800'}`}>
+                        {registryValue}
+                      </span>
+                      {justSaved && <Check size={13} className="shrink-0 text-[#4a7c59]" strokeWidth={3} />}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status + action */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <RegistryStatusBadge status={status} />
+                  {locked ? (
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-gray-400">
+                      <Lock size={9} /> Locked
+                    </span>
+                  ) : isEditing ? (
+                    <span className="text-[10px] font-semibold text-[#4a7c59]">Editing…</span>
+                  ) : (
+                    <button
+                      onClick={() => startEdit(field)}
+                      className="flex items-center gap-1 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-2.5 py-1 text-[11px] font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+                      <Edit2 size={10} /> Edit
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Policy note */}
+      <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
+          <Info size={13} className="text-blue-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-blue-800">Data Override Policy</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-blue-700">
+            Fields marked as <strong>Locked</strong> are strictly synced with the Fayda registry and cannot be altered.
+            For unlocked fields, any manual overrides will be flagged for secondary review during the final approval process.
+            Edited values are highlighted in <strong className="text-[#4a7c59]">green</strong> after saving.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REQUIRED_DOCS = [
+  { id: 'identityDoc',    label: 'Identity Document',    sub: 'National ID, Passport, or Kebele ID' },
+  { id: 'consentForm',    label: 'Signed Consent Form',  sub: 'Physical copy signed by farmer' },
+  { id: 'landOwnerProof', label: 'Land Ownership Proof', sub: 'Title deed or Kebele certificate', required: true },
+  { id: 'marriageCert',   label: 'Marriage Certificate', sub: 'Required if applicant is married' },
+];
+
+function formatUploadTime(date: Date) {
+  if (!date) return '';
+  return date.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, onClose: () => void }) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    if (!entry?.file) return;
+    const objectUrl = URL.createObjectURL(entry.file);
+
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [entry]);
+
+  if (!entry) return null;
+
+  const isImage = entry.file.type.startsWith('image/');
+  const isPdf   = entry.file.type === 'application/pdf';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800">{label}</p>
+            <p className="max-w-sm truncate text-xs text-gray-500">{entry.file.name} · {formatFileSize(entry.file.size)}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {url && (
+              <a href={url} download={entry.file.name}
+                 className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <Download size={12} /> Download
+              </a>
+            )}
+            <button onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-100 transition-colors">
+              <X size={15} className="text-gray-600" />
+            </button>
+          </div>
+        </div>
+        {/* Modal body */}
+        <div className="flex flex-1 items-center justify-center overflow-auto bg-gray-50 p-6 min-h-[200px]">
+          {!url ? (
+            <div className="flex flex-col items-center gap-2">
+              <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#4a7c59] border-t-transparent" />
+              <p className="text-xs text-gray-500">Loading preview…</p>
+            </div>
+          ) : isImage ? (
+            <img src={url} alt={entry.file.name} className="max-h-[65vh] max-w-full rounded-xl object-contain shadow" />
+          ) : isPdf ? (
+            <iframe src={url} title={entry.file.name} className="h-[65vh] w-full rounded-xl border border-gray-200" />
+          ) : (
+            <div className="flex flex-col items-center gap-4 py-10">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">
+                <FileText size={32} className="text-gray-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-700">{entry.file.name}</p>
+              <p className="text-xs text-gray-500">Preview not available for this file type.</p>
+              <a href={url} download={entry.file.name}
+                 className="flex items-center gap-1.5 rounded-lg bg-[#4a7c59] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
+                <Download size={14} /> Download File
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCamera = true }: { doc: any, entry: any, onUpload: (file: File) => void, onRemove: () => void, uploadProgress: number, showCamera?: boolean }) {
+  const fileRef   = useRef<any>(null);
+  const cameraRef = useRef<any>(null);
+  const [viewing, setViewing] = useState(false);
+  const isUploaded  = !!entry;
+  const isUploading = uploadProgress != null && uploadProgress < 100;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+
+    if (e.target.files[0]) { onUpload(e.target.files[0]); e.target.value = ''; }
+  }
+
+  return (
+    <>
+      {viewing && <ViewFileModal entry={entry} label={doc.label} onClose={() => setViewing(false)} />}
+      <div className={`relative flex flex-col rounded-xl border p-4 transition-all ${
+        isUploaded ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'
+      }`}>
+        {/* Card header */}
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">{doc.label}</p>
+            <p className="text-xs text-gray-500">{doc.sub}</p>
+          </div>
+          {isUploading ? (
+            <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" /> Uploading
+            </span>
+          ) : isUploaded ? (
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+              <Check size={10} strokeWidth={3} /> Uploaded
+            </span>
+          ) : null}
+        </div>
+
+        {/* Upload progress bar */}
+        {isUploading && (
+          <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+            <div className="h-full bg-[#16A34A] transition-all" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+
+        {/* Uploaded state */}
+        {isUploaded && !isUploading && entry && (
+          <div className="flex flex-col gap-2.5">
+            {/* File name row */}
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <Image size={13} className="shrink-0 text-gray-400" />
+              <span className="flex-1 truncate text-xs font-medium text-gray-700">{entry.file.name}</span>
+            </div>
+            {/* Date-time row */}
+            <div className="flex items-center gap-1.5 px-1">
+              <Clock size={11} className="shrink-0 text-gray-400" />
+              <span className="text-[11px] text-gray-500">Uploaded {formatUploadTime(entry.uploadedAt)}</span>
+            </div>
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewing(true)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#4a7c59]/40 bg-[#4a7c59]/5 px-3 py-2 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+                <Eye size={12} /> View
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                <Upload size={12} /> Re-Upload
+              </button>
+              <button
+                onClick={() => onRemove && onRemove()}
+                className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-500 hover:bg-red-100 transition-colors">
+                <X size={13} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty / not-yet-uploaded state */}
+        {!isUploaded && !isUploading && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-gray-300 bg-white">
+              <Upload size={16} className="text-gray-400" />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Browse Files
+              </button>
+              {showCamera && (
+                <button
+                  onClick={() => cameraRef.current?.click()}
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                  📷 Camera
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* File inputs */}
+        <input ref={fileRef}   type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+      </div>
+    </>
+  );
+}
+
+function Step5({ uploads, setUploads, form, setField }: Step5Props) {
+  const [progress, setProgress]         = useState({});
+  const [extraDocs, setExtraDocs]       = useState([]);
+  const [viewingExtra, setViewingExtra] = useState(null);
+  const extraInputRef                   = useRef<any>(null);
+
+  const MARRIAGE_STATUSES = [
+    { value: 'married',   label: 'Married' },
+    { value: 'single',    label: 'Single/Unmarried' },
+    { value: 'divorced',  label: 'Divorced' },
+    { value: 'widow',     label: 'Widow/Widower' },
+    { value: 'separated', label: 'Separated' },
+  ];
+
+  const INLINE_DOCS = [
+    { id: 'marriageCert',   label: 'Marriage Certificate',  required: true,  showCamera: false },
+    { id: 'identityDoc',    label: 'Identity Document',     required: true,  showCamera: false },
+    { id: 'landOwnerProof', label: 'Land Ownership Proof',  required: true,  showCamera: true  },
+  ];
+
+  function handleUpload(docId: string, file: File) {
+    setProgress(p => ({ ...p, [docId]: 0 }));
+
+    setUploads(prev => ({ ...prev, [docId]: { file, uploadedAt: new Date() } }));
+    let v = 0;
+    const iv = setInterval(() => {
+      v += Math.random() * 30 + 10;
+
+      if (v >= 100) { clearInterval(iv); setProgress(p => { const n = { ...p }; delete n[docId]; return n; }); }
+      else setProgress(p => ({ ...p, [docId]: Math.min(v, 99) }));
+    }, 300);
+  }
+
+  function removeUpload(docId: string) {
+
+    setUploads(prev => { const n = { ...prev }; delete n[docId]; return n; });
+  }
+
+  function handleExtraUpload(file: File) {
+
+    setExtraDocs(prev => [...prev, { id: Date.now(), file, uploadedAt: new Date() }]);
+  }
+
+  function removeExtraDoc(id: string) {
+
+    setExtraDocs(prev => prev.filter(d => d.id !== id));
+  }
+
+  const marriageStatus = form.marriageStatus || 'married';
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Marriage Status */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <h2 className="mb-4 text-base font-semibold text-gray-800">Marriage Status <span className="text-red-500">*</span></h2>
+        <div className="flex flex-wrap gap-3">
+          {MARRIAGE_STATUSES.map(opt => (
+            <label key={opt.value}
+              className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all
+                ${marriageStatus === opt.value
+                  ? 'border-[#22C55E] bg-[#22C55E]/5 text-[#4a7c59]'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-[#4a7c59]/40'}`}>
+              <input type="radio" name="marriageStatus" value={opt.value} checked={marriageStatus === opt.value}
+                onChange={() => setField('marriageStatus')(opt.value)} className="sr-only" />
+              <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors
+                ${marriageStatus === opt.value ? 'border-[#22C55E]' : 'border-gray-300'}`}>
+                {marriageStatus === opt.value && (
+                  <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
+                )}
+              </span>
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Required Documents */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div className="mb-5 flex items-center gap-1 border-b border-gray-100 pb-4">
+          <h2 className="text-base font-semibold text-gray-800">Required Documents</h2>
+          <span className="ml-1 text-red-500 text-sm">*</span>
+        </div>
+        {/* Two-column grid: Marriage Certificate (if not single) + Identity Document */}
+        <div className={`mb-4 grid grid-cols-1 gap-4 ${marriageStatus !== 'single' ? 'sm:grid-cols-2' : ''}`}>
+          {marriageStatus !== 'single' && (
+
+            <DocUploadCard doc={INLINE_DOCS[0]} entry={uploads[INLINE_DOCS[0].id]} uploadProgress={progress[INLINE_DOCS[0].id]}
+              showCamera={INLINE_DOCS[0].showCamera}
+              onUpload={f => handleUpload(INLINE_DOCS[0].id, f)} onRemove={() => removeUpload(INLINE_DOCS[0].id)} />
+          )}
+
+          <DocUploadCard doc={INLINE_DOCS[1]} entry={uploads[INLINE_DOCS[1].id]} uploadProgress={progress[INLINE_DOCS[1].id]}
+            showCamera={INLINE_DOCS[1].showCamera}
+            onUpload={f => handleUpload(INLINE_DOCS[1].id, f)} onRemove={() => removeUpload(INLINE_DOCS[1].id)} />
+        </div>
+        {/* Full-width: Land Ownership Proof */}
+        <DocUploadCard doc={INLINE_DOCS[2]} entry={uploads[INLINE_DOCS[2].id]}
+
+          uploadProgress={progress[INLINE_DOCS[2].id]}
+          showCamera={INLINE_DOCS[2].showCamera}
+          onUpload={f => handleUpload(INLINE_DOCS[2].id, f)}
+          onRemove={() => removeUpload(INLINE_DOCS[2].id)} />
+      </div>
+
+      {/* Acknowledgment */}
+      <div className={`rounded-2xl border bg-white px-4 py-4 shadow-sm sm:px-6 transition-colors ${form.acknowledgeDocDiscrepancy ? 'border-[#22C55E]/40 bg-green-50/40' : 'border-gray-200'}`}>
+        <label className="flex cursor-pointer items-start gap-3" onClick={() => setField('acknowledgeDocDiscrepancy')(!form.acknowledgeDocDiscrepancy)}>
+          <div
+            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors
+              ${form.acknowledgeDocDiscrepancy ? 'border-[#22C55E] bg-[#22C55E]' : 'border-gray-300 bg-white'}`}>
+            {form.acknowledgeDocDiscrepancy && <Check size={12} className="text-white" strokeWidth={3} />}
+          </div>
+          <span className={`text-sm transition-colors ${form.acknowledgeDocDiscrepancy ? 'font-sm text-gray-900' : 'text-gray-700'}`}>
+            I acknowledge that all uploaded documents are authentic and accurate. Any discrepancy may result in the rejection of this application.
+          </span>
+        </label>
+      </div>
+
+      {/* Additional Supporting Documents */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        {viewingExtra && (
+
+          <ViewFileModal entry={viewingExtra} label={viewingExtra.file.name} onClose={() => setViewingExtra(null)} />
+        )}
+        <h2 className="mb-4 text-base font-semibold text-gray-800">Additional Supporting Documents</h2>
+
+        {extraDocs.length > 0 && (
+          <div className="mb-4 flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+            {extraDocs.map(doc => (
+
+              <div key={doc.id} className="flex items-center gap-3 px-4 py-3 hover:bg-white transition-colors">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white">
+                  <FileText size={14} className="text-gray-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+
+                  <p className="truncate text-xs font-medium text-gray-800">{doc.file.name}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Clock size={10} className="text-gray-400" />
+
+                    <span className="text-[11px] text-gray-400">{formatUploadTime(doc.uploadedAt)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setViewingExtra(doc)}
+                    className="flex items-center gap-1 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-2.5 py-1.5 text-[11px] font-semibold text-[#16A34A] hover:bg-[#16A34A]/10 transition-colors">
+                    <Eye size={11} /> View
+                  </button>
+
+                  <button onClick={() => removeExtraDoc(doc.id)}
+                    className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-1.5 text-red-400 hover:bg-red-100 transition-colors">
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div onClick={() => extraInputRef.current?.click()}
+          className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-10 cursor-pointer hover:border-[#4a7c59]/40 hover:bg-green-50/30 transition-colors">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white">
+            <Upload size={20} className="text-gray-400" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-700">Drag and drop additional files here</p>
+            <p className="text-xs text-gray-500">Guarantor IDs, Business licenses, or other relevant docs.</p>
+          </div>
+          <span className="text-sm font-medium text-[#22C55E] bg-[#e6faee] py-1 px-3 rounded-md">+ Add Document</span>
+        </div>
+        <input ref={extraInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="hidden"
+          onChange={e => { Array.from(e.target.files || []).forEach(f => handleExtraUpload(f)); e.target.value = ''; }} />
+      </div>
+    </div>
+  );
+}
+
+const REVIEW_SECTIONS = [
+  { key: 'loanDetails',      icon: '🌾', title: 'Loan Details',               sub: 'Capture the requested loan, crop, and pricing details.',                status: 'complete', goStep: 1 },
+  { key: 'bankDetails',      icon: '🏦', title: 'Bank Details',               sub: 'Provide payout accounts and borrowing information.',                    status: 'complete', goStep: 2 },
+  { key: 'supportingDocs',   icon: '🛡', title: 'Supporting Documents',       sub: 'Upload the documents required for review.',                            status: 'complete', goStep: 3 },
+  { key: 'consentOtp',       icon: '🔐', title: 'Consent & OTP Verification', sub: 'Verify farmer identity and capture consent for registry data access.', status: 'verified', goStep: 4 },
+  { key: 'farmerDetails',    icon: '🧑‍🌾', title: 'Farmer Details',            sub: 'Confirm the farmer profile and agronomic details.',                    status: 'complete', goStep: 5 },
+];
+
+const REQUIRED_DOC_LABELS = {
+  identityDoc:    'Identity Document',
+  consentForm:    'Signed Consent Form',
+  landOwnerProof: 'Land Ownership Proof',
+  marriageCert:   'Marriage Certificate',
+};
+
+function ReviewSection({ section, expanded, onToggle, goToStep }: { section: any, expanded: boolean, onToggle: () => void, goToStep: (step: number) => void }) {
+  const statusConfig = {
+    complete: { label: 'Complete', bg: 'bg-green-100', text: 'text-green-700' },
+    verified: { label: 'Verified', bg: 'bg-blue-100',  text: 'text-blue-700'  },
+    mismatch: { label: 'Mismatch', bg: 'bg-amber-100', text: 'text-amber-700' },
+    pending:  { label: 'Pending',  bg: 'bg-gray-100',  text: 'text-gray-600'  },
+  };
+
+  const cfg = statusConfig[section.status] || statusConfig.pending;
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <button type="button" onClick={onToggle}
+        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors">
+        <span className="text-xl leading-none">{section.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800">{section.title}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{section.sub}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
+            {cfg.label}
+          </span>
+          <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      {expanded && (
+        <div className="border-t border-gray-100 px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs text-gray-500">This section has been filled. Review the details before submitting.</p>
+            <button onClick={() => goToStep(section.goStep)}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#4a7c59]/30 bg-[#4a7c59]/5 px-3 py-1.5 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors">
+              <Edit2 size={11} /> Edit Section
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Detail modal ─────────────────────────────────────────────────────────────
-const FARMING_PRACTICE_LABELS = {
-  usesIrrigation: 'Uses Irrigation', usesImprovedSeeds: 'Uses Improved Seeds',
-  usesFertilizers: 'Uses Fertilizers', memberOfCooperative: 'Member of Cooperative',
-  improvedSeeds: 'Improved Seeds', fertilizerUse: 'Fertilizer Use',
-  irrigation: 'Irrigation', cropRotation: 'Crop Rotation',
-  pesticides: 'Pesticides', mechanization: 'Mechanization',
-};
+function Step6({ form, uploads, goToStep }: { form: FormState, uploads: UploadsState, goToStep: (step: number) => void }) {
+  const [expanded, setExpanded]       = useState({});
+  const [acknowledged, setAcknowledged] = useState(false);
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div className="mb-5 border-b border-gray-100 pb-4">
+          <h2 className="text-base font-semibold text-gray-800">Review Application</h2>
+          <p className="text-xs text-gray-500 mt-1">Please review each section before submitting your application.</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {REVIEW_SECTIONS.map(section => (
+            <ReviewSection
+              key={section.key}
+              section={section}
 
-const INCOME_FIELDS = [
-  { key: 'primaryCropSales',        label: 'Primary Crop Sales' },
-  { key: 'livestockSales',          label: 'Livestock Sales' },
-  { key: 'secondaryCropSalesIncome',label: 'Secondary Crop Sales' },
-  { key: 'farmingIncome',           label: 'Other Farming Income' },
-  { key: 'offFarmWage',             label: 'Off-farm / Wage' },
-  { key: 'otherIncome',             label: 'Other Income' },
+              expanded={!!expanded[section.key]}
+
+              onToggle={() => setExpanded(p => ({ ...p, [section.key]: !p[section.key] }))}
+              goToStep={goToStep}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Acknowledgment */}
+      <div className={`rounded-2xl border bg-white px-4 py-4 shadow-sm sm:px-6 transition-colors ${acknowledged ? 'border-[#4a7c59]/40 bg-green-50/40' : 'border-gray-200'}`}>
+        <label className="flex cursor-pointer items-start gap-3" onClick={() => setAcknowledged(v => !v)}>
+          <div
+            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors
+              ${acknowledged ? 'border-[#4a7c59] bg-[#4a7c59]' : 'border-gray-300 bg-white'}`}>
+            {acknowledged && <Check size={12} className="text-white" strokeWidth={3} />}
+          </div>
+          <span className={`text-sm transition-colors ${acknowledged ? 'font-sm text-gray-900' : 'text-gray-700'}`}>
+            I confirm that all information provided in this application is accurate and complete. I understand that providing false information may lead to rejection or legal action.
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+const STATUS_TRACKING = [
+  { label: 'Application Submitted',        icon: '📤', done: true,  note: 'Securely transmitted to Cooperative Bank of Oromia via SFTP.' },
+  { label: 'Under Review',                 icon: '🔍', done: false, note: 'Loan officer will verify documents and applicant details.' },
+  { label: 'Credit Scoring',               icon: '📊', done: false, note: 'Automated credit assessment based on farm data and history.' },
+  { label: 'Decision (Approved/Rejected)', icon: '⚖️', done: false, note: 'Final approval or rejection communicated to applicant.' },
+  { label: 'Loan Disbursed',               icon: '💰', done: false, note: 'Approved funds transferred to the farmer\'s bank account.' },
 ];
 
-const EXPENDITURE_FIELDS = [
-  { key: 'foodLivingCosts',         label: 'Food & Living Costs' },
-  { key: 'educationCost',           label: 'Education' },
-  { key: 'healthCost',              label: 'Health' },
-  { key: 'farmingInputsSelf',       label: 'Farming Inputs (Self)' },
-  { key: 'existingDebtRepayments',  label: 'Existing Debt Repayments' },
-  { key: 'existingLoanRepayments',  label: 'Existing Loan Repayments' },
-  { key: 'otherExpenditure',        label: 'Other Expenditure' },
-];
+function SummaryModal({ form, displayId, dateStr, timeStr, onClose }: { form: FormState, displayId: string, dateStr: string, timeStr: string, onClose: () => void }) {
+  const farmerName = form.fullName || 'Abebe Kebede';
 
-// ─── Small UI helpers ─────────────────────────────────────────────────────────
-function F({ label, value }: any) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-400">{label}</span>
-      <span className="text-[13px] font-semibold text-gray-800 leading-snug">{value || '—'}</span>
-    </div>
-  );
-}
 
-function StatusBadge({ tone, label }: any) {
-  const cls = {
-    info:    'bg-blue-50 text-blue-800 border-blue-200',
-    success: 'bg-green-50 text-[#16A34A] border-green-200',
-    danger:  'bg-red-50 text-red-700 border-red-200',
-    neutral: 'bg-gray-100 text-gray-600 border-gray-200',
-  };
-  const dot = {
-    info: 'bg-blue-500', success: 'bg-green-500', danger: 'bg-red-500', neutral: 'bg-gray-400',
-  };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${cls[tone] || cls.neutral}`}>
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot[tone] || dot.neutral}`} />
-      {label}
-    </span>
-  );
-}
 
-function StepBadge({ children }: any) {
-  return (
-    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#4a7c59] text-white text-[10px] font-bold flex-shrink-0 leading-none">
-      {children}
-    </span>
-  );
-}
-
-function SectionHeading({ step, children }: any) {
-  return (
-    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-      {step && <StepBadge>{step}</StepBadge>}
-      <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0 leading-none">{children}</h4>
-    </div>
-  );
-}
-
-function MoneyRow({ label, value, isTotal }: any) {
-  if (isTotal) {
-    return (
-      <div className="flex items-center justify-between pt-2.5 mt-1 border-t-2 border-gray-200 text-[13px] font-bold text-gray-800">
-        <span>{label}</span>
-        <span>{value}</span>
+  const Section = ({ title, icon, children }) => (
+    <div className="mb-5">
+      <div className="mb-3 flex items-center gap-2 border-b border-gray-100 pb-2">
+        <span className="text-base leading-none">{icon}</span>
+        <p className="text-sm font-bold text-gray-800">{title}</p>
       </div>
-    );
-  }
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-50 text-[12.5px] last:border-0">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-semibold text-gray-800">{value}</span>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">{children}</div>
     </div>
   );
-}
 
-/* ── Field card used inside modal sections ── */
-function FC({ label, value, wide }: any) {
-  return (
-    <div className={`flex flex-col gap-1 bg-gray-50 rounded-xl px-3.5 py-3 border border-gray-100 ${wide ? 'col-span-2 sm:col-span-3' : ''}`}>
-      <span className="text-[9.5px] font-extrabold uppercase tracking-widest text-gray-400">{label}</span>
-      <span className="text-[13px] font-semibold text-gray-800 leading-snug break-words">{value || '—'}</span>
+
+  const F = ({ label, value }) => (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-gray-800 break-words">{value || '—'}</p>
     </div>
   );
-}
-
-/* ── Section card wrapper ── */
-function ModalSection({ icon, title, children, accent }: any) {
   return (
-    <div className="rounded-2xl border border-gray-100 overflow-hidden">
-      <div className={`flex items-center gap-2.5 px-4 py-3 ${accent || 'bg-gray-50/80 border-b border-gray-100'}`}>
-        {icon && <span className="text-base leading-none">{icon}</span>}
-        <h4 className="text-[11.5px] font-extrabold uppercase tracking-widest text-gray-500 m-0">{title}</h4>
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  );
-}
-
-function DetailModal({ app, onClose }: any) {
-  const [tab, setTab] = useState('overview');
-  const fd = app.formData || {};
-
-  const activePractices = Object.entries(fd.farmingPractices || {})
-    .filter(([, v]) => v)
-    .map(([k]) => FARMING_PRACTICE_LABELS[k] || k);
-
-  const totalIncome      = INCOME_FIELDS.reduce((s, f) => s + (parseFloat(fd[f.key]) || 0), 0);
-  const totalExpenditure = EXPENDITURE_FIELDS.reduce((s, f) => s + (parseFloat(fd[f.key]) || 0), 0);
-  const netCashFlow      = totalIncome - totalExpenditure;
-
-  const TABS = [
-    { id: 'overview',   emoji: '📋', label: 'Overview'       },
-    { id: 'applicant',  emoji: '👤', label: 'Applicant'      },
-    { id: 'farm',       emoji: '🌾', label: 'Farm & Crops'   },
-    { id: 'loan',       emoji: '💰', label: 'Loan'           },
-    { id: 'finances',   emoji: '📊', label: 'Finances'       },
-    { id: 'collateral', emoji: '🏦', label: 'Collateral'     },
-  ];
-
-  const statusGradient = {
-    success: 'from-emerald-500 to-green-600',
-    info:    'from-blue-500 to-blue-600',
-    danger:  'from-red-500 to-rose-600',
-    neutral: 'from-gray-400 to-gray-500',
-  };
-  const statusIcon = { success: '✅', info: '⏳', danger: '⚠️', neutral: '📝' };
-  const initials = (app.applicant || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-
-  const timelineSteps = [
-    { label: 'Application Submitted', sub: fmtDate(app.updated || app.submittedAt), done: true,  Icon: Check        },
-    { label: 'Under Agent Review',    sub: 'Awaiting Development Agent sign-off',   done: false, Icon: Clock3       },
-    { label: 'Bank Assessment',       sub: 'Pending financial institution review',  done: false, Icon: CheckCircle2 },
-    { label: 'Decision',              sub: 'Approval or additional info request',   done: false, Icon: CheckCircle2 },
-  ];
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-2xl min-h-0 bg-white rounded-3xl flex flex-col overflow-hidden shadow-2xl"
-        style={{
-          animation: 'modalIn .22s cubic-bezier(.22,.68,0,1.15) both',
-          height: 'min(90vh, calc(100dvh - 2rem))',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <style>{`
-          @keyframes modalIn {
-            from { opacity:0; transform:scale(.96) translateY(12px); }
-            to { opacity:1; transform:scale(1) translateY(0); }
-          }
-
-          .detail-modal-tabs,
-          .detail-modal-body {
-            scrollbar-color: #cbd5e1 transparent;
-            scrollbar-width: thin;
-          }
-
-          .detail-modal-tabs::-webkit-scrollbar {
-            height: 8px;
-          }
-
-          .detail-modal-body::-webkit-scrollbar {
-            width: 10px;
-          }
-
-          .detail-modal-tabs::-webkit-scrollbar-track,
-          .detail-modal-body::-webkit-scrollbar-track {
-            background: transparent;
-          }
-
-          .detail-modal-tabs::-webkit-scrollbar-thumb,
-          .detail-modal-body::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-          }
-
-          .detail-modal-tabs::-webkit-scrollbar-thumb:hover,
-          .detail-modal-body::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-          }
-        `}</style>
-
-          {/* ── Hero header ── */}
-          <div className={`relative flex-shrink-0 bg-gradient-to-br ${statusGradient[app.statusTone] || statusGradient.neutral} px-6 pt-6 pb-5 overflow-hidden`}>
-          {/* decorative circles */}
-          <div className="pointer-events-none absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
-          <div className="pointer-events-none absolute -bottom-10 -left-6 w-28 h-28 rounded-full bg-white/8" />
-
-          {/* close button */}
-          <button
-            className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 cursor-pointer transition-colors"
-            onClick={onClose}
-          >
-            <X size={15} strokeWidth={2.5} />
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-8" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-[#16A34A] to-[#10883c] px-6 py-5">
+          <div>
+            <p className="text-lg font-bold text-white">Application Summary</p>
+            <p className="text-xs text-white/70">ID: {displayId} · Submitted {dateStr} at {timeStr}</p>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+            <X size={16} className="text-white" />
           </button>
-
-          {/* avatar + meta */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/20 text-white text-xl font-extrabold shrink-0 border-2 border-white/30 shadow-lg">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-white/70 text-[11px] font-semibold tracking-wide mb-0.5">{app.id} · {fmtDate(app.updated)}</p>
-              <h3 className="text-white text-[18px] font-extrabold leading-tight m-0 truncate">{app.applicant}</h3>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 border border-white/30 text-white text-[11px] font-semibold">
-                  {statusIcon[app.statusTone]} {app.status}
-                </span>
-                {app.type && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/15 border border-white/25 text-white/90 text-[11px] font-semibold">
-                    {fmtType(app.type)}
-                  </span>
-                )}
-                {app.region && app.region !== '—' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/15 border border-white/25 text-white/90 text-[11px] font-semibold">
-                    📍 {app.region}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* quick-stat strip */}
-          {app.amount && (
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {[
-                { label: 'Amount',  value: fmtAmount(app.amount) },
-                { label: 'Term',    value: app.loanTerm || '—'   },
-                { label: 'Phone',   value: app.phone   || '—'   },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex flex-col rounded-xl bg-white/15 border border-white/20 px-3 py-2">
-                  <span className="text-[9.5px] font-bold uppercase tracking-widest text-white/60">{label}</span>
-                  <span className="text-[12.5px] font-extrabold text-white leading-snug truncate">{value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          </div>
-
-          {/* ── Pill tab bar ── */}
-          <div
-            className="detail-modal-tabs flex-shrink-0 overflow-x-scroll overflow-y-hidden border-b border-gray-100 px-4 py-3"
-            style={{ scrollbarGutter: 'stable' }}
-          >
-            <div className="flex gap-1.5 w-max pb-0.5">
-              {TABS.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11.5px] font-bold whitespace-nowrap border-0 cursor-pointer transition-all ' +
-                    (tab === t.id
-                      ? 'bg-[#16A34A] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700')}
-                >
-                  <span className="text-sm leading-none">{t.emoji}</span>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Tab body ── */}
-          <div
-            className="detail-modal-body min-h-0 flex-1 overflow-y-scroll overflow-x-hidden px-5 pt-4 pb-10 flex flex-col gap-4 overscroll-contain"
-            style={{ scrollbarGutter: 'stable', WebkitOverflowScrolling: 'touch', scrollPaddingBottom: '2.5rem' }}
-          >
-
-          {/* ── Overview ── */}
-          {tab === 'overview' && (
-            <>
-              <ModalSection icon="📋" title="Application Summary">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Application ID"     value={app.id} />
-                  <FC label="Loan Type"           value={fmtType(app.type)} />
-                  <FC label="Requested Amount"    value={fmtAmount(app.amount)} />
-                  <FC label="Loan Term"           value={app.loanTerm} />
-                  <FC label="Preferred Bank"      value={fd.preferredBank} />
-                  <FC label="Repayment Frequency" value={fd.repaymentFrequency} />
-                </div>
-              </ModalSection>
-
-              <ModalSection icon="👤" title="Applicant at a Glance">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Full Name"  value={app.applicant} />
-                  <FC label="Mobile"     value={app.phone} />
-                  <FC label="Region"     value={app.region || fd.region} />
-                  <FC label="Gender"     value={fd.gender} />
-                  <FC label="Education"  value={fd.educationLevel} />
-                  <FC label="Fayda ID"   value={fd.faydaId} />
-                </div>
-              </ModalSection>
-
-              <ModalSection icon="🕐" title="Submission Timeline">
-                <div className="flex flex-col gap-0">
-                  {timelineSteps.map(({ label, sub, done, Icon }, i, arr) => (
-                    <div key={label} className="flex items-stretch gap-4">
-                      <div className="flex flex-col items-center pt-0.5">
-                        <div className={`flex w-8 h-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${done ? 'bg-[#16A34A] border-[#16A34A]' : 'bg-white border-gray-200'}`}>
-                          <Icon size={13} strokeWidth={2.8} className={done ? 'text-white' : 'text-gray-300'} />
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div className={`w-0.5 flex-1 my-1 ${done ? 'bg-[#16A34A]/30' : 'bg-gray-100'}`} />
-                        )}
-                      </div>
-                      <div className={`pb-4 flex-1 ${i < arr.length - 1 ? '' : 'pb-0'}`}>
-                        <p className={`text-[13px] font-bold leading-tight ${done ? 'text-gray-900' : 'text-gray-400'}`}>{label}</p>
-                        <p className="text-[11.5px] text-gray-400 mt-0.5">{sub}</p>
-                        {done && (
-                          <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
-                            <Check size={9} strokeWidth={3} /> Completed
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ModalSection>
-            </>
-          )}
-
-          {/* ── Applicant ── */}
-          {tab === 'applicant' && (
-            <>
-              <ModalSection icon="👤" title="Personal Information">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Full Name"          value={fd.fullName} />
-                  <FC label="Father's Name"      value={fd.fatherName} />
-                  <FC label="Grandfather's Name" value={fd.grandfatherName} />
-                  <FC label="Date of Birth"      value={fd.dateOfBirth} />
-                  <FC label="Gender"             value={fd.gender} />
-                  <FC label="Marital Status"     value={fd.maritalStatus} />
-                  <FC label="Education Level"    value={fd.educationLevel} />
-                  <FC label="Mobile Phone"       value={fd.mobilePhone} />
-                  <FC label="Alternate Phone"    value={fd.alternatePhone} />
-                </div>
-              </ModalSection>
-              <ModalSection icon="📍" title="Residential Location">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Region"          value={fd.region} />
-                  <FC label="Zone"            value={fd.zone} />
-                  <FC label="Woreda/District" value={fd.woreda} />
-                  <FC label="Kebele"          value={fd.kebele} />
-                </div>
-              </ModalSection>
-              <ModalSection icon="🪪" title="KYC / Fayda Identity">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Fayda ID Number"     value={fd.faydaId} />
-                  <FC label="Verification Status" value={fd.faydaId ? 'OTP Verified' : 'Not Provided'} />
-                </div>
-              </ModalSection>
-            </>
-          )}
-
-          {/* ── Farm & Crops ── */}
-          {tab === 'farm' && (
-            <>
-              <ModalSection icon="📍" title="Farm Location">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Region" value={fd.farmRegion} />
-                  <FC label="Zone"   value={fd.farmZone} />
-                  <FC label="Woreda" value={fd.farmWoreda} />
-                  <FC label="Kebele" value={fd.farmKebele} />
-                </div>
-              </ModalSection>
-              <ModalSection icon="🌱" title="Land Details">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Land Ownership"        value={fd.landOwnership} />
-                  <FC label="Total Farm Size (ha)"  value={fd.totalFarmSize} />
-                  <FC label="Land Certificate No."  value={fd.landCertificateNo} />
-                  <FC label="Distance to Road (km)" value={fd.distanceToRoad} />
-                </div>
-              </ModalSection>
-              <ModalSection icon="🌾" title="Agricultural Profile">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Primary Crop"         value={fd.primaryCropType} />
-                  <FC label="Secondary Crop"       value={fd.secondaryCrop} />
-                  <FC label="Farming Season"       value={fd.farmingSeason} />
-                  <FC label="Experience (Years)"   value={fd.farmingSeasonYears} />
-                  <FC label="Expected Yield (Qt.)" value={fd.expectedYield} />
-                </div>
-                {activePractices.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {activePractices.map(p => (
-                      <span key={p} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#4a7c59]/10 text-[#3a6347] border border-[#4a7c59]/20">{p}</span>
-                    ))}
-                  </div>
-                )}
-              </ModalSection>
-              {fd.purposeOfLoan && (
-                <ModalSection icon="📝" title="Purpose of Loan">
-                  <p className="text-[13px] text-gray-700 leading-relaxed m-0">{fd.purposeOfLoan}</p>
-                </ModalSection>
-              )}
-            </>
-          )}
-
-          {/* ── Loan ── */}
-          {tab === 'loan' && (
-            <>
-              <ModalSection icon="💰" title="Loan Request">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Loan Type"           value={fmtType(fd.loanType)} />
-                  <FC label="Requested Amount"    value={fmtAmount(fd.requestedAmount || app.amount)} />
-                  <FC label="Loan Duration"       value={fd.loanDuration || app.loanTerm} />
-                  <FC label="Repayment Frequency" value={fd.repaymentFrequency} />
-                  <FC label="Loan Purpose"        value={fd.loanPurpose} />
-                  <FC label="Preferred Bank"      value={fd.preferredBank} />
-                </div>
-              </ModalSection>
-              {(() => {
-                const principal = parseFloat(String(fd.requestedAmount || app.amount || '').replace(/,/g, '')) || 0;
-                const durationStr = fd.loanDuration || app.loanTerm || '';
-                const months = parseInt(durationStr) || 0;
-                if (!principal || !months) return null;
-                const interest = principal * 0.18 * (months / 12);
-                const fee      = principal * 0.02;
-                const total    = principal + interest + fee;
-                return (
-                  <ModalSection icon="📈" title="Estimated Loan Breakdown">
-                    <div className="flex flex-col divide-y divide-gray-100">
-                      {[
-                        ['Principal Amount',       fmtAmount(principal)],
-                        ['Interest (18% p.a.)',    fmtAmount(Math.round(interest))],
-                        ['Processing Fee (2%)',    fmtAmount(Math.round(fee))],
-                      ].map(([l, v]) => (
-                        <div key={l} className="flex items-center justify-between py-2.5 text-[12.5px]">
-                          <span className="text-gray-500">{l}</span>
-                          <span className="font-semibold text-gray-800">{v}</span>
-                        </div>
-                      ))}
-                      <div className="flex items-center justify-between pt-3 mt-1">
-                        <span className="text-[13px] font-extrabold text-gray-900">Total Repayment</span>
-                        <span className="text-[14px] font-extrabold text-[#4a7c59]">{fmtAmount(Math.round(total))}</span>
-                      </div>
-                    </div>
-                  </ModalSection>
-                );
-              })()}
-              {fd.detailedUseOfFunds && (
-                <ModalSection icon="📝" title="Detailed Use of Funds">
-                  <p className="text-[13px] text-gray-700 leading-relaxed m-0">{fd.detailedUseOfFunds}</p>
-                </ModalSection>
-              )}
-            </>
-          )}
-
-          {/* ── Finances ── */}
-          {tab === 'finances' && (
-            <>
-              <ModalSection icon="📥" title="Annual Income Sources (ETB)">
-                <div className="flex flex-col divide-y divide-gray-50">
-                  {INCOME_FIELDS.map(({ key, label }) => (
-                    <div key={key} className="flex items-center justify-between py-2.5 text-[12.5px]">
-                      <span className="text-gray-500">{label}</span>
-                      <span className="font-semibold text-gray-800">{parseFloat(fd[key]) ? `${Number(fd[key]).toLocaleString()} ETB` : '—'}</span>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between pt-3 mt-1 border-t-2 border-gray-200">
-                    <span className="text-[13px] font-extrabold text-gray-900">Total Income</span>
-                    <span className="text-[13px] font-extrabold text-emerald-700">{totalIncome.toLocaleString()} ETB</span>
-                  </div>
-                </div>
-              </ModalSection>
-              <ModalSection icon="📤" title="Annual Household Expenditures (ETB)">
-                <div className="flex flex-col divide-y divide-gray-50">
-                  {EXPENDITURE_FIELDS.map(({ key, label }) => (
-                    <div key={key} className="flex items-center justify-between py-2.5 text-[12.5px]">
-                      <span className="text-gray-500">{label}</span>
-                      <span className="font-semibold text-gray-800">{parseFloat(fd[key]) ? `${Number(fd[key]).toLocaleString()} ETB` : '—'}</span>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between pt-3 mt-1 border-t-2 border-gray-200">
-                    <span className="text-[13px] font-extrabold text-gray-900">Total Expenditure</span>
-                    <span className="text-[13px] font-extrabold text-red-600">{totalExpenditure.toLocaleString()} ETB</span>
-                  </div>
-                </div>
-              </ModalSection>
-              <div className={`flex items-center justify-between rounded-2xl border-2 px-5 py-4 ${netCashFlow >= 0 ? 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50' : 'border-red-200 bg-gradient-to-r from-red-50 to-rose-50'}`}>
-                <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-0.5">Net Cash Flow</p>
-                  <p className="text-[11.5px] text-gray-500">{netCashFlow >= 0 ? 'Financially viable' : 'Review required'}</p>
-                </div>
-                <span className={`text-[22px] font-extrabold tabular-nums ${netCashFlow >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                  {netCashFlow >= 0 ? '+' : ''}{netCashFlow.toLocaleString()} <span className="text-[14px]">ETB</span>
-                </span>
-              </div>
-            </>
-          )}
-
-          {/* ── Collateral ── */}
-          {tab === 'collateral' && (
-            <>
-              <ModalSection icon="🏦" title="Collateral Information">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <FC label="Collateral Type"  value={fd.collateralType} />
-                  <FC label="Estimated Value"  value={fmtAmount(fd.estimatedValue)} />
-                  {fd.descriptionCondition && <FC label="Condition Notes" value={fd.descriptionCondition} wide />}
-                </div>
-              </ModalSection>
-              <ModalSection icon="🤝" title="Guarantors">
-                <div className="flex flex-col gap-3">
-                  {[
-                    { label: 'Guarantor 1', name: fd.guarantor1Name, rel: fd.guarantor1Relationship, phone: fd.guarantor1Phone, id: fd.guarantor1FaydaId },
-                    { label: 'Guarantor 2', name: fd.guarantor2Name, rel: fd.guarantor2Relationship, phone: fd.guarantor2Phone, id: fd.guarantor2FaydaId },
-                  ].map(({ label, name, rel, phone, id }) => (
-                    <div key={label} className="rounded-xl border border-gray-100 p-3 bg-gray-50/60">
-                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">{label}</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <FC label="Name"         value={name} />
-                        <FC label="Relationship" value={rel}  />
-                        <FC label="Phone"        value={phone}/>
-                        <FC label="Fayda / ID"   value={id}   />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ModalSection>
-              <ModalSection icon="📜" title="Declaration">
-                <div className="flex flex-col gap-2.5">
-                  {[
-                    { label: 'Applicant Declaration signed',          done: fd.declaration   },
-                    { label: 'Development Agent verification signed', done: fd.agentVerified },
-                  ].map(({ label, done }) => (
-                    <div key={label} className={`flex items-center gap-3 rounded-xl px-3.5 py-3 border ${done ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100'}`}>
-                      <div className={`flex w-6 h-6 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-500' : 'bg-gray-200'}`}>
-                        <Check size={12} strokeWidth={3} className={done ? 'text-white' : 'text-gray-400'} />
-                      </div>
-                      <span className={`text-[12.5px] font-semibold ${done ? 'text-emerald-800' : 'text-gray-400'}`}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </ModalSection>
-            </>
-          )}
-          </div>
-
-          {/* ── Footer ── */}
-          <div className="flex-shrink-0 px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
-            <span className="text-[11px] text-gray-400">Application ID: <strong className="text-gray-600">{app.id}</strong></span>
-            <button
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-bold hover:bg-[#10883c] transition-colors border-0 cursor-pointer shadow-sm"
-              onClick={onClose}
-            >
-              <X size={14} strokeWidth={2.5} />
-              Close
-            </button>
-          </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ value, label, helper, trendLabel, trendDir, TrendIcon, IconComponent, iconBg, iconColor }: any) {
-  const trendStyle =
-    trendDir === 'up'   ? 'bg-green-50 text-green-700' :
-    trendDir === 'down' ? 'bg-red-50 text-red-600'     :
-                          'bg-gray-100 text-gray-500';
-  return (
-    <article className="relative bg-white border border-gray-100 rounded-2xl shadow-sm p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden">
-      {/* Trend badge */}
-      <span className={`absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${trendStyle}`}>
-        {TrendIcon && <TrendIcon size={10} strokeWidth={2.5} />}
-        {trendLabel}
-      </span>
-
-      {/* Body: icon left, value+label right */}
-      <div className="flex items-center justify-between mt-6">
-        <div className={`flex items-center justify-center w-14 h-14 rounded-2xl flex-shrink-0 ${iconBg}`}>
-          <IconComponent size={30} strokeWidth={1.5} className={iconColor} />
         </div>
-        <div className="text-right">
-          <strong className="block text-[2.4rem] font-bold tracking-tight text-gray-900 leading-none">{value}</strong>
-          <span className="block text-sm font-bold text-gray-700 mt-1 leading-tight">{label}</span>
+
+        {/* Status strip */}
+        <div className="flex items-center gap-3 bg-green-50 border-b border-green-100 px-6 py-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500">
+            <Check size={13} strokeWidth={3} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#10883c]">Submitted &amp; Pending Review</p>
+            <p className="text-xs text-green-600">Transmitted to Cooperative Bank of Oromia via SFTP</p>
+          </div>
         </div>
-      </div>
 
-      {/* Helper footer */}
-      <div className="flex items-center justify-end gap-1.5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
-        {helper}
-      </div>
-    </article>
-  );
-}
+        {/* Body */}
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-5">
+          <Section title="Farmer Information" icon="👤">
+            <F label="Full Name"       value={form.fullName} />
+            <F label="Father's Name"   value={form.fatherName} />
+            <F label="Farmer ID"       value={form.farmerId} />
+            <F label="Date of Birth"   value={form.dateOfBirth} />
+            <F label="Gender"          value={form.gender} />
+            <F label="Marital Status"  value={form.maritalStatus} />
+            <F label="Mobile Phone"    value={form.mobilePhone} />
+            <F label="Education Level" value={form.educationLevel} />
+            <F label="National ID"     value={form.nationalId} />
+            <F label="Region"          value={form.region} />
+            <F label="Woreda"          value={form.woreda} />
+            <F label="Kebele"          value={form.kebele} />
+          </Section>
+          <Section title="Loan Details" icon="🔒">
+            <F label="Loan Type"         value={form.loanType} />
+            <F label="Purpose"           value={form.loanPurpose} />
+            <F label="Requested Amount"  value={form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : ''} />
+            <F label="Duration"          value={form.loanDuration} />
+            <F label="Primary Crops"     value={(form.primaryCrops || []).join(', ')} />
+            <F label="Crop Variety"      value={form.cropVariety} />
+            <F label="Land Size"         value={form.landSize ? `${form.landSize} Ha` : ''} />
+            <F label="Expected Yield"    value={form.expectedYield ? `${form.expectedYield} Qt` : ''} />
+          </Section>
+          <Section title="Banking Information" icon="🏦">
+            <F label="Bank Account No." value={form.bankAccount} />
+            <F label="IFSC / FSC Code"  value={form.ifscCode} />
+            <F label="Bank Name"        value={form.bankName} />
+            <F label="Account Holder"   value={form.accountHolderName} />
+          </Section>
+          <Section title="Consent &amp; Fayda" icon="🛡">
+            <F label="Fayda ID"         value={form.faydaId} />
+            <F label="OTP Verification" value="Verified" />
 
-// ─── Main component ───────────────────────────────────────────────────────────
-function NewLoanApplicationDashboard() {
-  const router = useRouter();
-  const { data: rawLoans = [], isLoading } = useLoans();
-  // Map and normalize if needed, but since mock provides them ready we just use them:
-  const loans = rawLoans;
-  const [page, setPage] = useState(1);
-  const [selectedStatuses, setSelectedStatuses] = useState(new Set(ALL_STATUS_VALUES));
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [viewApp, setViewApp] = useState(null);
-  const [dateFilter, setDateFilter] = useState('all');
-  const [customFrom, setCustomFrom] = useState(null);
-  const [customTo, setCustomTo] = useState(null);
-  const filterRef = useRef(null);
 
-  useEffect(() => {
-    function onFocus() { }
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, []);
-
-  useEffect(() => {
-    function handleOutside(e: any) {
-      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
-    }
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
-
-  function applyDateFilter(list: any[]) {
-    if (dateFilter === 'all') return list;
-    const now = new Date();
-    let from, to;
-    if (dateFilter === 'today') {
-      from = sod(now); to = eod(now);
-    } else if (dateFilter === 'yesterday') {
-      const y = new Date(now); y.setDate(y.getDate() - 1);
-      from = sod(y); to = eod(y);
-    } else if (dateFilter === 'this_week') {
-      const w = new Date(now); w.setDate(w.getDate() - w.getDay());
-      from = sod(w); to = eod(now);
-    } else if (dateFilter === 'this_month') {
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
-      to = eod(now);
-    } else if (dateFilter === 'custom') {
-      if (!customFrom) return list;
-      from = sod(customFrom);
-      to = customTo ? eod(customTo) : eod(now);
-    } else {
-      return list;
-    }
-    return list.filter((l) => {
-      const d = parseLoanDate(l.updated || l.submittedAt);
-      if (!d) return true;
-      return d >= from && d <= to;
-    });
-  }
-
-  const dateFiltered  = applyDateFilter(loans);
-  const totalCount    = dateFiltered.length;
-  const pendingCount  = dateFiltered.filter((l) => l.statusTone === 'info').length;
-  const approvedCount = dateFiltered.filter((l) => l.statusTone === 'success').length;
-  const rejectedCount = dateFiltered.filter((l) => l.statusTone === 'danger').length;
-
-  const allChecked = selectedStatuses.size === STATUS_OPTIONS.length;
-
-  function toggleStatus(value: string) {
-    setSelectedStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      if (next.size === 0) return new Set(ALL_STATUS_VALUES);
-      return next;
-    });
-    setPage(1);
-  }
-
-  function toggleAll() {
-    setSelectedStatuses(allChecked ? new Set() : new Set(ALL_STATUS_VALUES));
-    setPage(1);
-  }
-
-  const filteredLoans = (selectedStatuses.size === 0 || allChecked)
-    ? dateFiltered
-    : dateFiltered.filter((l) => selectedStatuses.has(l.statusTone));
-
-  const totalPages = Math.max(1, Math.ceil(filteredLoans.length / PAGE_SIZE));
-  const pagedLoans = filteredLoans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const isFiltered = !allChecked && selectedStatuses.size > 0;
-
-  const dotColor = { info: 'bg-blue-500', success: 'bg-green-500', danger: 'bg-red-500', neutral: 'bg-gray-400' };
-
-  return (
-    <div className="flex flex-col gap-5 pb-6">
-      <style>{`
-        @keyframes rowFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .row-anim { animation: rowFadeUp 0.22s cubic-bezier(.22,.68,0,1.2) both; }
-        .row-anim:hover td { background: #f8faf9; }
-      `}</style>
-
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 mb-0.5 m-0">Loan Applications List</h1>
-          <p className="text-sm text-gray-400 m-0">All applications submitted via the New Loan Application form.</p>
+            <F label="Consented Fields" value={(form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ')} />
+          </Section>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <DateFilterDropdown
-            activeFilter={dateFilter}
-            customFrom={customFrom}
-            customTo={customTo}
-            onSelect={(id) => { setDateFilter(id); setPage(1); }}
-            onCustomApply={(f, t) => { setCustomFrom(f); setCustomTo(t); setDateFilter('custom'); setPage(1); }}
-          />
-          <button
-            className="inline-flex items-center gap-1.5 px-4 py-3 rounded-lg text-sm font-semibold bg-[#16A34A] text-white hover:bg-[#10883c] transition-colors cursor-pointer border-0"
-            onClick={() => router.push('/loans/create-new-credit-request')}
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            New Application
+
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
+          <p className="text-xs text-gray-400">Generated on {dateStr} · {timeStr}</p>
+          <button onClick={onClose} className="rounded-xl bg-[#16A34A] px-5 py-2 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+            Close
           </button>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* ── KPI grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <KpiCard
-          value={totalCount}
-          label="Total Applications"
-          trendLabel="All loan types"
-          trendDir={null}
-          TrendIcon={Globe}
-          IconComponent={ClipboardList}
-          iconBg="bg-blue-50"
-          iconColor="text-blue-500"
-          helper={<><Globe size={12} strokeWidth={2} className="opacity-60" /><span>All loan types</span></>}
-        />
-        <KpiCard
-          value={approvedCount}
-          label="Approved"
-          trendLabel={approvedCount > 0 ? `${approvedCount} ready` : '—'}
-          trendDir={approvedCount > 0 ? 'up' : null}
-          TrendIcon={approvedCount > 0 ? TrendingUp : TrendingDown}
-          IconComponent={CheckCircle2}
-          iconBg="bg-green-50"
-          iconColor="text-green-500"
-          helper={<><Tag size={12} strokeWidth={2} className="opacity-60" /><span>Ready to disburse</span></>}
-        />
-        <KpiCard
-          value={pendingCount}
-          label="Pending Review"
-          trendLabel={pendingCount > 0 ? `${pendingCount} pending` : '—'}
-          trendDir={pendingCount > 0 ? 'up' : null}
-          TrendIcon={pendingCount > 0 ? TrendingUp : TrendingDown}
-          IconComponent={Clock3}
-          iconBg="bg-amber-50"
-          iconColor="text-amber-500"
-          helper={<><Calendar size={12} strokeWidth={2} className="opacity-60" /><span>In this period</span></>}
-        />
-        <KpiCard
-          value={rejectedCount}
-          label="Rejected"
-          trendLabel={rejectedCount > 0 ? `${rejectedCount} flagged` : '—'}
-          trendDir={rejectedCount > 0 ? 'down' : null}
-          TrendIcon={rejectedCount > 0 ? TrendingDown : TrendingUp}
-          IconComponent={CircleAlert}
-          iconBg="bg-red-50"
-          iconColor="text-red-500"
-          helper={<><Clock3 size={12} strokeWidth={2} className="opacity-60" /><span>Needs attention</span></>}
-        />
-      </div>
+const UPDATE_STATUS_OPTIONS = [
+  { value: 'submitted',  label: 'Application Submitted', icon: '📤' },
+  { value: 'review',     label: 'Under Review',           icon: '🔍' },
+  { value: 'scoring',    label: 'Credit Scoring',         icon: '📊' },
+  { value: 'decision',   label: 'Decision Made',          icon: '⚖️' },
+  { value: 'disbursed',  label: 'Loan Disbursed',         icon: '💰' },
+];
 
-      {/* ── Table card ── */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-
-        {/* Card header */}
-        <div className="flex items-center justify-between flex-wrap gap-3 px-5 py-4 border-b border-gray-100">
-          <h2 className="text-[15px] font-bold text-gray-900 flex items-center gap-2 m-0">
-            <ClipboardList size={16} strokeWidth={2.2} />
-             Applications List
-            {loans.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs font-semibold text-gray-500">
-                {filteredLoans.length}
-              </span>
-            )}
-          </h2>
-          <div className="flex items-center gap-2">
-            <div className="relative" ref={filterRef}>
+function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }: { currentDoneCount: number, onUpdate: () => void, onClose: () => void }) {
+  const [selected, setSelected] = useState(currentDoneCount - 1);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <div>
+            <p className="text-sm font-bold text-gray-800">Update Application Status</p>
+            <p className="text-xs text-gray-400">Select the latest completed stage</p>
+          </div>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+            <X size={15} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-2 px-5 py-4">
+          {UPDATE_STATUS_OPTIONS.map((opt, idx) => {
+            const isSelected = selected === idx;
+            const isPast     = idx < selected;
+            return (
               <button
-                type="button"
-                onClick={() => setFilterOpen((o) => !o)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
-                  isFiltered
-                    ? 'bg-[#4a7c59] text-white border-[#16A34A]'
-                    : filterOpen
-                    ? 'bg-[#4a7c59]/5 text-[#16A34A] border-[#16A34A]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <Filter size={12} strokeWidth={2.5} />
-                {isFiltered ? `Status (${selectedStatuses.size})` : 'Filter Status'}
-                <ChevronDown size={11} strokeWidth={2.5} />
-              </button>
-
-              {filterOpen && (
-                <div className="absolute top-[calc(100%+6px)] right-0 z-40 min-w-[180px] bg-white border border-gray-100 rounded-xl shadow-xl p-1.5 flex flex-col gap-0.5">
-                  <button
-                    type="button"
-                    onClick={toggleAll}
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${allChecked ? 'bg-[#16A34A]/10 text-gray-900 font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
-                  >
-                    <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${allChecked ? 'bg-[#16A34A] border-[#16A34A] text-white' : 'border-gray-300'}`}>
-                      {allChecked && <Check size={9} strokeWidth={3} />}
-                    </span>
-                    All Statuses
-                  </button>
-                  {STATUS_OPTIONS.map((opt) => {
-                    const checked = selectedStatuses.has(opt.value);
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => toggleStatus(opt.value)}
-                        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium w-full text-left cursor-pointer border-0 transition-colors ${checked ? 'bg-[#16A34A]/10 text-gray-900 font-semibold' : 'bg-transparent text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${checked ? 'bg-[#16A34A] border-[#16A34A] text-white' : 'border-gray-300'}`}>
-                          {checked && <Check size={9} strokeWidth={3} />}
-                        </span>
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor[opt.value] || 'bg-gray-400'}`} />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+                key={opt.value}
+                onClick={() => setSelected(idx)}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                  isSelected
+                    ? 'border-[#16A34A] bg-[#16A34A]/5 ring-1 ring-[#16A34A]/30'
+                    : isPast
+                    ? 'border-green-100 bg-green-50/50'
+                    : 'border-gray-100 bg-white hover:bg-gray-50'
+                }`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
+                  isSelected || isPast ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
+                }`}>
+                  {isSelected || isPast
+                    ? <Check size={12} strokeWidth={3} className="text-white" />
+                    : <span className="text-xs">{opt.icon}</span>}
                 </div>
-              )}
-            </div>
+                <span className={`text-sm font-medium ${isSelected || isPast ? 'text-gray-900' : 'text-gray-400'}`}>
+                  {opt.label}
+                </span>
+                {isSelected && (
+                  <span className="ml-auto rounded-full bg-[#16A34A] px-2 py-0.5 text-[10px] font-bold text-white">Current</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex gap-3 border-t border-gray-100 px-5 py-4">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button
+
+            onClick={() => { onUpdate(selected + 1); onClose(); }}
+            className="flex-1 rounded-xl bg-[#16A34A] py-3 text-sm font-semibold text-white hover:bg-[#16A34A] transition-colors">
+            Save Status
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: string, appId: string }) {
+  const router = useRouter();
+  const now        = submittedAt || new Date();
+
+  const dateStr    = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const timeStr    = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const displayId  = appId || 'APP-2026-8921';
+  const farmerName = form.fullName || 'Abebe Kebede';
+
+  const [showSummary, setShowSummary]   = useState(false);
+  const [showUpdate,  setShowUpdate]    = useState(false);
+  const [doneCount,   setDoneCount]     = useState(1); // 1 = only "Submitted" done initially
+
+  // Build live tracking list from doneCount
+  const trackingItems = STATUS_TRACKING.map((item, idx) => ({ ...item, done: idx < doneCount }));
+
+  function handleDownloadPDF() {
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return;
+    const crops = (form.primaryCrops || []).join(', ');
+
+
+    const consented = (form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ');
+    const amount = form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : '—';
+
+
+
+    const rows = (items) => items.map(([l, v]) =>
+      `<tr><td style="padding:6px 12px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;width:40%;border-bottom:1px solid #f3f4f6">${l}</td>
+       <td style="padding:6px 12px;font-size:13px;color:#111827;border-bottom:1px solid #f3f4f6">${v || '—'}</td></tr>`
+    ).join('');
+
+
+
+    const section = (title, icon, items) =>
+      `<div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;">
+          <span style="font-size:16px">${icon}</span>
+          <span style="font-size:13px;font-weight:700;color:#374151">${title}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #f3f4f6;border-radius:8px;overflow:hidden">${rows(items)}</table>
+       </div>`;
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>Loan Application – ${displayId}</title>
+      <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background:#fff; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+      </style>
+    </head><body>
+      <div style="background:linear-gradient(135deg,#4a7c59,#3a6347);padding:28px 32px;border-radius:12px;margin-bottom:24px;color:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:20px;font-weight:800;margin-bottom:4px;">Loan Application Summary</div>
+            <div style="font-size:12px;opacity:.8;">Access to Credit System — Cooperative Bank of Oromia</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;">${displayId}</div>
+            <div style="font-size:11px;opacity:.75;">${dateStr} · ${timeStr}</div>
           </div>
         </div>
+        <div style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.2);padding:6px 14px;border-radius:99px;">
+          <span style="font-size:13px">✓</span>
+          <span style="font-size:12px;font-weight:600;">Submitted &amp; Pending Review</span>
+        </div>
+      </div>
+      ${section('Farmer Information','👤',[['Full Name',form.fullName],["Father's Name",form.fatherName],['Farmer ID',form.farmerId],['Date of Birth',form.dateOfBirth],['Gender',form.gender],['Marital Status',form.maritalStatus],['Mobile Phone',form.mobilePhone],['Education Level',form.educationLevel],['National ID',form.nationalId],['Region',form.region],['Woreda',form.woreda],['Kebele',form.kebele]])}
+      ${section('Loan Details','🔒',[['Loan Type',form.loanType],['Purpose',form.loanPurpose],['Requested Amount',amount],['Duration',form.loanDuration],['Primary Crops',crops],['Crop Variety',form.cropVariety],['Land Size',form.landSize?form.landSize+' Ha':''],['Expected Yield',form.expectedYield?form.expectedYield+' Qt':'']])}
+      ${section('Banking Information','🏦',[['Bank Account No.',form.bankAccount],['IFSC / FSC Code',form.ifscCode],['Bank Name',form.bankName],['Account Holder',form.accountHolderName]])}
+      ${section('Consent & Fayda','🛡',[['Fayda ID',form.faydaId],['OTP Verification','Verified'],['Consented Fields',consented]])}
+      <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;color:#9ca3af;">Generated by A2C System · ${dateStr} ${timeStr}</span>
+        <span style="font-size:10px;color:#9ca3af;">CONFIDENTIAL — For internal bank use only</span>
+      </div>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    w.document.close();
+  }
 
-        {/* Empty state */}
-        {loans.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#4a7c59]/10 text-[#4a7c59]">
-              <ClipboardList size={28} strokeWidth={1.6} />
-            </div>
-            <h3 className="text-base font-bold text-gray-800 m-0">No Applications Yet</h3>
-            <p className="text-sm text-gray-400 max-w-md leading-relaxed m-0">
-              Submitted loan applications will appear here automatically. Start a new application and complete all 9 steps to see it listed.
-            </p>
-            <button
-              className="inline-flex items-center gap-1.5 mt-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#4a7c59] text-white hover:bg-[#3a6347] transition-colors border-0 cursor-pointer"
-              onClick={() => router.push('/loans/create-new-credit-request')}
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Start New Application
-            </button>
+  return (
+    <>
+      {showSummary && (
+        <SummaryModal form={form} displayId={displayId} dateStr={dateStr} timeStr={timeStr} onClose={() => setShowSummary(false)} />
+      )}
+      {showUpdate && (
+        <UpdateStatusModal
+          currentDoneCount={doneCount}
+
+
+          onUpdate={n => setDoneCount(n)}
+          onClose={() => setShowUpdate(false)}
+        />
+      )}
+
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+
+      {/* ── Left / Success card ── */}
+      <div className="lg:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+        {/* Green header banner */}
+        <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#10883c] px-6 py-10 text-center">
+          <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
+          <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/5" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+            <Check size={30} className="text-white" strokeWidth={2.5} />
           </div>
-        ) : (
-          <>
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    {['#', 'Application ID / Applicant', 'Loan Type', 'Amount', 'Region', 'Term', 'Status', 'Date Submitted', 'Action'].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50/80 whitespace-nowrap first:rounded-l-none last:rounded-r-none border-b border-gray-100">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody key={'pg-' + page}>
-                  {pagedLoans.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="text-center py-10 text-sm text-gray-400">
-                        No applications match the selected filter.
-                      </td>
-                    </tr>
-                  ) : pagedLoans.map((app, idx) => {
-                    const rowNum = (page - 1) * PAGE_SIZE + idx + 1;
-                    const initials = (app.applicant || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-                    const avatarColors = [
-                      'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
-                      'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700',
-                      'bg-rose-100 text-rose-700', 'bg-cyan-100 text-cyan-700',
-                    ];
-                    const avatarColor = avatarColors[app.applicant.charCodeAt(0) % avatarColors.length];
-                    const termShort = (app.loanTerm || '').replace(' Months (1 Year)', ' mo.').replace(' Months (2 Years)', ' mo.').replace(' Months (3 Years)', ' mo.').replace(' Months', ' mo.');
-                    return (
-                      <tr
-                        key={app.id + '-' + page + '-' + idx}
-                        className='row-anim border-b border-gray-50 transition-all duration-150 cursor-default'
-                        style={{ animationDelay: (idx * 35) + 'ms' }}
-                      >
-                        {/* # */}
-                        <td className="px-4 py-3.5 text-[11px] font-bold text-gray-300 tabular-nums w-8">{rowNum}</td>
+          <div>
+            <h2 className="text-xl font-bold text-white">Application Submitted Successfully!</h2>
+            <p className="mt-1 text-sm text-white/80">
+              The loan application for <span className="font-semibold text-white">{farmerName}</span> has been
+              securely transmitted to Coop Bank for review.
+            </p>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+            <Check size={11} strokeWidth={3} /> Verified &amp; Submitted
+          </span>
+        </div>
 
-                        {/* ID + Applicant */}
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <span className={'flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-extrabold shrink-0 ' + avatarColor}>{initials}</span>
-                            <div>
-                              <strong className="block text-[12.5px] font-bold text-[#10883c] leading-tight">{app.id}</strong>
-                              <span className="text-[11px] text-gray-400 leading-tight">{app.applicant}</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Loan Type */}
-                        <td className="px-4 py-3.5">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11.5px] font-semibold bg-gray-100 text-gray-700 whitespace-nowrap">
-                            {fmtType(app.type)}
-                          </span>
-                        </td>
-
-                        {/* Amount */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          {app.amount ? (
-                            <span className="text-[13px] font-bold text-gray-900 tabular-nums">
-                              {fmtAmount(app.amount)}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-gray-100 text-gray-400">N/A</span>
-                          )}
-                        </td>
-
-                        {/* Region */}
-                        <td className="px-4 py-3.5 text-[12.5px] text-gray-600 whitespace-nowrap">{app.region || '—'}</td>
-
-                        {/* Term */}
-                        <td className="px-4 py-3.5">
-                          {termShort ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-700 whitespace-nowrap border border-blue-100">
-                              {termShort}
-                            </span>
-                          ) : '—'}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-3.5">
-                          <StatusBadge tone={app.statusTone} label={app.status} />
-                        </td>
-
-                        {/* Date */}
-                        <td className="px-4 py-3.5 text-[11.5px] text-gray-400 whitespace-nowrap">{fmtDate(app.updated)}</td>
-
-                        {/* Action */}
-                        <td className="px-4 py-3.5">
-                          <button
-                            onClick={() => setViewApp(app)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold bg-[#16A34A]/8 border border-[#4a7c59]/20 text-[#16A34A] hover:bg-[#10883c] hover:text-white transition-all duration-150 cursor-pointer"
-                          >
-                            <Eye size={12} strokeWidth={2.2} />
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        {/* Meta cards */}
+        <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-3">
+          {[
+            { label: 'Application ID',  value: displayId,               icon: <FileText size={15} className="text-[#4a7c59]" /> },
+            { label: 'Submitted On',    value: `${dateStr} ${timeStr}`,  icon: <Calendar size={15} className="text-[#4a7c59]" /> },
+            { label: 'Transfer Method', value: 'SFTP Sync',              icon: <Send size={15} className="text-[#4a7c59]" /> },
+          ].map(({ label, value, icon }) => (
+            <div key={label} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4a7c59]/10">{icon}</div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                <p className="mt-0.5 truncate text-sm font-bold text-gray-800">{value}</p>
+              </div>
             </div>
+          ))}
+        </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between flex-wrap gap-2 px-5 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-400">
-                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredLoans.length)} of {filteredLoans.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    className="grid place-items-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft size={13} strokeWidth={2.5} />
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
-                    <button
-                      key={pg}
-                      onClick={() => setPage(pg)}
-                      aria-current={pg === page ? 'page' : undefined}
-                      className={`grid place-items-center min-w-[2rem] h-8 px-1 rounded-lg border text-xs font-semibold cursor-pointer transition-colors ${
-                        pg === page
-                          ? 'bg-[#16A34A] border-[#16A34A] text-white'
-                          : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pg}
-                    </button>
-                  ))}
-                  <button
-                    className="grid place-items-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                    aria-label="Next"
-                  >
-                    <ChevronRight size={13} strokeWidth={2.5} />
-                  </button>
+        {/* Farmer strip */}
+        <div className="mx-6 mb-5 flex items-center gap-3 rounded-xl border border-[#4a7c59]/20 bg-[#4a7c59]/5 px-4 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a7c59]/15 text-base">👤</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">{farmerName}</p>
+            <p className="text-xs text-gray-500">
+              {form.loanType || 'Agricultural'} Loan
+              {form.requestedAmount ? ` · ETB ${Number(form.requestedAmount).toLocaleString()}` : ''}
+              {form.loanDuration    ? ` · ${form.loanDuration}` : ''}
+            </p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-[green-100] px-2.5 py-1 text-xs font-semibold text-[#16A34A]">
+            <Check size={10} strokeWidth={3} /> Pending Review
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            <Download size={14} /> Download PDF
+          </button>
+          <button
+            onClick={() => setShowSummary(true)}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+            <Eye size={14} /> View Summary
+          </button>
+          <button
+            onClick={() => router.push('/loans/loan-application-dashboard')}
+            className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
+            <LayoutDashboard size={14} /> Return to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* ── Right / Status tracking card ── */}
+      <div className="lg:col-span-2 flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800">Status Tracking</h3>
+            <p className="text-[11px] text-gray-400">Real-time application progress</p>
+          </div>
+          <button
+            onClick={() => setShowUpdate(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-2.5 py-1.5 text-xs font-semibold text-[#16A34A] hover:bg-[#16A34A]/10 transition-colors">
+            <Edit2 size={11} /> Update
+          </button>
+        </div>
+
+        <div className="flex flex-col px-5 py-4">
+          {trackingItems.map((item, idx) => {
+            const isLast = idx === trackingItems.length - 1;
+            return (
+              <div key={item.label} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                    item.done ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
+                  }`}>
+                    {item.done
+                      ? <Check size={13} strokeWidth={3} className="text-white" />
+                      : <span className="text-xs leading-none">{item.icon}</span>}
+                  </div>
+                  {!isLast && (
+                    <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#16A34A]' : 'bg-gray-200'}`} />
+                  )}
+                </div>
+                <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-semibold ${item.done ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</p>
+                    {item.done && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Done</span>}
+                  </div>
+                  {item.done && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Clock size={10} className="text-gray-400" />
+                      <p className="text-[11px] text-gray-400">{dateStr} · {timeStr}</p>
+                    </div>
+                  )}
+                  {item.note && (
+                    <p className={`mt-1 text-xs leading-relaxed ${item.done ? 'text-gray-600' : 'text-gray-400'}`}>{item.note}</p>
+                  )}
                 </div>
               </div>
-            )}
-          </>
+            );
+          })}
+        </div>
+
+        <div className="mt-auto border-t border-gray-100 bg-blue-50/60 px-5 py-3.5">
+          <div className="flex items-start gap-2">
+            <Info size={12} className="mt-0.5 shrink-0 text-blue-500" />
+            <p className="text-[11px] leading-relaxed text-blue-700">
+              Status updates are synced automatically with Cooperative Bank. You will be notified at each stage.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </>
+  );
+}
+
+export default function NewLoanApplication() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { currentStep, applicationId, formData: form } = useSelector(selectLoanFormState);
+  
+  const [errors, setErrors] = useState({});
+  const [step5Uploads, setStep5Uploads] = useState({});
+  const [submittedAt, setSubmittedAt] = useState(null);
+
+  const saveLoanDetails = useSaveLoanDetails();
+  const saveBankDetails = useSaveBankDetails();
+  const saveFarmerDetails = useSaveFarmerDetails();
+  const uploadDocument = useUploadDocument();
+  const submitApp = useSubmitApplication();
+
+  function setField(key: string) { 
+    return (val: any) => dispatch(updateFormData({ key, value: val })); 
+  }
+
+  async function goNext() {
+    const errs: any = {};
+    if (currentStep === 1) {
+      if (!form.loanType) errs.loanType = 'Loan Type is required';
+      if (!form.loanPurpose) errs.loanPurpose = 'Purpose of Loan is required';
+      if (!form.requestedAmount) errs.requestedAmount = 'Requested Loan Amount is required';
+      if (!form.primaryCrops || form.primaryCrops.length === 0) errs.primaryCrops = 'Primary Crop is required';
+    } else if (currentStep === 2) {
+      if (!form.bankAccountName) errs.bankAccountName = 'Bank Account Name is required';
+      if (!form.bankAccount) errs.bankAccount = 'Bank Account Number is required';
+      if (!form.bankName) errs.bankName = 'Bank Name is required';
+      if (!form.bankSwiftCode) errs.bankSwiftCode = 'Bank SWIFT/IFSC Code is required';
+      if (!form.mobileAccountName) errs.mobileAccountName = 'Mobile Account Name is required';
+      if (!form.mobilePaymentsNumber) errs.mobilePaymentsNumber = 'Mobile Payments Number is required';
+      if (!form.totalBorrowingAmount) errs.totalBorrowingAmount = 'Total Borrowing Amount is required';
+    } else if (currentStep === 5) {
+      if (form.dateOfBirth) {
+        const dob = new Date(form.dateOfBirth);
+        const today = new Date();
+        const age18 = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+        if (age18 > today) {
+          errs.dateOfBirth = 'Farmer must be at least 18 years old.';
+        }
+      }
+    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    setErrors({});
+
+    try {
+      if (currentStep === 1) {
+        const res = await saveLoanDetails.mutateAsync({
+          loan_type: form.loanType || '',
+          purpose_of_loan: form.loanPurpose || '',
+          requested_loan_amount: parseFloat(form.requestedAmount) || 0,
+          primary_crop: (form.primaryCrops || [])[0] || '',
+          loan_duration: form.loanDuration,
+          expected_yield: parseFloat(form.expectedYield) || 0,
+          expected_harvest_date: form.expectedHarvestDate,
+        });
+        if (res?.data?.application_id) {
+          dispatch(setApplicationId(res.data.application_id));
+        }
+      } else if (currentStep === 2) {
+        if (!applicationId) throw new Error("Application ID is missing");
+        await saveBankDetails.mutateAsync({
+          application_id: applicationId,
+          bank_account_name: form.bankAccountName || '',
+          bank_account_number: form.bankAccount || '',
+          bank_name: form.bankName || '',
+          total_amount_borrowing: parseFloat(form.totalBorrowingAmount) || 0,
+        });
+      } else if (currentStep === 3) {
+        if (!applicationId) throw new Error("Application ID is missing");
+        const docKeys = Object.keys(step5Uploads);
+        for (const key of docKeys) {
+          const entry = (step5Uploads as Record<string, any>)[key];
+          if (entry && entry.file) {
+             await uploadDocument.mutateAsync({ 
+               application_id: applicationId, 
+               document_type: key, 
+               file: entry.file 
+             });
+          }
+        }
+      } else if (currentStep === 5) {
+        if (!applicationId) throw new Error("Application ID is missing");
+        await saveFarmerDetails.mutateAsync({
+          application_id: applicationId,
+          full_name: form.fullName || '',
+          last_name: form.lastName || '',
+          mobile_phone: form.mobilePhone || '',
+          gender: form.gender || '',
+          woreda: form.woreda || '',
+          kebele: form.kebele || '',
+          marital_status: form.maritalStatus || '',
+        });
+      }
+      
+      dispatch(setStep(Math.min(currentStep + 1, STEPS.length)));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e: any) {
+      console.error(e);
+      setErrors({ api: e.message || 'Failed to save data. Please try again.' });
+    }
+  }
+
+  function goBack() {
+    setErrors({});
+    if (currentStep === 1) { 
+      dispatch(resetForm());
+      router.push('/loans/loan-application-dashboard'); 
+      return; 
+    }
+    dispatch(setStep(currentStep - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function handleSubmit() {
+    setErrors({});
+    try {
+      if (!applicationId) throw new Error("Application ID is missing. Please start over.");
+      
+      await submitApp.mutateAsync(applicationId);
+      
+      const now = new Date();
+
+      setSubmittedAt(now);
+      dispatch(resetForm()); // Clear state on success
+      
+      // Prevent user from going back, navigate up in the wizard artificially or stay on success UI
+      dispatch(setStep(STEPS.length + 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e: any) {
+      console.error(e);
+      setErrors({ api: e.message || 'Failed to submit application. Please try again.' });
+    }
+  }
+
+  const meta = STEP_META[Math.min(currentStep, STEPS.length) - 1];
+  const isSubmitStep = currentStep === STEPS.length;
+  const isLastStep = currentStep === STEPS.length + 1;
+  const showFaydaBadge = currentStep >= 5 && currentStep <= STEPS.length;
+
+  return (
+    <div className="flex flex-col gap-4 pb-8">
+      {!isLastStep && (
+        <button onClick={goBack} className="flex w-fit items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
+          <ArrowLeft size={16} /> Back
+        </button>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex items-center gap-4">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${isLastStep ? 'bg-[#16A34A]' : 'bg-[#4B5563]'}`}>
+            {isLastStep ? <Check size={18} strokeWidth={2.5} /> : currentStep}
+          </span>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold text-gray-900">{meta.title}</h1>
+              {showFaydaBadge && (
+                <span className="flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                  <Check size={10} strokeWidth={3} /> Verified via Fayda
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">{meta.subtitle}</p>
+          </div>
+        </div>
+        {!isLastStep && (
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button onClick={() => router.push('/loans/new-loan-application-creation')} className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Save Draft</button>
+          </div>
         )}
       </div>
 
-      {/* ── Detail modal ── */}
-      {viewApp && <DetailModal app={viewApp} onClose={() => setViewApp(null)} />}
+      <StepProgressBar currentStep={currentStep} />
+
+      {currentStep === 1 && <Step1 form={form} setField={setField} errors={errors} />}
+      {currentStep === 2 && <StepBankDetails form={form} setField={setField} errors={errors} />}
+      {currentStep === 3 && <Step5 uploads={step5Uploads} setUploads={setStep5Uploads} form={form} setField={setField} />}
+      {currentStep === 4 && <Step3 form={form} setField={setField} errors={errors} />}
+      {currentStep === 5 && <StepFarmerDetails form={form} setField={setField} errors={errors} />}
+      {currentStep === 6 && <Step6 form={form} uploads={step5Uploads} goToStep={(s: number) => dispatch(setStep(s))} />}
+
+
+      {currentStep === 7 && <Step7 form={form} submittedAt={submittedAt} appId={applicationId} />}
+
+      {errors?.api && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+          <div className="text-sm font-medium text-red-700">{errors.api}</div>
+        </div>
+      )}
+
+      {!isLastStep && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          {/* Row 1 on mobile / Left on desktop: Save Draft + Auto-saved */}
+          <div className="flex items-center gap-3">
+            <button className="rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              Save Draft
+            </button>
+            <span className="flex items-center gap-1.5 text-sm text-gray-500">
+              <Check size={13} className="text-[#4a7c59]" strokeWidth={2.5} /> Auto-saved
+            </span>
+          </div>
+          {/* Row 2 on mobile / Right on desktop: Previous Step + Next / Submit */}
+          <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+            {currentStep > 1 ? (
+              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <ArrowLeft size={14} /> Previous Step
+              </button>
+            ) : <div />}
+            {isSubmitStep ? (
+              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+                Submit Application <Send size={14} />
+              </button>
+            ) : currentStep === 4 ? (
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+                Confirm &amp; Next <ArrowRight size={14} />
+              </button>
+            ) : (
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+                Next Step <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default NewLoanApplicationDashboard;

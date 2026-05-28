@@ -1,7 +1,6 @@
 export interface User {
   username?: string;
   officerName: string;
-  email: string;
   mobileNo?: string;
   userType?: string;
   homePage: string;

@@ -1,26 +1,146 @@
-export interface LoanApplication {
-  id: string;
-  applicant: string;
-  type: string;
-  status: string;
-  statusTone: string;
-  updated: string;
-  amount: string;
-  phone: string;
-  region: string;
-  loanTerm: string;
-  formData?: Record<string, any>;
+export interface LoanApplication { id: string; applicant: string; type: string; status: string; statusTone: string; updated: string; amount?: string; phone?: string; region?: string; loanTerm?: string; formData?: any; }
+
+export interface GetLoansParams {
+  page?: number;
+  page_size?: number;
+  status?: string; // stringified array e.g. '["Draft", "Approved"]'
+  loan_amount_min?: string;
+  loan_amount_max?: string;
+  loan_type?: string;
+  mobile_phone?: string;
+  from_date?: string;
+  to_date?: string;
+}
+
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
+async function fetchApi(path: string, options: RequestInit = {}) {
+  const url = new URL(`/api/proxy/api/method/${path}`, BASE_URL);
+  
+  const headers = new Headers(options.headers || {});
+  if (!(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const response = await fetch(url.toString(), {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('UNAUTHORIZED');
+    }
+    throw new Error(`API Request failed with status ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export const loanService = {
-  async getLoans(): Promise<LoanApplication[]> {
-    const response = await fetch('/api/loans');
-    if (!response.ok) {
-      throw new Error('Failed to fetch loans');
+  async getLoans(params?: GetLoansParams): Promise<any> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) searchParams.append(key, value.toString());
+      });
     }
-    return response.json();
+
+    const path = `oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_applications?${searchParams.toString()}`;
+    return fetchApi(path);
   },
 
+  async getLoanSummary(): Promise<any> {
+    return fetchApi('oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_summary');
+  },
+
+  async saveLoanDetails(data: {
+    loan_type: string;
+    purpose_of_loan: string;
+    requested_loan_amount: number;
+    primary_crop: string;
+    [key: string]: any;
+  }): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.loan_details', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', ...data }),
+    });
+  },
+
+  async saveBankDetails(data: {
+    application_id: string;
+    bank_account_name: string;
+    bank_account_number: string;
+    bank_name: string;
+    total_amount_borrowing: number;
+    [key: string]: any;
+  }): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.bank_details', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', ...data }),
+    });
+  },
+
+  async saveFarmerDetails(data: {
+    application_id: string;
+    full_name: string;
+    last_name: string;
+    mobile_phone: string;
+    gender: string;
+    woreda: string;
+    kebele: string;
+    marital_status: string;
+    [key: string]: any;
+  }): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.farmer_details', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', ...data }),
+    });
+  },
+
+  async uploadSupportingDocument(application_id: string, document_type: string, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('action', 'upload');
+    formData.append('application_id', application_id);
+    formData.append('document_type', document_type);
+    formData.append('file', file);
+
+    return fetchApi('oan_a2c.api.loan_app_api.supporting_documents', {
+      method: 'POST',
+      body: formData, // FormData doesn't need Content-Type, fetch sets it with boundary
+    });
+  },
+
+  async listSupportingDocuments(application_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.supporting_documents', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'list', application_id }),
+    });
+  },
+
+  async getConsentData(application_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.get_consent_data', {
+      method: 'POST',
+      body: JSON.stringify({ application_id }),
+    });
+  },
+
+  async reviewApplication(application_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.application_manager', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'review', application_id }),
+    });
+  },
+
+  async submitApplication(application_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.loan_app_api.application_manager', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'submit', application_id }),
+    });
+  },
+
+  // Mock implementation for getLoan for now if needed by other components,
+  // since a specific get endpoint wasn't provided for a single loan by id.
   async getLoan(id: string): Promise<LoanApplication> {
     const response = await fetch(`/api/loans/${id}`);
     if (!response.ok) {
@@ -29,7 +149,8 @@ export const loanService = {
     return response.json();
   },
 
-  async updateLoanStatus(id: string, status: string): Promise<LoanApplication> {
+  async updateLoanStatus(id: string, status: string): Promise<any> {
+    // Fallback to mock API if production endpoint doesn't exist
     const response = await fetch(`/api/loans/${id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -37,18 +158,6 @@ export const loanService = {
     });
     if (!response.ok) {
       throw new Error('Failed to update loan status');
-    }
-    return response.json();
-  },
-
-  async createLoan(data: Record<string, unknown>): Promise<LoanApplication> {
-    const response = await fetch('/api/loans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create loan');
     }
     return response.json();
   },

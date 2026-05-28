@@ -17,6 +17,9 @@ export const leadService = {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('UNAUTHORIZED');
+      }
       throw new Error('Failed to fetch leads');
     }
     const data = await response.json();
@@ -37,6 +40,22 @@ export const leadService = {
       callStartTime: item.creation,
       external_id: item.external_id,
     }));
+  },
+
+  async getLeadSummary(): Promise<any> {
+    const url = new URL(
+      '/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_summary',
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+    );
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('UNAUTHORIZED');
+      }
+      throw new Error('Failed to fetch lead summary');
+    }
+    const data = await response.json();
+    return data.message;
   },
 
   async getLead(id: string): Promise<Lead> {
