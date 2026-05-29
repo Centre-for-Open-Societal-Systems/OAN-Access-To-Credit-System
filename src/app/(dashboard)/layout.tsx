@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { Clock3, FileText, ListChecks, Plus, SquarePen, Users } from 'lucide-react';
+import { ListChecks, Users } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import TopHeader from '@/components/layout/TopHeader';
 import { selectIsAuthenticated } from '@/features/auth/store/authSlice';
@@ -14,41 +14,24 @@ const navigationSections = [
     title: 'DASHBOARDS',
     items: [
       { path: '/leads-dashboard', label: 'Leads Dashboard', icon: Users },
-      { path: '/loans/loan-application-dashboard', label: 'Loan Application Dashboard', icon: FileText },
     ],
   },
   {
     title: 'WORKFLOW',
     items: [
       {
-        path: '/new-lead-creation',
-        activePaths: ['/new-lead-creation'],
-        label: 'New Lead Creation',
-        icon: Plus,
-      },
-      {
-        path: '/loans/new-loan-application-creation',
-        activePaths: ['/loans/new-loan-application-creation'],
-        label: 'New Loan Application Creation',
+        path: '/loans/new-loan-application',
+        activePaths: ['/loans/new-loan-application'],
+        label: 'New Loan Application',
         icon: ListChecks,
       },
-      {
-        path: '/loans/create-new-credit-request',
-        label: 'Create New Credit Request',
-        icon: SquarePen,
-      },
-      { path: '/loans/update-loan-application-status', label: 'Update Loan Application Status', icon: Clock3 },
     ],
   },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
   '/leads-dashboard': 'Leads Dashboard',
-  '/new-lead-creation': 'New Lead Creation',
-  '/loans/loan-application-dashboard': 'Loan Application Dashboard',
-  '/loans/new-loan-application-creation': 'New Loan Application Creation',
-  '/loans/create-new-credit-request': 'Create New Credit Request',
-  '/loans/update-loan-application-status': 'Update Loan Application Status',
+  '/loans/new-loan-application': 'New Loan Application',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

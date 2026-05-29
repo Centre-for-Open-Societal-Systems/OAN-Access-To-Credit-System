@@ -2106,7 +2106,7 @@ export default function NewLoanApplication() {
 
   function goBack() {
     setErrors({});
-    if (currentStep === 1) { router.push('/loans/new-loan-application-creation'); return; }
+    if (currentStep === 1) { router.push('/loans/new-loan-application'); return; }
     setCurrentStep(prev => prev - 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2180,7 +2180,7 @@ export default function NewLoanApplication() {
         </div>
         {!isLastStep && (
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <button onClick={() => router.push('/loans/new-loan-application-creation')} className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button onClick={() => router.push('/loans/new-loan-application')} className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
             <button className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Save Draft</button>
           </div>
         )}
