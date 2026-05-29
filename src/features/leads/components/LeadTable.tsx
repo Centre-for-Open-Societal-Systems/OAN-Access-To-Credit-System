@@ -4,7 +4,7 @@ import LeadStatusBadge from './LeadStatusBadge';
 import LeadActionCell from './LeadActionCell';
 import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
-import { Lead } from '@/types/leads.types';
+import { Lead } from '@/features/leads/types/leads.types';
 
 const TABLE_COLS = ['LEAD ID', 'PHONE NUMBER', 'STATUS', 'CALL START TIME', 'ACTIONS'] as const;
 const FILTERABLE = ['STATUS', 'CALL START TIME'] as const;

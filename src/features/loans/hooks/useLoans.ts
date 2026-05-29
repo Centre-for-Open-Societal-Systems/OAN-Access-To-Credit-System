@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { loanService, GetLoansParams } from '@/services/loan.service';
+import { loanService, GetLoansParams } from '@/features/loans/api/loan.service';
 
 export const loanKeys = {
   all: ['loans'] as const,

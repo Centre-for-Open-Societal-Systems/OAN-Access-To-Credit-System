@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { loginUser } from '../api/authApi';
 import type { RootState } from '../../../store';
-import type { User, AuthState } from '../../../types/auth.types';
+import type { User, AuthState } from '../types/auth.types';
 
 export const loginThunk = createAsyncThunk<
   User,

@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { SlidersHorizontal, X, Check, Phone, Calendar } from 'lucide-react';
 import { STATUS_CFG, STATUS_OPTS } from '../constants/leads.constants';
+import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
 
 interface LeadAdvancedFiltersProps {
   onClose: () => void;
 }
 
 function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
+  const dispatch = useDispatch();
+  const activeFilters = useSelector(selectAdvFilters);
+
   const CALL_STATUS_OPTS = ['All', 'Completed', 'Missed', 'Voicemail'];
   const QUICK_DATE_OPTS  = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
 
-  const [selStatuses, setSelStatuses] = useState<string[]>([]);
-  const [callSt,      setCallSt]      = useState('All');
-  const [quickDate,   setQuickDate]   = useState('Last 30 Days');
-  const [dateFrom,    setDateFrom]    = useState('');
-  const [dateTo,      setDateTo]      = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [selStatuses, setSelStatuses] = useState<string[]>(activeFilters.statuses);
+  const [callSt,      setCallSt]      = useState(activeFilters.callStatus);
+  const [quickDate,   setQuickDate]   = useState(activeFilters.quickDate);
+  const [dateFrom,    setDateFrom]    = useState(activeFilters.dateFrom);
+  const [dateTo,      setDateTo]      = useState(activeFilters.dateTo);
+  const [phoneNumber, setPhoneNumber] = useState(activeFilters.phoneNumber);
 
   const toggleStatus = (s: string) => setSelStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
@@ -156,8 +161,13 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
           <button
             type="button"
             onClick={() => {
-              setSelStatuses([]); setCallSt('All');
-              setQuickDate('Last 30 Days'); setDateFrom(''); setDateTo(''); setPhoneNumber('');
+              dispatch(resetFilters());
+              setSelStatuses([]);
+              setCallSt('All');
+              setQuickDate('Last 30 Days');
+              setDateFrom('');
+              setDateTo('');
+              setPhoneNumber('');
             }}
             className="flex-1 rounded-xl border border-gray-200 bg-white py-4 mb-3 text-base font-medium text-text-primary transition hover:bg-slate-50"
           >
@@ -165,7 +175,17 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              dispatch(setAdvFilters({
+                statuses: selStatuses,
+                callStatus: callSt,
+                quickDate,
+                dateFrom,
+                dateTo,
+                phoneNumber
+              }));
+              onClose();
+            }}
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#16A34A] mb-3 py-3 text-sm font-semibold text-white transition hover:bg-[#10883c]"
           >
             Apply Filters

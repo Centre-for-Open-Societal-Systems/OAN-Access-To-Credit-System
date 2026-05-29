@@ -1,4 +1,4 @@
-import { Lead, GetLeadsParams } from '@/types/leads.types';
+import type { Lead, GetLeadsParams } from '@/features/leads/types/leads.types';
 
 export const leadService = {
   async getLeads(params?: GetLeadsParams): Promise<Lead[]> {

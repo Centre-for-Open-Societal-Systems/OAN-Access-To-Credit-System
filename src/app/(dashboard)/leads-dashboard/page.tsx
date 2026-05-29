@@ -11,27 +11,54 @@ import LeadTable from '@/features/leads/components/LeadTable';
 import LeadPagination from '@/features/leads/components/LeadPagination';
 import LeadAdvancedFilters from '@/features/leads/components/LeadAdvancedFilters';
 import LeadLoadingSkeleton from '@/features/leads/components/LeadLoadingSkeleton';
-import { useLeads, useLeadSummary } from '@/features/leads/hooks/useLeads';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchLeads,
+  fetchLeadSummary,
+  selectLeads,
+  selectIsLeadsLoading,
+  selectLeadSummary,
+  selectSearch,
+  selectActiveTab,
+  selectDateFilter,
+  selectColStatusFilter,
+  selectColCallTimeFilter,
+  setSearch,
+  setActiveTab,
+  setDateFilter,
+  setColStatusFilter,
+  setColCallTimeFilter,
+  resetFilters,
+  selectFilteredLeads,
+} from '@/features/leads/store/leadSlice';
+import type { AppDispatch } from '@/store';
 
 export default function LeadsDashboard() {
   const router = useRouter();
-  const { data: allLeads = [], isLoading } = useLeads();
-  const { data: leadSummary } = useLeadSummary();
+  const dispatch = useDispatch<AppDispatch>();
+  const allLeads = useSelector(selectLeads) || [];
+  const isLoading = useSelector(selectIsLeadsLoading);
+  const leadSummary = useSelector(selectLeadSummary);
 
-  const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState('All Time');
+  React.useEffect(() => {
+    dispatch(fetchLeads());
+    dispatch(fetchLeadSummary());
+  }, [dispatch]);
+
+  const search = useSelector(selectSearch);
+  const activeTab = useSelector(selectActiveTab);
+  const dateFilter = useSelector(selectDateFilter);
+  const colStatusFilter = useSelector(selectColStatusFilter);
+  const colCallTimeFilter = useSelector(selectColCallTimeFilter);
+  const filtered = useSelector(selectFilteredLeads);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdvFilters, setShowAdvFilters] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
-  const [colStatusFilter, setColStatusFilter] = useState<string[]>([]);
-  const [colCallTimeFilter, setColCallTimeFilter] = useState<string[]>([]);
 
-  const myLeads = useMemo(() => allLeads.filter((l: any) => l.owner === 'me'), [allLeads]);
-  const unassignedLeads = useMemo(() => allLeads.filter((l: any) => l.owner === 'unassigned'), [allLeads]);
-  const baseLeads = activeTab === 'my' ? myLeads : activeTab === 'unassigned' ? unassignedLeads : allLeads;
+  const myLeadsCount = useMemo(() => allLeads.filter((l: any) => l.owner === 'me').length, [allLeads]);
+  const unassignedLeadsCount = useMemo(() => allLeads.filter((l: any) => l.owner === 'unassigned').length, [allLeads]);
 
   const liveKpiStats = useMemo(() => {
     if (!leadSummary) return kpiStats.filter((s: any) => s.id !== 'disqualified');
@@ -55,59 +82,6 @@ export default function LeadsDashboard() {
       });
   }, [leadSummary]);
 
-  function parseCallDate(callStartTime?: string): Date | null {
-    if (!callStartTime) return null;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (callStartTime.startsWith('Today')) return new Date(today);
-    if (callStartTime.startsWith('Yesterday')) return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-    const match = callStartTime.match(/^([A-Za-z]+ \d+)/);
-    if (match) return new Date(`${match[1]}, ${today.getFullYear()}`);
-    return null;
-  }
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const daysMap: Record<string, number> = { 'Last 7 Days': 7, 'Last 30 Days': 30, 'Last 90 Days': 90 };
-    const filterDays = daysMap[dateFilter] ?? null;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const cutoff = filterDays ? new Date(today.getFullYear(), today.getMonth(), today.getDate() - (filterDays - 1)) : null;
-
-    return baseLeads.filter((l: any) => {
-      if (q && !`${l.id} ${l.phone} ${l.status} ${l.location}`.toLowerCase().includes(q)) return false;
-      if (statusFilter !== 'All' && l.status !== statusFilter) return false;
-      if (colStatusFilter.length > 0 && !colStatusFilter.includes(l.status)) return false;
-      if (cutoff) {
-        const leadDate = parseCallDate(l.callStartTime);
-        if (!leadDate || leadDate < cutoff) return false;
-      }
-      if (colCallTimeFilter.length > 0) {
-        const leadDate = parseCallDate(l.callStartTime);
-        const t = l.callStartTime ?? '';
-        const matches = colCallTimeFilter.some(period => {
-          if (period === 'Today') return t.startsWith('Today');
-          if (period === 'Yesterday') return t.startsWith('Yesterday');
-          if (period === 'Last 7 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-            return leadDate != null && leadDate >= c;
-          }
-          if (period === 'Last 30 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
-            return leadDate != null && leadDate >= c;
-          }
-          if (period === 'Last 90 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 89);
-            return leadDate != null && leadDate >= c;
-          }
-          return true;
-        });
-        if (!matches) return false;
-      }
-      return true;
-    });
-  }, [baseLeads, search, statusFilter, dateFilter, colStatusFilter, colCallTimeFilter]);
-
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -124,8 +98,8 @@ export default function LeadsDashboard() {
   const toggleRow = (key: string) => setSelectedRows(p => p.includes(key) ? p.filter(x => x !== key) : [...p, key]);
 
   const clearAllFilters = () => {
-    setSearch(''); setStatusFilter('All'); setDateFilter('All Time');
-    setColStatusFilter([]); setColCallTimeFilter([]); setCurrentPage(1);
+    dispatch(resetFilters());
+    setCurrentPage(1);
   };
 
   if (isLoading) {
@@ -167,12 +141,12 @@ export default function LeadsDashboard() {
           search={search}
           activeTab={activeTab}
           allLeadsCount={allLeads.length}
-          myLeadsCount={myLeads.length}
-          unassignedLeadsCount={unassignedLeads.length}
+          myLeadsCount={myLeadsCount}
+          unassignedLeadsCount={unassignedLeadsCount}
           dateFilter={dateFilter}
-          onSearchChange={(v: string) => { setSearch(v); setCurrentPage(1); }}
-          onTabChange={(k: string) => { setActiveTab(k); setCurrentPage(1); }}
-          onDateChange={(v: string) => { setDateFilter(v); setCurrentPage(1); }}
+          onSearchChange={(v: string) => { dispatch(setSearch(v)); setCurrentPage(1); }}
+          onTabChange={(k: string) => { dispatch(setActiveTab(k)); setCurrentPage(1); }}
+          onDateChange={(v: string) => { dispatch(setDateFilter(v)); setCurrentPage(1); }}
           onShowAdvFilters={() => setShowAdvFilters(true)}
           onClearFilters={clearAllFilters}
         />
@@ -188,8 +162,8 @@ export default function LeadsDashboard() {
           onToggleAll={toggleAll}
           onToggleRow={toggleRow}
           onSetOpenColFilter={setOpenColFilter}
-          onApplyStatusFilter={setColStatusFilter}
-          onApplyCallTimeFilter={setColCallTimeFilter}
+          onApplyStatusFilter={(v: string[]) => { dispatch(setColStatusFilter(v)); setCurrentPage(1); }}
+          onApplyCallTimeFilter={(v: string[]) => { dispatch(setColCallTimeFilter(v)); setCurrentPage(1); }}
           onClearFilters={clearAllFilters}
         />
         <LeadPagination

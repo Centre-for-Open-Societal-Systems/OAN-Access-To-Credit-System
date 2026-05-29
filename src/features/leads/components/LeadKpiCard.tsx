@@ -1,6 +1,6 @@
 import React from 'react';
 import { Phone, TrendingUp, TrendingDown, Minus, FileText, CheckCircle2, XCircle, Users, CheckCircle } from 'lucide-react';
-import { KpiStat } from '@/types/leads.types';
+import { KpiStat } from '@/features/leads/types/leads.types';
 
 interface LeadKpiCardProps {
   stat: KpiStat;

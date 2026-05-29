@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye, CalendarPlus, CalendarCheck, Settings, CheckCircle, XCircle, Calendar } from 'lucide-react';
-import { Lead } from '@/types/leads.types';
+import { Lead } from '@/features/leads/types/leads.types';
 
 interface LeadActionCellProps {
   lead: Lead;

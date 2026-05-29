@@ -47,7 +47,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
 
   const officerName = rawOfficerName || 'Guest User';
   const officerRole = rawOfficerRole || 'Loan Officer';
-  const initials = officerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'GU';
+  const initials = officerName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'GU';
 
   useEffect(() => {
     const handleDocumentPointerDown = (event: MouseEvent) => {
