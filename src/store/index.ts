@@ -1,5 +1,5 @@
-import { configureStore, Middleware } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/store/authSlice';
+import { configureStore, Middleware, isRejectedWithValue } from '@reduxjs/toolkit';
+import authReducer, { logout } from '../features/auth/store/authSlice';
 import leadReducer from '../features/leads/store/leadSlice';
 import loanFormReducer from '../features/loans/store/loanFormSlice';
 
@@ -27,6 +27,18 @@ const storageMiddleware: Middleware = (store) => (next) => (action: any) => {
   return result;
 };
 
+const unauthenticatedMiddleware: Middleware = (api) => (next) => (action: any) => {
+  if (isRejectedWithValue(action)) {
+    if (action.payload?.message === 'UNAUTHORIZED' || action.error?.message === 'UNAUTHORIZED') {
+      api.dispatch(logout());
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+  }
+  return next(action);
+};
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -34,7 +46,7 @@ export const store = configureStore({
     loanForm: loanFormReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(storageMiddleware),
+    getDefaultMiddleware().concat(storageMiddleware, unauthenticatedMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

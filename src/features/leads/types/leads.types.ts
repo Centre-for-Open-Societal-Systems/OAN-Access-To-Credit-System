@@ -29,4 +29,10 @@ export interface GetLeadsParams {
   lead_source?: string;
   start_date?: string;
   end_date?: string;
+  assigned_to?: string;
+}
+
+export interface GetLeadsResponse {
+  results: Lead[];
+  totalCount: number;
 }

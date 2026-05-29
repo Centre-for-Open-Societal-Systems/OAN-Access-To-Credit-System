@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { DateSelect } from './LeadColFilterPopup';
 import { DATE_OPTS } from '../constants/leads.constants';
@@ -10,11 +10,11 @@ interface LeadToolbarProps {
   myLeadsCount: number;
   unassignedLeadsCount: number;
   dateFilter: string;
-  onSearchChange: (search: string) => void;
   onTabChange: (tab: string) => void;
   onDateChange: (date: string) => void;
   onShowAdvFilters: () => void;
   onClearFilters: () => void;
+  onSearchSubmit: (search: string) => void;
 }
 
 function LeadToolbar({
@@ -24,12 +24,17 @@ function LeadToolbar({
   myLeadsCount,
   unassignedLeadsCount,
   dateFilter,
-  onSearchChange,
   onTabChange,
   onDateChange,
   onShowAdvFilters,
   onClearFilters,
+  onSearchSubmit,
 }: LeadToolbarProps) {
+  const [localSearch, setLocalSearch] = useState(search);
+
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
   const tabs = [
     { key: 'all',        label: 'All Leads',  count: allLeadsCount        },
     { key: 'my',         label: 'My Leads',   count: myLeadsCount         },
@@ -45,13 +50,15 @@ function LeadToolbar({
           <input
             type="text"
             placeholder="Search by Lead ID or Phone Number..."
-            value={search}
-            onChange={e => onSearchChange(e.target.value)}
+            value={localSearch}
+            onChange={e => setLocalSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && onSearchSubmit(localSearch)}
             className="min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
           />
         </div>
         <button
           type="button"
+          onClick={() => onSearchSubmit(localSearch)}
           className="rounded-xl bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95"
         >
           Search

@@ -39,6 +39,7 @@ export interface AdvFilters {
 interface LeadState {
   selectedLeadIds: string[];
   leads: Lead[];
+  totalCount: number;
   isLeadsLoading: boolean;
   leadsError: string | null;
   leadSummary: any | null;
@@ -65,6 +66,7 @@ const initialFilters: AdvFilters = {
 const initialState: LeadState = {
   selectedLeadIds: [],
   leads: [],
+  totalCount: 0,
   isLeadsLoading: false,
   leadsError: null,
   leadSummary: null,
@@ -130,7 +132,8 @@ const leadSlice = createSlice({
       })
       .addCase(fetchLeads.fulfilled, (state, action) => {
         state.isLeadsLoading = false;
-        state.leads = action.payload;
+        state.leads = action.payload.results;
+        state.totalCount = action.payload.totalCount;
       })
       .addCase(fetchLeads.rejected, (state, action) => {
         state.isLeadsLoading = false;
@@ -166,6 +169,7 @@ export const {
 
 export const selectSelectedLeadIds = (state: RootState) => state.leads.selectedLeadIds;
 export const selectLeads = (state: RootState) => state.leads.leads;
+export const selectTotalCount = (state: RootState) => state.leads.totalCount;
 export const selectIsLeadsLoading = (state: RootState) => state.leads.isLeadsLoading;
 export const selectLeadsError = (state: RootState) => state.leads.leadsError;
 export const selectLeadSummary = (state: RootState) => state.leads.leadSummary;
@@ -178,140 +182,9 @@ export const selectColStatusFilter = (state: RootState) => state.leads.colStatus
 export const selectColCallTimeFilter = (state: RootState) => state.leads.colCallTimeFilter;
 export const selectAdvFilters = (state: RootState) => state.leads.advFilters;
 
-// ── Memoized Filtering Selector ──
+// ── Backend Filter Pass-Through ──
 
-function parseCallDate(callStartTime?: string): Date | null {
-  if (!callStartTime) return null;
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (callStartTime.startsWith('Today')) return new Date(today);
-  if (callStartTime.startsWith('Yesterday')) return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-  const match = callStartTime.match(/^([A-Za-z]+ \d+)/);
-  if (match) return new Date(`${match[1]}, ${today.getFullYear()}`);
-  
-  // ISO / DB timestamp parsing fallback
-  const parsed = new Date(callStartTime);
-  if (!isNaN(parsed.getTime())) {
-    return parsed;
-  }
-  return null;
-}
+export const selectFilteredLeads = (state: RootState) => state.leads.leads;
 
-export const selectFilteredLeads = createSelector(
-  [
-    selectLeads,
-    selectSearch,
-    selectActiveTab,
-    selectDateFilter,
-    selectColStatusFilter,
-    selectColCallTimeFilter,
-    selectAdvFilters
-  ],
-  (allLeads, search, activeTab, dateFilter, colStatusFilter, colCallTimeFilter, advFilters) => {
-    const myLeads = allLeads.filter((l: any) => l.owner === 'me');
-    const unassignedLeads = allLeads.filter((l: any) => l.owner === 'unassigned');
-    const baseLeads = activeTab === 'my' ? myLeads : activeTab === 'unassigned' ? unassignedLeads : allLeads;
-
-    const q = search.trim().toLowerCase();
-    
-    // Toolbar Date filter calculation:
-    const daysMap: Record<string, number> = { 'Last 7 Days': 7, 'Last 30 Days': 30, 'Last 90 Days': 90 };
-    const filterDays = daysMap[dateFilter] ?? null;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const cutoff = filterDays ? new Date(today.getFullYear(), today.getMonth(), today.getDate() - (filterDays - 1)) : null;
-
-    // Advanced date range or quick date calculation:
-    let advStart: Date | null = null;
-    let advEnd: Date | null = null;
-
-    if (advFilters.quickDate) {
-      const advDaysMap: Record<string, number> = { 'Today': 1, 'Last 7 Days': 7, 'Last 30 Days': 30, 'This Month': 30 };
-      const advDays = advDaysMap[advFilters.quickDate] ?? null;
-      if (advDays) {
-        if (advFilters.quickDate === 'This Month') {
-          advStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else {
-          advStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (advDays - 1));
-        }
-      }
-    } else {
-      if (advFilters.dateFrom) advStart = new Date(advFilters.dateFrom);
-      if (advFilters.dateTo) advEnd = new Date(advFilters.dateTo);
-    }
-
-    return baseLeads.filter((l: any) => {
-      // 1. General Search query (Search bar)
-      if (q && !`${l.id} ${l.phone} ${l.status} ${l.location}`.toLowerCase().includes(q)) return false;
-
-      // 2. Columns Status Filter (from column header filters)
-      if (colStatusFilter.length > 0 && !colStatusFilter.includes(l.status)) return false;
-
-      // 3. Toolbar Date filter
-      if (cutoff) {
-        const leadDate = parseCallDate(l.callStartTime);
-        if (!leadDate || leadDate < cutoff) return false;
-      }
-
-      // 4. Columns Call Time Filter (from column header filters)
-      if (colCallTimeFilter.length > 0) {
-        const leadDate = parseCallDate(l.callStartTime);
-        const t = l.callStartTime ?? '';
-        const matches = colCallTimeFilter.some(period => {
-          if (period === 'Today') return t.startsWith('Today');
-          if (period === 'Yesterday') return t.startsWith('Yesterday');
-          if (period === 'Last 7 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-            return leadDate != null && leadDate >= c;
-          }
-          if (period === 'Last 30 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
-            return leadDate != null && leadDate >= c;
-          }
-          if (period === 'Last 90 Days') {
-            const c = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 89);
-            return leadDate != null && leadDate >= c;
-          }
-          return true;
-        });
-        if (!matches) return false;
-      }
-
-      // ── ADVANCED FILTERS ──
-
-      // A. Statuses
-      if (advFilters.statuses.length > 0 && !advFilters.statuses.includes(l.status)) return false;
-
-      // B. Call Status
-      if (advFilters.callStatus !== 'All') {
-        const d = l.callDuration ?? '';
-        if (advFilters.callStatus === 'Missed') {
-          if (d.toLowerCase() !== 'missed') return false;
-        } else if (advFilters.callStatus === 'Voicemail') {
-          if (d.toLowerCase() !== 'voicemail') return false;
-        } else if (advFilters.callStatus === 'Completed') {
-          if (d.toLowerCase() === 'missed' || d.toLowerCase() === 'voicemail') return false;
-        }
-      }
-
-      // C. Date Range
-      if (advStart || advEnd) {
-        const leadDate = parseCallDate(l.callStartTime);
-        if (!leadDate) return false;
-        if (advStart && leadDate < advStart) return false;
-        if (advEnd && leadDate > advEnd) return false;
-      }
-
-      // D. Phone Number
-      if (advFilters.phoneNumber.trim()) {
-        const cleanPhone = advFilters.phoneNumber.replace(/\D/g, '');
-        const cleanLeadPhone = l.phone.replace(/\D/g, '');
-        if (cleanPhone && !cleanLeadPhone.includes(cleanPhone)) return false;
-      }
-
-      return true;
-    });
-  }
-);
 
 export default leadSlice.reducer;

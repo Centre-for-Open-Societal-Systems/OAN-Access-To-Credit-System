@@ -9,27 +9,15 @@ import { hydrate } from '@/features/auth/store/authSlice';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error) => {
-        if (error.message === 'UNAUTHORIZED') {
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-        }
-      },
-    }),
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000, // 1 minute
-        retry: (failureCount, error) => {
-          if (error.message === 'UNAUTHORIZED') return false;
-          return failureCount < 1;
-        },
+        retry: 1,
         refetchOnWindowFocus: false,
       },
     },
   }));
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {

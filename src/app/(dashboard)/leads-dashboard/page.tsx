@@ -29,7 +29,8 @@ import {
   setColStatusFilter,
   setColCallTimeFilter,
   resetFilters,
-  selectFilteredLeads,
+  selectTotalCount,
+  selectAdvFilters,
 } from '@/features/leads/store/leadSlice';
 import type { AppDispatch } from '@/store';
 
@@ -39,26 +40,104 @@ export default function LeadsDashboard() {
   const allLeads = useSelector(selectLeads) || [];
   const isLoading = useSelector(selectIsLeadsLoading);
   const leadSummary = useSelector(selectLeadSummary);
-
-  React.useEffect(() => {
-    dispatch(fetchLeads());
-    dispatch(fetchLeadSummary());
-  }, [dispatch]);
+  const totalCount = useSelector(selectTotalCount);
 
   const search = useSelector(selectSearch);
   const activeTab = useSelector(selectActiveTab);
   const dateFilter = useSelector(selectDateFilter);
   const colStatusFilter = useSelector(selectColStatusFilter);
   const colCallTimeFilter = useSelector(selectColCallTimeFilter);
-  const filtered = useSelector(selectFilteredLeads);
+  const advFilters = useSelector(selectAdvFilters);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdvFilters, setShowAdvFilters] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
 
-  const myLeadsCount = useMemo(() => allLeads.filter((l: any) => l.owner === 'me').length, [allLeads]);
-  const unassignedLeadsCount = useMemo(() => allLeads.filter((l: any) => l.owner === 'unassigned').length, [allLeads]);
+  // Initial Summary Fetch
+  React.useEffect(() => {
+    dispatch(fetchLeadSummary());
+  }, [dispatch]);
+
+  // Load leads from backend
+  const loadLeads = React.useCallback((page: number, currentSearch?: string) => {
+    const assigned_to = activeTab === 'my' ? 'me' : activeTab === 'unassigned' ? 'unassigned' : undefined;
+    
+    // Frappe typically expects start and end date if passing dates, but we just pass the raw value right now
+    // Since Frappe API expects start_date / end_date, we might need a converter. For now pass raw if it matches.
+    // If not matching Frappe schema perfectly, it will just ignore.
+    let start_date = undefined;
+    let end_date = undefined;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // 1. Process Advanced Filters Date Range
+    if (advFilters.dateFrom) start_date = advFilters.dateFrom;
+    if (advFilters.dateTo) end_date = advFilters.dateTo;
+    
+    // 2. Process Advanced Filters Quick Date
+    if (advFilters.quickDate) {
+      if (advFilters.quickDate === 'Today') {
+        start_date = today.toISOString().split('T')[0];
+        end_date = today.toISOString().split('T')[0];
+      } else if (advFilters.quickDate === 'Last 7 Days') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - 6);
+        start_date = start.toISOString().split('T')[0];
+      } else if (advFilters.quickDate === 'Last 30 Days') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - 29);
+        start_date = start.toISOString().split('T')[0];
+      } else if (advFilters.quickDate === 'This Month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start_date = start.toISOString().split('T')[0];
+      }
+    }
+    
+    // 3. Process Toolbar Date Filter (if adv filters didn't override)
+    if (!start_date && dateFilter !== 'All Time') {
+      if (dateFilter === 'Last 7 Days') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - 6);
+        start_date = start.toISOString().split('T')[0];
+      } else if (dateFilter === 'Last 30 Days') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - 29);
+        start_date = start.toISOString().split('T')[0];
+      } else if (dateFilter === 'Last 90 Days') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - 89);
+        start_date = start.toISOString().split('T')[0];
+      }
+    }
+
+    // Combine Statuses
+    const allStatuses = Array.from(new Set([...colStatusFilter, ...advFilters.statuses]));
+    const statusParam = allStatuses.length > 0 ? allStatuses.join(',') : undefined;
+
+    // Combine Search
+    let finalSearch = currentSearch ?? search;
+    if (advFilters.phoneNumber.trim()) {
+      finalSearch = finalSearch ? `${finalSearch} ${advFilters.phoneNumber.trim()}` : advFilters.phoneNumber.trim();
+    }
+    
+    dispatch(fetchLeads({
+      start: (page - 1) * PAGE_SIZE,
+      page_length: PAGE_SIZE,
+      search_query: finalSearch,
+      status: statusParam,
+      assigned_to,
+      start_date,
+      end_date
+    }));
+  }, [dispatch, activeTab, colStatusFilter, search, advFilters, dateFilter]);
+
+  // Auto-fetch when filters/page change (except for search typing)
+  React.useEffect(() => {
+    loadLeads(currentPage);
+  }, [loadLeads, currentPage]);
+
 
   const liveKpiStats = useMemo(() => {
     if (!leadSummary) return kpiStats.filter((s: any) => s.id !== 'disqualified');
@@ -82,9 +161,10 @@ export default function LeadsDashboard() {
       });
   }, [leadSummary]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
-  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  // Backend provides exactly `PAGE_SIZE` leads for current page
+  const visible = allLeads;
 
   const pageNums = useMemo(() => {
     if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -101,10 +181,6 @@ export default function LeadsDashboard() {
     dispatch(resetFilters());
     setCurrentPage(1);
   };
-
-  if (isLoading) {
-    return <LeadLoadingSkeleton />;
-  }
 
   return (
     <div className="space-y-4">
@@ -140,11 +216,15 @@ export default function LeadsDashboard() {
         <LeadToolbar
           search={search}
           activeTab={activeTab}
-          allLeadsCount={allLeads.length}
-          myLeadsCount={myLeadsCount}
-          unassignedLeadsCount={unassignedLeadsCount}
+          allLeadsCount={activeTab === 'all' ? totalCount : 0}
+          myLeadsCount={activeTab === 'my' ? totalCount : 0}
+          unassignedLeadsCount={activeTab === 'unassigned' ? totalCount : 0}
           dateFilter={dateFilter}
-          onSearchChange={(v: string) => { dispatch(setSearch(v)); setCurrentPage(1); }}
+          onSearchSubmit={(v: string) => { 
+            dispatch(setSearch(v)); 
+            setCurrentPage(1); 
+            // useEffect will trigger loadLeads when search changes
+          }}
           onTabChange={(k: string) => { dispatch(setActiveTab(k)); setCurrentPage(1); }}
           onDateChange={(v: string) => { dispatch(setDateFilter(v)); setCurrentPage(1); }}
           onShowAdvFilters={() => setShowAdvFilters(true)}
@@ -165,10 +245,11 @@ export default function LeadsDashboard() {
           onApplyStatusFilter={(v: string[]) => { dispatch(setColStatusFilter(v)); setCurrentPage(1); }}
           onApplyCallTimeFilter={(v: string[]) => { dispatch(setColCallTimeFilter(v)); setCurrentPage(1); }}
           onClearFilters={clearAllFilters}
+          isLoading={isLoading}
         />
         <LeadPagination
           visibleCount={visible.length}
-          filteredCount={filtered.length}
+          filteredCount={totalCount}
           safePage={safePage}
           totalPages={totalPages}
           pageNums={pageNums}

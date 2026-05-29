@@ -1,7 +1,7 @@
-import type { Lead, GetLeadsParams } from '@/features/leads/types/leads.types';
+import type { Lead, GetLeadsParams, GetLeadsResponse } from '@/features/leads/types/leads.types';
 
 export const leadService = {
-  async getLeads(params?: GetLeadsParams): Promise<Lead[]> {
+  async getLeads(params?: GetLeadsParams): Promise<GetLeadsResponse> {
     const url = new URL(
       '/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads',
       typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
@@ -14,6 +14,9 @@ export const leadService = {
     url.searchParams.append('lead_source', params?.lead_source || '');
     url.searchParams.append('start_date', params?.start_date || '');
     url.searchParams.append('end_date', params?.end_date || '');
+    if (params?.assigned_to !== undefined) {
+      url.searchParams.append('assigned_to', params.assigned_to);
+    }
 
     const response = await fetch(url.toString());
     if (!response.ok) {
@@ -25,8 +28,9 @@ export const leadService = {
     const data = await response.json();
     
     const rawLeads = data.message?.results || [];
+    const totalCount = data.message?.total_count || 0;
 
-    return rawLeads.map((item: any): Lead => ({
+    const results = rawLeads.map((item: any): Lead => ({
       id: item.name,
       name: item.name,
       phone: item.phone_number || '',
@@ -40,6 +44,8 @@ export const leadService = {
       callStartTime: item.creation,
       external_id: item.external_id,
     }));
+
+    return { results, totalCount };
   },
 
   async getLeadSummary(): Promise<any> {
