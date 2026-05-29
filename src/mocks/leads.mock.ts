@@ -1,11 +1,3 @@
-export const kpiStats = [
-  { id: 'total',        label: 'Total Applications', display: '12,493', trend: 12.5, up: true  },
-  { id: 'initiated',    label: 'Initiated',           display:  '3,241', trend:  4.2, up: true  },
-  { id: 'qualified',    label: 'Qualified',           display:  '5,832', trend:  8.1, up: true  },
-  { id: 'disqualified', label: 'Disqualified',        display:  '1,204', trend:  2.4, up: false },
-  { id: 'processed',    label: 'Processed',           display:  '1,890', trend: 15.3, up: true  },
-  { id: 'rejected',     label: 'Rejected',            display:    '326', trend:  0.0, up: null  },
-];
 
 export const leadStatusOptions = [
   { value: 'all',          label: 'All Statuses' },

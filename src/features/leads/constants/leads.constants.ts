@@ -21,3 +21,12 @@ export const COL_FILTER_OPTS: Record<string, string[]> = {
   'STATUS':          STATUS_OPTS.filter(o => o !== 'All' && o !== 'Disqualified'),
   'CALL START TIME': ['Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'],
 };
+
+export const KPI_CARDS_LAYOUT = [
+  { id: 'total',        label: 'Total Applications' },
+  { id: 'initiated',    label: 'Initiated'          },
+  { id: 'qualified',    label: 'Qualified'          },
+  { id: 'disqualified', label: 'Disqualified'       },
+  { id: 'processed',    label: 'Processed'          },
+  { id: 'rejected',     label: 'Rejected'           },
+] as const;

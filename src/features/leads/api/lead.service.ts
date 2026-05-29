@@ -1,4 +1,4 @@
-import type { Lead, GetLeadsParams, GetLeadsResponse } from '@/features/leads/types/leads.types';
+import type { Lead, GetLeadsParams, GetLeadsResponse, LeadSummaryResponse } from '@/features/leads/types/leads.types';
 
 export const leadService = {
   async getLeads(params?: GetLeadsParams): Promise<GetLeadsResponse> {
@@ -48,7 +48,7 @@ export const leadService = {
     return { results, totalCount };
   },
 
-  async getLeadSummary(): Promise<any> {
+  async getLeadSummary(): Promise<LeadSummaryResponse> {
     const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_summary');
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {

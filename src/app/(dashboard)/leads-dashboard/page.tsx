@@ -3,8 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
-import { kpiStats } from '@/mocks/leads.mock';
-import { PAGE_SIZE } from '@/features/leads/constants/leads.constants';
+import { PAGE_SIZE, KPI_CARDS_LAYOUT } from '@/features/leads/constants/leads.constants';
 import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import LeadToolbar from '@/features/leads/components/LeadToolbar';
 import LeadTable from '@/features/leads/components/LeadTable';
@@ -139,23 +138,23 @@ export default function LeadsDashboard() {
 
 
   const liveKpiStats = useMemo(() => {
-    if (!leadSummary) return kpiStats.filter((s: any) => s.id !== 'disqualified');
+    const byStatus = leadSummary?.by_status || {};
+    const totalCount = leadSummary?.total ?? 0;
 
-    const byStatus = leadSummary.by_status || {};
-    
-    return kpiStats
-      .filter((s: any) => s.id !== 'disqualified')
-      .map((s: any) => {
+    return KPI_CARDS_LAYOUT
+      .filter((card) => card.id !== 'disqualified')
+      .map((card) => {
         let count = 0;
-        if (s.id === 'total') count = leadSummary.total || 0;
-        else if (s.id === 'initiated') count = byStatus['Initiated'] || 0;
-        else if (s.id === 'qualified') count = byStatus['Qualified'] || 0;
-        else if (s.id === 'processed') count = byStatus['Processed'] || 0;
-        else if (s.id === 'rejected') count = byStatus['Not Interested'] || byStatus['Rejected'] || 0;
-        
+        if (card.id === 'total') count = totalCount;
+        else if (card.id === 'initiated') count = byStatus['Initiated'] || 0;
+        else if (card.id === 'qualified') count = byStatus['Qualified'] || 0;
+        else if (card.id === 'processed') count = byStatus['Processed'] || 0;
+        else if (card.id === 'rejected') count = byStatus['Not Interested'] || byStatus['Rejected'] || 0;
+
         return {
-          ...s,
-          display: count.toLocaleString(),
+          id: card.id,
+          label: card.label,
+          display: leadSummary ? count.toLocaleString() : '—',
         };
       });
   }, [leadSummary]);

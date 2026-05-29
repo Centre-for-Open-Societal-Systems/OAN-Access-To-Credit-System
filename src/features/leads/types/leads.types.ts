@@ -36,3 +36,16 @@ export interface GetLeadsResponse {
   results: Lead[];
   totalCount: number;
 }
+
+export interface LeadSummaryResponse {
+  status: string;
+  total: number;
+  by_status: {
+    Open?: number;
+    Initiated?: number;
+    Qualified?: number;
+    'Not Interested'?: number;
+    Processed?: number;
+    [key: string]: number | undefined;
+  };
+}

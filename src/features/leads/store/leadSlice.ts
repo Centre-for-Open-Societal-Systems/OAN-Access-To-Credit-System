@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { leadService } from '@/features/leads/api/lead.service';
-import type { GetLeadsParams, Lead } from '@/features/leads/types/leads.types';
+import type { GetLeadsParams, Lead, LeadSummaryResponse } from '@/features/leads/types/leads.types';
 
 export const fetchLeads = createAsyncThunk(
   'leads/fetchLeads',
@@ -42,7 +42,7 @@ interface LeadState {
   totalCount: number;
   isLeadsLoading: boolean;
   leadsError: string | null;
-  leadSummary: any | null;
+  leadSummary: LeadSummaryResponse | null;
   isSummaryLoading: boolean;
   summaryError: string | null;
   // Filters

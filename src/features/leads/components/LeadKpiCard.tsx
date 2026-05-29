@@ -38,13 +38,15 @@ function LeadKpiCard({ stat, index }: LeadKpiCardProps) {
       <div>
         <p className="text-sm text-text-muted">{stat.label}</p>
         <p className="mt-1.5 text-3xl font-bold text-text-primary">{stat.display}</p>
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold ${trendPill}`}>
-            <TrendIcon size={11} strokeWidth={2.5} />
-            {trendVal.toFixed(1)}%
-          </span>
-          <span className="text-xs text-text-muted">vs last month</span>
-        </div>
+        {stat.trend !== undefined && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold ${trendPill}`}>
+              <TrendIcon size={11} strokeWidth={2.5} />
+              {trendVal.toFixed(1)}%
+            </span>
+            <span className="text-xs text-text-muted">vs last month</span>
+          </div>
+        )}
       </div>
       <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${cfg.bg}`}>
         {cfg.icon}
