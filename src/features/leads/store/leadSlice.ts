@@ -56,7 +56,7 @@ interface LeadState {
 const initialFilters: AdvFilters = {
   statuses: [],
   callStatus: 'All',
-  quickDate: 'Last 30 Days',
+  quickDate: '',
   dateFrom: '',
   dateTo: '',
   phoneNumber: '',
@@ -188,6 +188,12 @@ function parseCallDate(callStartTime?: string): Date | null {
   if (callStartTime.startsWith('Yesterday')) return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
   const match = callStartTime.match(/^([A-Za-z]+ \d+)/);
   if (match) return new Date(`${match[1]}, ${today.getFullYear()}`);
+  
+  // ISO / DB timestamp parsing fallback
+  const parsed = new Date(callStartTime);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
+  }
   return null;
 }
 
