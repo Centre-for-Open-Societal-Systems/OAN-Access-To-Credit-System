@@ -29,7 +29,7 @@ const loadInitialState = (): LoanFormState => {
 
 const initialState: LoanFormState = loadInitialState();
 
-export const loanFormSlice = createSlice({
+export const newLoanFormSlice = createSlice({
   name: 'loanForm',
   initialState,
   reducers: {
@@ -75,11 +75,11 @@ export const {
   nextStep,
   prevStep,
   resetForm,
-} = loanFormSlice.actions;
+} = newLoanFormSlice.actions;
 
 export const selectLoanFormState = (state: RootState) => state.loanForm;
 export const selectLoanCurrentStep = (state: RootState) => state.loanForm.currentStep;
 export const selectLoanApplicationId = (state: RootState) => state.loanForm.applicationId;
 export const selectLoanFormData = (state: RootState) => state.loanForm.formData;
 
-export default loanFormSlice.reducer;
+export default newLoanFormSlice.reducer;

@@ -1,7 +1,8 @@
 import { configureStore, Middleware, isRejectedWithValue } from '@reduxjs/toolkit';
 import authReducer, { logout } from '../features/auth/store/authSlice';
 import leadReducer from '../features/leads/store/leadSlice';
-import loanFormReducer from '../features/loans/store/loanFormSlice';
+import loanFormReducer from '../features/loans/store/newLoanFormSlice';
+import loanDashboardReducer from '../features/loans/store/loanDashboardSlice';
 
 const AUTH_ACTIONS = ['auth/login/fulfilled', 'auth/logout', 'auth/hydrate'];
 
@@ -28,11 +29,20 @@ const storageMiddleware: Middleware = (store) => (next) => (action: any) => {
 };
 
 const unauthenticatedMiddleware: Middleware = (api) => (next) => (action: any) => {
-  if (isRejectedWithValue(action)) {
-    if (action.payload?.message === 'UNAUTHORIZED' || action.error?.message === 'UNAUTHORIZED') {
+  if (isRejectedWithValue(action) || action.type.endsWith('/rejected')) {
+    if (
+      action.payload === 'UNAUTHORIZED' ||
+      action.payload?.message === 'UNAUTHORIZED' ||
+      action.error?.message === 'UNAUTHORIZED'
+    ) {
       api.dispatch(logout());
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        // Clear HttpOnly cookie on the server before redirecting
+        fetch('/api/auth/logout', { method: 'POST' })
+          .catch(() => {}) // Ignore errors if server is unreachable
+          .finally(() => {
+            window.location.href = '/login';
+          });
       }
     }
   }
@@ -44,6 +54,7 @@ export const store = configureStore({
     auth: authReducer,
     leads: leadReducer,
     loanForm: loanFormReducer,
+    loanDashboard: loanDashboardReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(storageMiddleware, unauthenticatedMiddleware),

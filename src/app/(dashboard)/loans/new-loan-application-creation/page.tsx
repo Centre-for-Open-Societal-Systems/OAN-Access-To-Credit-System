@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectLoanFormState, setStep, updateFormData, setApplicationId, resetForm } from '@/features/loans/store/loanFormSlice';
+import { selectLoanFormState, setStep, updateFormData, setApplicationId, resetForm } from '@/features/loans/store/newLoanFormSlice';
 import { useSaveLoanDetails, useSaveBankDetails, useSaveFarmerDetails, useSubmitApplication, useUploadDocument, useConsentApis } from '@/features/loans/hooks/useLoans';
 import {
   STEP_META, GENDER_OPTIONS, MARITAL_OPTIONS, EDUCATION_OPTIONS, LOAN_TYPE_OPTIONS,
@@ -2074,7 +2074,7 @@ function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: str
             <Eye size={14} /> View Summary
           </button>
           <button
-            onClick={() => router.push('/loans/loan-application-dashboard')}
+            onClick={() => router.push('/loan-application-dashboard')}
             className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
             <LayoutDashboard size={14} /> Return to Dashboard
           </button>
@@ -2262,7 +2262,7 @@ export default function NewLoanApplication() {
     setErrors({});
     if (currentStep === 1) { 
       dispatch(resetForm());
-      router.push('/loans/loan-application-dashboard'); 
+      router.push('/loan-application-dashboard'); 
       return; 
     }
     dispatch(setStep(currentStep - 1));
