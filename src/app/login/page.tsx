@@ -22,9 +22,9 @@ import { loginThunk, selectAuthError, selectAuthStatus, clearAuthError } from '@
 
 
 const activeAgents = [
-  { initials: 'AM', tone: 'linear-gradient(135deg, #8bd0f7 0%, #2d6ea8 100%)' },
-  { initials: 'SN', tone: 'linear-gradient(135deg, #f4b27e 0%, #d96525 100%)' },
-  { initials: 'TK', tone: 'linear-gradient(135deg, #9ed8a7 0%, #4c8c67 100%)' },
+  { src: '/bb4a5b79fae40c0a468fa967443678ee9eb31bee.jpg', alt: 'Red-haired agent' },
+  { src: '/15546d74033e37b4f05979285cbde9b0d8a08256.jpg', alt: 'Black male agent' },
+  { src: '/c08326dd4541f98026723b0901e8ecaa33f73c17.jpg', alt: 'White male agent' },
 ];
 
 const languages = [
@@ -79,7 +79,7 @@ export default function Login() {
       <header className="header-shell">
         <div className="header-bar">
           <div className="brand-mark">
-            <div aria-hidden="true" className="relative h-8 w-24">
+            <div aria-hidden="true" className="relative h-16 w-24">
               <Image
                 src="/logo.png"
                 alt="Ethiopia OpenAgriNet Logo"
@@ -153,19 +153,29 @@ export default function Login() {
               <div className="hero-panel__bottom">
                 <div className="avatar-stack" aria-hidden="true">
                   {activeAgents.map((agent, index) => (
-                    <span
-                      key={agent.initials}
-                      className="avatar-stack__item"
+                    <div
+                      key={agent.src}
+                      className="avatar-stack__item relative overflow-hidden"
                       style={{
-                        background: agent.tone,
-                        marginLeft: index === 0 ? 0 : '-0.55rem',
-                        zIndex: activeAgents.length - index,
+                        marginLeft: index === 0 ? 0 : '-12px',
+                        zIndex: index + 1,
                       }}
                     >
-                      {agent.initials}
-                    </span>
+                      <Image
+                        src={agent.src}
+                        alt={agent.alt}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </div>
                   ))}
-                  <span className="avatar-stack__item avatar-stack__item--count">+2k</span>
+                  <span
+                    className="avatar-stack__item avatar-stack__item--count"
+                    style={{ zIndex: activeAgents.length + 1 }}
+                  >
+                    +2k
+                  </span>
                 </div>
 
                 <p className="hero-footnote">
@@ -247,80 +257,80 @@ export default function Login() {
               </div>
 
               <div className="portal-panel__body">
-                  <form className="sign-in-form" onSubmit={handleSignInSubmit}>
-                    <label className="sign-in-field">
-                      <span className="sign-in-field__label">Phone Number or Email</span>
-                      <span className="sign-in-field__control">
-                        <span className="sign-in-field__icon" aria-hidden="true">
-                          <UserRound size={16} strokeWidth={2.2} />
-                        </span>
-                        <input
-                          className="sign-in-field__input"
-                          type="text"
-                          placeholder="+251 911 234 567"
-                          autoComplete="username"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          required
-                        />
+                <form className="sign-in-form" onSubmit={handleSignInSubmit}>
+                  <label className="sign-in-field">
+                    <span className="sign-in-field__label">Phone Number or Email</span>
+                    <span className="sign-in-field__control">
+                      <span className="sign-in-field__icon" aria-hidden="true">
+                        <UserRound size={16} strokeWidth={2.2} />
                       </span>
+                      <input
+                        className="sign-in-field__input"
+                        type="text"
+                        placeholder="+251 911 234 567"
+                        autoComplete="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                      />
+                    </span>
+                  </label>
+
+                  <label className="sign-in-field">
+                    <span className="sign-in-field__label">Password</span>
+                    <span className="sign-in-field__control">
+                      <span className="sign-in-field__icon" aria-hidden="true">
+                        <Lock size={16} strokeWidth={2.2} />
+                      </span>
+                      <input
+                        className="sign-in-field__input"
+                        type={isPasswordVisible ? 'text' : 'password'}
+                        placeholder="•••••••"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        className="sign-in-field__toggle"
+                        type="button"
+                        aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                        onClick={() => setIsPasswordVisible((current) => !current)}
+                      >
+                        {isPasswordVisible ? (
+                          <EyeOff size={16} strokeWidth={2.2} />
+                        ) : (
+                          <Eye size={16} strokeWidth={2.2} />
+                        )}
+                      </button>
+                    </span>
+                  </label>
+
+                  <div className="mt-6 flex items-center justify-between gap-2 text-[0.84rem]">
+                    <label className="inline-flex cursor-pointer select-none items-center gap-2 text-slate-700">
+                      <input type="checkbox" />
+                      <span>Remember me</span>
                     </label>
 
-                    <label className="sign-in-field">
-                      <span className="sign-in-field__label">Password</span>
-                      <span className="sign-in-field__control">
-                        <span className="sign-in-field__icon" aria-hidden="true">
-                          <Lock size={16} strokeWidth={2.2} />
-                        </span>
-                        <input
-                          className="sign-in-field__input"
-                          type={isPasswordVisible ? 'text' : 'password'}
-                          placeholder="•••••••"
-                          autoComplete="current-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <button
-                          className="sign-in-field__toggle"
-                          type="button"
-                          aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
-                          onClick={() => setIsPasswordVisible((current) => !current)}
-                        >
-                          {isPasswordVisible ? (
-                            <EyeOff size={16} strokeWidth={2.2} />
-                          ) : (
-                            <Eye size={16} strokeWidth={2.2} />
-                          )}
-                        </button>
-                      </span>
-                    </label>
+                    <a className="font-semibold text-[#16335A] hover:underline" href="#">
+                      Having trouble?
+                    </a>
+                  </div>
 
-                    <div className="mt-6 flex items-center justify-between gap-2 text-[0.84rem]">
-                      <label className="inline-flex cursor-pointer select-none items-center gap-2 text-slate-700">
-                        <input type="checkbox" />
-                        <span>Remember me</span>
-                      </label>
-
-                      <a className="font-semibold text-[#16335A] hover:underline" href="#">
-                        Having trouble?
-                      </a>
-                    </div>
-
-                    {authError && (
-                      <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-[0.85rem] font-medium text-red-600">
-                        {authError}
-                      </p>
-                    )}
-
-                    <button className="sign-in-submit" type="submit" disabled={isLoading}>
-                      {isLoading ? 'Signing in…' : 'Sign In'}
-                    </button>
-
-                    <p className="signup-line">
-                      Need a new account? <a href="#">Register here</a>
+                  {authError && (
+                    <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-[0.85rem] font-medium text-red-600">
+                      {authError}
                     </p>
-                  </form>
+                  )}
+
+                  <button className="sign-in-submit" type="submit" disabled={isLoading}>
+                    {isLoading ? 'Signing in…' : 'Sign In'}
+                  </button>
+
+                  <p className="signup-line">
+                    Need a new account? <a href="#">Register here</a>
+                  </p>
+                </form>
               </div>
             </div>
           </div>

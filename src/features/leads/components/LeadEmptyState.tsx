@@ -9,7 +9,7 @@ interface LeadEmptyStateProps {
 function LeadEmptyState({ hasFilters, onClearFilters }: LeadEmptyStateProps) {
   return (
     <tr>
-      <td colSpan={6}>
+      <td colSpan={8}>
         <div className="flex flex-col items-center gap-4 py-16">
           <div className="relative flex h-32 w-32 items-center justify-center">
             <span className="absolute inset-0 rounded-full bg-slate-100 animate-ping opacity-30" style={{ animationDuration: '2.4s' }} />

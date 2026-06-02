@@ -2,19 +2,19 @@ import { useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 
-interface NavItem {
+export interface NavItem {
   path: string;
   activePaths?: string[];
   label: string;
   icon: any;
 }
 
-interface NavSection {
+export interface NavSection {
   title: string;
   items: NavItem[];
 }
 
-interface SidebarProps {
+export interface SidebarProps {
   isCollapsed: boolean;
   isMobileOpen?: boolean;
   sections?: NavSection[];
@@ -88,16 +88,16 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
           <img
             src="/logo.png"
             alt="OARI Logo"
-            className="h-10 w-auto object-contain hidden"
+            className="h-16 w-auto object-contain"
             id="primary-logo-img"
-            onLoad={(e) => {
-              e.currentTarget.classList.remove('hidden');
+            onError={(e) => {
+              e.currentTarget.classList.add('hidden');
               const fallback = document.getElementById('fallback-logo-graphic');
-              if (fallback) fallback.classList.add('hidden');
+              if (fallback) fallback.classList.remove('hidden');
             }}
           />
-          {/* Fallback graphic shown by default (hides if image loads) */}
-          <div id="fallback-logo-graphic" className="flex items-center justify-center">
+          {/* Fallback graphic hidden by default (shows if image fails to load) */}
+          <div id="fallback-logo-graphic" className="hidden items-center justify-center">
             <span className="text-[2.2rem] font-extrabold text-[#c4ea48] leading-none" style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '-0.08em' }}>
               oari
             </span>
@@ -111,10 +111,10 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
             isCollapsed ? 'min-[900px]:hidden' : 'flex',
           ].join(' ')}
         >
-          <span className="text-[1.05rem] font-bold text-white leading-tight tracking-tight">
+          <span className="text-[1.05rem] font-bold text-white leading-tight tracking-tight whitespace-nowrap">
             Ethiopia OpenAgriNet
           </span>
-          <span className="text-[0.85rem] text-[#e2e8f0] tracking-wide leading-tight font-medium">
+          <span className="text-[0.85rem] text-[#e2e8f0] tracking-wide leading-tight font-medium whitespace-nowrap">
             Access to Credit
           </span>
         </div>

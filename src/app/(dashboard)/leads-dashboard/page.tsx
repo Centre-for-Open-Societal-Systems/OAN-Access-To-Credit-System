@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
 
-import { PAGE_SIZE, KPI_CARDS_LAYOUT, resolveDateFilter } from '@/features/leads/constants/leads.constants';
+import { PAGE_SIZE, KPI_CARDS_LAYOUT, LEAD_STATUS_MAP, resolveDateFilter } from '@/features/leads/constants/leads.constants';
 
 import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import LeadToolbar from '@/features/leads/components/LeadToolbar';
@@ -74,24 +74,12 @@ export default function LeadsDashboard() {
 
   // Load  filtered leads data from backend
   const loadLeads = React.useCallback((page: number) => {
-    const assigned_to = activeTab === 'my' ? 'me' : activeTab === 'unassigned' ? 'unassigned' : undefined;
+    const hasCustomRange = !!(advFilters.dateFrom || advFilters.dateTo); // check if custom date range is selected
+    const activePreset = !hasCustomRange && (advFilters.quickDate || (dateFilter !== 'All Time' ? dateFilter : null));
+    const resolvedPreset = activePreset ? resolveDateFilter(activePreset) : null;
 
-    let start_date = undefined;
-    let end_date = undefined;
-
-    // 1. Process Advanced Filters Date Range
-    if (advFilters.dateFrom) start_date = advFilters.dateFrom;
-    if (advFilters.dateTo) end_date = advFilters.dateTo;
-
-
-    // 2. Resolve Quick Date / Toolbar Date Filter
-    const activeDateFilter = advFilters.quickDate || (!start_date && dateFilter !== 'All Time' ? dateFilter : null);
-
-    if (activeDateFilter) {
-      const resolved = resolveDateFilter(activeDateFilter);
-      if (resolved.start) start_date = resolved.start;
-      if (resolved.end) end_date = resolved.end;
-    }
+    const start_date = advFilters.dateFrom || resolvedPreset?.start;
+    const end_date = advFilters.dateTo || resolvedPreset?.end;
 
     // Combine Statuses
     const allStatuses = Array.from(new Set([...colStatusFilter, ...advFilters.statuses]));
@@ -108,13 +96,12 @@ export default function LeadsDashboard() {
       page_length: PAGE_SIZE,
       search_query: finalSearch,
       status: statusParam,
-      assigned_to,
       start_date,
       end_date
     }));
-  }, [dispatch, activeTab, colStatusFilter, search, advFilters, dateFilter]);
+  }, [dispatch, colStatusFilter, search, advFilters, dateFilter]);
 
-  // Auto-fetch when filters/page change (except for search typing)
+  // fetched only once during mount
   React.useEffect(() => {
     loadLeads(currentPage);
   }, [loadLeads, currentPage]);
@@ -124,33 +111,17 @@ export default function LeadsDashboard() {
     const byStatus = leadSummary?.by_status || {};
     const totalCount = leadSummary?.total ?? 0;
 
-    const statusMap: Record<string, string> = {
-      initiated: 'Initiated',
-      qualified: 'Qualified',
-      processed: 'Processed',
-      granted: 'Granted',
-      rejected: 'Not Interested',
-      dormant: 'Disqualified',
-    };
+    return KPI_CARDS_LAYOUT.map((card) => {
+      const count = card.id === 'total'
+        ? totalCount
+        : (LEAD_STATUS_MAP[card.id] || []).reduce((sum, status) => sum + (byStatus[status] || 0), 0);
 
-    return KPI_CARDS_LAYOUT
-      .map((card) => {
-        let count = 0;
-        if (card.id === 'total') {
-          count = totalCount;
-        } else if (card.id === 'initiated') {
-          // Combine 'Initiated' and 'Open' status counts under 'Active' KPI card
-          count = (byStatus['Initiated'] || 0) + (byStatus['Open'] || 0);
-        } else {
-          count = byStatus[statusMap[card.id]] || 0;
-        }
-
-        return {
-          id: card.id,
-          label: card.label,
-          display: leadSummary ? count.toLocaleString() : '—',
-        };
-      });
+      return {
+        id: card.id,
+        label: card.label,
+        display: leadSummary ? count.toLocaleString() : '—',
+      };
+    });
   }, [leadSummary]);
 
   const currentTabTotalCount = activeTab === 'my' ? tabCounts.my : activeTab === 'unassigned' ? tabCounts.unassigned : tabCounts.all;
@@ -223,14 +194,12 @@ export default function LeadsDashboard() {
           allLeadsCount={tabCounts.all}
           myLeadsCount={tabCounts.my}
           unassignedLeadsCount={tabCounts.unassigned}
-          dateFilter={dateFilter}
           onSearchSubmit={(v: string) => {
             dispatch(setSearch(v));
             setCurrentPage(1);
             // useEffect will trigger loadLeads when search changes
           }}
           onTabChange={(k: string) => { dispatch(setActiveTab(k)); setCurrentPage(1); }}
-          onDateChange={(v: string) => { dispatch(setDateFilter(v)); setCurrentPage(1); }}
           onShowAdvFilters={() => setShowAdvFilters(true)}
           onClearFilters={clearAllFilters}
         />

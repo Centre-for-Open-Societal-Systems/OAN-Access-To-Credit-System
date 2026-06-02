@@ -9,7 +9,6 @@ export interface GetLeadsParams {
   lead_source?: string;
   start_date?: string;
   end_date?: string;
-  assigned_to?: string;
 }
 
 // output for Get Leads API 

@@ -12,9 +12,7 @@ export const leadService = {
       end_date: params?.end_date || '',
     });
 
-    if (params?.assigned_to !== undefined) {
-      searchParams.append('assigned_to', params.assigned_to);
-    }
+
 
     const response = await fetch(
       `/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`

@@ -8,85 +8,55 @@ interface LeadActionCellProps {
 }
 
 function LeadActionCell({ lead, navigate }: LeadActionCellProps) {
+  const commonBtnClass = "inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#EDEFF1] bg-white px-3 py-2 text-xs font-medium text-[#3A474E] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-all hover:bg-slate-50 active:scale-95 select-none outline-none";
+
   switch (lead.actionType) {
     case 'view':
       return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col items-end gap-1">
           <button
             type="button"
             onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-50 active:scale-95"
+            className={`${commonBtnClass} w-[128px] h-[40px]`}
           >
-            <Eye size={14} />
-            View
+            <Eye size={12} className="text-[#3A474E]" />
+            <span>View</span>
           </button>
           {lead.actionNote && (
-            <p className="max-w-[200px] text-xs leading-snug text-text-muted">{lead.actionNote}</p>
+            <p className="max-w-[128px] text-[10px] leading-snug text-text-muted text-right">{lead.actionNote}</p>
           )}
         </div>
       );
 
-    case 'schedule-visit':
-      return (
-        <div className="flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}/schedule`)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-blue-500 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50 active:scale-95"
-          >
-            <CalendarPlus size={14} />
-            Schedule Visit
-          </button>
-          {lead.visitDate && (
-            <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-              <Calendar size={12} />
-              {lead.visitDate}
-            </span>
-          )}
-        </div>
-      );
+
 
     case 'visit-scheduled':
       return (
-        <div className="flex flex-col gap-1.5">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-blue-500 bg-white px-3 py-1.5 text-sm font-medium text-blue-700">
-            <CalendarCheck size={14} />
-            Visit Scheduled
+        <div className="flex flex-col items-end gap-1">
+          <span className={`${commonBtnClass} w-[111.71px] h-[40px] cursor-default`}>
+            <CalendarCheck size={12} className="text-[#3A474E]" />
+            <span>Visit Scheduled</span>
           </span>
           {lead.visitDate && (
-            <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-              <Calendar size={12} />
-              {lead.visitDate}
+            <span className="inline-flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+              <Calendar size={10} className="text-text-muted" />
+              <span className="text-[10px] font-normal text-text-muted text-right">{lead.visitDate}</span>
             </span>
           )}
         </div>
       );
 
-    case 'application-processing':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500 bg-white px-3 py-1.5 text-sm font-medium text-amber-700">
-          <Settings size={14} className="text-amber-500" />
-          Application Processing
-        </span>
-      );
 
-    case 'application-submitted':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700">
-          <CheckCircle size={14} className="text-emerald-500" />
-          Application Submitted
-        </span>
-      );
 
     case 'rejected':
       return (
-        <div className="flex flex-col gap-1.5">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-red-400 bg-white px-3 py-1.5 text-sm font-medium text-red-600">
-            <XCircle size={14} />
-            Rejected
+        <div className="flex flex-col items-end gap-1">
+          <span className={`${commonBtnClass} w-[128px] h-[40px] cursor-default`}>
+            <XCircle size={12} className="text-[#3A474E]" />
+            <span>Rejected</span>
           </span>
           {lead.actionNote && (
-            <p className="max-w-[200px] text-xs leading-snug text-text-muted">{lead.actionNote}</p>
+            <p className="max-w-[128px] text-[10px] leading-snug text-text-muted text-right">{lead.actionNote}</p>
           )}
         </div>
       );
@@ -96,10 +66,10 @@ function LeadActionCell({ lead, navigate }: LeadActionCellProps) {
         <button
           type="button"
           onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+          className={`${commonBtnClass} w-[128px] h-[40px]`}
         >
-          <Eye size={14} />
-          View
+          <Eye size={12} className="text-[#3A474E]" />
+          <span>View</span>
         </button>
       );
   }

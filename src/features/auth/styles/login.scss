@@ -4,6 +4,8 @@
   @apply relative flex min-h-screen flex-col items-center;
   background: linear-gradient(0deg, #F9FAFB, #F9FAFB), #FFFFFF;
   font-family: 'Roboto', sans-serif;
+  --button-bg: #16A34A;
+  --button-bg-hover: #15803D;
 }
 
 .header-shell {
@@ -29,7 +31,8 @@
   font-family: 'Space Grotesk', sans-serif;
   font-size: 38px;
   font-weight: 700;
-  color: #b4d330; /* Approximate lime green from screenshot */
+  color: #b4d330;
+  /* Approximate lime green from screenshot */
   letter-spacing: -2px;
   line-height: 1;
 }
@@ -261,9 +264,20 @@
 }
 
 @keyframes portal-scene-pop {
-  0% { opacity: 0; transform: translateY(0.65rem) scale(0.99); }
-  70% { opacity: 1; transform: translateY(-0.08rem) scale(1.005); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(0.65rem) scale(0.99);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-0.08rem) scale(1.005);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .sign-in-form {
@@ -302,7 +316,8 @@
 
 .sign-in-field__input[type='password'],
 .sign-in-field__input[type='text'] {
-  padding-right: 40px; /* Space for the toggle icon */
+  padding-right: 40px;
+  /* Space for the toggle icon */
 }
 
 .sign-in-field__toggle {
@@ -337,17 +352,47 @@
 }
 
 @media (max-width: 1023px) {
-  .card-shell { @apply flex-col h-auto max-w-2xl w-full mx-auto min-h-0; }
-  .hero-panel { @apply w-full p-8; min-height: auto; }
-  .portal-panel { @apply w-full p-8; }
+  .card-shell {
+    @apply flex-col h-auto max-w-2xl w-full mx-auto min-h-0;
+  }
+
+  .hero-panel {
+    @apply w-full p-8;
+    min-height: auto;
+  }
+
+  .portal-panel {
+    @apply w-full p-8;
+  }
 }
 
 @media (max-width: 640px) {
-  .header-bar { @apply flex-col items-start gap-3 h-auto py-4; }
-  .header-actions { @apply w-full justify-between; }
-  .header-tab { @apply min-w-0 flex-1 px-3 py-2 text-[0.75rem]; }
-  .hero-panel, .portal-panel { @apply p-6; }
-  .hero-panel__bottom { @apply mt-8 flex-col items-start; }
-  .portal-panel__locale-row { @apply justify-end; }
-  .portal-panel__locale-menu { @apply w-[9rem]; }
+  .header-bar {
+    @apply flex-col items-start gap-3 h-auto py-4;
+  }
+
+  .header-actions {
+    @apply w-full justify-between;
+  }
+
+  .header-tab {
+    @apply min-w-0 flex-1 px-3 py-2 text-[0.75rem];
+  }
+
+  .hero-panel,
+  .portal-panel {
+    @apply p-6;
+  }
+
+  .hero-panel__bottom {
+    @apply mt-8 flex-col items-start;
+  }
+
+  .portal-panel__locale-row {
+    @apply justify-end;
+  }
+
+  .portal-panel__locale-menu {
+    @apply w-[9rem];
+  }
 }

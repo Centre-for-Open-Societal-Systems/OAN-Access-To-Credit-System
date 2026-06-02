@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { DateSelect } from './LeadColFilterPopup';
-import { DATE_OPTS } from '../constants/leads.constants';
 
 interface LeadToolbarProps {
   search: string;
@@ -9,9 +7,7 @@ interface LeadToolbarProps {
   allLeadsCount: number;
   myLeadsCount: number;
   unassignedLeadsCount: number;
-  dateFilter: string;
   onTabChange: (tab: string) => void;
-  onDateChange: (date: string) => void;
   onShowAdvFilters: () => void;
   onClearFilters: () => void;
   onSearchSubmit: (search: string) => void;
@@ -23,9 +19,7 @@ function LeadToolbar({
   allLeadsCount,
   myLeadsCount,
   unassignedLeadsCount,
-  dateFilter,
   onTabChange,
-  onDateChange,
   onShowAdvFilters,
   onClearFilters,
   onSearchSubmit,
@@ -88,35 +82,41 @@ function LeadToolbar({
       </div>
 
       {/* tabs + date filter row */}
-      <div className="flex items-center justify-between border-b border-border-subtle px-5">
-        <div className="flex items-center gap-6">
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onTabChange(t.key)}
-              className={`flex items-center gap-2 border-b-2 py-4 text-base font-medium transition ${
-                activeTab === t.key
-                  ? 'border-green-600 text-green-600'
-                  : 'border-transparent text-text-muted hover:text-text-primary'
-              }`}
-            >
-              {t.label}
-              <span className={`rounded-full px-2 py-0.5 text-sm font-semibold ${
-                activeTab === t.key ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-text-muted'
-              }`}>
-                {t.count}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1 py-3">
-          <span className="text-base font-medium text-text-muted">Date&nbsp;</span>
-          <DateSelect
-            value={dateFilter}
-            options={DATE_OPTS}
-            onChange={onDateChange}
-          />
+      <div className="flex items-center justify-between border-b border-[#F1F3F4] bg-white px-2 h-[53px]">
+        <div className="flex items-center h-full overflow-x-auto pb-0 [&::-webkit-scrollbar]:hidden">
+          {tabs.map(t => {
+            const isActive = activeTab === t.key;
+            const formattedCount = t.count >= 1000
+              ? (t.count / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+              : t.count.toString();
+
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => onTabChange(t.key)}
+                className={`relative flex items-center gap-2 px-5 h-[44px] text-sm font-medium transition select-none outline-none ${
+                  isActive ? 'text-[#1E6865]' : 'text-[#C1C7D0] hover:text-[#9CA3AF]'
+                }`}
+              >
+                <span className="font-semibold">{t.label}</span>
+                <span
+                  className={`flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold h-[20px] transition ${
+                    isActive ? 'bg-[#F0FDFA] text-[#1E6865]' : 'bg-[#F1F3F4] text-[#9CA3AF]'
+                  }`}
+                >
+                  {formattedCount}
+                </span>
+                
+                {/* Active Underline Gradient */}
+                <div
+                  className={`absolute left-0 right-0 bottom-0 h-[3px] rounded-[3px] bg-gradient-to-r from-[rgba(20,184,166,0.2)] via-[rgba(20,184,166,0.8)] to-[rgba(20,184,166,0.2)] transition-opacity duration-300 ${
+                    isActive ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

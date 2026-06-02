@@ -4,25 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ListChecks, Users, type LucideIcon } from 'lucide-react';
-import Sidebar from '@/components/Sidebar';
+import Sidebar, { NavSection } from '@/components/Sidebar';
 import TopHeader from '@/components/TopHeader';
 import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
 
 import '@/styles/main-layout.scss';
 
-interface NavigationItem {
-  path: string;
-  label: string;
-  icon: LucideIcon;
-  activePaths?: string[];
-}
-
-interface NavigationSection {
-  title: string;
-  items: NavigationItem[];
-}
-
-const navigationSections: NavigationSection[] = [
+const navigationSections: NavSection[] = [
   {
     title: 'DASHBOARDS',
     items: [

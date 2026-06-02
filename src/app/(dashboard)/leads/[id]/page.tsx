@@ -1,3 +1,4 @@
+
 export default function LeadDetails() {
-  return null;
+  return <div>Lead Details</div>;
 }
