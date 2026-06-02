@@ -34,12 +34,12 @@ export const leadService = {
       phone: item.phone_number || '',
       status: item.status || 'New',
       location: item.location || 'Unknown',
-      cropFocus: item.crop_focus || 'Unknown',
-      farmSize: item.farm_size || 'Unknown',
+      loanType: item.loan_type || '',
+      loanAmount: item.loan_amount || '',
       source: item.lead_source || 'Unknown',
       assignedTo: item.assigned_to,
       owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
-      callStartTime: item.creation,
+      creation: item.creation || '',
       external_id: item.external_id,
     }));
 
