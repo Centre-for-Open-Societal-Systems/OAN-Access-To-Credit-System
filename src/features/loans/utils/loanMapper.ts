@@ -1,0 +1,93 @@
+export function mapLoanRowToFormFields(row: any): Record<string, any> {
+  const formFields: Record<string, any> = {
+    // Step 1: Loan Details
+    loanType: row.loan_type || row.type || '',
+    loanPurpose: row.purpose_of_loan || '',
+    requestedAmount: row.requested_loan_amount || row.requested_amount || row.amount || '',
+    loanDuration: row.loan_duration_months || row.loan_duration || '',
+    nearestBranch: row.nearest_branch_responsible_for_loan_administration || row.nearest_branch || '',
+    primaryCrops: row.primary_crop ? [row.primary_crop] : [],
+    cropVariety: row.crop_variety || '',
+    cropAddress: row.crop_address || '',
+    quantityRequested: row.quantity_requested || '',
+    unitPrice: row.unit_price || '',
+    totalSeedCost: row.total_seed_cost || '',
+    landSize: row.land_size || '',
+    expectedYield: row.expected_yield || '',
+    expectedHarvestDate: row.expected_harvest_date || '',
+    fertilizerUsed: row.fertilizer_used || '',
+    otherFarmingActivities: row.other_farming_activities || '',
+    farmerGroup: row.farmer_group || '',
+    animalReared: row.animal_reared || '',
+    farmEquipment: row.farm_equipment || '',
+    farmSizeHectares: row.farm_size_hectares || '',
+    region: row.region || '',
+    zone: row.zone || '',
+    woreda: row.woreda || '',
+    kebele: row.kebele || '',
+    harvestAggregatorType: row.harvest_aggregator_type || '',
+    cooperativeName: row.cooperative_name || '',
+    dapQuantity: row.dap_quantity || '',
+    ureaQuantity: row.urea_quantity || '',
+    fertilizerUnitPrice: row.fertilizer_unit_price || '',
+    totalFertilizerCost: row.total_fertilizer_cost || '',
+    agrochemicalType: row.agrochemical_type || '',
+    cropProtectionQuantity: row.crop_protection_quantity || '',
+    cropProtectionUnitPrice: row.crop_protection_unit_price || '',
+    totalCropProtectionCost: row.total_crop_protection_cost || '',
+    selectedInputSupplier: row.selected_input_supplier || '',
+    maleFarmerContribution: row.male_farmer_contribution || '',
+    femaleFarmerContribution: row.female_farmer_contribution || '',
+    cropInsurancePremium: row.crop_insurance_premium || '',
+
+    // Step 2: Bank Details
+    bankAccountName: row.bank_account_name || '',
+    bankAccount: row.bank_account_number || '',
+    bankName: row.bank_name || '',
+    bankSwiftCode: row.bank_swift_code || '',
+    mobileAccountName: row.mobile_account_name || '',
+    mobilePaymentsNumber: row.mobile_payments_number || '',
+    totalBorrowingAmount: row.total_amount_borrowing || '',
+    taxId: row.tax_id || '',
+
+    // Step 5: Farmer Details
+    fullName: row.full_name || row.applicant || '',
+    lastName: row.last_name || '',
+    mobilePhone: row.mobile_phone || '',
+    dateOfBirth: row.date_of_birth || '',
+    gender: row.gender || '',
+    idType: row.id_type || '',
+    idNumber: row.id_number || '',
+    language: row.language || '',
+    landSizeAcres: row.land_size_acres || '',
+    farmId: row.farm_id || '',
+    farmPolygon: row.farm_polygon || '',
+    landAcreage: row.land_acreage || '',
+    farmLandNumber: row.farm_land_number || '',
+    maritalStatus: row.marital_status || '',
+    sizeOfFamily: row.size_of_family || '',
+    numberOfChildren: row.number_of_children || '',
+    noOfFemalesFamily: row.no_of_females_family || '',
+    noOfMalesFamily: row.no_of_males_family || '',
+    familyMemberOwnsLand: row.family_member_owns_land || '',
+    sourceOfIncome: row.source_of_income || '',
+    educationLevel: row.education_level || '',
+    totalFarmlandLandowner: row.total_farmland_landowner || '',
+    totalFarmlandCropSharing: row.total_farmland_crop_sharing || '',
+    totalFarmlandRented: row.total_farmland_rented || '',
+    certificationId: row.certification_id || '',
+    certificationPhoto: row.certification_photo || '',
+    farmlandSizeHectares: row.farmland_size_hectares || '',
+    landOwnershipStatus: row.land_ownership_status || '',
+    soilFertility: row.soil_fertility || '',
+    moistureLevels: row.moisture_levels || '',
+  };
+
+  Object.entries(row).forEach(([key, val]) => {
+    if (val !== undefined && val !== null) {
+      formFields[key] = val;
+    }
+  });
+
+  return formFields;
+}

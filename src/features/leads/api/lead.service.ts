@@ -1,0 +1,68 @@
+import type { Lead, GetLeadsParams, GetLeadsResponse, LeadSummaryResponse } from '@/features/leads/types/leads.types';
+
+export const leadService = {
+  async getLeads(params?: GetLeadsParams): Promise<GetLeadsResponse> {
+    const searchParams = new URLSearchParams({
+      start: params?.start?.toString() || '0',
+      page_length: params?.page_length?.toString() || '20',
+      search_query: params?.search_query || '',
+      status: params?.status || '',
+      lead_source: params?.lead_source || '',
+      start_date: params?.start_date || '',
+      end_date: params?.end_date || '',
+    });
+
+
+
+    const response = await fetch(
+      `/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`
+    );
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('UNAUTHORIZED');
+      }
+      throw new Error('Failed to fetch leads');
+    }
+    const data = await response.json();
+    
+    const rawLeads = data.message?.results || [];
+    const totalCount = data.message?.total_count || 0;
+
+    const results = rawLeads.map((item: any): Lead => ({
+      id: item.name,
+      name: item.name,
+      phone: item.phone_number || '',
+      status: item.status || 'New',
+      location: item.location || 'Unknown',
+      cropFocus: item.crop_focus || 'Unknown',
+      farmSize: item.farm_size || 'Unknown',
+      source: item.lead_source || 'Unknown',
+      assignedTo: item.assigned_to,
+      owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
+      callStartTime: item.creation,
+      external_id: item.external_id,
+    }));
+
+    return { results, totalCount };
+  },
+
+  async getLeadSummary(): Promise<LeadSummaryResponse> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_summary');
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('UNAUTHORIZED');
+      }
+      throw new Error('Failed to fetch lead summary');
+    }
+    const data = await response.json();
+    return data.message;
+  },
+
+  async getLead(id: string): Promise<Lead> {
+    const response = await fetch(`/api/leads/${id}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch lead');
+    }
+    return response.json();
+  },
+};
