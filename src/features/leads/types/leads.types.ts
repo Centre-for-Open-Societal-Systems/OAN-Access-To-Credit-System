@@ -24,12 +24,12 @@ export interface Lead {
   phone: string;
   status: 'New' | 'Attempted' | 'Connected' | 'Follow Up' | 'Application Started' | 'Application Submitted' | 'Not Interested' | 'Invalid' | string;
   location: string;
-  cropFocus: string;
-  farmSize: string;
+  loanType: string;
+  loanAmount: string;
   source: string;
   assignedTo?: string;
   owner?: 'me' | 'unassigned' | 'other' | string;
-  callStartTime?: string;
+  creation: string;
   [key: string]: any;
 }
 // small trend under summary in Leads

@@ -6,17 +6,27 @@ import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
 import { Lead } from '@/features/leads/types/leads.types';
 
-const TABLE_COLS = [
-  'LEAD ID',
-  'PHONE NUMBER',
-  'STATUS',
-  'LOAN TYPE',
-  'LOAN AMOUNT',
-  'STATUS CHANGE DATE',
-  'ACTIONS'
-] as const;
+type Align = 'center';
 
-const FILTERABLE = ['STATUS', 'LOAN TYPE'] as const;
+interface ColumnDef {
+  id: string;
+  label: string;
+  align: Align;
+  isFilterable?: boolean;
+  isSortable?: boolean;
+}
+
+const TABLE_COLS: ColumnDef[] = [
+  { id: 'LEAD ID', label: 'LEAD ID', align: 'center' },
+  { id: 'PHONE NUMBER', label: 'PHONE NUMBER', align: 'center' },
+  { id: 'STATUS', label: 'STATUS', align: 'center', isFilterable: true },
+  { id: 'LOAN TYPE', label: 'LOAN TYPE', align: 'center', isFilterable: true },
+  { id: 'LOAN AMOUNT', label: 'LOAN AMOUNT', align: 'center', isSortable: true },
+  { id: 'STATUS CHANGE DATE', label: 'STATUS CHANGE DATE', align: 'center' },
+  { id: 'ACTIONS', label: 'ACTIONS', align: 'center' }
+];
+
+const CELL_CLASS = "w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle";
 
 interface LeadTableProps {
   visible: Lead[];
@@ -96,6 +106,69 @@ function LeadTable({
     'LOAN TYPE': { value: colCallTimeFilter, onApply: onApplyCallTimeFilter },
   };
 
+  const getCellClassName = (align: Align, isHeader = false) => {
+    const alignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left';
+    const typoClass = isHeader ? '' : 'font-sans font-medium text-[14px] leading-[20px] text-[#232F34]';
+    return `${CELL_CLASS} ${alignClass} ${typoClass}`.trim();
+  };
+
+  const renderCellContent = (colId: string, l: Lead) => {
+    switch (colId) {
+      case 'LEAD ID':
+        return (
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-[#00A63E] hover:underline">
+              {l.id}
+            </span>
+            {l.location && (
+              <span className="font-normal text-[12px] leading-[16px] text-[#6B7280]">
+                {l.location}
+              </span>
+            )}
+          </div>
+        );
+      case 'PHONE NUMBER':
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <Phone size={12} className="text-[#6B7280] shrink-0" />
+            <span className="whitespace-nowrap">
+              {l.phone}
+            </span>
+          </div>
+        );
+      case 'STATUS':
+        return (
+          <div className="flex justify-center w-full">
+            <LeadStatusBadge status={l.status} />
+          </div>
+        );
+      case 'LOAN TYPE':
+        return <>{l.loanType}</>;
+      case 'LOAN AMOUNT':
+        return (
+          <span className="tracking-[-0.150391px]">
+            {!!l.loanAmount ? formatCurrency(l.loanAmount) : ''}
+          </span>
+        );
+      case 'STATUS CHANGE DATE':
+        return (
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="font-normal text-[#3A474E]">
+              {formatStatusDate(l.creation)}
+            </span>
+          </div>
+        );
+      case 'ACTIONS':
+        return (
+          <div className="flex justify-center w-full">
+            <LeadActionCell lead={l} navigate={navigate} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="overflow-x-auto w-full [&::-webkit-scrollbar]:hidden">
       <table className="w-full min-w-[1118px] table-fixed border-collapse">
@@ -112,47 +185,39 @@ function LeadTable({
               </div>
             </th>
             {TABLE_COLS.map(col => {
-              const hasFilter = FILTERABLE.includes(col as any);
-              const isActive = hasFilter && ((colFilterCfg[col]?.value?.length ?? 0) > 0);
-              const isAmount = col === 'LOAN AMOUNT';
-              const isActions = col === 'ACTIONS';
+              const isActive = col.isFilterable && ((colFilterCfg[col.id]?.value?.length ?? 0) > 0);
 
               return (
-                <th
-                  key={col}
-                  className={`w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle ${isActions ? 'text-center' : 'text-left'
-                    }`}
-                >
-                  <div className={`flex items-center gap-1.5 whitespace-nowrap ${isActions ? 'justify-center' : 'justify-start'}`}>
+                <th key={col.id} className={getCellClassName(col.align, true)}>
+                  <div className={`flex items-center gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
                     <span className="font-sans font-medium text-[12px] uppercase tracking-[0.6px] text-[#6B7280]">
-                      {col}
+                      {col.label}
                     </span>
 
-                    {hasFilter && (
+                    {col.isFilterable && (
                       <div className="relative inline-flex items-center">
                         <button
-                          ref={el => { anchorRefs.current[col] = { current: el }; }}
+                          ref={el => { anchorRefs.current[col.id] = { current: el }; }}
                           type="button"
-                          onClick={() => onSetOpenColFilter(prev => prev === col ? null : col)}
-                          className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'
-                            }`}
+                          onClick={() => onSetOpenColFilter(prev => prev === col.id ? null : col.id)}
+                          className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col.id || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
                         >
                           <Filter size={12} strokeWidth={2.5} />
                         </button>
                         {isActive && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1E6865]" />}
-                        {openColFilter === col && (
+                        {openColFilter === col.id && (
                           <LeadColFilterPopup
-                            col={col}
-                            anchorRef={{ current: anchorRefs.current[col]?.current ?? null }}
-                            initialSelected={colFilterCfg[col]?.value ?? []}
-                            onApply={colFilterCfg[col]?.onApply ?? (() => { })}
+                            col={col.id}
+                            anchorRef={{ current: anchorRefs.current[col.id]?.current ?? null }}
+                            initialSelected={colFilterCfg[col.id]?.value ?? []}
+                            onApply={colFilterCfg[col.id]?.onApply ?? (() => { })}
                             onClose={() => onSetOpenColFilter(null)}
                           />
                         )}
                       </div>
                     )}
 
-                    {isAmount && (
+                    {col.isSortable && (
                       <span className="inline-flex cursor-pointer text-[#AEB4BA] hover:text-[#3A474E] text-[10px] select-none">
                         ⇅
                       </span>
@@ -170,9 +235,9 @@ function LeadTable({
                 <td className="w-[56px] p-0 text-center align-middle">
                   <div className="h-[13px] w-[13px] rounded-[2.5px] bg-slate-200 mx-auto" />
                 </td>
-                {Array.from({ length: 7 }).map((_, idx) => (
-                  <td key={idx} className="w-[151.71px] px-5 py-3">
-                    <div className="h-4 w-20 rounded bg-slate-200" />
+                {TABLE_COLS.map((col) => (
+                  <td key={col.id} className={getCellClassName(col.align)}>
+                    <div className={`h-4 rounded bg-slate-200 ${col.id === 'LEAD ID' || col.id === 'STATUS CHANGE DATE' ? 'w-24' : 'w-20'} ${col.align === 'center' ? 'mx-auto' : col.align === 'right' ? 'ml-auto' : ''}`} />
                   </td>
                 ))}
               </tr>
@@ -180,7 +245,6 @@ function LeadTable({
           ) : visible.length > 0 ? (
             visible.map(l => {
               const key = l.id + l.phone;
-              const hasLoanAmount = !!(l.loanAmount || l.loan_amount);
 
               // Custom Background for Visit Scheduled row status
               const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
@@ -205,62 +269,15 @@ function LeadTable({
                     </div>
                   </td>
 
-                  {/* LEAD ID */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <div className="flex flex-col items-start justify-center h-full">
-                      <span className="font-sans font-medium text-[14px] leading-[20px] text-[#00A63E] hover:underline">
-                        {l.id}
-                      </span>
-                      {l.location && (
-                        <span className="font-sans font-normal text-[12px] leading-[16px] text-[#6B7280]">
-                          {l.location}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* PHONE NUMBER */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <div className="flex items-center gap-2">
-                      <Phone size={12} className="text-[#6B7280] shrink-0" />
-                      <span className="font-sans font-medium text-[14px] leading-[20px] text-[#232F34] whitespace-nowrap">
-                        {l.phone}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* STATUS */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <LeadStatusBadge status={l.status} />
-                  </td>
-
-                  {/* LOAN TYPE */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <span className="font-sans font-medium text-[14px] leading-[20px] text-[#232F34]">
-                      {l.loanType || l.loan_type || ''}
-                    </span>
-                  </td>
-
-                  {/* LOAN AMOUNT */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <span className="font-sans font-medium text-[14px] leading-[20px] tracking-[-0.150391px] text-[#232F34]">
-                      {hasLoanAmount ? formatCurrency(l.loanAmount || l.loan_amount) : ''}
-                    </span>
-                  </td>
-
-                  {/* STATUS CHANGE DATE */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle">
-                    <div className="flex flex-col items-start justify-center h-full">
-                      <span className="font-sans font-normal text-[14px] leading-[20px] text-[#3A474E]">
-                        {formatStatusDate(l.callStartTime || l.modified)}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* ACTIONS */}
-                  <td className="w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle text-right" onClick={e => e.stopPropagation()}>
-                    <LeadActionCell lead={l} navigate={navigate} />
-                  </td>
+                  {TABLE_COLS.map((col) => (
+                    <td
+                      key={col.id}
+                      className={getCellClassName(col.align)}
+                      onClick={col.id === 'ACTIONS' ? (e) => e.stopPropagation() : undefined}
+                    >
+                      {renderCellContent(col.id, l)}
+                    </td>
+                  ))}
                 </tr>
               );
             })

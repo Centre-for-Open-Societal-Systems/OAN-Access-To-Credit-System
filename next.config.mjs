@@ -3,6 +3,10 @@ const nextConfig = {
   reactStrictMode: true,
   sassOptions: {
     includePaths: ['./src/assets/styles'],
+    silenceDeprecations: ['import'],
+  },
+  turbopack: {
+    root: process.cwd(),
   },
   async rewrites() {
     return {

@@ -33,22 +33,27 @@ graph TD
 ```
 
 ## Technology Stack
-- Core: Next.js 14, React 18
-- Language: TypeScript (Strict Mode)
+- Core: Next.js 16, React 19
+- Language: TypeScript 6 (Strict Mode)
 - State Management: Redux Toolkit, TanStack Query
 - Styling: Tailwind CSS, class-variance-authority, clsx
 - Mocking: Mock Service Worker (MSW)
 
 ## Setup and Development
 
-Requires Node.js and a package manager (pnpm recommended).
+Requires Node.js and a package manager (npm or pnpm recommended).
 
-Install dependencies:
+1. Environment Configuration:
+```bash
+cp .env.example .env.local
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-Start the development environment:
+3. Start the development environment:
 ```bash
 npm run dev
 ```
