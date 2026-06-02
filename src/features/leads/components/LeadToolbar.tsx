@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { DateSelect } from './LeadColFilterPopup';
 import { DATE_OPTS } from '../constants/leads.constants';
 
@@ -44,47 +44,47 @@ function LeadToolbar({
   return (
     <>
       {/* search row */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-5 py-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-[#f4f4f4] px-4 py-2.5">
-          <Search size={18} className="shrink-0 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search by Lead ID or Phone Number..."
-            value={localSearch}
-            onChange={e => setLocalSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && onSearchSubmit(localSearch)}
-            className="min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted focus:outline-none"
-          />
+      <div className="relative flex flex-wrap items-center justify-between border-b border-[#F1F3F4] bg-white px-5 py-4 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-t-2xl">
+        {/* Left side: Search input + Search button */}
+        <div className="flex items-center gap-3 w-full max-w-lg">
+          <div className="relative flex flex-1 items-center rounded-lg border border-[#EDEFF1] bg-[#F6F8FA] px-3 py-2.5">
+            <Search size={16} className="absolute left-3 text-[#9CA3AF]" />
+            <input
+              type="text"
+              placeholder="Search by Lead ID or Phone Number..."
+              value={localSearch}
+              onChange={e => setLocalSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && onSearchSubmit(localSearch)}
+              className="w-full bg-transparent pl-7 text-sm text-[#232F34] placeholder-[#9CA3AF] focus:outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => onSearchSubmit(localSearch)}
+            className="flex items-center justify-center rounded-lg bg-[#232F34] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1C262A] active:scale-95 h-[42px]"
+          >
+            Search
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => onSearchSubmit(localSearch)}
-          className="rounded-xl bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95"
-        >
-          Search
-        </button>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#16A34A] bg-[#EDFAF2] px-4 py-2 text-sm font-semibold text-[#16A34A] transition hover:bg-[#d6f5e5]"
-        >
-          <ChevronDown size={14} strokeWidth={2.5} />
-          All Active (12k)
-        </button>
-        <button
-          type="button"
-          onClick={onShowAdvFilters}
-          className="inline-flex items-center gap-2 rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-medium text-text-muted transition hover:bg-slate-50"
-        >
-          <SlidersHorizontal size={16} />
-          Advanced Filters
-        </button>
-        <button
-          type="button"
-          onClick={onClearFilters}
-          className="text-sm font-semibold text-[#16A34A] transition hover:text-[#10883c]"
-        >
-          Clear Filters
-        </button>
+
+        {/* Right side: Advanced Filters + Clear Filters */}
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onShowAdvFilters}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#EDEFF1] bg-white px-4 py-2.5 text-sm font-medium text-[#6B7280] transition hover:bg-slate-50 active:scale-95 h-[42px]"
+          >
+            <SlidersHorizontal size={14} className="text-[#6B7280]" />
+            Advanced Filters
+          </button>
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="text-sm font-semibold text-[#0D9488] transition hover:text-[#0b7e74] active:scale-95"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
 
       {/* tabs + date filter row */}
