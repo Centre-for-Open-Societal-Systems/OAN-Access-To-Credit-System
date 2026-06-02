@@ -53,14 +53,27 @@ export default function LeadsDashboard() {
   const [showAdvFilters, setShowAdvFilters] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
+  const [tabCounts, setTabCounts] = useState({ all: 0, my: 0, unassigned: 0 });
+
+  React.useEffect(() => {
+    // Calculate counts dynamically from allLeads since the backend doesn't filter by assigned_to
+    const myCount = allLeads.filter(l => l.assignedTo === 'me').length;
+    const unassignedCount = allLeads.filter(l => !l.assignedTo).length;
+
+    setTabCounts({
+      all: totalCount,
+      my: myCount,
+      unassigned: unassignedCount
+    });
+  }, [allLeads, totalCount]);
 
   // Initial Summary Fetch
   React.useEffect(() => {
     dispatch(fetchLeadSummary());
   }, [dispatch]);
 
-  // Load leads from backend
-  const loadLeads = React.useCallback((page: number, currentSearch?: string) => {
+  // Load  filtered leads data from backend
+  const loadLeads = React.useCallback((page: number) => {
     const assigned_to = activeTab === 'my' ? 'me' : activeTab === 'unassigned' ? 'unassigned' : undefined;
 
     let start_date = undefined;
@@ -85,7 +98,7 @@ export default function LeadsDashboard() {
     const statusParam = allStatuses.length > 0 ? allStatuses.join(',') : undefined;
 
     // Combine Search
-    let finalSearch = currentSearch ?? search;
+    let finalSearch = search;
     if (advFilters.phoneNumber.trim()) {
       finalSearch = finalSearch ? `${finalSearch} ${advFilters.phoneNumber.trim()}` : advFilters.phoneNumber.trim();
     }
@@ -115,15 +128,22 @@ export default function LeadsDashboard() {
       initiated: 'Initiated',
       qualified: 'Qualified',
       processed: 'Processed',
+      granted: 'Granted',
       rejected: 'Not Interested',
+      dormant: 'Disqualified',
     };
 
     return KPI_CARDS_LAYOUT
-      .filter((card) => card.id !== 'disqualified')
       .map((card) => {
-        const count = card.id === 'total'
-          ? totalCount
-          : (byStatus[statusMap[card.id]] || 0);
+        let count = 0;
+        if (card.id === 'total') {
+          count = totalCount;
+        } else if (card.id === 'initiated') {
+          // Combine 'Initiated' and 'Open' status counts under 'Active' KPI card
+          count = (byStatus['Initiated'] || 0) + (byStatus['Open'] || 0);
+        } else {
+          count = byStatus[statusMap[card.id]] || 0;
+        }
 
         return {
           id: card.id,
@@ -133,10 +153,18 @@ export default function LeadsDashboard() {
       });
   }, [leadSummary]);
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentTabTotalCount = activeTab === 'my' ? tabCounts.my : activeTab === 'unassigned' ? tabCounts.unassigned : tabCounts.all;
+  const totalPages = Math.max(1, Math.ceil(currentTabTotalCount / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
-  // Backend provides exactly `PAGE_SIZE` leads for current page
-  const visible = allLeads;
+
+  // Filter leads locally for the active tab since backend does not apply assigned_to parameter
+  const visible = useMemo(() => {
+    return allLeads.filter((lead: any) => {
+      if (activeTab === 'my') return lead.assignedTo === 'me' || lead.owner === 'me';
+      if (activeTab === 'unassigned') return !lead.assignedTo || lead.owner === 'unassigned';
+      return true;
+    });
+  }, [allLeads, activeTab]);
 
   const pageNums = useMemo(() => {
     if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -180,17 +208,21 @@ export default function LeadsDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        {liveKpiStats.map((s: any, i: number) => <LeadKpiCard key={s.id} stat={s} index={i} />)}
+      <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {liveKpiStats.map((s: any, i: number) => (
+          <div key={s.id} className="min-w-[240px] shrink-0">
+            <LeadKpiCard stat={s} index={i} />
+          </div>
+        ))}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <LeadToolbar
           search={search}
           activeTab={activeTab}
-          allLeadsCount={activeTab === 'all' ? totalCount : 0}
-          myLeadsCount={activeTab === 'my' ? totalCount : 0}
-          unassignedLeadsCount={activeTab === 'unassigned' ? totalCount : 0}
+          allLeadsCount={tabCounts.all}
+          myLeadsCount={tabCounts.my}
+          unassignedLeadsCount={tabCounts.unassigned}
           dateFilter={dateFilter}
           onSearchSubmit={(v: string) => {
             dispatch(setSearch(v));
@@ -221,7 +253,7 @@ export default function LeadsDashboard() {
         />
         <LeadPagination
           visibleCount={visible.length}
-          filteredCount={totalCount}
+          filteredCount={currentTabTotalCount}
           safePage={safePage}
           totalPages={totalPages}
           pageNums={pageNums}

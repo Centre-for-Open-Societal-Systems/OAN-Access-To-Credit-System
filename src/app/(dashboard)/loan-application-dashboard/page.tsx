@@ -3,7 +3,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useRouter } from 'next/navigation';
-import { setFormData, setStep, setApplicationId, resetForm } from '@/features/loans/store/newLoanFormSlice';
+import { setFormData, setStep, setApplicationId, resetForm } from '@/features/new-loan/store/newLoanFormSlice';
 import { fetchLoans, fetchLoanSummary, selectQueryParams } from '@/features/loans/store/loanDashboardSlice';
 
 import LoanKpiCard from '@/features/loans/components/LoanKpiCard';

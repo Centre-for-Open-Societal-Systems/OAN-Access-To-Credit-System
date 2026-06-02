@@ -1,7 +1,7 @@
 import { configureStore, Middleware, isRejectedWithValue } from '@reduxjs/toolkit';
 import authReducer, { logout } from '../features/auth/store/authSlice';
 import leadReducer from '../features/leads/store/leadSlice';
-import loanFormReducer from '../features/loans/store/newLoanFormSlice';
+import loanFormReducer from '../features/new-loan/store/newLoanFormSlice';
 import loanDashboardReducer from '../features/loans/store/loanDashboardSlice';
 
 const AUTH_ACTIONS = ['auth/login/fulfilled', 'auth/logout', 'auth/hydrate'];

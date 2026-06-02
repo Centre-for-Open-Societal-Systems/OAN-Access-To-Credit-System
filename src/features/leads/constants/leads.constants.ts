@@ -5,6 +5,7 @@ export interface StatusConfig {
 
 export const STATUS_CFG: Record<string, StatusConfig> = {
   Initiated:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border-blue-200'         },
+  Open:         { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border-blue-200'         },
   Qualified:    { dot: 'bg-green-500',   badge: 'bg-green-50 text-green-700 border-green-200'       },
   Processed:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   Disqualified: { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 border-red-200'             },
@@ -23,12 +24,13 @@ export const COL_FILTER_OPTS: Record<string, string[]> = {
 };
 
 export const KPI_CARDS_LAYOUT = [
-  { id: 'total',        label: 'Total Applications' },
-  { id: 'initiated',    label: 'Initiated'          },
-  { id: 'qualified',    label: 'Qualified'          },
-  { id: 'disqualified', label: 'Disqualified'       },
-  { id: 'processed',    label: 'Processed'          },
-  { id: 'rejected',     label: 'Rejected'           },
+  { id: 'total',        label: 'Overall Leads' },
+  { id: 'initiated',    label: 'Active'        },
+  { id: 'qualified',    label: 'Verified'      },
+  { id: 'processed',    label: 'Processed'     },
+  { id: 'granted',      label: 'Granted'       },
+  { id: 'rejected',     label: 'Rejected'      },
+  { id: 'dormant',      label: 'Dormant'       },
 ] as const;
 
 export const resolveDateFilter = (filterKey: string): { start?: string; end?: string } => {

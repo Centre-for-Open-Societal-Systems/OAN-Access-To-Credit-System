@@ -36,7 +36,7 @@ interface LoanDashboardState {
   rawSummaryData: any;
   isSummaryLoading: boolean;
   summaryError: string | null;
-  
+
   // UI State
   dateRange: string;
   selectedStatuses: string[];
@@ -50,7 +50,7 @@ const initialState: LoanDashboardState = {
   rawSummaryData: null,
   isSummaryLoading: false,
   summaryError: null,
-  
+
   dateRange: 'last30',
   selectedStatuses: [...ALL_STATUS_VALUES],
   activityPage: 1,
@@ -212,7 +212,7 @@ export const selectVisibleNotifications = createSelector(
     const getCutoffTimestamp = (range: string) => {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    
+
       const resolvers: Record<string, () => number> = {
         'today': () => today,
         'yesterday': () => today - 86400000,
@@ -224,7 +224,7 @@ export const selectVisibleNotifications = createSelector(
       };
       return resolvers[range]?.() ?? 0;
     };
-    
+
     const cutoffTimestamp = getCutoffTimestamp(dateRange);
 
     const parseNotificationTime = (timeStr: string) => {
@@ -249,7 +249,7 @@ export const selectQueryParams = createSelector(
     const getCutoffTimestamp = (range: string) => {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    
+
       const resolvers: Record<string, () => number> = {
         'today': () => today,
         'yesterday': () => today - 86400000,
@@ -261,7 +261,7 @@ export const selectQueryParams = createSelector(
       };
       return resolvers[range]?.() ?? 0;
     };
-    
+
     const ts = getCutoffTimestamp(dateRange);
     if (ts > 0) {
       const d = new Date(ts);
