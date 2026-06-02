@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { QueryClient, QueryClientProvider, QueryCache } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { store } from '@/store';
 import { hydrate } from '@/features/auth/store/authSlice';
@@ -19,15 +19,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }));
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedUser = localStorage.getItem('auth_user');
-        if (cachedUser) {
-          store.dispatch(hydrate(JSON.parse(cachedUser)));
-        }
-      } catch (e) {
-        localStorage.removeItem('auth_user');
+    try {
+      const cachedUser = localStorage.getItem('auth_user');
+      if (cachedUser) {
+        store.dispatch(hydrate(JSON.parse(cachedUser)));
       }
+    } catch (e) {
+      localStorage.removeItem('auth_user');
     }
 
     if (process.env.NEXT_PUBLIC_API_MOCKING === 'true') {

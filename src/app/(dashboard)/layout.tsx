@@ -15,7 +15,7 @@ const navigationSections = [
     title: 'DASHBOARDS',
     items: [
       { path: '/leads-dashboard', label: 'Leads Dashboard', icon: Users },
-      { path: '/loans/loan-application-dashboard', label: 'Loan Application Dashboard', icon: FileText },
+      // { path: '/loan-application-dashboard', label: 'Loan Application Dashboard', icon: FileText },
     ],
   },
   {
@@ -43,14 +43,7 @@ const navigationSections = [
   },
 ];
 
-const PAGE_TITLES: Record<string, string> = {
-  '/leads-dashboard': 'Leads Dashboard',
-  '/new-lead-creation': 'New Lead Creation',
-  '/loans/loan-application-dashboard': 'Loan Application Dashboard',
-  '/loans/new-loan-application-creation': 'New Loan Application Creation',
-  '/loans/create-new-credit-request': 'Create New Credit Request',
-  '/loans/update-loan-application-status': 'Update Loan Application Status',
-};
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -62,7 +55,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard';
+  const activeItem = navigationSections
+    .flatMap((section) => section.items)
+    .find((item) => item.path === pathname || item.activePaths?.includes(pathname));
+
+  const pageTitle = activeItem?.label ?? 'Dashboard';
 
 
 

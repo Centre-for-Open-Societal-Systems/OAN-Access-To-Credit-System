@@ -1,3 +1,24 @@
+
+
+// input for Get Leads API 
+export interface GetLeadsParams {
+  start?: number;
+  page_length?: number;
+  search_query?: string;
+  status?: string;
+  lead_source?: string;
+  start_date?: string;
+  end_date?: string;
+  assigned_to?: string;
+}
+
+// output for Get Leads API 
+export interface GetLeadsResponse {
+  results: Lead[];
+  totalCount: number;
+}
+
+// the lead object in the output of Get Leads API 
 export interface Lead {
   id: string;
   name: string;
@@ -12,7 +33,7 @@ export interface Lead {
   callStartTime?: string;
   [key: string]: any;
 }
-
+// small trend under summary in Leads
 export interface KpiStat {
   id: string;
   label: string;
@@ -20,23 +41,6 @@ export interface KpiStat {
   trend?: string;
   trendUp?: boolean;
 }
-
-export interface GetLeadsParams {
-  start?: number;
-  page_length?: number;
-  search_query?: string;
-  status?: string;
-  lead_source?: string;
-  start_date?: string;
-  end_date?: string;
-  assigned_to?: string;
-}
-
-export interface GetLeadsResponse {
-  results: Lead[];
-  totalCount: number;
-}
-
 export interface LeadSummaryResponse {
   status: string;
   total: number;

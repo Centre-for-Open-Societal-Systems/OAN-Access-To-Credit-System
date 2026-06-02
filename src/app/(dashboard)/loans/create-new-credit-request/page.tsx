@@ -1925,7 +1925,7 @@ function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: str
             <Eye size={14} /> View Summary
           </button>
           <button
-            onClick={() => router.push('/loans/loan-application-dashboard')}
+            onClick={() => router.push('/loan-application-dashboard')}
             className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
             <LayoutDashboard size={14} /> Return to Dashboard
           </button>

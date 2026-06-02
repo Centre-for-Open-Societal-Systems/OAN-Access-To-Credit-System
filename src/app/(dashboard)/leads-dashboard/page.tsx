@@ -3,13 +3,15 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
-import { PAGE_SIZE, KPI_CARDS_LAYOUT } from '@/features/leads/constants/leads.constants';
+
+import { PAGE_SIZE, KPI_CARDS_LAYOUT, resolveDateFilter } from '@/features/leads/constants/leads.constants';
+
 import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import LeadToolbar from '@/features/leads/components/LeadToolbar';
 import LeadTable from '@/features/leads/components/LeadTable';
 import LeadPagination from '@/features/leads/components/LeadPagination';
 import LeadAdvancedFilters from '@/features/leads/components/LeadAdvancedFilters';
-import LeadLoadingSkeleton from '@/features/leads/components/LeadLoadingSkeleton';
+
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchLeads,
@@ -60,54 +62,22 @@ export default function LeadsDashboard() {
   // Load leads from backend
   const loadLeads = React.useCallback((page: number, currentSearch?: string) => {
     const assigned_to = activeTab === 'my' ? 'me' : activeTab === 'unassigned' ? 'unassigned' : undefined;
-    
-    // Frappe typically expects start and end date if passing dates, but we just pass the raw value right now
-    // Since Frappe API expects start_date / end_date, we might need a converter. For now pass raw if it matches.
-    // If not matching Frappe schema perfectly, it will just ignore.
+
     let start_date = undefined;
     let end_date = undefined;
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // 1. Process Advanced Filters Date Range
     if (advFilters.dateFrom) start_date = advFilters.dateFrom;
     if (advFilters.dateTo) end_date = advFilters.dateTo;
-    
-    // 2. Process Advanced Filters Quick Date
-    if (advFilters.quickDate) {
-      if (advFilters.quickDate === 'Today') {
-        start_date = today.toISOString().split('T')[0];
-        end_date = today.toISOString().split('T')[0];
-      } else if (advFilters.quickDate === 'Last 7 Days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 6);
-        start_date = start.toISOString().split('T')[0];
-      } else if (advFilters.quickDate === 'Last 30 Days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 29);
-        start_date = start.toISOString().split('T')[0];
-      } else if (advFilters.quickDate === 'This Month') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        start_date = start.toISOString().split('T')[0];
-      }
-    }
-    
-    // 3. Process Toolbar Date Filter (if adv filters didn't override)
-    if (!start_date && dateFilter !== 'All Time') {
-      if (dateFilter === 'Last 7 Days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 6);
-        start_date = start.toISOString().split('T')[0];
-      } else if (dateFilter === 'Last 30 Days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 29);
-        start_date = start.toISOString().split('T')[0];
-      } else if (dateFilter === 'Last 90 Days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 89);
-        start_date = start.toISOString().split('T')[0];
-      }
+
+
+    // 2. Resolve Quick Date / Toolbar Date Filter
+    const activeDateFilter = advFilters.quickDate || (!start_date && dateFilter !== 'All Time' ? dateFilter : null);
+
+    if (activeDateFilter) {
+      const resolved = resolveDateFilter(activeDateFilter);
+      if (resolved.start) start_date = resolved.start;
+      if (resolved.end) end_date = resolved.end;
     }
 
     // Combine Statuses
@@ -119,7 +89,7 @@ export default function LeadsDashboard() {
     if (advFilters.phoneNumber.trim()) {
       finalSearch = finalSearch ? `${finalSearch} ${advFilters.phoneNumber.trim()}` : advFilters.phoneNumber.trim();
     }
-    
+
     dispatch(fetchLeads({
       start: (page - 1) * PAGE_SIZE,
       page_length: PAGE_SIZE,
@@ -141,15 +111,19 @@ export default function LeadsDashboard() {
     const byStatus = leadSummary?.by_status || {};
     const totalCount = leadSummary?.total ?? 0;
 
+    const statusMap: Record<string, string> = {
+      initiated: 'Initiated',
+      qualified: 'Qualified',
+      processed: 'Processed',
+      rejected: 'Not Interested',
+    };
+
     return KPI_CARDS_LAYOUT
       .filter((card) => card.id !== 'disqualified')
       .map((card) => {
-        let count = 0;
-        if (card.id === 'total') count = totalCount;
-        else if (card.id === 'initiated') count = byStatus['Initiated'] || 0;
-        else if (card.id === 'qualified') count = byStatus['Qualified'] || 0;
-        else if (card.id === 'processed') count = byStatus['Processed'] || 0;
-        else if (card.id === 'rejected') count = byStatus['Not Interested'] || byStatus['Rejected'] || 0;
+        const count = card.id === 'total'
+          ? totalCount
+          : (byStatus[statusMap[card.id]] || 0);
 
         return {
           id: card.id,
@@ -218,9 +192,9 @@ export default function LeadsDashboard() {
           myLeadsCount={activeTab === 'my' ? totalCount : 0}
           unassignedLeadsCount={activeTab === 'unassigned' ? totalCount : 0}
           dateFilter={dateFilter}
-          onSearchSubmit={(v: string) => { 
-            dispatch(setSearch(v)); 
-            setCurrentPage(1); 
+          onSearchSubmit={(v: string) => {
+            dispatch(setSearch(v));
+            setCurrentPage(1);
             // useEffect will trigger loadLeads when search changes
           }}
           onTabChange={(k: string) => { dispatch(setActiveTab(k)); setCurrentPage(1); }}

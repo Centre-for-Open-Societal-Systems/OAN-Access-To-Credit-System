@@ -10,8 +10,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Missing credentials in request' }, { status: 400 });
     }
 
-    // Use the exact destination URL from next.config.mjs to avoid HTTP -> HTTPS redirects dropping the POST body
-    const baseUrl = 'https://a2c-backend-development.oanstaging.com';
+    // Use the base URL from .env
+    const baseUrl = process.env.API_BASE_URL;
+    
+    if (!baseUrl) {
+      return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
+    }
 
     // Call external API using a clean slate (like Postman)
     const response = await fetch(`${baseUrl}/api/method/oan_a2c.api.auth.login`, {

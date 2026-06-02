@@ -71,7 +71,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
   const handleLogout = () => { closeProfileMenu(); onLogout?.(); };
 
   return (
-    <header className="sticky top-0 z-[4] flex items-center justify-between gap-4 min-h-[3.7rem] px-5 py-3 border-b border-[rgba(22,32,51,0.08)] bg-white/[0.86] backdrop-blur-[12px] max-[640px]:px-[0.9rem]">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-4 min-h-[3.7rem] px-5 py-3 border-b border-[rgba(22,32,51,0.08)] bg-white max-[640px]:px-[0.9rem]">
 
       {/* Left: menu toggle + page title */}
       <div className="inline-flex items-center gap-[0.65rem] min-w-0">

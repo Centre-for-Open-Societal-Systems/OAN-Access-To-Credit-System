@@ -3,9 +3,7 @@ export interface User {
   officerName: string;
   mobileNo?: string;
   userType?: string;
-  homePage: string;
   roles?: string[];
-  [key: string]: any;
 }
 
 export type AuthStatus = 'idle' | 'loading' | 'succeeded' | 'failed';

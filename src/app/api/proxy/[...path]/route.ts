@@ -8,17 +8,21 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
 export { GET as POST, GET as PUT, GET as DELETE };
 
 async function handleProxy(request: NextRequest, pathArray: string[]) {
-  const baseUrl = process.env.API_BASE_URL || 'https://a2c-backend-development.oanstaging.com';
+  const baseUrl = process.env.API_BASE_URL;
+
+  if (!baseUrl) {
+    return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
+  }
 
   // Construct the target URL
   const targetPath = pathArray.join('/');
   const { search } = new URL(request.url);
   const targetUrl = `${baseUrl}/${targetPath}${search}`;
 
-  // Read the HttpOnly auth_token cookie
+  // Read auth_token cookie
   const authToken = request.cookies.get('auth_token')?.value;
 
-  // Prepare headers for the external request
+  // Prepare headers 
   const headers = new Headers();
   request.headers.forEach((value, key) => {
     // Avoid forwarding headers that might cause issues

@@ -10,14 +10,11 @@ export const loginThunk = createAsyncThunk<
 >(
   'auth/login',
   async ({ usr, pwd }, { rejectWithValue }) => {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-
     try {
       const loginData = await loginUser({ usr, pwd });
 
       return {
         officerName: loginData.full_name || usr,
-        homePage: loginData.home_page ?? '/',
         roles: Array.isArray(loginData.roles) ? loginData.roles : [],
       } as User;
     } catch (err: unknown) {

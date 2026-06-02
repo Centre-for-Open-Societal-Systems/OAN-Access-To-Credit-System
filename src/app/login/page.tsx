@@ -1,5 +1,7 @@
 'use client';
 
+import '@/features/auth/styles/login.scss';
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
@@ -12,6 +14,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginThunk, selectAuthError, selectAuthStatus, clearAuthError } from '@/features/auth/store/authSlice';
@@ -45,7 +48,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const languageMenuRef = useRef<HTMLDivElement>(null);
 
-  const portalSubtitle = 'Access the agricultural credit system network.';
+  const portalSubtitle = 'Access the Development Agent';
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -76,12 +79,18 @@ export default function Login() {
       <header className="header-shell">
         <div className="header-bar">
           <div className="brand-mark">
-            <div className="brand-icon" aria-hidden="true">
-              <Sprout size={26} strokeWidth={2.2} />
+            <div aria-hidden="true" className="relative h-8 w-24">
+              <Image
+                src="/logo.png"
+                alt="Ethiopia OpenAgriNet Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="brand-copy">
-              <span className="brand-title">Open Agri</span>
-              <span className="brand-subtitle">ACCESS CREDIT SYSTEM</span>
+              <span className="brand-title">Ethiopia OpenAgriNet</span>
+              <span className="brand-subtitle">Access to Credit</span>
             </div>
           </div>
 
@@ -113,15 +122,21 @@ export default function Login() {
             <div className="hero-panel">
               <div className="hero-panel__top">
                 <div className="hero-brand">
-                  <div className="hero-brand__icon" aria-hidden="true">
-                    <Sprout size={22} strokeWidth={2.4} />
+                  <div className="hero-brand__icon relative h-10 w-28" aria-hidden="true">
+                    <Image
+                      src="/logo.png"
+                      alt="Ethiopia OpenAgriNet Logo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
                   </div>
                   <span className="hero-brand__name">Open AgriNet</span>
                 </div>
 
                 <span className="hero-pill">Field Agent Portal</span>
 
-                <h1 className="hero-title font-display">
+                <h1 className="hero-title">
                   Empowering
                   <br />
                   Ethiopian
@@ -226,7 +241,7 @@ export default function Login() {
                 </div>
 
                 <div className="portal-panel__heading">
-                  <h2 className="font-display">Welcome to the Portal</h2>
+                  <h2>Welcome to the Portal</h2>
                   <p>{portalSubtitle}</p>
                 </div>
               </div>
@@ -287,8 +302,8 @@ export default function Login() {
                         <span>Remember me</span>
                       </label>
 
-                      <a className="font-semibold text-[color:var(--button-bg)] hover:underline" href="#">
-                        Forgot password?
+                      <a className="font-semibold text-[#16335A] hover:underline" href="#">
+                        Having trouble?
                       </a>
                     </div>
 
