@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
-  return handleProxy(request, params.path);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const resolvedParams = await params;
+  return handleProxy(request, resolvedParams.path);
 }
 
 // Statically export other HTTP verbs by aliasing the GET reference
