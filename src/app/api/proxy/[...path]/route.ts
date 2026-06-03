@@ -17,7 +17,7 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
 
   // Construct the target URL
   const targetPath = pathArray.join('/');
-  const { search } = new URL(request.url);
+  const search = request.nextUrl.search;
   const targetUrl = `${baseUrl}/${targetPath}${search}`;
 
   // Read auth_token cookie

@@ -88,7 +88,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
           <img
             src="/logo.png"
             alt="OARI Logo"
-            className="h-16 w-auto object-contain"
+            className="h-20 w-auto max-w-[220px] object-contain -mt-1.5"
             id="primary-logo-img"
             onError={(e) => {
               e.currentTarget.classList.add('hidden');

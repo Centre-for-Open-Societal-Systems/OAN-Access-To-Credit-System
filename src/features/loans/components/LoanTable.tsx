@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Filter, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  selectPagedRows, 
-  selectSelectedStatuses, 
-  toggleStatus, 
-  toggleAllStatuses 
+import {
+  selectPagedRows,
+  selectSelectedStatuses,
+  toggleStatus,
+  toggleAllStatuses
 } from '../store/loanDashboardSlice';
 
 const STATUS_OPTIONS = [
@@ -30,11 +30,11 @@ interface LoanTableProps {
   onView?: (row: LoanTableRow) => void;
 }
 
-const LoanTable = React.memo(({ onView }: LoanTableProps) => {
+const LoanTable = memo(({ onView }: LoanTableProps) => {
   const dispatch = useAppDispatch();
   const rows: LoanTableRow[] = useAppSelector(selectPagedRows);
   const selectedStatuses = useAppSelector(selectSelectedStatuses);
-  
+
   const allChecked = selectedStatuses.length === 3;
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -63,13 +63,12 @@ const LoanTable = React.memo(({ onView }: LoanTableProps) => {
                 <button
                   type="button"
                   onClick={() => setFilterOpen(!filterOpen)}
-                  className={`inline-grid h-6 w-6 place-items-center rounded-md transition-colors ${
-                    filterOpen
-                      ? 'bg-blue-50 text-blue-600'
-                      : !allChecked
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
-                  }`}
+                  className={`inline-grid h-6 w-6 place-items-center rounded-md transition-colors ${filterOpen
+                    ? 'bg-blue-50 text-blue-600'
+                    : !allChecked
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                    }`}
                 >
                   <Filter size={12} strokeWidth={2.5} />
                 </button>
@@ -91,7 +90,7 @@ const LoanTable = React.memo(({ onView }: LoanTableProps) => {
                       let dotColor = "bg-gray-400";
                       if (opt.value === 'danger') dotColor = "bg-red-500";
                       if (opt.value === 'info') dotColor = "bg-blue-500";
-                      
+
                       return (
                         <button
                           key={opt.value}

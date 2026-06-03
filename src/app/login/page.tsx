@@ -2,7 +2,7 @@
 
 import '@/features/auth/styles/login.scss';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,

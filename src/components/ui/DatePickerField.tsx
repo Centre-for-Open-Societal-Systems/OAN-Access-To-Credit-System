@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar, ChevronLeft, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -27,11 +27,11 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function h(e: MouseEvent) { 
-      if (ref.current && !ref.current.contains(e.target as Node)) { 
-        setIsOpen(false); 
-        setMode('day'); 
-      } 
+    function h(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setMode('day');
+      }
     }
     if (isOpen) document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
@@ -49,7 +49,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
   function selectDay(d: number) {
     if (isDisabled(viewYear, viewMonth, d)) return;
     onChange(new Date(viewYear, viewMonth, d).toISOString().split('T')[0]);
-    setIsOpen(false); 
+    setIsOpen(false);
     setMode('day');
   }
 
@@ -57,7 +57,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
     else setViewMonth(m => m - 1);
   }
-  
+
   function nextMonth() {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
     else setViewMonth(m => m + 1);
@@ -77,7 +77,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
 
   return (
     <div className="relative flex flex-col gap-1.5" ref={ref}>
-      <input type="text" className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0" value={value} onChange={() => {}} required={required} tabIndex={-1} aria-hidden="true" />
+      <input type="text" className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0" value={value} onChange={() => { }} required={required} tabIndex={-1} aria-hidden="true" />
       {label && (
         <label htmlFor={id} className="text-sm font-medium text-gray-700">
           {label} {required && <span className="text-red-500">*</span>}

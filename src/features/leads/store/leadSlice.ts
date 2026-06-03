@@ -33,7 +33,11 @@ export interface AdvFilters {
   quickDate: string;
   dateFrom: string;
   dateTo: string;
-  phoneNumber: string;
+  location: string;
+  minAmount: number | null;
+  maxAmount: number | null;
+  loanType: string | null;
+  leadSources: string[];
 }
 
 interface LeadState {
@@ -60,7 +64,11 @@ const initialFilters: AdvFilters = {
   quickDate: '',
   dateFrom: '',
   dateTo: '',
-  phoneNumber: '',
+  location: '',
+  minAmount: null,
+  maxAmount: null,
+  loanType: null,
+  leadSources: [],
 };
 
 const initialState: LeadState = {

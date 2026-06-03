@@ -1,60 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Filter } from 'lucide-react';
 import { COL_FILTER_OPTS } from '../constants/leads.constants';
 
-/* ─── DateSelect ────────────────────────────────────────────────────── */
-interface DateSelectProps {
-  value: string;
-  options: readonly string[];
-  onChange: (val: string) => void;
-}
-
-export function DateSelect({ value, options, onChange }: DateSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [isOpen]);
-
-  return (
-    <div ref={ref} className="relative w-44">
-      <button
-        type="button"
-        onClick={() => setIsOpen(o => !o)}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}
-      >
-        <span className="text-gray-900">{value}</span>
-        <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
-      </button>
-      <ul
-        className={`absolute right-0 z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
-        style={{ transformOrigin: 'top' }}
-      >
-        {options.map(opt => {
-          const sel = value === opt;
-          return (
-            <li
-              key={opt}
-              onMouseDown={() => { onChange(opt); setIsOpen(false); }}
-              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'font-medium text-[#16A34A]' : 'text-gray-800 hover:bg-gray-50'}`}
-            >
-              {opt}
-              {sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
 
 /* ─── LeadColFilterPopup ────────────────────────────────────────────── */
 interface LeadColFilterPopupProps {
@@ -87,7 +35,7 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popupRef.current && !popupRef.current.contains(e.target as Node) &&
-          anchorRef.current && !anchorRef.current.contains(e.target as Node)) {
+        anchorRef.current && !anchorRef.current.contains(e.target as Node)) {
         onClose();
       }
     }

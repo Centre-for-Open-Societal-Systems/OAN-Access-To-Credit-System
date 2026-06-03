@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 
 interface LeadToolbarProps {
@@ -30,15 +30,15 @@ function LeadToolbar({
     setLocalSearch(search);
   }, [search]);
   const tabs = [
-    { key: 'all',        label: 'All Leads',  count: allLeadsCount        },
-    { key: 'my',         label: 'My Leads',   count: myLeadsCount         },
+    { key: 'all', label: 'All Leads', count: allLeadsCount },
+    { key: 'my', label: 'My Leads', count: myLeadsCount },
     { key: 'unassigned', label: 'Unassigned', count: unassignedLeadsCount },
   ];
 
   return (
     <>
       {/* search row */}
-      <div className="relative flex flex-wrap items-center justify-between border-b border-[#F1F3F4] bg-white px-5 py-4 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-t-2xl">
+      <div className="relative flex flex-wrap items-center justify-between border-b border-[#F1F3F4] bg-white px-5 py-4 rounded-t-2xl">
         {/* Left side: Search input + Search button */}
         <div className="flex items-center gap-3 w-full max-w-lg">
           <div className="relative flex flex-1 items-center rounded-lg border border-[#EDEFF1] bg-[#F6F8FA] px-3 py-2.5">
@@ -95,24 +95,21 @@ function LeadToolbar({
                 key={t.key}
                 type="button"
                 onClick={() => onTabChange(t.key)}
-                className={`relative flex items-center gap-2 px-5 h-[44px] text-sm font-medium transition select-none outline-none ${
-                  isActive ? 'text-[#1E6865]' : 'text-[#C1C7D0] hover:text-[#9CA3AF]'
-                }`}
+                className={`relative flex items-center gap-2 px-5 h-[44px] text-sm font-medium transition select-none outline-none ${isActive ? 'text-[#1E6865]' : 'text-[#C1C7D0] hover:text-[#9CA3AF]'
+                  }`}
               >
                 <span className="font-semibold">{t.label}</span>
                 <span
-                  className={`flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold h-[20px] transition ${
-                    isActive ? 'bg-[#F0FDFA] text-[#1E6865]' : 'bg-[#F1F3F4] text-[#9CA3AF]'
-                  }`}
+                  className={`flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold h-[20px] transition ${isActive ? 'bg-[#F0FDFA] text-[#1E6865]' : 'bg-[#F1F3F4] text-[#9CA3AF]'
+                    }`}
                 >
                   {formattedCount}
                 </span>
-                
+
                 {/* Active Underline Gradient */}
                 <div
-                  className={`absolute left-0 right-0 bottom-0 h-[3px] rounded-[3px] bg-gradient-to-r from-[rgba(20,184,166,0.2)] via-[rgba(20,184,166,0.8)] to-[rgba(20,184,166,0.2)] transition-opacity duration-300 ${
-                    isActive ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className={`absolute left-0 right-0 bottom-0 h-[3px] rounded-[3px] bg-gradient-to-r from-[rgba(20,184,166,0.2)] via-[rgba(20,184,166,0.8)] to-[rgba(20,184,166,0.2)] transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0'
+                    }`}
                 />
               </button>
             );

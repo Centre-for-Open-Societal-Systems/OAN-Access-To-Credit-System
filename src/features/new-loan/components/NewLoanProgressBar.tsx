@@ -18,11 +18,11 @@ export function NewLoanProgressBar({ currentStep }: { currentStep: number }) {
           {/* Background Gray Line */}
           <div className="absolute left-[16.66%] right-[16.66%] top-[21px] -z-10 h-[2px] bg-gray-200"></div>
           {/* Active Green Line */}
-          <div 
+          <div
             className="absolute left-[16.66%] top-[21px] -z-10 h-[2px] bg-[#16A34A] transition-all duration-500"
             style={{ width: activeLineWidth, maxWidth: '66.66%' }}
           ></div>
-          
+
           {STEPS.map(step => {
             const isDone = step.number < currentStep || currentStep === 4;
             const isActive = step.number === currentStep;

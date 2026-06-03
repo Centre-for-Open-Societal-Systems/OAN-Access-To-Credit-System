@@ -9,6 +9,9 @@ export interface GetLeadsParams {
   lead_source?: string;
   start_date?: string;
   end_date?: string;
+  min_amount?: number;
+  max_amount?: number;
+  loan_type?: string;
 }
 
 // output for Get Leads API 

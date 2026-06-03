@@ -11,6 +11,15 @@ export const leadService = {
       start_date: params?.start_date || '',
       end_date: params?.end_date || '',
     });
+    if (params?.min_amount !== undefined) {
+      searchParams.set('min_amount', params.min_amount.toString());
+    }
+    if (params?.max_amount !== undefined) {
+      searchParams.set('max_amount', params.max_amount.toString());
+    }
+    if (params?.loan_type !== undefined) {
+      searchParams.set('loan_type', params.loan_type);
+    }
 
 
 
@@ -24,7 +33,7 @@ export const leadService = {
       throw new Error('Failed to fetch leads');
     }
     const data = await response.json();
-    
+
     const rawLeads = data.message?.results || [];
     const totalCount = data.message?.total_count || 0;
 

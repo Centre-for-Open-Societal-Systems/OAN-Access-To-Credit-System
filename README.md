@@ -39,6 +39,22 @@ graph TD
 - Styling: Tailwind CSS, class-variance-authority, clsx
 - Mocking: Mock Service Worker (MSW)
 
+## Folder Structure
+The codebase follows a feature-based architecture within the `src/` directory to maximize modularity and maintainability:
+
+- **`app/`**: Next.js App Router routing infrastructure (pages, nested layouts, `loading.tsx`, error boundaries, and API route proxies).
+- **`components/`**: Reusable, generic, and unstyled UI primitive components (buttons, inputs, modals, layout wrappers) used across the application.
+- **`features/`**: The core of the application domain logic. Each feature (e.g., `leads`, `loans`, `new-lead`, `auth`) contains its own:
+  - `components/`: Domain-specific components.
+  - `api/`: API service functions and data fetchers.
+  - `store/`: Redux slices for client state.
+  - `hooks/`: Feature-specific custom React hooks.
+  - `types/`: Domain-specific TypeScript interfaces.
+- **`lib/`**: Shared utilities, pure helper functions, constant definitions, and global configurations (e.g., global API clients, date formatters).
+- **`mocks/`**: Mock Service Worker (MSW) handlers and configurations for local development and testing without a live backend.
+- **`store/`**: Global Redux store configuration, root reducer composition, and middleware setup.
+- **`styles/`**: Global stylesheets, SCSS files, and customized Tailwind CSS configurations (like `main-layout.scss`).
+
 ## Setup and Development
 
 Requires Node.js and a package manager (npm or pnpm recommended).

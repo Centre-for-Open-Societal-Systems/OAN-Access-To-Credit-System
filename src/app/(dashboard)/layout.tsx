@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ListChecks, Users, type LucideIcon } from 'lucide-react';
@@ -33,6 +33,7 @@ const navigationSections: NavSection[] = [
 const PAGE_TITLES: Record<string, string> = {
   '/leads-dashboard': 'Leads Dashboard',
   '/loans/new-loan-application': 'New Loan Application',
+  '/leads-application': 'Create New Lead',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     .flatMap((section) => section.items)
     .find((item) => item.path === pathname || item.activePaths?.includes(pathname));
 
-  const pageTitle = activeItem?.label ?? 'Dashboard';
+  const pageTitle = activeItem?.label ?? PAGE_TITLES[pathname] ?? 'Dashboard';
 
 
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
 
@@ -55,10 +55,10 @@ export default function LeadsDashboard() {
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
   const [tabCounts, setTabCounts] = useState({ all: 0, my: 0, unassigned: 0 });
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Calculate counts dynamically from allLeads since the backend doesn't filter by assigned_to
-    const myCount = allLeads.filter(l => l.assignedTo === 'me').length;
-    const unassignedCount = allLeads.filter(l => !l.assignedTo).length;
+    const myCount = allLeads.filter(l => l.assignedTo === 'me' || l.owner === 'me').length;
+    const unassignedCount = allLeads.filter(l => !l.assignedTo || l.owner === 'unassigned').length;
 
     setTabCounts({
       all: totalCount,
@@ -68,12 +68,12 @@ export default function LeadsDashboard() {
   }, [allLeads, totalCount]);
 
   // Initial Summary Fetch
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(fetchLeadSummary());
   }, [dispatch]);
 
   // Load  filtered leads data from backend
-  const loadLeads = React.useCallback((page: number) => {
+  const loadLeads = useCallback((page: number) => {
     const hasCustomRange = !!(advFilters.dateFrom || advFilters.dateTo); // check if custom date range is selected
     const activePreset = !hasCustomRange && (advFilters.quickDate || (dateFilter !== 'All Time' ? dateFilter : null));
     const resolvedPreset = activePreset ? resolveDateFilter(activePreset) : null;
@@ -82,14 +82,21 @@ export default function LeadsDashboard() {
     const end_date = advFilters.dateTo || resolvedPreset?.end;
 
     // Combine Statuses
-    const allStatuses = Array.from(new Set([...colStatusFilter, ...advFilters.statuses]));
+    // NOTE: only we are expanding (e.g. "Active" expands to ['Initiated', 'Open'])
+    const expandedAdvStatuses = advFilters.statuses.flatMap(id => LEAD_STATUS_MAP[id] || [id]);
+    const allStatuses = Array.from(new Set([...colStatusFilter, ...expandedAdvStatuses]));
     const statusParam = allStatuses.length > 0 ? allStatuses.join(',') : undefined;
 
     // Combine Search
     let finalSearch = search;
-    if (advFilters.phoneNumber.trim()) {
-      finalSearch = finalSearch ? `${finalSearch} ${advFilters.phoneNumber.trim()}` : advFilters.phoneNumber.trim();
+    if (advFilters.location?.trim()) {
+      finalSearch = finalSearch ? `${finalSearch} ${advFilters.location.trim()}` : advFilters.location.trim();
     }
+
+    const min_amount = advFilters.minAmount !== null ? advFilters.minAmount : undefined;
+    const max_amount = advFilters.maxAmount !== null ? advFilters.maxAmount : undefined;
+    const loan_type = advFilters.loanType || undefined;
+    const lead_source = advFilters.leadSources?.length > 0 ? advFilters.leadSources.join(',') : undefined;
 
     dispatch(fetchLeads({
       start: (page - 1) * PAGE_SIZE,
@@ -97,12 +104,16 @@ export default function LeadsDashboard() {
       search_query: finalSearch,
       status: statusParam,
       start_date,
-      end_date
+      end_date,
+      min_amount,
+      max_amount,
+      loan_type,
+      lead_source
     }));
   }, [dispatch, colStatusFilter, search, advFilters, dateFilter]);
 
   // fetched only once during mount
-  React.useEffect(() => {
+  useEffect(() => {
     loadLeads(currentPage);
   }, [loadLeads, currentPage]);
 
@@ -170,7 +181,7 @@ export default function LeadsDashboard() {
           </button>
           <button
             type="button"
-            onClick={() => router.push('/new-lead-creation')}
+            onClick={() => router.push('/leads-application')}
             className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
           >
             <Plus size={18} strokeWidth={2.5} />

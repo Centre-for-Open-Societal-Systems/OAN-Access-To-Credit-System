@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { nextStep } from '@/features/new-loan/store/newLoanFormSlice';
-import { ArrowRight, CheckCircle2, FileText, Loader2, FolderOpen, Eye, EyeOff, X, Check, ChevronDown } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, Loader2, FolderOpen, Eye, EyeOff, X, Check, ChevronDown, Info } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 
 export function Step1ConsentDocs() {
@@ -319,153 +319,160 @@ export function Step1ConsentDocs() {
                 </button>
                 <span className='font-normal'>provided on May 25, 2026</span>
               </div>
+              <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-[#f4f8ff] p-4">
+                <Info className="mt-0.5 shrink-0 text-blue-500" size={18} />
+                <div>
+                  <p className="text-sm font-semibold text-[#2563eb]">Consent Authorization</p>
+                  <p className="mt-1 text-xs text-blue-700/80 leading-relaxed">By requesting OTP, you confirm the farmer is present and has verbally agreed to share their registry data with AgriBank.</p>
+                </div>
+              </div>
             </div>
 
             {/* Right Column - Signed Consent Form */}
             <div className="rounded-lg border border-gray-200 bg-white p-5">
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h3 className="text-[15px] font-semibold text-gray-900">Signed Consent Form</h3>
-                  <p className="text-[13px] text-gray-500">Physical copy signed by farmer</p>
-                </div>
-                {consentFile && !isConsentUploading && (
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setShowConsentDocumentPopup(true)} className="flex items-center gap-2 rounded-md border border-[#22c55e] px-4 py-1.5 text-sm font-semibold text-[#22c55e] bg-white hover:bg-green-50 transition-colors">
-                      <Eye className="h-4 w-4" /> View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemoveConsentFile}
-                      className="flex items-center justify-center rounded-md border border-red-300 px-2.5 py-1.5 text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
-                      title="Remove file"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <input type="file" className="hidden" ref={consentFileRef} onChange={handleConsentUpload} accept=".pdf,.png,.jpg,.jpeg" />
-
-              {consentFile ? (
-                <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${consentFile.type.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                        <FileText className="h-6 w-6" />
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-gray-900">Signed Consent Form</h3>
+                      <p className="text-[13px] text-gray-500">Physical copy signed by farmer</p>
+                    </div>
+                    {consentFile && !isConsentUploading && (
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setShowConsentDocumentPopup(true)} className="flex items-center gap-2 rounded-md border border-[#22c55e] px-4 py-1.5 text-sm font-semibold text-[#22c55e] bg-white hover:bg-green-50 transition-colors">
+                          <Eye className="h-4 w-4" /> View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveConsentFile}
+                          className="flex items-center justify-center rounded-md border border-red-300 px-2.5 py-1.5 text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0 flex items-center justify-between">
-                        <div>
-                          <p className="truncate text-[15px] font-medium text-gray-900">{consentFile.name}</p>
-                          <p className="text-[13px] text-gray-500 mt-0.5">{consentFile.size > 0 ? (consentFile.size / (1024 * 1024)).toFixed(2) : '1.2'} MB / 4.5 MB</p>
+                    )}
+                  </div>
+
+                  <input type="file" className="hidden" ref={consentFileRef} onChange={handleConsentUpload} accept=".pdf,.png,.jpg,.jpeg" />
+
+                  {consentFile ? (
+                    <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${consentFile.type.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                            <FileText className="h-6 w-6" />
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-center justify-between">
+                            <div>
+                              <p className="truncate text-[15px] font-medium text-gray-900">{consentFile.name}</p>
+                              <p className="text-[13px] text-gray-500 mt-0.5">{consentFile.size > 0 ? (consentFile.size / (1024 * 1024)).toFixed(2) : '1.2'} MB / 4.5 MB</p>
+                            </div>
+                            <span className="text-[13px] font-medium text-gray-500">{isConsentUploading ? consentProgress : 100}%</span>
+                          </div>
                         </div>
-                        <span className="text-[13px] font-medium text-gray-500">{isConsentUploading ? consentProgress : 100}%</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div className={`h-full transition-all duration-300 ${isConsentUploading ? 'bg-blue-600' : 'bg-[#22c55e]'}`} style={{ width: `${isConsentUploading ? consentProgress : 100}%` }} />
                       </div>
                     </div>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                    <div className={`h-full transition-all duration-300 ${isConsentUploading ? 'bg-blue-600' : 'bg-[#22c55e]'}`} style={{ width: `${isConsentUploading ? consentProgress : 100}%` }} />
-                  </div>
+                  ) : (
+                    <div
+                      onClick={() => consentFileRef.current?.click()}
+                      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-10 transition-colors hover:bg-gray-50 hover:border-blue-300 group"
+                    >
+                      <div className="mb-4 rounded-full bg-[#f1f5f9] p-3 text-[#94a3b8] group-hover:text-blue-500 transition-colors">
+                        <FolderOpen className="h-8 w-8 fill-current" />
+                      </div>
+                      <p className="mb-1 text-[15px] font-medium text-gray-900">Drag and drop files here</p>
+                      <p className="mb-1 text-[14px] text-gray-900">Or</p>
+                      <p className="text-[15px] font-medium text-gray-900">Click Browse files to select a file</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div
-                  onClick={() => consentFileRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-10 transition-colors hover:bg-gray-50 hover:border-blue-300 group"
-                >
-                  <div className="mb-4 rounded-full bg-[#f1f5f9] p-3 text-[#94a3b8] group-hover:text-blue-500 transition-colors">
-                    <FolderOpen className="h-8 w-8 fill-current" />
-                  </div>
-                  <p className="mb-1 text-[15px] font-medium text-gray-900">Drag and drop files here</p>
-                  <p className="mb-1 text-[14px] text-gray-900">Or</p>
-                  <p className="text-[15px] font-medium text-gray-900">Click Browse files to select a file</p>
+              </div>
+            </div>
+
+            {/* Supporting Documents Section */}
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">
+                Supporting Documents <span className="text-red-500">*</span>
+              </h2>
+
+              {/* Drag & Drop Area */}
+              <div className="mb-6 mx-auto max-w-lg flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
+                <div className="mb-3">
+                  <FolderOpen className="h-8 w-8 text-gray-500 fill-gray-500" />
+                </div>
+                <p className="mb-1 text-sm font-medium text-gray-900">Drag and drop files here</p>
+                <p className="mb-1 text-sm text-gray-500">Or</p>
+                <p className="mb-4 text-sm font-medium text-gray-900">Click Browse files to select a file</p>
+                <button type="button" onClick={() => setShowAddDocPopup(true)} className="flex items-center gap-1.5 rounded text-sm font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-4 py-1">
+                  <span className="text-lg">+</span> Browse Files
+                </button>
+              </div>
+
+              {/* Documents Table */}
+              {supportingDocs.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border border-gray-100 bg-gray-50/50">
+                  <table className="min-w-[600px] w-full divide-y divide-gray-100">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Description</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {supportingDocs.map((doc) => (
+                        <tr key={doc.id}>
+                          <td className="px-4 py-4 w-1/3">
+                            <div className="flex items-center gap-3">
+                              <div className="text-gray-400 rounded border border-gray-200 p-1 bg-gray-50"><FileText className="h-5 w-5" /></div>
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">{doc.type}</p>
+                                <p className="text-xs text-gray-500">{doc.name}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-500 w-1/3 break-words max-w-[200px]">{doc.description}</td>
+                          <td className="px-4 py-4 text-right w-1/3">
+                            <div className="flex items-center justify-end gap-3">
+                              <button type="button" onClick={() => { setSelectedSupportingDoc(doc); setShowSupportingDocPopup(true); }} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
+                                <Eye className="h-4 w-4" /> View
+                              </button>
+                              <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Supporting Documents Section */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">
-            Supporting Documents <span className="text-red-500">*</span>
-          </h2>
-
-          {/* Drag & Drop Area */}
-          <div className="mb-6 mx-auto max-w-lg flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
-            <div className="mb-3">
-              <FolderOpen className="h-8 w-8 text-gray-500 fill-gray-500" />
+            {/* Bottom Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={isSavingDraft}
+                  className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+                >
+                  {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
+                  {isSavingDraft ? 'Saving...' : 'Save Draft'}
+                </button>
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
+                  <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+                </div>
+              </div>
+              <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
+                Confirm & Next <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
-            <p className="mb-1 text-sm font-medium text-gray-900">Drag and drop files here</p>
-            <p className="mb-1 text-sm text-gray-500">Or</p>
-            <p className="mb-4 text-sm font-medium text-gray-900">Click Browse files to select a file</p>
-            <button type="button" onClick={() => setShowAddDocPopup(true)} className="flex items-center gap-1.5 rounded text-sm font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-4 py-1">
-              <span className="text-lg">+</span> Browse Files
-            </button>
-          </div>
-
-          {/* Documents Table */}
-          {supportingDocs.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-gray-100 bg-gray-50/50">
-              <table className="min-w-[600px] w-full divide-y divide-gray-100">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Description</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {supportingDocs.map((doc) => (
-                    <tr key={doc.id}>
-                      <td className="px-4 py-4 w-1/3">
-                        <div className="flex items-center gap-3">
-                          <div className="text-gray-400 rounded border border-gray-200 p-1 bg-gray-50"><FileText className="h-5 w-5" /></div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">{doc.type}</p>
-                            <p className="text-xs text-gray-500">{doc.name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500 w-1/3 break-words max-w-[200px]">{doc.description}</td>
-                      <td className="px-4 py-4 text-right w-1/3">
-                        <div className="flex items-center justify-end gap-3">
-                          <button type="button" onClick={() => { setSelectedSupportingDoc(doc); setShowSupportingDocPopup(true); }} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
-                            <Eye className="h-4 w-4" /> View
-                          </button>
-                          <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={isSavingDraft}
-              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
-            >
-              {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
-              {isSavingDraft ? 'Saving...' : 'Save Draft'}
-            </button>
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
-              <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
-            </div>
-          </div>
-          <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
-            Confirm & Next <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </form>
-    </>
-  );
+          </form>
+        </>
+        );
 }
