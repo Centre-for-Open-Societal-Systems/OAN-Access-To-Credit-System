@@ -12,54 +12,7 @@ export interface GetLoansParams {
   to_date?: string;
 }
 
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-
-async function fetchApi(path: string, options: RequestInit = {}) {
-  const url = new URL(`/api/proxy/api/method/${path}`, BASE_URL);
-  
-  const headers = new Headers(options.headers || {});
-  if (!(options.body instanceof FormData)) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  const response = await fetch(url.toString(), {
-    ...options,
-    headers,
-  });
-
-  let responseData;
-  try {
-    responseData = await response.json();
-  } catch (e) {
-    if (!response.ok) throw new Error(`API Request failed with status ${response.status}`);
-    return null;
-  }
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error('UNAUTHORIZED');
-    }
-    let errorMsg = `API Request failed with status ${response.status}`;
-    if (responseData?.message?.message) {
-      errorMsg = responseData.message.message;
-    } else if (responseData?.message) {
-      errorMsg = typeof responseData.message === 'string' ? responseData.message : JSON.stringify(responseData.message);
-    } else if (responseData?._server_messages) {
-      try {
-        const msgs = JSON.parse(responseData._server_messages);
-        errorMsg = JSON.parse(msgs[0]).message;
-      } catch (e) {}
-    }
-    throw new Error(errorMsg);
-  }
-
-  // Handle Frappe's "200 OK" application-level errors
-  if (responseData?.message?.status === 'error') {
-    throw new Error(responseData.message.message || 'Application Error');
-  }
-
-  return responseData;
-}
+import { fetchApi } from '@/lib/api/fetchApi';
 
 export const loanService = {
   async getLoans(params?: GetLoansParams): Promise<any> {

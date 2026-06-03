@@ -6,7 +6,9 @@ import {
   MapPin, Banknote, Calendar,
 } from 'lucide-react';
 
-import { useLoans, useUpdateLoanStatus } from '@/features/loans/hooks/useLoans';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchLoans, updateLoanStatus, selectRawActivityData, selectIsLoansLoading } from '@/features/loans/store/loanDashboardSlice';
 import {
   STATUS_CFG,
   LOAN_STATUSES,
@@ -223,10 +225,20 @@ function UpdatePanel({ loan, onClose, onConfirm }: any) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 function UpdateLoanStatus() {
-  const { data: loans = [], isLoading } = useLoans();
-  const updateLoanMutation = useUpdateLoanStatus();
+  const dispatch = useAppDispatch();
+  const rawData = useAppSelector(selectRawActivityData);
+  const isLoading = useAppSelector(selectIsLoansLoading);
+
+  // Safely extract loans array from rawActivityData
+  const loans = Array.isArray(rawData) 
+    ? rawData 
+    : (rawData?.message?.results || rawData?.data || rawData?.applications || []);
+
+  useEffect(() => {
+    dispatch(fetchLoans());
+  }, [dispatch]);
+
   const [search,     setSearch]     = useState('');
   const [activeTab,  setActiveTab]  = useState('All');
   const [page,       setPage]       = useState(1);
@@ -260,7 +272,7 @@ function UpdateLoanStatus() {
   );
 
   function handleStatusUpdate({ loanId, newStatus }: any) {
-    updateLoanMutation.mutate({ id: loanId, status: newStatus });
+    dispatch(updateLoanStatus({ id: loanId, status: newStatus }));
   }
 
   return (

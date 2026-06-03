@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { prevStep } from '@/features/new-loan/store/newLoanFormSlice';
 import { ArrowLeft, Send, Check } from 'lucide-react';

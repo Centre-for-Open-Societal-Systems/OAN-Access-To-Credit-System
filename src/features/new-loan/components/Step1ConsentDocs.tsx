@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { nextStep } from '@/features/new-loan/store/newLoanFormSlice';
 import { ArrowRight, Check, X, FileText, Clock, Eye, Upload, Info, Send, Smartphone, Image, Download, Folder } from 'lucide-react';
@@ -204,7 +204,7 @@ export function Step1ConsentDocs() {
                 <button type="button" onClick={() => setIsFarmerFound(true)} className="rounded-lg bg-[#16A34A] px-4 py-2.5 text-sm text-white">Search</button>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-[#f4f8ff] p-4">
               <Info className="mt-0.5 shrink-0 text-blue-500" size={18} />
               <div>
@@ -245,11 +245,11 @@ export function Step1ConsentDocs() {
         <h2 className="mb-5 flex items-center gap-1 text-base font-semibold text-gray-800 pb-4 border-b border-gray-200"><span className="text-red-500">*</span> Required Documents</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {INLINE_DOCS.map(doc => (
-            <DocUploadCard key={doc.id} doc={doc} entry={uploads[doc.id]} uploadProgress={progress[doc.id]} onUpload={f => handleUpload(doc.id, f)} onRemove={() => setUploads(p => { const n = {...p}; delete n[doc.id]; return n; })} showCamera={doc.showCamera} />
+            <DocUploadCard key={doc.id} doc={doc} entry={uploads[doc.id]} uploadProgress={progress[doc.id]} onUpload={f => handleUpload(doc.id, f)} onRemove={() => setUploads(p => { const n = { ...p }; delete n[doc.id]; return n; })} showCamera={doc.showCamera} />
           ))}
         </div>
       </div>
-      
+
       <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6">
         <button type="submit" className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-[#15803d] transition-all">
           Verify & Next <ArrowRight size={16} />

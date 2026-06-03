@@ -1,4 +1,3 @@
-import React from 'react';
 
 interface LeadStatusBadgeProps {
   status: string;
@@ -7,14 +6,14 @@ interface LeadStatusBadgeProps {
 const mapStatusToKpiLabel = (status?: string): string => {
   if (!status) return 'Active';
   const lower = status.toLowerCase();
-  
+
   if (lower === 'initiated' || lower === 'open' || lower === 'active') return 'Active';
   if (lower === 'qualified' || lower === 'verified') return 'Verified';
   if (lower === 'processed') return 'Processed';
   if (lower === 'granted') return 'Granted';
   if (lower === 'rejected' || lower === 'not interested' || lower === 'not_interested') return 'Rejected';
   if (lower === 'dormant' || lower === 'disqualified' || lower === 'invalid') return 'Dormant';
-  
+
   return status;
 };
 

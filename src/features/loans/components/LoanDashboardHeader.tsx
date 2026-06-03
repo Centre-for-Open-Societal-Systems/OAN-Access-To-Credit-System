@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Download, ChevronDown } from 'lucide-react';
 import { DATE_RANGE_OPTIONS } from '../constants/loans.constants';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectDateRange, setDateRange } from '../store/loanDashboardSlice';
 
-const LoanDashboardHeader = React.memo(() => {
+const LoanDashboardHeader = memo(() => {
   const dispatch = useAppDispatch();
   const dateRange = useAppSelector(selectDateRange);
-  
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -29,9 +29,8 @@ const LoanDashboardHeader = React.memo(() => {
         <button
           type="button"
           onClick={() => setDropdownOpen((o) => !o)}
-          className={`flex items-center gap-2 rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-slate-50 ${
-            dropdownOpen ? 'ring-2 ring-blue-500/20 border-blue-500' : ''
-          }`}
+          className={`flex items-center gap-2 rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-slate-50 ${dropdownOpen ? 'ring-2 ring-blue-500/20 border-blue-500' : ''
+            }`}
         >
           {activeLabel}
           <ChevronDown size={14} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -47,9 +46,8 @@ const LoanDashboardHeader = React.memo(() => {
                   dispatch(setDateRange(opt.value));
                   setDropdownOpen(false);
                 }}
-                className={`w-full px-4 py-2 text-left text-sm transition hover:bg-slate-50 ${
-                  dateRange === opt.value ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-text-primary'
-                }`}
+                className={`w-full px-4 py-2 text-left text-sm transition hover:bg-slate-50 ${dateRange === opt.value ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-text-primary'
+                  }`}
               >
                 {opt.label}
               </button>

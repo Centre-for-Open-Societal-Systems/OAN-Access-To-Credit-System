@@ -27,6 +27,20 @@ export const fetchLoanSummary = createAsyncThunk(
   }
 );
 
+export const updateLoanStatus = createAsyncThunk(
+  'loanDashboard/updateLoanStatus',
+  async ({ id, status }: { id: string; status: string }, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await loanService.updateLoanStatus(id, status);
+      // Re-fetch loans after a successful update to refresh the list
+      dispatch(fetchLoans());
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update loan status');
+    }
+  }
+);
+
 const ALL_STATUS_VALUES = ['danger', 'info', 'neutral'];
 
 interface LoanDashboardState {

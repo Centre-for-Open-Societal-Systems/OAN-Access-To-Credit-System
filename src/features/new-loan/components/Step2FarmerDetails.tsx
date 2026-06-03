@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { nextStep, prevStep } from '@/features/new-loan/store/newLoanFormSlice';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -9,8 +9,8 @@ import type { AppDispatch } from '@/store';
 
 export function Step2FarmerDetails() {
   const dispatch = useDispatch<AppDispatch>();
-  const [formData, setFormData] = useState<Record<string, string>>({ 
-    fullName: '', fatherName: '', mobilePhone: '', gender: '', maritalStatus: '', educationLevel: '', idNumber: '', region: '', woreda: '', kebele: '' 
+  const [formData, setFormData] = useState<Record<string, string>>({
+    fullName: '', fatherName: '', mobilePhone: '', gender: '', maritalStatus: '', educationLevel: '', idNumber: '', region: '', woreda: '', kebele: ''
   });
 
   const handleChange = (key: string) => (val: string) => setFormData(f => ({ ...f, [key]: val }));

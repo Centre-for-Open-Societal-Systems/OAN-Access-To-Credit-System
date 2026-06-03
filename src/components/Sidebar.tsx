@@ -78,7 +78,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
       {/* ── Brand ────────────────────────────────────────────────────────── */}
       <div
         className={[
-          'flex shrink-0 items-center gap-4 border-b border-white/[0.08]',
+          'flex shrink-0 items-center gap-1.5 border-b border-white/[0.08]',
           'px-[0.45rem] pb-6 pt-[0.9rem]',
           isCollapsed ? 'min-[900px]:justify-center min-[900px]:gap-0 min-[900px]:px-0' : '',
         ].join(' ')}
@@ -86,7 +86,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
         {/* Left Side: Logo Graphic */}
         <div className={`flex shrink-0 items-center justify-center ${isCollapsed ? 'w-full' : ''}`}>
           <img
-            src="/logo.png"
+            src="/logo.svg"
             alt="OARI Logo"
             className="h-16 w-auto object-contain"
             id="primary-logo-img"

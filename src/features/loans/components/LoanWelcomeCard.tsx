@@ -6,7 +6,7 @@ export default function LoanWelcomeCard() {
   const router = useRouter();
 
   return (
-    <article className="relative flex h-full flex-col justify-center overflow-hidden rounded-[20px] bg-white p-8 shadow-sm border border-border-subtle">
+    <article className="relative flex h-full w-full max-w-4xl flex-col justify-center overflow-hidden rounded-[20px] bg-white p-8 shadow-sm border border-border-subtle">
       {/* Subtle background gradient/orb mimicking the original */}
       <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-slate-50 opacity-50 blur-3xl" />
       

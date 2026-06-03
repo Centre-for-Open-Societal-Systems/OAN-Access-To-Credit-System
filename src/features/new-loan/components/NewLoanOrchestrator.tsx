@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectLoanCurrentStep, setStep, resetForm } from '@/features/new-loan/store/newLoanFormSlice';
 import { NewLoanProgressBar } from './NewLoanProgressBar';
