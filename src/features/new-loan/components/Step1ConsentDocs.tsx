@@ -1,260 +1,471 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { nextStep } from '@/features/new-loan/store/newLoanFormSlice';
-import { ArrowRight, Check, X, FileText, Clock, Eye, Upload, Info, Send, Smartphone, Image, Download, Folder } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, Loader2, FolderOpen, Eye, EyeOff, X, Check, ChevronDown } from 'lucide-react';
 import type { AppDispatch } from '@/store';
-
-function formatFileSize(bytes: number) {
-  if (!bytes) return '0 KB';
-  if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / 1024).toFixed(1) + ' KB';
-}
-
-function formatUploadTime(date: Date) {
-  if (!date) return '';
-  return date.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, onClose: () => void }) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!entry?.file) return;
-    const objectUrl = URL.createObjectURL(entry.file);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [entry]);
-
-  if (!entry) return null;
-  const isImage = entry.file.type.startsWith('image/');
-  const isPdf = entry.file.type === 'application/pdf';
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-800">{label}</p>
-            <p className="max-w-sm truncate text-xs text-gray-500">{entry.file.name} · {formatFileSize(entry.file.size)}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {url && (
-              <a href={url} download={entry.file.name} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <Download size={12} /> Download
-              </a>
-            )}
-            <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-100 transition-colors">
-              <X size={15} className="text-gray-600" />
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-1 items-center justify-center overflow-auto bg-gray-50 p-6 min-h-[200px]">
-          {!url ? (
-            <div className="flex flex-col items-center gap-2">
-              <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#4a7c59] border-t-transparent" />
-            </div>
-          ) : isImage ? (
-            <img src={url} alt={entry.file.name} className="max-h-[65vh] max-w-full rounded-xl object-contain shadow" />
-          ) : isPdf ? (
-            <iframe src={url} title={entry.file.name} className="h-[65vh] w-full rounded-xl border border-gray-200" />
-          ) : (
-            <div className="flex flex-col items-center gap-4 py-10">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100"><FileText size={32} className="text-gray-400" /></div>
-              <p className="text-sm font-medium text-gray-700">{entry.file.name}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCamera = true }: { doc: any, entry: any, onUpload: (file: File) => void, onRemove: () => void, uploadProgress: number, showCamera?: boolean }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const [viewing, setViewing] = useState(false);
-  const isUploaded = !!entry;
-  const isUploading = uploadProgress != null && uploadProgress < 100;
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files?.[0]) { onUpload(e.target.files[0]); e.target.value = ''; }
-  }
-
-  return (
-    <>
-      {viewing && <ViewFileModal entry={entry} label={doc.label} onClose={() => setViewing(false)} />}
-      <div className={`relative flex flex-col rounded-xl border p-4 transition-all ${isUploaded ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'}`}>
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div>
-            <p className="text-sm font-semibold text-gray-800">{doc.label} {doc.required && <span className="text-red-500">*</span>}</p>
-            <p className="text-xs text-gray-500">{doc.sub}</p>
-          </div>
-          {isUploading ? (
-            <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" /> Uploading
-            </span>
-          ) : isUploaded ? (
-            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              <Check size={10} strokeWidth={3} /> Uploaded
-            </span>
-          ) : null}
-        </div>
-        {isUploading && (
-          <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-            <div className="h-full bg-[#16A34A] transition-all" style={{ width: `${uploadProgress}%` }} />
-          </div>
-        )}
-        {isUploaded && !isUploading && entry && (
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <Image size={13} className="shrink-0 text-gray-400" />
-              <span className="flex-1 truncate text-xs font-medium text-gray-700">{entry.file.name}</span>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setViewing(true)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#4a7c59]/40 bg-[#4a7c59]/5 px-3 py-2 text-xs font-semibold text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors"><Eye size={12} /> View</button>
-              <button onClick={() => onRemove()} className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-500 hover:bg-red-100 transition-colors"><X size={13} /></button>
-            </div>
-          </div>
-        )}
-        {!isUploaded && !isUploading && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4">
-            <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all">Browse Files</button>
-          </div>
-        )}
-        <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-      </div>
-    </>
-  );
-}
-
-const INLINE_DOCS = [
-  { id: 'identityDoc', label: 'Identity Document', sub: 'National ID, Passport, or Kebele ID', required: true, showCamera: false },
-  { id: 'landOwnerProof', label: 'Land Ownership Proof', sub: 'Title deed or Kebele certificate', required: true, showCamera: true },
-];
 
 export function Step1ConsentDocs() {
   const dispatch = useDispatch<AppDispatch>();
-  const [farmerIdSearch, setFarmerIdSearch] = useState('');
-  const [isFarmerFound, setIsFarmerFound] = useState(false);
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [otpStatus, setOtpStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [faydaId, setFaydaId] = useState('**********');
+  const [showFaydaId, setShowFaydaId] = useState(false);
+  const [showConsentPopup, setShowConsentPopup] = useState(false);
+  const [showConsentDocumentPopup, setShowConsentDocumentPopup] = useState(false);
 
-  const [uploads, setUploads] = useState<Record<string, any>>({});
-  const [progress, setProgress] = useState<Record<string, number>>({});
-  const consentInputRef = useRef<HTMLInputElement>(null);
+  type SupportingDoc = { id: number; type: string; name: string; description: string; file?: File };
 
-  function handleUpload(docId: string, file: File) {
-    setProgress(p => ({ ...p, [docId]: 0 }));
-    setUploads((prev: any) => ({ ...prev, [docId]: { file, uploadedAt: new Date() } }));
-    let v = 0;
-    const iv = setInterval(() => {
-      v += Math.random() * 30 + 10;
-      if (v >= 100) { clearInterval(iv); setProgress(p => { const n = { ...p }; delete n[docId]; return n; }); }
-      else setProgress(p => ({ ...p, [docId]: Math.min(v, 99) }));
-    }, 300);
-  }
+  const [showSupportingDocPopup, setShowSupportingDocPopup] = useState(false);
+  const [selectedSupportingDoc, setSelectedSupportingDoc] = useState<SupportingDoc | null>(null);
+  const [supportPreviewUrl, setSupportPreviewUrl] = useState<string | null>(null);
 
-  function handleOtpChange(index: number, value: string) {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-    if (value && index < 5) otpInputRefs.current[index + 1]?.focus();
-  }
-
-  function handleVerifyOtp() {
-    if (otp.join('') === '123456') {
-      setOtpStatus('success');
-      setTimeout(() => {
-        dispatch(nextStep());
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 1000);
+  useEffect(() => {
+    if (selectedSupportingDoc?.file) {
+      const url = URL.createObjectURL(selectedSupportingDoc.file);
+      setSupportPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
     } else {
-      setOtpStatus('error');
+      setSupportPreviewUrl(null);
     }
-  }
+  }, [selectedSupportingDoc]);
+
+  const [showAddDocPopup, setShowAddDocPopup] = useState(false);
+  const [newDocType, setNewDocType] = useState('');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [newDocDesc, setNewDocDesc] = useState('');
+  const [newDocFile, setNewDocFile] = useState<File | null>(null);
+  const addDocFileRef = useRef<HTMLInputElement>(null);
+
+
+  const [supportingDocs, setSupportingDocs] = useState<SupportingDoc[]>([
+    { id: 1, type: 'ID Proof', name: 'householdID.png', description: 'Household ID added for 2 members' },
+    { id: 2, type: 'ID Proof', name: 'householdID.png', description: 'Household ID added for 2 members' }
+  ]);
+
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  const handleSaveDraft = () => {
+    setIsSavingDraft(true);
+    setTimeout(() => {
+      setIsSavingDraft(false);
+      const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setLastSaved(`Auto-saved at ${timeString}`);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      handleSaveDraft();
+    }, 60000); // Auto save every 60 seconds
+    return () => clearInterval(timer);
+  }, []);
+
+  const consentFileRef = useRef<HTMLInputElement>(null);
+  const [consentFile, setConsentFile] = useState<File | null>(null);
+  const [isConsentUploading, setIsConsentUploading] = useState(false);
+  const [consentProgress, setConsentProgress] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (consentFile) {
+      const url = URL.createObjectURL(consentFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [consentFile]);
+
+  const handleConsentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setConsentFile(e.target.files[0]);
+      setIsConsentUploading(true);
+      setConsentProgress(0);
+
+      // Simulate upload progress
+      let p = 0;
+      const interval = setInterval(() => {
+        p += 20;
+        if (p >= 100) {
+          p = 100;
+          setIsConsentUploading(false);
+          clearInterval(interval);
+        }
+        setConsentProgress(p);
+      }, 300);
+    }
+  };
+
+  const handleRemoveConsentFile = () => {
+    setConsentFile(null);
+    setConsentProgress(0);
+    if (consentFileRef.current) {
+      consentFileRef.current.value = '';
+    }
+  };
+
+  const handleRemoveSupportingDoc = (id: number) => {
+    setSupportingDocs(docs => docs.filter(doc => doc.id !== id));
+  };
+
+  const handleAddSupportingDoc = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDocType || !newDocDesc || !newDocFile) return;
+
+    const newDoc: SupportingDoc = {
+      id: Date.now(),
+      type: newDocType,
+      name: newDocFile.name,
+      description: newDocDesc,
+      file: newDocFile
+    };
+    setSupportingDocs([...supportingDocs, newDoc]);
+
+    setShowAddDocPopup(false);
+    setNewDocType('');
+    setNewDocDesc('');
+    setNewDocFile(null);
+  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
-    if (!uploads['identityDoc'] || !uploads['landOwnerProof']) {
-      alert("Please upload all required documents first.");
-      return;
-    }
-    if (otpStatus !== 'success') {
-      alert("Please verify the farmer's Fayda OTP first.");
-      return;
-    }
     dispatch(nextStep());
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-5">
-      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
-        <h2 className="mb-5 border-b border-gray-200 pb-4 text-base font-semibold text-gray-800">Consent Form & OTP</h2>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Farmer ID / Fayda ID</label>
-              <div className="flex gap-3">
-                <input type="text" placeholder="Search ID" value={farmerIdSearch} onChange={e => setFarmerIdSearch(e.target.value)} disabled={isFarmerFound} className="w-full rounded-lg border px-3 py-2.5 text-sm" />
-                <button type="button" onClick={() => setIsFarmerFound(true)} className="rounded-lg bg-[#16A34A] px-4 py-2.5 text-sm text-white">Search</button>
+    <>
+      {showAddDocPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 sm:px-6 py-4 shrink-0">
+              <h3 className="text-lg font-bold text-gray-900">Supporting Documents</h3>
+              <button type="button" onClick={() => setShowAddDocPopup(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-4 sm:px-6 py-6 overflow-y-auto">
+              <form onSubmit={handleAddSupportingDoc} className="space-y-5">
+                <div className="relative">
+                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Type <span className="text-red-500">*</span></label>
+                  <div
+                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                    className="flex w-full cursor-pointer items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  >
+                    <span>{newDocType || 'Select Document'}</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  {isTypeDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                      {['ID Proof', 'Land Record'].map((type) => (
+                        <div
+                          key={type}
+                          onClick={() => { setNewDocType(type); setIsTypeDropdownOpen(false); }}
+                          className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700"
+                        >
+                          {type}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Description <span className="text-red-500">*</span></label>
+                  <textarea
+                    value={newDocDesc}
+                    onChange={e => setNewDocDesc(e.target.value)}
+                    placeholder="Enter Description"
+                    rows={4}
+                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Document <span className="text-red-500">*</span></label>
+                  <input type="file" ref={addDocFileRef} onChange={e => e.target.files && setNewDocFile(e.target.files[0])} className="hidden" required />
+                  <div
+                    onClick={() => addDocFileRef.current?.click()}
+                    className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2.5 transition-colors hover:bg-gray-50"
+                  >
+                    <FolderOpen className="h-5 w-5 text-gray-400 fill-gray-400" />
+                    <span className="text-[15px] text-gray-400">{newDocFile ? newDocFile.name : 'Browse Files'}</span>
+                  </div>
+                </div>
+                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
+                  <button type="button" onClick={() => setShowAddDocPopup(false)} className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <button type="submit" className="rounded-md bg-[#16a34a] px-6 py-2.5 text-[15px] font-medium text-white hover:bg-green-700 transition-colors">
+                    Submit
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSupportingDocPopup && selectedSupportingDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-white shrink-0">
+              <h3 className="text-lg font-medium text-gray-900">{selectedSupportingDoc.name}</h3>
+              <button type="button" onClick={() => setShowSupportingDocPopup(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-100 p-6 overflow-auto flex items-center justify-center min-h-[500px]">
+              {supportPreviewUrl && selectedSupportingDoc.file?.type.startsWith('image/') ? (
+                <img src={supportPreviewUrl} alt="Document Preview" className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]" />
+              ) : supportPreviewUrl && selectedSupportingDoc.file?.type === 'application/pdf' ? (
+                <iframe src={supportPreviewUrl} className="w-full h-[70vh] border border-gray-200 rounded shadow-sm bg-white" title="Document Preview" />
+              ) : (
+                <div className="bg-white p-8 shadow-sm text-center w-full max-w-2xl min-h-[600px] border border-gray-200 flex flex-col items-center justify-center rounded-lg">
+                  <FileText className="h-16 w-16 text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg font-medium">Document Preview</p>
+                  <p className="text-gray-400 text-sm mt-2">({selectedSupportingDoc.name})</p>
+                  {supportPreviewUrl && <p className="text-gray-400 text-xs mt-1">Preview not available for this file type.</p>}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConsentDocumentPopup && consentFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-white shrink-0">
+              <h3 className="text-lg font-medium text-gray-900">{consentFile.name}</h3>
+              <button type="button" onClick={() => setShowConsentDocumentPopup(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-100 p-6 overflow-auto flex items-center justify-center min-h-[500px]">
+              {previewUrl && consentFile.type.startsWith('image/') ? (
+                <img src={previewUrl} alt="Document Preview" className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]" />
+              ) : previewUrl && consentFile.type === 'application/pdf' ? (
+                <iframe src={previewUrl} className="w-full h-[70vh] border border-gray-200 rounded shadow-sm bg-white" title="Document Preview" />
+              ) : (
+                <div className="bg-white p-8 shadow-sm text-center w-full max-w-2xl min-h-[600px] border border-gray-200 flex flex-col items-center justify-center rounded-lg">
+                  <FileText className="h-16 w-16 text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg font-medium">Document Preview</p>
+                  <p className="text-gray-400 text-sm mt-2">({consentFile.name})</p>
+                  <p className="text-gray-400 text-xs mt-1">Preview not available for this file type.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConsentPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h3 className="text-lg font-medium text-gray-900">Signed Consent Form</h3>
+              <button type="button" onClick={() => setShowConsentPopup(false)} className="text-gray-900 hover:text-gray-500 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-6">
+              <p className="mb-4 text-[15px] font-medium text-gray-900">Data shared as part of Agri Loan consent:</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {[
+                  'Basic Profile',
+                  'Land Information',
+                  'Crop and Livestock Information',
+                  'Socio Economic Information',
+                  'Agronomic Data'
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 rounded-lg border border-[#22c55e] bg-[#f0fdf4] px-4 py-4 shadow-sm">
+                    <CheckCircle2 className="h-5 w-5 text-white fill-[#22c55e]" />
+                    <span className="text-[15px] font-medium text-[#334155]">{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-[#f4f8ff] p-4">
-              <Info className="mt-0.5 shrink-0 text-blue-500" size={18} />
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6 relative z-0">
+        {/* Consent Management Section */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">Consent Management</h2>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {/* Left Column */}
+            <div className="flex flex-col gap-4">
               <div>
-                <p className="text-sm font-semibold text-[#2563eb]">Consent Authorization</p>
-                <p className="mt-1 text-xs text-blue-700/80 leading-relaxed">By requesting OTP, you confirm the farmer is present and has verbally agreed to share their registry data with AgriBank.</p>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Farmer ID / Fayda ID</label>
+                <div className="relative">
+                  <input
+                    type={showFaydaId ? "text" : "password"}
+                    value={faydaId}
+                    onChange={(e) => setFaydaId(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 pr-10 text-sm text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <button type="button" onClick={() => setShowFaydaId(!showFaydaId)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showFaydaId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <button type="button" onClick={() => setShowConsentPopup(true)} className="font-bold text-green-700">
+                  View Consent Details
+                </button>
+                <span className='font-normal'>provided on May 25, 2026</span>
               </div>
             </div>
 
-            <button type="button" onClick={() => setShowOtpVerification(true)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#16A34A] py-3 text-sm text-white shadow-sm hover:bg-[#15803d]">
-              <Send size={16} /> Send OTP Request
+            {/* Right Column - Signed Consent Form */}
+            <div className="rounded-lg border border-gray-200 bg-white p-5">
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-gray-900">Signed Consent Form</h3>
+                  <p className="text-[13px] text-gray-500">Physical copy signed by farmer</p>
+                </div>
+                {consentFile && !isConsentUploading && (
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setShowConsentDocumentPopup(true)} className="flex items-center gap-2 rounded-md border border-[#22c55e] px-4 py-1.5 text-sm font-semibold text-[#22c55e] bg-white hover:bg-green-50 transition-colors">
+                      <Eye className="h-4 w-4" /> View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveConsentFile}
+                      className="flex items-center justify-center rounded-md border border-red-300 px-2.5 py-1.5 text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+                      title="Remove file"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <input type="file" className="hidden" ref={consentFileRef} onChange={handleConsentUpload} accept=".pdf,.png,.jpg,.jpeg" />
+
+              {consentFile ? (
+                <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${consentFile.type.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center justify-between">
+                        <div>
+                          <p className="truncate text-[15px] font-medium text-gray-900">{consentFile.name}</p>
+                          <p className="text-[13px] text-gray-500 mt-0.5">{consentFile.size > 0 ? (consentFile.size / (1024 * 1024)).toFixed(2) : '1.2'} MB / 4.5 MB</p>
+                        </div>
+                        <span className="text-[13px] font-medium text-gray-500">{isConsentUploading ? consentProgress : 100}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div className={`h-full transition-all duration-300 ${isConsentUploading ? 'bg-blue-600' : 'bg-[#22c55e]'}`} style={{ width: `${isConsentUploading ? consentProgress : 100}%` }} />
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => consentFileRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-10 transition-colors hover:bg-gray-50 hover:border-blue-300 group"
+                >
+                  <div className="mb-4 rounded-full bg-[#f1f5f9] p-3 text-[#94a3b8] group-hover:text-blue-500 transition-colors">
+                    <FolderOpen className="h-8 w-8 fill-current" />
+                  </div>
+                  <p className="mb-1 text-[15px] font-medium text-gray-900">Drag and drop files here</p>
+                  <p className="mb-1 text-[14px] text-gray-900">Or</p>
+                  <p className="text-[15px] font-medium text-gray-900">Click Browse files to select a file</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Supporting Documents Section */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">
+            Supporting Documents <span className="text-red-500">*</span>
+          </h2>
+
+          {/* Drag & Drop Area */}
+          <div className="mb-6 mx-auto max-w-lg flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
+            <div className="mb-3">
+              <FolderOpen className="h-8 w-8 text-gray-500 fill-gray-500" />
+            </div>
+            <p className="mb-1 text-sm font-medium text-gray-900">Drag and drop files here</p>
+            <p className="mb-1 text-sm text-gray-500">Or</p>
+            <p className="mb-4 text-sm font-medium text-gray-900">Click Browse files to select a file</p>
+            <button type="button" onClick={() => setShowAddDocPopup(true)} className="flex items-center gap-1.5 rounded text-sm font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-4 py-1">
+              <span className="text-lg">+</span> Browse Files
             </button>
           </div>
 
-          {showOtpVerification && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 bg-[#f9fafb] p-8 h-full">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm border border-gray-100">
-                <Smartphone className="text-[#16A34A] animate-bounce" size={24} />
-              </div>
-              <h3 className="mb-3 text-lg font-bold text-gray-800">Fayda OTP Verification</h3>
-              <p className="text-center text-sm text-gray-500">OTP sent to 091****645</p>
-
-              <div className="mt-6 flex justify-center gap-2">
-                {otp.map((digit, i) => (
-                  <input key={i} type="text" maxLength={1} value={digit} onChange={e => handleOtpChange(i, e.target.value)} ref={el => { otpInputRefs.current[i] = el; }} className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border text-center text-xl font-semibold text-gray-800 shadow-sm" />
-                ))}
-              </div>
-
-              {otpStatus === 'error' && <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-lg">Incorrect OTP. Please try again.</p>}
-              {otpStatus === 'success' && <p className="mt-4 text-sm text-green-600 bg-green-50 border border-green-100 px-4 py-2 rounded-lg">OTP Verified!</p>}
-
-              <button type="button" onClick={handleVerifyOtp} className="mt-6 w-full rounded-lg bg-[#16A34A] py-3 text-sm font-medium text-white shadow-sm hover:bg-[#15803d]">Verify Code</button>
+          {/* Documents Table */}
+          {supportingDocs.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-gray-100 bg-gray-50/50">
+              <table className="min-w-[600px] w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Description</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {supportingDocs.map((doc) => (
+                    <tr key={doc.id}>
+                      <td className="px-4 py-4 w-1/3">
+                        <div className="flex items-center gap-3">
+                          <div className="text-gray-400 rounded border border-gray-200 p-1 bg-gray-50"><FileText className="h-5 w-5" /></div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{doc.type}</p>
+                            <p className="text-xs text-gray-500">{doc.name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-500 w-1/3 break-words max-w-[200px]">{doc.description}</td>
+                      <td className="px-4 py-4 text-right w-1/3">
+                        <div className="flex items-center justify-end gap-3">
+                          <button type="button" onClick={() => { setSelectedSupportingDoc(doc); setShowSupportingDocPopup(true); }} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
+                            <Eye className="h-4 w-4" /> View
+                          </button>
+                          <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
-      </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6">
-        <h2 className="mb-5 flex items-center gap-1 text-base font-semibold text-gray-800 pb-4 border-b border-gray-200"><span className="text-red-500">*</span> Required Documents</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {INLINE_DOCS.map(doc => (
-            <DocUploadCard key={doc.id} doc={doc} entry={uploads[doc.id]} uploadProgress={progress[doc.id]} onUpload={f => handleUpload(doc.id, f)} onRemove={() => setUploads(p => { const n = {...p}; delete n[doc.id]; return n; })} showCamera={doc.showCamera} />
-          ))}
+        {/* Bottom Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft}
+              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+              {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
+              {isSavingDraft ? 'Saving...' : 'Save Draft'}
+            </button>
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
+              <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+            </div>
+          </div>
+          <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
+            Confirm & Next <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
-      </div>
-      
-      <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6">
-        <button type="submit" className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-[#15803d] transition-all">
-          Verify & Next <ArrowRight size={16} />
-        </button>
-      </div>
-    </form>
+      </form>
+    </>
   );
 }

@@ -13,22 +13,22 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const activeFilters = useAppSelector(selectAdvFilters);
 
   const CALL_STATUS_OPTS = ['All', 'Completed', 'Missed', 'Voicemail'];
-  const QUICK_DATE_OPTS  = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
+  const QUICK_DATE_OPTS = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
 
   const [selStatuses, setSelStatuses] = useState<string[]>(activeFilters.statuses);
-  const [callSt,      setCallSt]      = useState(activeFilters.callStatus);
-  const [quickDate,   setQuickDate]   = useState(activeFilters.quickDate);
-  const [dateFrom,    setDateFrom]    = useState(activeFilters.dateFrom);
-  const [dateTo,      setDateTo]      = useState(activeFilters.dateTo);
+  const [callSt, setCallSt] = useState(activeFilters.callStatus);
+  const [quickDate, setQuickDate] = useState(activeFilters.quickDate);
+  const [dateFrom, setDateFrom] = useState(activeFilters.dateFrom);
+  const [dateTo, setDateTo] = useState(activeFilters.dateTo);
   const [phoneNumber, setPhoneNumber] = useState(activeFilters.phoneNumber);
 
   const toggleStatus = (s: string) => setSelStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
   const activeCount =
     (selStatuses.length > 0 ? 1 : 0) +
-    (callSt !== 'All'       ? 1 : 0) +
-    (quickDate || dateFrom  ? 1 : 0) +
-    (phoneNumber.trim()     ? 1 : 0);
+    (callSt !== 'All' ? 1 : 0) +
+    (quickDate || dateFrom ? 1 : 0) +
+    (phoneNumber.trim() ? 1 : 0);
 
   return (
     <>
@@ -60,14 +60,12 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   <div
                     key={s}
                     onClick={() => toggleStatus(s)}
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${
-                      sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${
-                        sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
-                      }`}>
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
+                        }`}>
                         {sel && <Check size={12} strokeWidth={3} className="text-white" />}
                       </div>
                       <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-text-primary'}`}>{s}</span>
@@ -88,11 +86,10 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   key={o}
                   type="button"
                   onClick={() => setCallSt(o)}
-                  className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${
-                    callSt === o
+                  className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${callSt === o
                       ? 'border-green-600 bg-green-50 text-green-700'
                       : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
-                  }`}
+                    }`}
                 >
                   {o}
                 </button>
@@ -106,7 +103,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'From', val: dateFrom, set: (v: string) => { setDateFrom(v); setQuickDate(''); } },
-                { label: 'To',   val: dateTo,   set: (v: string) => { setDateTo(v);   setQuickDate(''); } },
+                { label: 'To', val: dateTo, set: (v: string) => { setDateTo(v); setQuickDate(''); } },
               ].map(({ label, val, set }) => (
                 <div key={label}>
                   <p className="mb-1 text-sm text-text-muted">{label}</p>
@@ -128,11 +125,10 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   key={o}
                   type="button"
                   onClick={() => { setQuickDate(o); setDateFrom(''); setDateTo(''); }}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                    quickDate === o
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${quickDate === o
                       ? 'border-green-600 bg-green-50 text-green-700'
                       : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
-                  }`}
+                    }`}
                 >
                   {o}
                 </button>
@@ -150,7 +146,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                 value={phoneNumber}
                 onChange={e => setPhoneNumber(e.target.value)}
                 placeholder="e.g. +1 555 123 4567"
-                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-base text-text-primary placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-base text-text-primary placeholder:text-gray-500 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
               />
             </div>
           </section>

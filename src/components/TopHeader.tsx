@@ -12,6 +12,7 @@ import {
   Settings,
   UserRound,
   Languages,
+  Check,
 } from 'lucide-react';
 import { selectOfficerName, selectOfficerRole } from '@/features/auth/store/authSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -125,7 +126,7 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
     <header className="sticky top-0 z-50 flex items-center justify-between gap-4 min-h-[3.7rem] px-5 py-3 border-b border-[rgba(22,32,51,0.08)] bg-white max-[640px]:px-[0.9rem]">
 
       {/* Left: menu toggle + page title */}
-      <div className="inline-flex items-center gap-[0.65rem] min-w-0">
+      <div className="inline-flex items-center gap-[0.65rem] min-w-0 font-bold">
         <button
           type="button"
           aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -169,6 +170,10 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
         >
           {pageTitle}
         </button>
+        <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A]">
+
+          LD-9822
+        </span>
       </div>
 
       {/* Right: actions */}
