@@ -147,7 +147,17 @@ export const newLoanFormSlice = createSlice({
     },
     resetForm: () => {
       if (typeof window !== 'undefined') localStorage.removeItem('loan_form_state');
-      return { ...initialState, loadingStates: { sendOtp: false, verifyOtp: false, uploadDoc: false, saveFarmer: false, submitApp: false }, errors: {} };
+      return { 
+        currentStep: 1,
+        applicationId: null,
+        consentRequestData: null,
+        otpVerified: false,
+        uploadedDocuments: {},
+        formData: {},
+        farmerData: null,
+        loadingStates: { sendOtp: false, verifyOtp: false, uploadDoc: false, saveFarmer: false, submitApp: false }, 
+        errors: {} 
+      };
     },
     clearError: (state, action: PayloadAction<string>) => {
       state.errors[action.payload] = null;

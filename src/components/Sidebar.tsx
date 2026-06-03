@@ -79,7 +79,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
       <div
         className={[
           'flex shrink-0 items-center gap-4 border-b border-white/[0.08]',
-          'px-[0.45rem] pb-6 pt-[0.9rem]',
+          'px-[0.45rem] pb-0 pt-[0.9rem]',
           isCollapsed ? 'min-[900px]:justify-center min-[900px]:gap-0 min-[900px]:px-0' : '',
         ].join(' ')}
       >
@@ -154,12 +154,12 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
                     onClick={() => router.push(item.path)}
                     className={[
                       'flex w-full items-center gap-[0.65rem] rounded-[0.55rem] border-0',
-                      'px-[0.68rem] py-[0.7rem] text-left text-[1rem] font-medium leading-[1.1]',
+                      'px-[0.68rem] py-[0.7rem] text-left text-[1rem] leading-[1.1]',
                       'transition-[background-color,color,transform] duration-150 ease-in-out',
                       'hover:translate-x-[1px] hover:bg-white/[0.06] hover:text-white',
                       isActive
-                        ? 'bg-white/[0.12] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
-                        : 'bg-transparent text-white/[0.76]',
+                        ? 'bg-white/[0.12] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] font-bold'
+                        : 'bg-transparent text-white/[0.76] font-medium',
                       isCollapsed
                         ? 'min-[900px]:justify-center min-[900px]:gap-0 min-[900px]:px-[0.35rem]'
                         : '',

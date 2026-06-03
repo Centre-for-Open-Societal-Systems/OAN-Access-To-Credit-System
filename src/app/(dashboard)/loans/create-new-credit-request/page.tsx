@@ -82,9 +82,9 @@ function AnimatedCheckbox({ checked, onChange }: { checked: boolean, onChange: (
   );
 }
 
-const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 function DatePickerField({ id, label, value, onChange, required, error, disabled }: { id?: string, label?: string, value: string, onChange: (val: string) => void, required?: boolean, error?: string, disabled?: boolean }) {
   const today = new Date();
@@ -104,7 +104,7 @@ function DatePickerField({ id, label, value, onChange, required, error, disabled
   }, [isOpen]);
 
   const displayValue = selectedDate
-    ? `${String(selectedDate.getDate()).padStart(2,'0')} / ${MONTH_SHORT[selectedDate.getMonth()]} / ${selectedDate.getFullYear()}`
+    ? `${String(selectedDate.getDate()).padStart(2, '0')} / ${MONTH_SHORT[selectedDate.getMonth()]} / ${selectedDate.getFullYear()}`
     : '';
 
   function isDisabled(y: number, m: number, d: number) {
@@ -149,9 +149,9 @@ function DatePickerField({ id, label, value, onChange, required, error, disabled
       <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); setMode('day'); }}
         className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none
           ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default'
-          : error ? 'border-red-400 bg-red-50/40'
-          : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
-          : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+            : error ? 'border-red-400 bg-red-50/40'
+              : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15'
+                : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
         <span className={`flex items-center gap-2 ${disabled ? 'text-gray-500' : displayValue ? 'text-gray-900' : 'text-gray-400'}`}>
           <Calendar size={14} className="shrink-0 text-gray-400" />
           {displayValue || 'DD / MM / YYYY'}
@@ -213,13 +213,13 @@ function DatePickerField({ id, label, value, onChange, required, error, disabled
                     <button key={idx} type="button" onClick={() => selectDay(cell.day)} disabled={disabled}
                       className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all
                         ${selected ? 'font-semibold text-white shadow'
-                        : disabled ? 'cursor-not-allowed text-gray-300'
-                        : isTodayCell ? 'font-semibold border-2 hover:bg-opacity-10'
-                        : 'text-gray-700 hover:bg-gray-100'}`}
+                          : disabled ? 'cursor-not-allowed text-gray-300'
+                            : isTodayCell ? 'font-semibold border-2 hover:bg-opacity-10'
+                              : 'text-gray-700 hover:bg-gray-100'}`}
                       style={
                         selected ? { background: '#4a7c59' }
-                        : isTodayCell ? { borderColor: '#4a7c59', color: '#4a7c59' }
-                        : {}
+                          : isTodayCell ? { borderColor: '#4a7c59', color: '#4a7c59' }
+                            : {}
                       }>
                       {cell.day}
                     </button>
@@ -282,7 +282,7 @@ function TextField({ id, label, placeholder, value, onChange, type = 'text', hin
       <div className="relative">
         {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>}
         <input id={id} type={type} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} readOnly={readOnly} max={max} min={min}
-          className={`w-full rounded-lg border px-3 py-3 text-sm shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+          className={`w-full rounded-lg border px-3 py-3 text-sm shadow-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 ${icon ? 'pl-9' : ''} ${readOnly ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default focus:outline-none' : error ? 'border-red-400 bg-red-50/40 focus:border-red-400 focus:ring-red-100' : 'border-gray-300 bg-white text-gray-900 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
       </div>
       {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -295,7 +295,7 @@ function TextAreaField({ id, label, placeholder, value, onChange, required, rows
     <div className="flex flex-col gap-1.5">
       {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}{required && <span className="ml-0.5 text-red-500">*</span>}</label>}
       <textarea id={id} placeholder={placeholder} value={value} onChange={onChange ? e => onChange(e.target.value) : undefined} rows={rows}
-        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
+        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-500 focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/20" />
     </div>
   );
 }
@@ -436,7 +436,7 @@ function Step1({ form, setField, errors }: StepProps) {
       )}
       <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
         <input id={id} type={type} placeholder={placeholder} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange && onChange(e.target.value)}
-          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none" />
         <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">{unit}</span>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -451,7 +451,7 @@ function Step1({ form, setField, errors }: StepProps) {
       <div className={`flex overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${error ? 'border-red-400 bg-red-50/40 focus-within:border-red-400 focus-within:ring-red-100' : 'border-gray-300 bg-white focus-within:border-[#16A34A] focus-within:ring-[#16A34A]/20'}`}>
         <span className="flex shrink-0 items-center border-r border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">ETB</span>
         <input id={id} type="number" placeholder={placeholder} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange && onChange(e.target.value)}
-          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none" />
         <span className="flex shrink-0 items-center border-l border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">.00</span>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -638,18 +638,18 @@ function StepBankDetails({ form, setField, errors }: StepProps) {
 }
 
 function Step3({ form, setField, errors }: StepProps) {
-  const otpRefs            = useRef([]);
+  const otpRefs = useRef([]);
   const consentFileInputRef = useRef(null);
-  const consentAttachRef    = useRef(null);
-  const [otpSent,     setOtpSent]     = useState(false);
+  const consentAttachRef = useRef(null);
+  const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
-  const [otpError,    setOtpError]    = useState('');
-  const [verifying,   setVerifying]   = useState(false);
-  const [countdown,   setCountdown]   = useState(0);
+  const [otpError, setOtpError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const timerRef = useRef(null);
   const [consentFileProgress, setConsentFileProgress] = useState(null);
-  const [consentUploadedAt, setConsentUploadedAt]     = useState(null);
-  const [viewingConsent, setViewingConsent]           = useState(false);
+  const [consentUploadedAt, setConsentUploadedAt] = useState(null);
+  const [viewingConsent, setViewingConsent] = useState(false);
 
   function startCountdown(s: number = 102) {
     setCountdown(s);
@@ -668,7 +668,7 @@ function Step3({ form, setField, errors }: StepProps) {
 
   function handleOtpChange(i: number, v: string) {
     if (!/^\d?$/.test(v)) return;
-    const n = [...(form.otpCode || ['','','','','',''])];
+    const n = [...(form.otpCode || ['', '', '', '', '', ''])];
     n[i] = v;
     setField('otpCode')(n);
     setOtpError('');
@@ -703,9 +703,9 @@ function Step3({ form, setField, errors }: StepProps) {
     }, 300);
   }
 
-  const otpCode           = form.otpCode || ['','','','','',''];
-  const fmtCountdown      = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
-  const consentFile       = form.consentFormFile;
+  const otpCode = form.otpCode || ['', '', '', '', '', ''];
+  const fmtCountdown = s => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+  const consentFile = form.consentFormFile;
   const isConsentUploading = consentFileProgress != null;
 
   return (
@@ -891,8 +891,8 @@ function Step3({ form, setField, errors }: StepProps) {
                       onChange={e => handleOtpChange(i, e.target.value)} onKeyDown={e => handleOtpKeyDown(i, e)}
                       className={`h-12 w-12 rounded-xl border-2 bg-white text-center text-lg font-semibold text-gray-900 shadow-sm transition-all focus:outline-none focus:ring-2
                         ${otpError ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                        : digit ? 'border-[#4a7c59] focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'
-                        : 'border-gray-300 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
+                          : digit ? 'border-[#4a7c59] focus:border-[#4a7c59] focus:ring-[#4a7c59]/20'
+                            : 'border-gray-300 focus:border-[#16A34A] focus:ring-[#16A34A]/20'}`} />
                   ))}
                 </div>
                 {otpError && <p className="flex items-center gap-1 text-xs text-red-500"><AlertTriangle size={12} /> {otpError}</p>}
@@ -926,8 +926,8 @@ function Step3({ form, setField, errors }: StepProps) {
         </div>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SelectField id="consentType"     label="Consent Type" placeholder="Specific (Single Farmer)" options={CONSENT_TYPE_OPTIONS}     value={form.consentType}     onChange={setField('consentType')}     required />
-            <SelectField id="consentDuration" label="Duration"     placeholder="12 Months"                options={CONSENT_DURATION_OPTIONS} value={form.consentDuration} onChange={setField('consentDuration')} required />
+            <SelectField id="consentType" label="Consent Type" placeholder="Specific (Single Farmer)" options={CONSENT_TYPE_OPTIONS} value={form.consentType} onChange={setField('consentType')} required />
+            <SelectField id="consentDuration" label="Duration" placeholder="12 Months" options={CONSENT_DURATION_OPTIONS} value={form.consentDuration} onChange={setField('consentDuration')} required />
           </div>
           <TextAreaField id="consentPurposeDetailed" label="Purpose of Loan (Detailed)" placeholder="Describe exactly how the funds will be used..." value={form.consentPurposeDetailed} onChange={setField('consentPurposeDetailed')} rows={4} />
           <div>
@@ -952,12 +952,12 @@ function Step3({ form, setField, errors }: StepProps) {
 }
 
 const REGISTRY_FIELDS_INIT = [
-  { key: 'legalName', label: 'Legal Name',             icon: '👤', appValue: 'Abebe Kebede',   registryValue: 'Abebe Kebede Tadesse',        locked: true,  status: 'match' },
-  { key: 'dob',       label: 'Date of Birth',           icon: '🗓', appValue: '12/05/1985',     registryValue: '12/05/1985',                  locked: true,  status: 'match' },
-  { key: 'gender',    label: 'Gender',                  icon: '⚧',  appValue: 'Male',           registryValue: 'Male',                        locked: true,  status: 'match' },
-  { key: 'address',   label: 'Address (Region/Woreda)', icon: '📍', appValue: 'Oromia / Jimma', registryValue: 'Oromia / Jimma / Limmu Kosa', locked: false, status: 'warn'  },
-  { key: 'landSize',  label: 'Land Size (Hectares)',    icon: '🌾', appValue: '2.5',            registryValue: '2.5',                         locked: false, status: 'match' },
-  { key: 'faydaId',   label: 'Fayda ID',                icon: '🪪', appValue: 'Not entered',    registryValue: '722334455',                   locked: true,  status: 'auto'  },
+  { key: 'legalName', label: 'Legal Name', icon: '👤', appValue: 'Abebe Kebede', registryValue: 'Abebe Kebede Tadesse', locked: true, status: 'match' },
+  { key: 'dob', label: 'Date of Birth', icon: '🗓', appValue: '12/05/1985', registryValue: '12/05/1985', locked: true, status: 'match' },
+  { key: 'gender', label: 'Gender', icon: '⚧', appValue: 'Male', registryValue: 'Male', locked: true, status: 'match' },
+  { key: 'address', label: 'Address (Region/Woreda)', icon: '📍', appValue: 'Oromia / Jimma', registryValue: 'Oromia / Jimma / Limmu Kosa', locked: false, status: 'warn' },
+  { key: 'landSize', label: 'Land Size (Hectares)', icon: '🌾', appValue: '2.5', registryValue: '2.5', locked: false, status: 'match' },
+  { key: 'faydaId', label: 'Fayda ID', icon: '🪪', appValue: 'Not entered', registryValue: '722334455', locked: true, status: 'auto' },
 ];
 
 function RegistryStatusBadge({ status }: { status: string }) {
@@ -987,8 +987,8 @@ function Step4() {
   const inputRef = useRef(null);
 
   const matchCount = fields.filter(f => f.status === 'match').length;
-  const warnCount  = fields.filter(f => f.status === 'warn').length;
-  const autoCount  = fields.filter(f => f.status === 'auto').length;
+  const warnCount = fields.filter(f => f.status === 'warn').length;
+  const autoCount = fields.filter(f => f.status === 'auto').length;
 
   function startEdit(field: string) {
     setEditing(field.key);
@@ -1016,9 +1016,9 @@ function Step4() {
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { count: matchCount, label: 'Matched',    color: 'green', Icon: Check,         iconClass: 'text-green-600',  bg: 'bg-green-100',  border: 'border-green-200', textBig: 'text-green-700', textSm: 'text-green-600' },
-          { count: warnCount,  label: 'Mismatches', color: 'amber', Icon: AlertTriangle,  iconClass: 'text-amber-600',  bg: 'bg-amber-100',  border: 'border-amber-200', textBig: 'text-amber-700', textSm: 'text-amber-600' },
-          { count: autoCount,  label: 'Auto-filled',color: 'blue',  Icon: Zap,            iconClass: 'text-blue-600',   bg: 'bg-blue-100',   border: 'border-blue-200',  textBig: 'text-blue-700',  textSm: 'text-blue-600'  },
+          { count: matchCount, label: 'Matched', color: 'green', Icon: Check, iconClass: 'text-green-600', bg: 'bg-green-100', border: 'border-green-200', textBig: 'text-green-700', textSm: 'text-green-600' },
+          { count: warnCount, label: 'Mismatches', color: 'amber', Icon: AlertTriangle, iconClass: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-200', textBig: 'text-amber-700', textSm: 'text-amber-600' },
+          { count: autoCount, label: 'Auto-filled', color: 'blue', Icon: Zap, iconClass: 'text-blue-600', bg: 'bg-blue-100', border: 'border-blue-200', textBig: 'text-blue-700', textSm: 'text-blue-600' },
         ].map(({ count, label, bg, border, Icon, iconClass, textBig, textSm }) => (
           <div key={label} className={`flex items-center gap-3 rounded-2xl border ${border} bg-white px-4 py-3 shadow-sm`}>
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
@@ -1048,7 +1048,7 @@ function Step4() {
         <div className="divide-y divide-gray-100">
           {fields.map((field) => {
             const { key, label, icon, appValue, registryValue, locked, status } = field;
-            const isWarn    = status === 'warn';
+            const isWarn = status === 'warn';
             const isEditing = editing === key;
             const justSaved = savedKey === key;
 
@@ -1056,8 +1056,8 @@ function Step4() {
               <div key={key}
                 className={`grid grid-cols-[200px_1fr_1fr_140px] items-center gap-0 px-5 py-4 transition-all duration-200
                   ${isEditing ? 'bg-[#4a7c59]/5 ring-1 ring-inset ring-[#4a7c59]/20'
-                  : isWarn    ? 'bg-amber-50/30 hover:bg-amber-50/60'
-                  : 'hover:bg-gray-50/60'}`}>
+                    : isWarn ? 'bg-amber-50/30 hover:bg-amber-50/60'
+                      : 'hover:bg-gray-50/60'}`}>
 
                 {/* Field label */}
                 <div className="flex items-center gap-3 pr-4">
@@ -1106,12 +1106,12 @@ function Step4() {
                   ) : (
                     <div className={`flex items-center rounded-lg border px-3 py-3
                       ${justSaved ? 'border-[#4a7c59] bg-[#4a7c59]/5'
-                      : isWarn    ? 'border-amber-300 bg-amber-50'
-                      : 'border-green-200 bg-green-50/50'}`}>
+                        : isWarn ? 'border-amber-300 bg-amber-50'
+                          : 'border-green-200 bg-green-50/50'}`}>
                       <span className={`flex-1 text-sm font-medium truncate
                         ${justSaved ? 'text-[#4a7c59]'
-                        : isWarn    ? 'text-amber-800'
-                        : 'text-gray-800'}`}>
+                          : isWarn ? 'text-amber-800'
+                            : 'text-gray-800'}`}>
                         {registryValue}
                       </span>
                       {justSaved && <Check size={13} className="shrink-0 text-[#4a7c59]" strokeWidth={3} />}
@@ -1161,10 +1161,10 @@ function Step4() {
 }
 
 const REQUIRED_DOCS = [
-  { id: 'identityDoc',    label: 'Identity Document',    sub: 'National ID, Passport, or Kebele ID' },
-  { id: 'consentForm',    label: 'Signed Consent Form',  sub: 'Physical copy signed by farmer' },
+  { id: 'identityDoc', label: 'Identity Document', sub: 'National ID, Passport, or Kebele ID' },
+  { id: 'consentForm', label: 'Signed Consent Form', sub: 'Physical copy signed by farmer' },
   { id: 'landOwnerProof', label: 'Land Ownership Proof', sub: 'Title deed or Kebele certificate', required: true },
-  { id: 'marriageCert',   label: 'Marriage Certificate', sub: 'Required if applicant is married' },
+  { id: 'marriageCert', label: 'Marriage Certificate', sub: 'Required if applicant is married' },
 ];
 
 function formatUploadTime(date: Date) {
@@ -1185,7 +1185,7 @@ function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, o
   if (!entry) return null;
 
   const isImage = entry.file.type.startsWith('image/');
-  const isPdf   = entry.file.type === 'application/pdf';
+  const isPdf = entry.file.type === 'application/pdf';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
@@ -1199,7 +1199,7 @@ function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, o
           <div className="flex items-center gap-3">
             {url && (
               <a href={url} download={entry.file.name}
-                 className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 <Download size={12} /> Download
               </a>
             )}
@@ -1228,7 +1228,7 @@ function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, o
               <p className="text-sm font-medium text-gray-700">{entry.file.name}</p>
               <p className="text-xs text-gray-500">Preview not available for this file type.</p>
               <a href={url} download={entry.file.name}
-                 className="flex items-center gap-1.5 rounded-lg bg-[#4a7c59] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
+                className="flex items-center gap-1.5 rounded-lg bg-[#4a7c59] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a6347] transition-colors">
                 <Download size={14} /> Download File
               </a>
             </div>
@@ -1240,10 +1240,10 @@ function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, o
 }
 
 function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCamera = true }: { doc: any, entry: any, onUpload: (file: File) => void, onRemove: () => void, uploadProgress: number, showCamera?: boolean }) {
-  const fileRef   = useRef(null);
+  const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const [viewing, setViewing] = useState(false);
-  const isUploaded  = !!entry;
+  const isUploaded = !!entry;
   const isUploading = uploadProgress != null && uploadProgress < 100;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1253,9 +1253,8 @@ function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCam
   return (
     <>
       {viewing && <ViewFileModal entry={entry} label={doc.label} onClose={() => setViewing(false)} />}
-      <div className={`relative flex flex-col rounded-xl border p-4 transition-all ${
-        isUploaded ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'
-      }`}>
+      <div className={`relative flex flex-col rounded-xl border p-4 transition-all ${isUploaded ? 'border-[#4a7c59]/30 bg-white shadow-sm' : 'border-dashed border-gray-300 bg-gray-50'
+        }`}>
         {/* Card header */}
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
@@ -1338,7 +1337,7 @@ function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCam
         )}
 
         {/* File inputs */}
-        <input ref={fileRef}   type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
+        <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
       </div>
     </>
@@ -1346,23 +1345,23 @@ function DocUploadCard({ doc, entry, onUpload, onRemove, uploadProgress, showCam
 }
 
 function Step5({ uploads, setUploads, form, setField }: Step5Props) {
-  const [progress, setProgress]         = useState({});
-  const [extraDocs, setExtraDocs]       = useState([]);
+  const [progress, setProgress] = useState({});
+  const [extraDocs, setExtraDocs] = useState([]);
   const [viewingExtra, setViewingExtra] = useState(null);
-  const extraInputRef                   = useRef(null);
+  const extraInputRef = useRef(null);
 
   const MARRIAGE_STATUSES = [
-    { value: 'married',   label: 'Married' },
-    { value: 'single',    label: 'Single/Unmarried' },
-    { value: 'divorced',  label: 'Divorced' },
-    { value: 'widow',     label: 'Widow/Widower' },
+    { value: 'married', label: 'Married' },
+    { value: 'single', label: 'Single/Unmarried' },
+    { value: 'divorced', label: 'Divorced' },
+    { value: 'widow', label: 'Widow/Widower' },
     { value: 'separated', label: 'Separated' },
   ];
 
   const INLINE_DOCS = [
-    { id: 'marriageCert',   label: 'Marriage Certificate',  required: true,  showCamera: false },
-    { id: 'identityDoc',    label: 'Identity Document',     required: true,  showCamera: false },
-    { id: 'landOwnerProof', label: 'Land Ownership Proof',  required: true,  showCamera: true  },
+    { id: 'marriageCert', label: 'Marriage Certificate', required: true, showCamera: false },
+    { id: 'identityDoc', label: 'Identity Document', required: true, showCamera: false },
+    { id: 'landOwnerProof', label: 'Land Ownership Proof', required: true, showCamera: true },
   ];
 
   function handleUpload(docId: string, file: File) {
@@ -1510,26 +1509,26 @@ function Step5({ uploads, setUploads, form, setField }: Step5Props) {
 }
 
 const REVIEW_SECTIONS = [
-  { key: 'loanDetails',      icon: '🌾', title: 'Loan Details',               sub: 'Capture the requested loan, crop, and pricing details.',                status: 'complete', goStep: 1 },
-  { key: 'bankDetails',      icon: '🏦', title: 'Bank Details',               sub: 'Provide payout accounts and borrowing information.',                    status: 'complete', goStep: 2 },
-  { key: 'supportingDocs',   icon: '🛡', title: 'Supporting Documents',       sub: 'Upload the documents required for review.',                            status: 'complete', goStep: 3 },
-  { key: 'consentOtp',       icon: '🔐', title: 'Consent & OTP Verification', sub: 'Verify farmer identity and capture consent for registry data access.', status: 'verified', goStep: 4 },
-  { key: 'farmerDetails',    icon: '🧑‍🌾', title: 'Farmer Details',            sub: 'Confirm the farmer profile and agronomic details.',                    status: 'complete', goStep: 5 },
+  { key: 'loanDetails', icon: '🌾', title: 'Loan Details', sub: 'Capture the requested loan, crop, and pricing details.', status: 'complete', goStep: 1 },
+  { key: 'bankDetails', icon: '🏦', title: 'Bank Details', sub: 'Provide payout accounts and borrowing information.', status: 'complete', goStep: 2 },
+  { key: 'supportingDocs', icon: '🛡', title: 'Supporting Documents', sub: 'Upload the documents required for review.', status: 'complete', goStep: 3 },
+  { key: 'consentOtp', icon: '🔐', title: 'Consent & OTP Verification', sub: 'Verify farmer identity and capture consent for registry data access.', status: 'verified', goStep: 4 },
+  { key: 'farmerDetails', icon: '🧑‍🌾', title: 'Farmer Details', sub: 'Confirm the farmer profile and agronomic details.', status: 'complete', goStep: 5 },
 ];
 
 const REQUIRED_DOC_LABELS = {
-  identityDoc:    'Identity Document',
-  consentForm:    'Signed Consent Form',
+  identityDoc: 'Identity Document',
+  consentForm: 'Signed Consent Form',
   landOwnerProof: 'Land Ownership Proof',
-  marriageCert:   'Marriage Certificate',
+  marriageCert: 'Marriage Certificate',
 };
 
 function ReviewSection({ section, expanded, onToggle, goToStep }: { section: any, expanded: boolean, onToggle: () => void, goToStep: (step: number) => void }) {
   const statusConfig = {
     complete: { label: 'Complete', bg: 'bg-green-100', text: 'text-green-700' },
-    verified: { label: 'Verified', bg: 'bg-blue-100',  text: 'text-blue-700'  },
+    verified: { label: 'Verified', bg: 'bg-blue-100', text: 'text-blue-700' },
     mismatch: { label: 'Mismatch', bg: 'bg-amber-100', text: 'text-amber-700' },
-    pending:  { label: 'Pending',  bg: 'bg-gray-100',  text: 'text-gray-600'  },
+    pending: { label: 'Pending', bg: 'bg-gray-100', text: 'text-gray-600' },
   };
   const cfg = statusConfig[section.status] || statusConfig.pending;
   return (
@@ -1564,7 +1563,7 @@ function ReviewSection({ section, expanded, onToggle, goToStep }: { section: any
 }
 
 function Step6({ form, uploads, goToStep }: { form: FormState, uploads: UploadsState, goToStep: (step: number) => void }) {
-  const [expanded, setExpanded]       = useState({});
+  const [expanded, setExpanded] = useState({});
   const [acknowledged, setAcknowledged] = useState(false);
   return (
     <div className="flex flex-col gap-5">
@@ -1604,11 +1603,11 @@ function Step6({ form, uploads, goToStep }: { form: FormState, uploads: UploadsS
 }
 
 const STATUS_TRACKING = [
-  { label: 'Application Submitted',        icon: '📤', done: true,  note: 'Securely transmitted to Cooperative Bank of Oromia via SFTP.' },
-  { label: 'Under Review',                 icon: '🔍', done: false, note: 'Loan officer will verify documents and applicant details.' },
-  { label: 'Credit Scoring',               icon: '📊', done: false, note: 'Automated credit assessment based on farm data and history.' },
+  { label: 'Application Submitted', icon: '📤', done: true, note: 'Securely transmitted to Cooperative Bank of Oromia via SFTP.' },
+  { label: 'Under Review', icon: '🔍', done: false, note: 'Loan officer will verify documents and applicant details.' },
+  { label: 'Credit Scoring', icon: '📊', done: false, note: 'Automated credit assessment based on farm data and history.' },
   { label: 'Decision (Approved/Rejected)', icon: '⚖️', done: false, note: 'Final approval or rejection communicated to applicant.' },
-  { label: 'Loan Disbursed',               icon: '💰', done: false, note: 'Approved funds transferred to the farmer\'s bank account.' },
+  { label: 'Loan Disbursed', icon: '💰', done: false, note: 'Approved funds transferred to the farmer\'s bank account.' },
 ];
 
 function SummaryModal({ form, displayId, dateStr, timeStr, onClose }: { form: FormState, displayId: string, dateStr: string, timeStr: string, onClose: () => void }) {
@@ -1656,37 +1655,37 @@ function SummaryModal({ form, displayId, dateStr, timeStr, onClose }: { form: Fo
         {/* Body */}
         <div className="overflow-y-auto max-h-[60vh] px-6 py-5">
           <Section title="Farmer Information" icon="👤">
-            <F label="Full Name"       value={form.fullName} />
-            <F label="Father's Name"   value={form.fatherName} />
-            <F label="Farmer ID"       value={form.farmerId} />
-            <F label="Date of Birth"   value={form.dateOfBirth} />
-            <F label="Gender"          value={form.gender} />
-            <F label="Marital Status"  value={form.maritalStatus} />
-            <F label="Mobile Phone"    value={form.mobilePhone} />
+            <F label="Full Name" value={form.fullName} />
+            <F label="Father's Name" value={form.fatherName} />
+            <F label="Farmer ID" value={form.farmerId} />
+            <F label="Date of Birth" value={form.dateOfBirth} />
+            <F label="Gender" value={form.gender} />
+            <F label="Marital Status" value={form.maritalStatus} />
+            <F label="Mobile Phone" value={form.mobilePhone} />
             <F label="Education Level" value={form.educationLevel} />
-            <F label="National ID"     value={form.nationalId} />
-            <F label="Region"          value={form.region} />
-            <F label="Woreda"          value={form.woreda} />
-            <F label="Kebele"          value={form.kebele} />
+            <F label="National ID" value={form.nationalId} />
+            <F label="Region" value={form.region} />
+            <F label="Woreda" value={form.woreda} />
+            <F label="Kebele" value={form.kebele} />
           </Section>
           <Section title="Loan Details" icon="🔒">
-            <F label="Loan Type"         value={form.loanType} />
-            <F label="Purpose"           value={form.loanPurpose} />
-            <F label="Requested Amount"  value={form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : ''} />
-            <F label="Duration"          value={form.loanDuration} />
-            <F label="Primary Crops"     value={(form.primaryCrops || []).join(', ')} />
-            <F label="Crop Variety"      value={form.cropVariety} />
-            <F label="Land Size"         value={form.landSize ? `${form.landSize} Ha` : ''} />
-            <F label="Expected Yield"    value={form.expectedYield ? `${form.expectedYield} Qt` : ''} />
+            <F label="Loan Type" value={form.loanType} />
+            <F label="Purpose" value={form.loanPurpose} />
+            <F label="Requested Amount" value={form.requestedAmount ? `ETB ${Number(form.requestedAmount).toLocaleString()}` : ''} />
+            <F label="Duration" value={form.loanDuration} />
+            <F label="Primary Crops" value={(form.primaryCrops || []).join(', ')} />
+            <F label="Crop Variety" value={form.cropVariety} />
+            <F label="Land Size" value={form.landSize ? `${form.landSize} Ha` : ''} />
+            <F label="Expected Yield" value={form.expectedYield ? `${form.expectedYield} Qt` : ''} />
           </Section>
           <Section title="Banking Information" icon="🏦">
             <F label="Bank Account No." value={form.bankAccount} />
-            <F label="IFSC / FSC Code"  value={form.ifscCode} />
-            <F label="Bank Name"        value={form.bankName} />
-            <F label="Account Holder"   value={form.accountHolderName} />
+            <F label="IFSC / FSC Code" value={form.ifscCode} />
+            <F label="Bank Name" value={form.bankName} />
+            <F label="Account Holder" value={form.accountHolderName} />
           </Section>
           <Section title="Consent &amp; Fayda" icon="🛡">
-            <F label="Fayda ID"         value={form.faydaId} />
+            <F label="Fayda ID" value={form.faydaId} />
             <F label="OTP Verification" value="Verified" />
             <F label="Consented Fields" value={(form.dataFields || []).filter(f => f.checked).map(f => f.label).join(', ')} />
           </Section>
@@ -1705,11 +1704,11 @@ function SummaryModal({ form, displayId, dateStr, timeStr, onClose }: { form: Fo
 }
 
 const UPDATE_STATUS_OPTIONS = [
-  { value: 'submitted',  label: 'Application Submitted', icon: '📤' },
-  { value: 'review',     label: 'Under Review',           icon: '🔍' },
-  { value: 'scoring',    label: 'Credit Scoring',         icon: '📊' },
-  { value: 'decision',   label: 'Decision Made',          icon: '⚖️' },
-  { value: 'disbursed',  label: 'Loan Disbursed',         icon: '💰' },
+  { value: 'submitted', label: 'Application Submitted', icon: '📤' },
+  { value: 'review', label: 'Under Review', icon: '🔍' },
+  { value: 'scoring', label: 'Credit Scoring', icon: '📊' },
+  { value: 'decision', label: 'Decision Made', icon: '⚖️' },
+  { value: 'disbursed', label: 'Loan Disbursed', icon: '💰' },
 ];
 
 function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }: { currentDoneCount: number, onUpdate: () => void, onClose: () => void }) {
@@ -1729,21 +1728,19 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }: { currentDon
         <div className="flex flex-col gap-2 px-5 py-4">
           {UPDATE_STATUS_OPTIONS.map((opt, idx) => {
             const isSelected = selected === idx;
-            const isPast     = idx < selected;
+            const isPast = idx < selected;
             return (
               <button
                 key={opt.value}
                 onClick={() => setSelected(idx)}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
-                  isSelected
-                    ? 'border-[#16A34A] bg-[#16A34A]/5 ring-1 ring-[#16A34A]/30'
-                    : isPast
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${isSelected
+                  ? 'border-[#16A34A] bg-[#16A34A]/5 ring-1 ring-[#16A34A]/30'
+                  : isPast
                     ? 'border-green-100 bg-green-50/50'
                     : 'border-gray-100 bg-white hover:bg-gray-50'
-                }`}>
-                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
-                  isSelected || isPast ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
-                }`}>
+                  }`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${isSelected || isPast ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
+                  }`}>
                   {isSelected || isPast
                     ? <Check size={12} strokeWidth={3} className="text-white" />
                     : <span className="text-xs">{opt.icon}</span>}
@@ -1773,15 +1770,15 @@ function UpdateStatusModal({ currentDoneCount, onUpdate, onClose }: { currentDon
 
 function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: string, appId: string }) {
   const router = useRouter();
-  const now        = submittedAt || new Date();
-  const dateStr    = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const timeStr    = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  const displayId  = appId || 'APP-2026-8921';
+  const now = submittedAt || new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const displayId = appId || 'APP-2026-8921';
   const farmerName = form.fullName || 'Abebe Kebede';
 
-  const [showSummary, setShowSummary]   = useState(false);
-  const [showUpdate,  setShowUpdate]    = useState(false);
-  const [doneCount,   setDoneCount]     = useState(1); // 1 = only "Submitted" done initially
+  const [showSummary, setShowSummary] = useState(false);
+  const [showUpdate, setShowUpdate] = useState(false);
+  const [doneCount, setDoneCount] = useState(1); // 1 = only "Submitted" done initially
 
   // Build live tracking list from doneCount
   const trackingItems = STATUS_TRACKING.map((item, idx) => ({ ...item, done: idx < doneCount }));
@@ -1829,10 +1826,10 @@ function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: str
           <span style="font-size:12px;font-weight:600;">Submitted &amp; Pending Review</span>
         </div>
       </div>
-      ${section('Farmer Information','👤',[['Full Name',form.fullName],["Father's Name",form.fatherName],['Farmer ID',form.farmerId],['Date of Birth',form.dateOfBirth],['Gender',form.gender],['Marital Status',form.maritalStatus],['Mobile Phone',form.mobilePhone],['Education Level',form.educationLevel],['National ID',form.nationalId],['Region',form.region],['Woreda',form.woreda],['Kebele',form.kebele]])}
-      ${section('Loan Details','🔒',[['Loan Type',form.loanType],['Purpose',form.loanPurpose],['Requested Amount',amount],['Duration',form.loanDuration],['Primary Crops',crops],['Crop Variety',form.cropVariety],['Land Size',form.landSize?form.landSize+' Ha':''],['Expected Yield',form.expectedYield?form.expectedYield+' Qt':'']])}
-      ${section('Banking Information','🏦',[['Bank Account No.',form.bankAccount],['IFSC / FSC Code',form.ifscCode],['Bank Name',form.bankName],['Account Holder',form.accountHolderName]])}
-      ${section('Consent & Fayda','🛡',[['Fayda ID',form.faydaId],['OTP Verification','Verified'],['Consented Fields',consented]])}
+      ${section('Farmer Information', '👤', [['Full Name', form.fullName], ["Father's Name", form.fatherName], ['Farmer ID', form.farmerId], ['Date of Birth', form.dateOfBirth], ['Gender', form.gender], ['Marital Status', form.maritalStatus], ['Mobile Phone', form.mobilePhone], ['Education Level', form.educationLevel], ['National ID', form.nationalId], ['Region', form.region], ['Woreda', form.woreda], ['Kebele', form.kebele]])}
+      ${section('Loan Details', '🔒', [['Loan Type', form.loanType], ['Purpose', form.loanPurpose], ['Requested Amount', amount], ['Duration', form.loanDuration], ['Primary Crops', crops], ['Crop Variety', form.cropVariety], ['Land Size', form.landSize ? form.landSize + ' Ha' : ''], ['Expected Yield', form.expectedYield ? form.expectedYield + ' Qt' : '']])}
+      ${section('Banking Information', '🏦', [['Bank Account No.', form.bankAccount], ['IFSC / FSC Code', form.ifscCode], ['Bank Name', form.bankName], ['Account Holder', form.accountHolderName]])}
+      ${section('Consent & Fayda', '🛡', [['Fayda ID', form.faydaId], ['OTP Verification', 'Verified'], ['Consented Fields', consented]])}
       <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:10px;color:#9ca3af;">Generated by A2C System · ${dateStr} ${timeStr}</span>
         <span style="font-size:10px;color:#9ca3af;">CONFIDENTIAL — For internal bank use only</span>
@@ -1855,145 +1852,144 @@ function Step7({ form, submittedAt, appId }: { form: FormState, submittedAt: str
         />
       )}
 
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
 
-      {/* ── Left / Success card ── */}
-      <div className="lg:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {/* ── Left / Success card ── */}
+        <div className="lg:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-        {/* Green header banner */}
-        <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#10883c] px-6 py-10 text-center">
-          <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
-          <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/5" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
-            <Check size={30} className="text-white" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Application Submitted Successfully!</h2>
-            <p className="mt-1 text-sm text-white/80">
-              The loan application for <span className="font-semibold text-white">{farmerName}</span> has been
-              securely transmitted to Coop Bank for review.
-            </p>
-          </div>
-          <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
-            <Check size={11} strokeWidth={3} /> Verified &amp; Submitted
-          </span>
-        </div>
-
-        {/* Meta cards */}
-        <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-3">
-          {[
-            { label: 'Application ID',  value: displayId,               icon: <FileText size={15} className="text-[#4a7c59]" /> },
-            { label: 'Submitted On',    value: `${dateStr} ${timeStr}`,  icon: <Calendar size={15} className="text-[#4a7c59]" /> },
-            { label: 'Transfer Method', value: 'SFTP Sync',              icon: <Send size={15} className="text-[#4a7c59]" /> },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4a7c59]/10">{icon}</div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-                <p className="mt-0.5 truncate text-sm font-bold text-gray-800">{value}</p>
-              </div>
+          {/* Green header banner */}
+          <div className="relative flex flex-col items-center gap-3 overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#10883c] px-6 py-10 text-center">
+            <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
+            <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/5" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+              <Check size={30} className="text-white" strokeWidth={2.5} />
             </div>
-          ))}
-        </div>
-
-        {/* Farmer strip */}
-        <div className="mx-6 mb-5 flex items-center gap-3 rounded-xl border border-[#4a7c59]/20 bg-[#4a7c59]/5 px-4 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a7c59]/15 text-base">👤</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800">{farmerName}</p>
-            <p className="text-xs text-gray-500">
-              {form.loanType || 'Agricultural'} Loan
-              {form.requestedAmount ? ` · ETB ${Number(form.requestedAmount).toLocaleString()}` : ''}
-              {form.loanDuration    ? ` · ${form.loanDuration}` : ''}
-            </p>
+            <div>
+              <h2 className="text-xl font-bold text-white">Application Submitted Successfully!</h2>
+              <p className="mt-1 text-sm text-white/80">
+                The loan application for <span className="font-semibold text-white">{farmerName}</span> has been
+                securely transmitted to Coop Bank for review.
+              </p>
+            </div>
+            <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+              <Check size={11} strokeWidth={3} /> Verified &amp; Submitted
+            </span>
           </div>
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-[green-100] px-2.5 py-1 text-xs font-semibold text-[#16A34A]">
-            <Check size={10} strokeWidth={3} /> Pending Review
-          </span>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-            <Download size={14} /> Download PDF
-          </button>
-          <button
-            onClick={() => setShowSummary(true)}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-            <Eye size={14} /> View Summary
-          </button>
-          <button
-            onClick={() => router.push('/loan-application-dashboard')}
-            className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
-            <LayoutDashboard size={14} /> Return to Dashboard
-          </button>
-        </div>
-      </div>
-
-      {/* ── Right / Status tracking card ── */}
-      <div className="lg:col-span-2 flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
-          <div>
-            <h3 className="text-sm font-bold text-gray-800">Status Tracking</h3>
-            <p className="text-[11px] text-gray-400">Real-time application progress</p>
-          </div>
-          <button
-            onClick={() => setShowUpdate(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-2.5 py-1.5 text-xs font-semibold text-[#16A34A] hover:bg-[#16A34A]/10 transition-colors">
-            <Edit2 size={11} /> Update
-          </button>
-        </div>
-
-        <div className="flex flex-col px-5 py-4">
-          {trackingItems.map((item, idx) => {
-            const isLast = idx === trackingItems.length - 1;
-            return (
-              <div key={item.label} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                    item.done ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
-                  }`}>
-                    {item.done
-                      ? <Check size={13} strokeWidth={3} className="text-white" />
-                      : <span className="text-xs leading-none">{item.icon}</span>}
-                  </div>
-                  {!isLast && (
-                    <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#16A34A]' : 'bg-gray-200'}`} />
-                  )}
-                </div>
-                <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm font-semibold ${item.done ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</p>
-                    {item.done && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Done</span>}
-                  </div>
-                  {item.done && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <Clock size={10} className="text-gray-400" />
-                      <p className="text-[11px] text-gray-400">{dateStr} · {timeStr}</p>
-                    </div>
-                  )}
-                  {item.note && (
-                    <p className={`mt-1 text-xs leading-relaxed ${item.done ? 'text-gray-600' : 'text-gray-400'}`}>{item.note}</p>
-                  )}
+          {/* Meta cards */}
+          <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-3">
+            {[
+              { label: 'Application ID', value: displayId, icon: <FileText size={15} className="text-[#4a7c59]" /> },
+              { label: 'Submitted On', value: `${dateStr} ${timeStr}`, icon: <Calendar size={15} className="text-[#4a7c59]" /> },
+              { label: 'Transfer Method', value: 'SFTP Sync', icon: <Send size={15} className="text-[#4a7c59]" /> },
+            ].map(({ label, value, icon }) => (
+              <div key={label} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4a7c59]/10">{icon}</div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-gray-800">{value}</p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        <div className="mt-auto border-t border-gray-100 bg-blue-50/60 px-5 py-3.5">
-          <div className="flex items-start gap-2">
-            <Info size={12} className="mt-0.5 shrink-0 text-blue-500" />
-            <p className="text-[11px] leading-relaxed text-blue-700">
-              Status updates are synced automatically with Cooperative Bank. You will be notified at each stage.
-            </p>
+          {/* Farmer strip */}
+          <div className="mx-6 mb-5 flex items-center gap-3 rounded-xl border border-[#4a7c59]/20 bg-[#4a7c59]/5 px-4 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a7c59]/15 text-base">👤</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">{farmerName}</p>
+              <p className="text-xs text-gray-500">
+                {form.loanType || 'Agricultural'} Loan
+                {form.requestedAmount ? ` · ETB ${Number(form.requestedAmount).toLocaleString()}` : ''}
+                {form.loanDuration ? ` · ${form.loanDuration}` : ''}
+              </p>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-[green-100] px-2.5 py-1 text-xs font-semibold text-[#16A34A]">
+              <Check size={10} strokeWidth={3} /> Pending Review
+            </span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+              <Download size={14} /> Download PDF
+            </button>
+            <button
+              onClick={() => setShowSummary(true)}
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+              <Eye size={14} /> View Summary
+            </button>
+            <button
+              onClick={() => router.push('/loan-application-dashboard')}
+              className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#10883c] transition-colors">
+              <LayoutDashboard size={14} /> Return to Dashboard
+            </button>
           </div>
         </div>
-      </div>
 
-    </div>
+        {/* ── Right / Status tracking card ── */}
+        <div className="lg:col-span-2 flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+            <div>
+              <h3 className="text-sm font-bold text-gray-800">Status Tracking</h3>
+              <p className="text-[11px] text-gray-400">Real-time application progress</p>
+            </div>
+            <button
+              onClick={() => setShowUpdate(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-2.5 py-1.5 text-xs font-semibold text-[#16A34A] hover:bg-[#16A34A]/10 transition-colors">
+              <Edit2 size={11} /> Update
+            </button>
+          </div>
+
+          <div className="flex flex-col px-5 py-4">
+            {trackingItems.map((item, idx) => {
+              const isLast = idx === trackingItems.length - 1;
+              return (
+                <div key={item.label} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${item.done ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-200 bg-white'
+                      }`}>
+                      {item.done
+                        ? <Check size={13} strokeWidth={3} className="text-white" />
+                        : <span className="text-xs leading-none">{item.icon}</span>}
+                    </div>
+                    {!isLast && (
+                      <div className={`w-0.5 flex-1 my-1 min-h-[28px] rounded-full ${item.done ? 'bg-[#16A34A]' : 'bg-gray-200'}`} />
+                    )}
+                  </div>
+                  <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm font-semibold ${item.done ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</p>
+                      {item.done && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Done</span>}
+                    </div>
+                    {item.done && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Clock size={10} className="text-gray-400" />
+                        <p className="text-[11px] text-gray-400">{dateStr} · {timeStr}</p>
+                      </div>
+                    )}
+                    {item.note && (
+                      <p className={`mt-1 text-xs leading-relaxed ${item.done ? 'text-gray-600' : 'text-gray-400'}`}>{item.note}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-auto border-t border-gray-100 bg-blue-50/60 px-5 py-3.5">
+            <div className="flex items-start gap-2">
+              <Info size={12} className="mt-0.5 shrink-0 text-blue-500" />
+              <p className="text-[11px] leading-relaxed text-blue-700">
+                Status updates are synced automatically with Cooperative Bank. You will be notified at each stage.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </>
   );
 }
@@ -2139,7 +2135,7 @@ export default function NewLoanApplication() {
               <h1 className="text-lg font-bold text-gray-900">{meta.title}</h1>
               {showFaydaBadge && (
                 <span className="flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                  <Check size={10} strokeWidth={3} /> Verified via Fayda
+                  <Check size={10} strokeWidth={3} /> Loan Application AGL-1234
                 </span>
               )}
             </div>
@@ -2178,20 +2174,20 @@ export default function NewLoanApplication() {
           {/* Row 2 on mobile / Right on desktop: Previous Step + Next / Submit */}
           <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
             {currentStep > 1 ? (
-              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              <button onClick={goBack} className="flex items-center gap-1.5 rounded-xl border border-gray-600 bg-white px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
                 <ArrowLeft size={14} /> Previous Step
               </button>
             ) : <div />}
             {isSubmitStep ? (
-              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+              <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-bold text-white hover:bg-[#10883c] transition-colors">
                 Submit Application <Send size={14} />
               </button>
             ) : currentStep === 4 ? (
-              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-bold text-white hover:bg-[#10883c] transition-colors">
                 Confirm &amp; Next <ArrowRight size={14} />
               </button>
             ) : (
-              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#10883c] transition-colors">
+              <button onClick={goNext} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-5 py-3 text-sm font-bold text-white hover:bg-[#10883c] transition-colors">
                 Next Step <ArrowRight size={14} />
               </button>
             )}
