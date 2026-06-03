@@ -16,6 +16,9 @@ import { CallDetailsSection } from '@/features/new-lead/components/CallDetailsSe
 import { ActivitySection } from '@/features/new-lead/components/ActivitySection';
 import { ScheduleVisitCard } from '@/features/new-lead/components/ScheduleVisitCard';
 import { LeadAssignmentCard } from '@/features/new-lead/components/LeadAssignmentCard';
+import { InteractionTimelineCard } from '@/features/new-lead/components/InteractionTimelineCard';
+import { ScheduleNewVisitForm } from '@/features/new-lead/components/ScheduleNewVisitForm';
+import { VisitHistoryCard } from '@/features/new-lead/components/VisitHistoryCard';
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
 import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
 
@@ -102,34 +105,47 @@ function LeadApplicationContent() {
 
                     {/* Left Column (Forms) */}
                     <div className="flex flex-col items-start gap-6 flex-1 w-full">
-                        <LeadInfoSection />
-                        <ConsentManagementSection />
-                        <FarmerDetailsSection />
-                        <CreditInformationSection />
-                        <CallDetailsSection />
-                        <ActivitySection />
+                        {action === 'schedule-visit' ? (
+                            <ScheduleNewVisitForm />
+                        ) : (
+                            <>
+                                <LeadInfoSection />
+                                <ConsentManagementSection />
+                                <FarmerDetailsSection />
+                                <CreditInformationSection />
+                                <CallDetailsSection />
+                                <ActivitySection />
 
-                        {/* Form Actions Bottom */}
-                        <div className="flex flex-row justify-end items-center p-6 w-full bg-white border border-[#D4D4D4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl gap-4">
-                            <button
-                                onClick={handleClear}
-                                className="flex justify-center items-center px-5 py-2.5 bg-white border border-[#D1D5DC] rounded-[10px] text-[#364153] font-inter font-medium text-sm hover:bg-gray-50 transition-colors"
-                            >
-                                Clear Form
-                            </button>
-                            <button
-                                onClick={handleSubmit}
-                                className="flex justify-center items-center px-5 py-2.5 bg-[#16A34A] rounded-[10px] text-white font-inter font-medium text-sm shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:bg-[#15803d] transition-colors"
-                            >
-                                Submit Lead
-                            </button>
-                        </div>
+                                {/* Form Actions Bottom */}
+                                <div className="flex flex-row justify-end items-center p-6 w-full bg-white border border-[#D4D4D4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl gap-4">
+                                    <button
+                                        onClick={handleClear}
+                                        className="flex justify-center items-center px-5 py-2.5 bg-white border border-[#D1D5DC] rounded-[10px] text-[#364153] font-inter font-medium text-sm hover:bg-gray-50 transition-colors"
+                                    >
+                                        Clear Form
+                                    </button>
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="flex justify-center items-center px-5 py-2.5 bg-[#16A34A] rounded-[10px] text-white font-inter font-medium text-sm shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:bg-[#15803d] transition-colors"
+                                    >
+                                        Submit Lead
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Right Column (Sidebar Cards) */}
                     <div className="flex flex-col items-start gap-6 w-[314px]">
-                        <ScheduleVisitCard />
-                        <LeadAssignmentCard />
+                        {action === 'schedule-visit' ? (
+                            <VisitHistoryCard />
+                        ) : (
+                            <>
+                                <ScheduleVisitCard />
+                                <LeadAssignmentCard />
+                                {action === 'view' && <InteractionTimelineCard />}
+                            </>
+                        )}
                     </div>
 
                 </div>

@@ -21,7 +21,7 @@ const ICON_PROPS = {
 // 2.  to prevent unnecessary parent-driven row re-renders
 const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
-  
+
   switch (status) {
     case 'visit scheduled':
       return (
