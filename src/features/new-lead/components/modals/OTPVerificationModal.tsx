@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, ShieldCheck, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { verifyOtpThunk, selectNewLeadState } from '../store/newLeadSlice';
+import { verifyOtpThunk, selectNewLeadState } from '../../store/newLeadSlice';
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { consentRequestId } = useAppSelector(selectNewLeadState);
 
   useEffect(() => {
     if (isOpen) {
@@ -71,7 +72,12 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
     }
 
     setError(null);
-    const result = await dispatch(verifyOtpThunk(code));
+    if (!consentRequestId) {
+      alert("Missing consent request ID. Please try again.");
+      return;
+    }
+
+    const result = await dispatch(verifyOtpThunk({ otp_code: code, consent_request: consentRequestId }));
     if (verifyOtpThunk.fulfilled.match(result)) {
       onClose(); // Verification successful, close modal
     } else {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MapPin, Phone } from 'lucide-react';
-import LeadStatusModal, { LeadStatusOutcome } from './LeadStatusModal';
+import LeadStatusModal, { LeadStatusOutcome } from './modals/LeadStatusModal';
 
 interface LeadContextBannerProps {
   leadId: string;

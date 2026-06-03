@@ -51,6 +51,7 @@ interface NewLeadState {
   isVerifyingOtp: boolean;
   isOtpVerified: boolean;
   isSubmitting: boolean;
+  consentRequestId: string | null;
 }
 
 const initialState: NewLeadState = {
@@ -85,15 +86,16 @@ const initialState: NewLeadState = {
   isVerifyingOtp: false,
   isOtpVerified: false,
   isSubmitting: false,
+  consentRequestId: null,
 };
 
 export const searchFarmerConsent = createAsyncThunk(
   'newLead/searchConsent',
   async (farmerId: string, { rejectWithValue }) => {
     try {
-      // Simulate sending OTP delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return { success: true };
+      const response = await newLeadService.sendOtpAndCreateConsent({ farmerId });
+      // The backend response structure for this API is assumed to contain a success flag and possibly a consent_request id
+      return response as { success: boolean; consent_request?: string; farmer?: Partial<FarmerDetails> };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to search farmer');
     }
@@ -102,20 +104,13 @@ export const searchFarmerConsent = createAsyncThunk(
 
 export const verifyOtpThunk = createAsyncThunk(
   'newLead/verifyOtp',
-  async (otp: string, { rejectWithValue }) => {
+  async (payload: { otp_code: string; consent_request: string }, { rejectWithValue }) => {
     try {
-      // Simulate backend verification delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (otp !== '123456') { // Mock validation
-        throw new Error('Invalid OTP');
-      }
-      
-      // Mock Backend Data response
-      return {
-        firstName: 'Abebe',
-        lastName: 'Kebede',
-        phoneNumber: '+251 911 234 567',
-      };
+      const response = await newLeadService.verifyOtp({ 
+        consent_request: payload.consent_request, 
+        otp_code: payload.otp_code 
+      });
+      return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Verification failed');
     }
@@ -145,6 +140,31 @@ export const submitNewLeadThunk = createAsyncThunk(
   }
 );
 
+export const assignLeadThunk = createAsyncThunk(
+  'newLead/assignLead',
+  async (payload: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string; region?: string; date?: string }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.assignLead(payload);
+      // Pass the payload down so we can update local state
+      return { ...response, payload };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to assign lead');
+    }
+  }
+);
+
+export const scheduleVisitThunk = createAsyncThunk(
+  'newLead/scheduleVisit',
+  async (payload: { leadId: string; date: string; time?: string; location?: string; agenda?: string; region?: string; zone?: string; woreda?: string; kebele?: string; address?: string; }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.scheduleVisit({ leadId: payload.leadId, date: payload.date });
+      return { ...response, payload };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to schedule visit');
+    }
+  }
+);
+
 const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
@@ -158,6 +178,13 @@ const newLeadSlice = createSlice({
     },
     setFarmerId(state, action: PayloadAction<string>) {
       state.farmerId = action.payload;
+    },
+    addCreditInfo(state, action: PayloadAction<Omit<CreditInfo, 'id'>>) {
+      const newCreditInfo: CreditInfo = {
+        id: `CI-${Math.floor(Math.random() * 10000)}`,
+        ...action.payload
+      };
+      state.creditInfo.push(newCreditInfo);
     },
     updateFarmerDetails(state, action: PayloadAction<Partial<FarmerDetails>>) {
       state.farmerDetails = { ...state.farmerDetails, ...action.payload };
@@ -186,6 +213,11 @@ const newLeadSlice = createSlice({
       })
       .addCase(searchFarmerConsent.fulfilled, (state, action) => {
         state.isLoadingConsent = false;
+        
+        if (action.payload?.consent_request) {
+           state.consentRequestId = action.payload.consent_request;
+        }
+
         // Mock setting details from response if they exist.
         // In reality, map response to state.farmerDetails here.
         if (action.payload?.farmer) {
@@ -224,6 +256,22 @@ const newLeadSlice = createSlice({
       .addCase(submitNewLeadThunk.rejected, (state, action) => {
         state.isSubmitting = false;
         // Could store error state here if needed
+      })
+      .addCase(assignLeadThunk.fulfilled, (state, action) => {
+        const p = action.payload.payload;
+        state.assignment = {
+          agentId: p.assigneeId || 'AG-0000-0000',
+          assigneeName: p.assigneeName,
+          region: p.region || 'Addis Ababa',
+          date: p.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        };
+      })
+      .addCase(scheduleVisitThunk.fulfilled, (state, action) => {
+        const p = action.payload.payload;
+        // The time is not stored in the state definition currently, but date is.
+        // We'll format the date string to be shown in the UI.
+        const formattedDate = p.time ? `${p.date} • ${p.time}` : p.date;
+        state.visitSchedule = { date: formattedDate };
       });
   }
 });
@@ -232,6 +280,7 @@ export const {
   initializeLead,
   setLeadSource,
   setFarmerId,
+  addCreditInfo,
   updateFarmerDetails,
   addActivityNote,
   setVisitSchedule,

@@ -9,6 +9,13 @@ export const newLeadService = {
     });
   },
 
+  async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
+    return fetchApi('oan_a2c.consent.consent.verify_otp', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   // Dummy endpoint for credit info (will be replaced later)
   async getCreditInfo(farmerId: string): Promise<any> {
     return new Promise((resolve) => setTimeout(() => resolve([]), 500));
@@ -37,6 +44,11 @@ export const newLeadService = {
       region: 'Oromia',
       date: 'May 15, 2026'
     }), 500));
+  },
+
+  // Dummy endpoint for assigning lead to an owner
+  async assignLead(data: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string }): Promise<any> {
+    return new Promise((resolve) => setTimeout(() => resolve({ success: true, ...data }), 500));
   },
 
   // API to create a new lead

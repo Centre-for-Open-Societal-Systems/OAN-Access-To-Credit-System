@@ -1,8 +1,22 @@
-import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../store/newLeadSlice';
+import { useState } from 'react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { selectNewLeadState, assignLeadThunk } from '../store/newLeadSlice';
+import AssignOwnerModal from './modals/AssignOwnerModal';
 
 export function LeadAssignmentCard() {
-  const { assignment } = useAppSelector(selectNewLeadState);
+  const { assignment, leadId } = useAppSelector(selectNewLeadState);
+  const dispatch = useAppDispatch();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAssign = async (user: any) => {
+    await dispatch(assignLeadThunk({
+      leadId: leadId || 'TEMP-LEAD-ID',
+      assigneeName: user.name,
+      assigneeId: user.id,
+      gender: user.gender
+    }));
+    setIsModalOpen(false);
+  };
 
   if (!assignment) return null;
 
@@ -49,10 +63,21 @@ export function LeadAssignmentCard() {
 
       <button
         type="button"
+        onClick={() => setIsModalOpen(true)}
         className="flex flex-row justify-center items-center px-4 py-3 gap-2 w-full bg-[#16A34A] rounded-lg text-white font-roboto font-bold text-base hover:bg-[#15803d] transition-colors mt-2"
       >
         Change Assignee
       </button>
+
+      {isModalOpen && (
+        <AssignOwnerModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          currentOwnerName={assignment.assigneeName}
+          currentOwnerGender="Female" // Defaulting or derive from state if needed
+          onAssign={handleAssign}
+        />
+      )}
     </div>
   );
 }

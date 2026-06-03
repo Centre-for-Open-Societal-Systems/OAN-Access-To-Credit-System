@@ -1,8 +1,21 @@
-import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../store/newLeadSlice';
+import { useState } from 'react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { selectNewLeadState, addCreditInfo } from '../store/newLeadSlice';
+import { CreditInformationModal } from './modals/CreditInformationModal';
 
 export function CreditInformationSection() {
+  const dispatch = useAppDispatch();
   const { creditInfo } = useAppSelector(selectNewLeadState);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSubmit = (data: { loanType: string; loanAmount: string; purposeMessage: string }) => {
+    dispatch(addCreditInfo({
+      type: data.loanType,
+      amount: data.loanAmount,
+      purpose: data.purposeMessage
+    }));
+    setIsModalOpen(false);
+  };
 
   return (
     <section className="flex flex-col items-center pb-6 gap-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
@@ -12,7 +25,7 @@ export function CreditInformationSection() {
         </h2>
         <button
           type="button"
-          onClick={() => {/* Mock Add logic */}}
+          onClick={() => setIsModalOpen(true)}
           className="flex flex-row justify-center items-center px-4 py-1 gap-2 h-8 bg-white border border-[#16A34A] rounded-lg text-[#16A34A] font-roboto font-bold text-base leading-6 hover:bg-[#F0FDFA] transition-colors"
         >
           + Add
@@ -61,6 +74,12 @@ export function CreditInformationSection() {
           )}
         </div>
       </div>
+
+      <CreditInformationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+      />
     </section>
   );
 }

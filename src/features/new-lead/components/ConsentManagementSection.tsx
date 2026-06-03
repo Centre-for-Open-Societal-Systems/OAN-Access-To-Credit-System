@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, setFarmerId, searchFarmerConsent } from '../store/newLeadSlice';
-import { OTPVerificationModal } from './OTPVerificationModal';
+import { OTPVerificationModal } from './modals/OTPVerificationModal';
 
 export function ConsentManagementSection() {
   const dispatch = useAppDispatch();
