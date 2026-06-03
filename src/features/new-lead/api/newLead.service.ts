@@ -3,17 +3,25 @@ import { fetchApi } from '@/lib/api/fetchApi';
 export const newLeadService = {
   // NOTE: duplicated later need to make it universal  
   async sendOtpAndCreateConsent(data: { farmerId: string; phoneNumber?: string }): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.send_otp_and_create_consent', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return new Promise((resolve) => setTimeout(() => resolve({ 
+      success: true, 
+      consent_request: `REQ-${Date.now()}`,
+      farmer: {
+        firstName: 'Abebe',
+        lastName: 'Kebede',
+        phoneNumber: data.phoneNumber || '+251 911 234 567',
+        location: 'Jimma Zone'
+      }
+    }), 800));
   },
 
   async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.verify_otp', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return new Promise((resolve) => setTimeout(() => resolve({ 
+      success: true,
+      firstName: 'Abebe',
+      lastName: 'Kebede',
+      phoneNumber: '+251 911 234 567'
+    }), 800));
   },
 
   // Dummy endpoint for credit info (will be replaced later)
@@ -60,9 +68,8 @@ export const newLeadService = {
     lead_source: string;
     external_id?: string;
   }): Promise<any> {
-    return fetchApi('oan_a2c.api.v1.leads.create_lead', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return new Promise((resolve) => setTimeout(() => resolve({ 
+      message: { lead_id: `#LD-${Math.floor(Math.random() * 10000)}` }
+    }), 1000));
   }
 };

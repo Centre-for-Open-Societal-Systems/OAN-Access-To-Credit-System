@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, setVisitSchedule, scheduleVisitThunk } from '../store/newLeadSlice';
 import { Calendar, CalendarCheck } from 'lucide-react';
-import ScheduleVisitModal from './modals/ScheduleVisitModal';
+import { ScheduleNewVisitForm } from './ScheduleNewVisitForm';
 
 export function ScheduleVisitCard() {
   const dispatch = useAppDispatch();
@@ -66,7 +66,8 @@ export function ScheduleVisitCard() {
       </div>
 
       {isModalOpen && (
-        <ScheduleVisitModal
+        <ScheduleNewVisitForm
+          asModal={true}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}

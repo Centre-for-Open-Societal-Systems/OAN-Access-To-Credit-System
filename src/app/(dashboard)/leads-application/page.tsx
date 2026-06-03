@@ -105,7 +105,7 @@ function LeadApplicationContent() {
 
                     {/* Left Column (Forms) */}
                     <div className="flex flex-col items-start gap-6 flex-1 w-full">
-                        {action === 'schedule-visit' ? (
+                        {action === 'visit-scheduled' ? (
                             <ScheduleNewVisitForm />
                         ) : (
                             <>
@@ -137,7 +137,7 @@ function LeadApplicationContent() {
 
                     {/* Right Column (Sidebar Cards) */}
                     <div className="flex flex-col items-start gap-6 w-[314px]">
-                        {action === 'schedule-visit' ? (
+                        {action === 'visit-scheduled' ? (
                             <VisitHistoryCard />
                         ) : (
                             <>

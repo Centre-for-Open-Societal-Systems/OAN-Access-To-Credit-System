@@ -22,12 +22,12 @@ export default function LeadContextBanner({
   actionType = 'view',
 }: LeadContextBannerProps) {
   const isVisitScheduled = actionType === 'visit-scheduled';
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<'verify' | 'reject' | null>(null);
 
   const handleModalConfirm = (outcome: LeadStatusOutcome, notes: string) => {
     console.log('Confirmed:', outcome, notes);
     // TODO: dispatch actual update action here
-    setIsModalOpen(false);
+    setModalAction(null);
   };
 
   // Extract initials for visit-scheduled
@@ -102,11 +102,14 @@ export default function LeadContextBanner({
       {/* Buttons only show for generic view */}
       {!isVisitScheduled && (
         <div className="flex-1 flex justify-end gap-3">
-          <button className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#374151] hover:bg-slate-50 transition-colors">
+          <button 
+            onClick={() => setModalAction('reject')}
+            className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#374151] hover:bg-slate-50 transition-colors"
+          >
             ✕ Reject
           </button>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setModalAction('verify')}
             className="px-4 py-2 bg-[#087F50] rounded-lg text-sm font-medium text-white hover:bg-[#05774A] transition-colors"
           >
             ✓ Verify Lead
@@ -115,12 +118,13 @@ export default function LeadContextBanner({
       )}
 
       <LeadStatusModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={modalAction !== null}
+        onClose={() => setModalAction(null)}
         onConfirm={handleModalConfirm}
         variant="finalize"
         currentStatus={status}
         leadId={leadId}
+        initialOutcome={modalAction === 'reject' ? 'Rejected' : null}
       />
     </div>
   );

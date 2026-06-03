@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ThumbsUp, Ban, AlertTriangle, Circle, CircleDot, Lock } from 'lucide-react';
 
 export type LeadStatusOutcome = 'Qualified' | 'Rejected' | null;
@@ -10,6 +10,7 @@ interface LeadStatusModalProps {
   variant: 'update' | 'finalize';
   currentStatus: string;
   leadId: string;
+  initialOutcome?: LeadStatusOutcome;
 }
 
 export default function LeadStatusModal({
@@ -19,9 +20,17 @@ export default function LeadStatusModal({
   variant,
   currentStatus,
   leadId,
+  initialOutcome = null,
 }: LeadStatusModalProps) {
-  const [outcome, setOutcome] = useState<LeadStatusOutcome>(null);
+  const [outcome, setOutcome] = useState<LeadStatusOutcome>(initialOutcome);
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setOutcome(initialOutcome);
+      setNotes('');
+    }
+  }, [isOpen, initialOutcome]);
 
   if (!isOpen) return null;
 

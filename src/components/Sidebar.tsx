@@ -86,9 +86,9 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
         {/* Left Side: Logo Graphic */}
         <div className={`flex shrink-0 items-center justify-center ${isCollapsed ? 'w-full' : ''}`}>
           <img
-            src="/logo.svg"
+            src="/logo.png"
             alt="OARI Logo"
-            className="h-20 w-auto max-w-[130px] object-contain -mt-3.5"
+            className="h-20 w-auto max-w-[220px] object-contain -mt-1.5"
             id="primary-logo-img"
             onError={(e) => {
               e.currentTarget.classList.add('hidden');
