@@ -52,10 +52,6 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const [quickDate, setQuickDate] = useState(activeFilters.quickDate);
   const [dateFrom, setDateFrom] = useState(activeFilters.dateFrom);
   const [dateTo, setDateTo] = useState(activeFilters.dateTo);
-  const [phoneNumber, setPhoneNumber] = useState(activeFilters.phoneNumber);
-  const [quickDate, setQuickDate] = useState(activeFilters.quickDate);
-  const [dateFrom, setDateFrom] = useState(activeFilters.dateFrom);
-  const [dateTo, setDateTo] = useState(activeFilters.dateTo);
   const [location, setLocation] = useState(activeFilters.location || '');
 
   const getInitialIndex = () => {
@@ -126,8 +122,6 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     (selStatuses.length > 0 ? 1 : 0) +
     (callSt !== 'All' ? 1 : 0) +
     (quickDate || dateFrom ? 1 : 0) +
-    (phoneNumber.trim() ? 1 : 0);
-  (quickDate || dateFrom ? 1 : 0) +
     (location.trim() ? 1 : 0) +
     (tempIndex !== 4 ? 1 : 0) +
     (tempLoanType ? 1 : 0) +
@@ -167,20 +161,16 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                     onClick={() => toggleStatus(s)}
                     className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
                         }`}>
-                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
-                          }`}>
-                          {sel && <Check size={12} strokeWidth={3} className="text-white" />}
-                        </div>
-                        <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-text-primary'}`}>{label}</span>
+                        {sel && <Check size={12} strokeWidth={3} className="text-white" />}
                       </div>
-                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+                      <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-text-primary'}`}>{label}</span>
                     </div>
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+                  </div>
                     );
               })}
                   </div>
@@ -203,8 +193,11 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   {o}
                 </button>
               ))}
-              {/* Loan Amount */}
-              <section ref={amountRef} className="relative">
+            </div>
+          </section>
+
+          {/* Loan Amount */}
+          <section ref={amountRef} className="relative">
                 <p className="mb-3 text-base font-semibold text-text-primary">Loan Amount</p>
                 <div className="relative">
                   <button
@@ -450,7 +443,6 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   {[
                     { label: 'From', val: dateFrom, set: (v: string) => { setDateFrom(v); setQuickDate(''); } },
                     { label: 'To', val: dateTo, set: (v: string) => { setDateTo(v); setQuickDate(''); } },
-                    { label: 'To', val: dateTo, set: (v: string) => { setDateTo(v); setQuickDate(''); } },
                   ].map(({ label, val, set }) => (
                     <div key={label}>
                       <p className="mb-1 text-sm text-text-muted">{label}</p>
@@ -476,10 +468,6 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                         ? 'border-green-600 bg-green-50 text-green-700'
                         : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
                         }`}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${quickDate === o
-                        ? 'border-green-600 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-text-muted hover:border-gray-300 hover:text-text-primary'
-                        }`}
                     >
                       {o}
                     </button>
@@ -495,6 +483,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                 onClick={() => {
                   dispatch(resetFilters());
                   setSelStatuses([]);
+                  setCallSt('All');
                   setQuickDate('Last 30 Days');
                   setDateFrom('');
                   setDateTo('');
@@ -513,6 +502,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   const activeRange = RANGE_STEPS[tempIndex];
                   dispatch(setAdvFilters({
                     statuses: selStatuses,
+                    callStatus: callSt,
                     quickDate,
                     dateFrom,
                     dateTo,

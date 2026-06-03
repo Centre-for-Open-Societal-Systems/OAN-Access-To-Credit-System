@@ -29,6 +29,7 @@ export const fetchLeadSummary = createAsyncThunk(
 
 export interface AdvFilters {
   statuses: string[];
+  callStatus: string;
   quickDate: string;
   dateFrom: string;
   dateTo: string;
@@ -59,6 +60,7 @@ interface LeadState {
 
 const initialFilters: AdvFilters = {
   statuses: [],
+  callStatus: 'All',
   quickDate: '',
   dateFrom: '',
   dateTo: '',
