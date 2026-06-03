@@ -1,71 +1,178 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { prevStep } from '@/features/new-loan/store/newLoanFormSlice';
-import { ArrowLeft, Send, Check } from 'lucide-react';
+import { prevStep, setStep } from '@/features/new-loan/store/newLoanFormSlice';
+import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 import { useRouter } from 'next/navigation';
 
 export function Step3ReviewSubmit() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const [acknowledged, setAcknowledged] = useState(false);
 
-  function handleSubmit() {
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showValidationPopup, setShowValidationPopup] = useState(false);
+
+  // Background auto-save simulation
+  useEffect(() => {
+    const timer = setInterval(() => {
+      handleSaveDraft();
+    }, 60000); // 60 seconds
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleSaveDraft = () => {
+    setIsSavingDraft(true);
+    setTimeout(() => {
+      setIsSavingDraft(false);
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setLastSaved(`Auto-saved at ${timeString}`);
+    }, 1000);
+  };
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     if (!acknowledged) {
-      alert("Please acknowledge the information is correct.");
+      setShowValidationPopup(true);
       return;
     }
-    alert("Application Submitted to Redux / API successfully!");
-    router.push('/loan-application-dashboard');
+    // Application submitted successfully
+    dispatch(setStep(4));
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-      <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#16A34A]/50 transition-all duration-300">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#16A34A] shadow-sm relative overflow-hidden">
-          <Check size={26} className="text-white relative z-10" strokeWidth={3} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-[#1f2937]">Review Application</h2>
-            <span className="flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-bold text-[#16A34A]">
-              <Check size={12} strokeWidth={3} /> Verified via Fayda
-            </span>
-          </div>
-          <p className="text-sm text-gray-500">Please review all information before final submission.</p>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
 
-      <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Summary</h2>
-        <hr className="border-gray-200 mb-6" />
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Review Application</h2>
 
-        <div className="bg-[#f8fafc] border border-gray-200 p-5 rounded-xl mb-6 text-center text-sm text-gray-600">
-          All steps completed successfully. Ready for submission.
-        </div>
-
-        <hr className="border-gray-200 my-6" />
-
-        <div className="flex items-center justify-between">
-          <label className="flex cursor-pointer items-start gap-3" onClick={() => setAcknowledged(v => !v)}>
-            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${acknowledged ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-400 bg-white'}`}>
-              {acknowledged && <Check size={14} className="text-white" strokeWidth={3} />}
+        <div className="space-y-4">
+          {/* Consent & Supporting Documents Section */}
+          <div className="flex flex-col rounded-lg border border-gray-200 bg-gray-50/50 transition-colors hover:bg-gray-50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer gap-4 sm:gap-0" onClick={() => setExpandedSection(prev => prev === 'consent' ? null : 'consent')}>
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <User size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Consent & Supporting Documents</h3>
+                  <p className="text-sm text-gray-500">Obtain farmer's consent and upload required documents</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                  <Check size={14} /> Complete
+                </span>
+                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${expandedSection === 'consent' ? 'rotate-180' : ''}`} />
+              </div>
             </div>
-            <span className={`text-sm transition-colors ${acknowledged ? 'text-gray-900' : 'text-gray-600'}`}>
+
+            <div className={`grid transition-all duration-300 ease-in-out ${expandedSection === 'consent' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="p-4 pt-4 text-sm font-medium text-green-700 flex items-center gap-2 border-t border-gray-200 bg-green-50/30 justify-center">
+                  <Check className={`shrink-0 transition-all duration-500 delay-150 ${expandedSection === 'consent' ? 'scale-125 opacity-100' : 'scale-50 opacity-0'}`} size={18} />
+                  <span>All required consent and supporting documents have been successfully uploaded and verified.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Farmer Details Section */}
+          <div className="flex flex-col rounded-lg border border-gray-200 bg-gray-50/50 transition-colors hover:bg-gray-50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer gap-4 sm:gap-0" onClick={() => setExpandedSection(prev => prev === 'farmer' ? null : 'farmer')}>
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <Folder size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Farmer Details</h3>
+                  <p className="text-sm text-gray-500">Review the farmer profile information</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                  <Check size={14} /> Complete
+                </span>
+                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${expandedSection === 'farmer' ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+
+            <div className={`grid transition-all duration-300 ease-in-out ${expandedSection === 'farmer' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="p-4 pt-4 text-sm font-medium text-green-700 flex items-center gap-2 border-t border-gray-200 bg-green-50/30 justify-center">
+                  <Check className={`shrink-0 transition-all duration-500 delay-150 ${expandedSection === 'farmer' ? 'scale-125 opacity-100' : 'scale-50 opacity-0'}`} size={18} />
+                  <span>All farmer profile details and agronomic information have been successfully captured and verified.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={acknowledged}
+              onChange={(e) => setAcknowledged(e.target.checked)}
+              className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-600 cursor-pointer shrink-0"
+            />
+            <span className="text-sm font-medium text-gray-700">
               I acknowledge that the information provided is true and correct to the best of my knowledge.
             </span>
           </label>
         </div>
       </div>
 
-      <div className="mt-6 flex justify-between border-t border-gray-100 pt-6">
-        <button type="button" onClick={() => dispatch(prevStep())} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-gray-200">
-          <ArrowLeft size={16} /> Back
-        </button>
-        <button type="button" onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-[#16A34A] px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-[#15803d] transition-all hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#16A34A]/50">
-          Submit Application <Send size={16} />
-        </button>
+      {/* Bottom Actions */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm mt-8 relative z-0 gap-6 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft}
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+          >
+            {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
+            {isSavingDraft ? 'Saving...' : 'Save Draft'}
+          </button>
+          <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
+            <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 font-semibold">
+          <button type="button" onClick={() => dispatch(prevStep())} className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-[#16335A] shadow-sm hover:bg-gray-50 transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Previous Step
+          </button>
+          <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
+            Submit Application <Send className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-    </div>
+      {/* Validation Popup */}
+      {showValidationPopup && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden text-center p-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
+              <AlertCircle className="h-8 w-8 text-red-600" strokeWidth={2} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Acknowledgment Required</h3>
+            <p className="text-[15px] text-gray-600 mb-8">
+              Please check the box to acknowledge that the information provided is correct before submitting the application.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowValidationPopup(false)}
+              className="w-full rounded-xl bg-[#16A34A] py-3.5 text-[15px] font-bold text-white shadow-sm hover:bg-[#15803d] transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </form>
   );
 }
