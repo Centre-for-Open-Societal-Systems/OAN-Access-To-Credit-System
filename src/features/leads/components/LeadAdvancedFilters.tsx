@@ -23,7 +23,6 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     dormant: 'bg-red-400',
   };
 
-  const QUICK_DATE_OPTS = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
 
   const RANGE_STEPS = [
     { label: '0-25,000', value: '0-25000', min: 0, max: 25000, display: 'ETB 0 - 25,000' },
