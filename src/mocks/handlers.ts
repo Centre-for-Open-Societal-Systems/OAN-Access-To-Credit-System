@@ -69,8 +69,8 @@ export const handlers = [
       ...row,
       name: row.id,
       phone_number: row.phone,
-      loan_type: 'Input Financing', // Mocked defaults for what's missing in leadRows
-      loan_amount: '10000',
+      loan_type: row.loanType || '', 
+      loan_amount: row.loanAmount || '',
       lead_source: row.source,
       assigned_to: row.owner === 'me' ? 'me' : row.owner === 'other' ? 'someone' : null,
       creation: row.callStartTime,
