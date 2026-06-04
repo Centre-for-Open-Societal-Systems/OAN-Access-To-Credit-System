@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, addActivityNote } from '../store/newLeadSlice';
-import { Activity as ActivityIcon, Paperclip, Image as ImageIcon } from 'lucide-react';
+import { Edit, Paperclip, Image as ImageIcon } from 'lucide-react';
 
 export function ActivitySection() {
   const dispatch = useAppDispatch();
@@ -19,9 +19,7 @@ export function ActivitySection() {
     <section className="flex flex-col items-start p-6 gap-4 w-full bg-white border border-[#D4D4D4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
       <div className="flex flex-row items-center pb-3 w-full border-b border-[#D4D4D4]/50">
         <div className="flex flex-row items-center gap-2">
-          <div className="flex justify-center items-center w-4 h-4 bg-[#16335A] rounded-[2px]">
-            <ActivityIcon size={12} className="text-white" />
-          </div>
+          <Edit size={18} className="text-[#16335A]" />
           <h2 className="font-roboto font-bold text-base leading-6 text-[#111827]">
             Activity
           </h2>

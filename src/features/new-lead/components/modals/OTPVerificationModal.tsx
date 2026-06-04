@@ -140,7 +140,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
               </p>
 
               {/* Inputs */}
-              <div className="flex flex-row justify-center items-center py-4 gap-2 w-full">
+              <div className="flex flex-row justify-center items-center py-4 gap-1 sm:gap-2 w-full">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -154,7 +154,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
                     onChange={(e) => handleChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={handlePaste}
-                    className="flex flex-col items-center justify-center w-12 h-14 bg-white border border-[#D1D5DB] rounded-lg font-inter font-bold text-[20px] leading-6 text-center text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#16A34A] focus:border-[#16A34A] transition-all"
+                    className="flex flex-col items-center justify-center w-10 sm:w-12 h-12 sm:h-14 bg-white border border-[#D1D5DB] rounded-lg font-inter font-bold text-[16px] sm:text-[20px] leading-6 text-center text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#16A34A] focus:border-[#16A34A] transition-all"
                   />
                 ))}
               </div>

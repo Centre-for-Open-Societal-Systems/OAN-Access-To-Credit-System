@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, setVisitSchedule, scheduleVisitThunk } from '../store/newLeadSlice';
 import { Calendar, CalendarCheck } from 'lucide-react';
 import { ScheduleNewVisitForm } from './ScheduleNewVisitForm';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 
 export function ScheduleVisitCard() {
   const dispatch = useAppDispatch();
@@ -22,7 +23,7 @@ export function ScheduleVisitCard() {
   };
 
   return (
-    <div className="flex flex-col items-start bg-white border border-[#BFDBFE] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-xl w-[314px]">
+    <div className="flex flex-col items-start bg-white border border-[#BFDBFE] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-xl w-full">
       <div className="flex flex-row items-center p-4 px-6 w-full bg-[#EFF6FF] border-b border-[#F3F4F6] rounded-t-xl">
         <div className="flex flex-row items-center gap-2">
           <Calendar size={14} className="text-[#1E3A8A]" />
@@ -33,18 +34,13 @@ export function ScheduleVisitCard() {
       </div>
 
       <div className="flex flex-col items-start p-5 gap-4 w-full">
-        <div className="flex flex-col items-start gap-1.5 w-full">
-          <label className="text-sm font-medium text-gray-700 font-inter">
-            Date <span className="text-red-500">*</span>
-          </label>
-          <div className="relative w-full">
-            <input
-              type="date"
-              value={visitSchedule?.date || ''}
-              onChange={handleDateChange}
-              className="w-full rounded-md border border-[#D1D5DB] px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-[#3B82F6] focus:ring-[#3B82F6]/20 bg-white"
-            />
-          </div>
+        <div className="flex flex-col items-start w-full ">
+          <DatePickerField
+            label="Date"
+            value={visitSchedule?.date || ''}
+            onChange={(val) => dispatch(setVisitSchedule(val))}
+            required
+          />
         </div>
 
         <div className="flex flex-col items-start p-3 w-full bg-[#F9FAFB] border border-[#F3F4F6] rounded-md">

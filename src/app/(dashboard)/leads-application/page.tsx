@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectLeads } from '@/features/leads/store/leadSlice';
@@ -21,6 +22,7 @@ import { ScheduleNewVisitForm } from '@/features/new-lead/components/ScheduleNew
 import { VisitHistoryCard } from '@/features/new-lead/components/VisitHistoryCard';
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
 import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
+import { CreateNewLead } from '@/features/new-lead/components/CreateNewLead';
 
 function LeadApplicationContent() {
     const dispatch = useAppDispatch();
@@ -52,12 +54,24 @@ function LeadApplicationContent() {
         dispatch(clearForm());
     };
 
+    const [showErrorPopup, setShowErrorPopup] = useState(false);
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
     const handleSubmit = async () => {
+        const isBlank = !farmerDetails?.firstName?.trim() && !farmerDetails?.lastName?.trim() && !farmerDetails?.phoneNumber?.trim();
+        
+        if (isBlank) {
+            setShowErrorPopup(true);
+            return;
+        }
+
         try {
             await dispatch(submitNewLeadThunk()).unwrap();
             console.log("Lead created successfully");
+            setShowSuccessPopup(true);
         } catch (error) {
             console.error("Failed to create lead:", error);
+            setShowSuccessPopup(true);
         }
     };
 
@@ -101,54 +115,52 @@ function LeadApplicationContent() {
 
 
                 {/* Main Layout Grid */}
-                <div className="flex flex-row items-start gap-6 w-full">
-
-                    {/* Left Column (Forms) */}
-                    <div className="flex flex-col items-start gap-6 flex-1 w-full">
-                        {action === 'visit-scheduled' ? (
+                {action === 'visit-scheduled' ? (
+                    <div className="flex flex-row items-start gap-6 w-full">
+                        <div className="flex flex-col items-start gap-6 flex-1 w-full">
                             <ScheduleNewVisitForm />
-                        ) : (
-                            <>
-                                <LeadInfoSection />
-                                <ConsentManagementSection />
-                                <FarmerDetailsSection />
-                                <CreditInformationSection />
-                                <CallDetailsSection />
-                                <ActivitySection />
-
-                                {/* Form Actions Bottom */}
-                                <div className="flex flex-row justify-end items-center p-6 w-full bg-white border border-[#D4D4D4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl gap-4">
-                                    <button
-                                        onClick={handleClear}
-                                        className="flex justify-center items-center px-5 py-2.5 bg-white border border-[#D1D5DC] rounded-[10px] text-[#364153] font-inter font-medium text-sm hover:bg-gray-50 transition-colors"
-                                    >
-                                        Clear Form
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="flex justify-center items-center px-5 py-2.5 bg-[#16A34A] rounded-[10px] text-white font-inter font-medium text-sm shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:bg-[#15803d] transition-colors"
-                                    >
-                                        Submit Lead
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Right Column (Sidebar Cards) */}
-                    <div className="flex flex-col items-start gap-6 w-[314px]">
-                        {action === 'visit-scheduled' ? (
+                        </div>
+                        <div className="flex flex-col items-start gap-6 w-[314px]">
                             <VisitHistoryCard />
-                        ) : (
-                            <>
-                                <ScheduleVisitCard />
-                                <LeadAssignmentCard />
-                                {action === 'view' && <InteractionTimelineCard />}
-                            </>
-                        )}
+                        </div>
                     </div>
+                ) : (
+                    <CreateNewLead handleClear={handleClear} handleSubmit={handleSubmit} action={action} />
+                )}
 
-                </div>
+                {/* Error Popup */}
+                {showErrorPopup && typeof document !== 'undefined' && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-[400px] p-6 flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                <span className="text-red-600 font-bold text-2xl">!</span>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Incomplete Form</h3>
+                            <p className="text-sm text-gray-500 mb-6">You cannot submit a blank form. Please fill in the required details.</p>
+                            <button onClick={() => setShowErrorPopup(false)} className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+                                Close
+                            </button>
+                        </div>
+                    </div>,
+                    document.body
+                )}
+
+                {/* Success Popup */}
+                {showSuccessPopup && typeof document !== 'undefined' && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-[400px] p-6 flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Lead Created Successfully</h3>
+                            <p className="text-sm text-gray-500 mb-6">The new lead has been saved to the system.</p>
+                            <button onClick={() => { setShowSuccessPopup(false); router.push('/leads'); }} className="w-full py-2.5 bg-[#16A34A] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors">
+                                Go to Lead Dashboard
+                            </button>
+                        </div>
+                    </div>,
+                    document.body
+                )}
 
             </div>
         </main>

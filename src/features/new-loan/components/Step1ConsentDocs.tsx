@@ -328,66 +328,7 @@ export function Step1ConsentDocs() {
               </div>
             </div>
 
-            {/* Right Column - Signed Consent Form */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5">
-                  <div className="mb-4 flex items-start justify-between">
-                    <div>
-                      <h3 className="text-[15px] font-semibold text-gray-900">Signed Consent Form</h3>
-                      <p className="text-[13px] text-gray-500">Physical copy signed by farmer</p>
-                    </div>
-                    {consentFile && !isConsentUploading && (
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={() => setShowConsentDocumentPopup(true)} className="flex items-center gap-2 rounded-md border border-[#22c55e] px-4 py-1.5 text-sm font-semibold text-[#22c55e] bg-white hover:bg-green-50 transition-colors">
-                          <Eye className="h-4 w-4" /> View
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRemoveConsentFile}
-                          className="flex items-center justify-center rounded-md border border-red-300 px-2.5 py-1.5 text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
-                          title="Remove file"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
-                  <input type="file" className="hidden" ref={consentFileRef} onChange={handleConsentUpload} accept=".pdf,.png,.jpg,.jpeg" />
-
-                  {consentFile ? (
-                    <div className="relative rounded-md border border-gray-100 bg-white p-4 shadow-sm">
-                      <div className="mb-3 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${consentFile.type.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                            <FileText className="h-6 w-6" />
-                          </div>
-                          <div className="flex-1 min-w-0 flex items-center justify-between">
-                            <div>
-                              <p className="truncate text-[15px] font-medium text-gray-900">{consentFile.name}</p>
-                              <p className="text-[13px] text-gray-500 mt-0.5">{consentFile.size > 0 ? (consentFile.size / (1024 * 1024)).toFixed(2) : '1.2'} MB / 4.5 MB</p>
-                            </div>
-                            <span className="text-[13px] font-medium text-gray-500">{isConsentUploading ? consentProgress : 100}%</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                        <div className={`h-full transition-all duration-300 ${isConsentUploading ? 'bg-blue-600' : 'bg-[#22c55e]'}`} style={{ width: `${isConsentUploading ? consentProgress : 100}%` }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => consentFileRef.current?.click()}
-                      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-10 transition-colors hover:bg-gray-50 hover:border-blue-300 group"
-                    >
-                      <div className="mb-4 rounded-full bg-[#f1f5f9] p-3 text-[#94a3b8] group-hover:text-blue-500 transition-colors">
-                        <FolderOpen className="h-8 w-8 fill-current" />
-                      </div>
-                      <p className="mb-1 text-[15px] font-medium text-gray-900">Drag and drop files here</p>
-                      <p className="mb-1 text-[14px] text-gray-900">Or</p>
-                      <p className="text-[15px] font-medium text-gray-900">Click Browse files to select a file</p>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 

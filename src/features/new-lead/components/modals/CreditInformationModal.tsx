@@ -31,11 +31,11 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
       >
         {/* Modal Container */}
         <div 
-          className="relative flex flex-col items-start p-0 w-[799px] bg-white rounded-[10px] shadow-xl overflow-hidden"
+          className="relative flex flex-col items-start p-0 w-[95%] sm:w-[799px] max-w-full bg-white rounded-[10px] shadow-xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="box-border flex flex-row justify-between items-center p-6 w-[799px] h-[77px] border-b border-[#E5E7EB]">
+          <div className="box-border flex flex-row justify-between items-center p-6 w-full h-[77px] border-b border-[#E5E7EB]">
             <h2 className="font-inter font-semibold text-[18px] leading-[28px] tracking-[-0.439453px] text-[#0A0A0A]">
               Credit Information
             </h2>
@@ -48,12 +48,12 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
           </div>
 
           {/* Body */}
-          <div className="flex flex-col items-start p-[24px_24px_0px] gap-[16px] w-[799px]">
+          <div className="flex flex-col items-start p-[24px_24px_0px] gap-[16px] w-full">
             {/* Form Fields Container */}
-            <div className="flex flex-row flex-wrap items-start content-start p-0 gap-[24px_32px] w-[751px]">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start content-start p-0 gap-[24px] w-full">
               
               {/* Loan Type Row */}
-              <div className="flex flex-col items-start p-0 gap-[6px] w-[358px]">
+              <div className="flex flex-col items-start p-0 gap-[6px] w-full sm:w-[358px]">
                 <label className="font-roboto font-medium text-[14px] leading-[20px] text-[#111827]">
                   Loan Type <span className="text-red-500">*</span>
                 </label>
@@ -78,7 +78,7 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
               </div>
 
               {/* Loan Amount Row */}
-              <div className="flex flex-col items-start p-0 gap-[6px] w-[358px]">
+              <div className="flex flex-col items-start p-0 gap-[6px] w-full sm:w-[358px]">
                 <label className="font-roboto font-medium text-[14px] leading-[20px] text-[#111827]">
                   Loan Amount <span className="text-red-500">*</span>
                 </label>
@@ -92,7 +92,7 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
               </div>
 
               {/* Purpose Message Row */}
-              <div className="flex flex-col items-start p-0 gap-[6px] w-[751px]">
+              <div className="flex flex-col items-start p-0 gap-[6px] w-full">
                 <label className="font-roboto font-medium text-[14px] leading-[20px] text-[#111827]">
                   Purpose Message <span className="text-red-500">*</span>
                 </label>
@@ -107,7 +107,7 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
           </div>
 
           {/* Footer */}
-          <div className="box-border flex flex-row justify-end items-center p-[24px] gap-[12px] w-[799px] h-[87px] border-t border-[#E5E7EB] mt-[24px]">
+          <div className="box-border flex flex-row justify-end items-center p-[24px] gap-[12px] w-full h-[87px] border-t border-[#E5E7EB] mt-[24px]">
             <button 
               onClick={onClose}
               className="box-border flex flex-col justify-center items-center p-[8px_16px] w-[76.86px] h-[40px] bg-white border border-[#D4D4D4] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[8px] hover:bg-gray-50 transition-colors"

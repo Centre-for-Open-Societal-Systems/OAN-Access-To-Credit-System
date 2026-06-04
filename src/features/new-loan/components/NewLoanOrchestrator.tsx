@@ -65,24 +65,12 @@ export function NewLoanOrchestrator() {
             <div className="sm:hidden">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl font-bold text-gray-900">{meta.title}</h1>
-                <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A]">
-                  <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#16A34A]">
-                    <Check size={9} strokeWidth={4} className="text-white" />
-                  </div>
-                  AGL- 1234
-                </span>
               </div>
             </div>
           </div>
           <div className="hidden sm:block">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-xl font-bold text-gray-900">{meta.title}</h1>
-              <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A]">
-                <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#16A34A]">
-                  <Check size={9} strokeWidth={4} className="text-white" />
-                </div>
-                AGL- 1234
-              </span>
             </div>
             <p className="text-sm text-gray-500">{meta.subtitle}</p>
           </div>
