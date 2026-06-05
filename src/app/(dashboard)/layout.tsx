@@ -14,7 +14,12 @@ const navigationSections: NavSection[] = [
   {
     title: 'DASHBOARDS',
     items: [
-      { path: '/leads-dashboard', label: 'Leads Dashboard', icon: Users },
+      { 
+        path: '/leads-dashboard',
+        activePaths: ['/leads-dashboard', '/leads-application'],
+        label: 'Leads Dashboard', 
+        icon: Users 
+      },
     ],
   },
   {
