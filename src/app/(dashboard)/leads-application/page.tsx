@@ -37,9 +37,21 @@ function LeadApplicationContent() {
         if (id) {
             // Find lead in Redux to grab source if it exists
             const existingLead = leads.find(l => l.id.replace('#', '') === id);
+            const nameParts = existingLead?.name ? existingLead.name.split(' ') : [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
             dispatch(initializeLead({
                 id: `#${id}`,
-                source: existingLead?.source || 'Direct Entry'
+                source: existingLead?.source || 'Direct Entry',
+                farmerId: existingLead?.farmerId || '',
+                consentDate: existingLead?.consentDate || '',
+                farmerDetails: {
+                    firstName,
+                    lastName,
+                    phoneNumber: existingLead?.phone || '',
+                    location: existingLead?.location || ''
+                }
             }));
         } else {
             dispatch(initializeLead({}));

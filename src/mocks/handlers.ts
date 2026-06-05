@@ -68,6 +68,9 @@ export const handlers = [
     const mappedResults = filteredRows.map((row: any) => ({
       ...row,
       name: row.id,
+      farmer_name: row.farmerName,
+      farmer_id: row.farmerId,
+      consent_date: row.consentDate,
       phone_number: row.phone,
       loan_type: row.loanType || '', 
       loan_amount: row.loanAmount || '',
