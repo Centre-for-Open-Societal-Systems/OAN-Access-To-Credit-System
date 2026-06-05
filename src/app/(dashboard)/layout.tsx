@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { ListChecks, Users, type LucideIcon } from 'lucide-react';
+import { ListChecks, Users, LayoutDashboard, type LucideIcon } from 'lucide-react';
 import Sidebar, { NavSection } from '@/components/Sidebar';
 import TopHeader from '@/components/TopHeader';
 import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
@@ -19,6 +19,12 @@ const navigationSections: NavSection[] = [
         activePaths: ['/leads-dashboard', '/leads-application'],
         label: 'Leads Dashboard', 
         icon: Users 
+      },
+      { 
+        path: '/loan-application-dashboard',
+        activePaths: ['/loan-application-dashboard'],
+        label: 'Loans Dashboard', 
+        icon: LayoutDashboard 
       },
     ],
   },

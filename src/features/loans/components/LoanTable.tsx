@@ -1,22 +1,19 @@
 import { useState, useRef, useEffect, memo } from 'react';
-import { Filter, Check } from 'lucide-react';
+import { Filter, Check, Phone, Eye, ArrowUpDown } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   selectPagedRows,
-  selectSelectedStatuses,
-  toggleStatus,
-  toggleAllStatuses
+  selectTableStatusFilters,
+  selectTableTypeFilters,
+  toggleTableStatusFilter,
+  toggleTableTypeFilter,
 } from '../store/loanDashboardSlice';
-
-const STATUS_OPTIONS = [
-  { label: 'Action Required', value: 'danger' },
-  { label: 'Pending Review', value: 'info' },
-  { label: 'Draft', value: 'neutral' },
-];
 
 export interface LoanTableRow {
   id: string;
   applicant: string;
+  phone: string;
+  loanAmount: string;
   type: string;
   status: string;
   statusTone: string;
@@ -30,94 +27,136 @@ interface LoanTableProps {
   onView?: (row: LoanTableRow) => void;
 }
 
+const STATUS_OPTIONS = ['Approved', 'Processing', 'Rejected',];
+const LOAN_TYPE_OPTIONS = [
+  'Input loan (seeds, agrochemicals)',
+  'Agricultural term loan',
+  'Smallholder short-term loan',
+  'Land loan',
+  'Farm equipment loan',
+  'Smallholder farmer direct loan'
+];
+
 const LoanTable = memo(({ onView }: LoanTableProps) => {
   const dispatch = useAppDispatch();
   const rows: LoanTableRow[] = useAppSelector(selectPagedRows);
-  const selectedStatuses = useAppSelector(selectSelectedStatuses);
 
-  const allChecked = selectedStatuses.length === 3;
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [loanTypeFilterOpen, setLoanTypeFilterOpen] = useState(false);
 
-  const [filterOpen, setFilterOpen] = useState(false);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const selectedStatuses = useAppSelector(selectTableStatusFilters);
+  const selectedLoanTypes = useAppSelector(selectTableTypeFilters);
+
+  const statusRef = useRef<HTMLDivElement>(null);
+  const loanTypeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
-        setFilterOpen(false);
-      }
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusFilterOpen(false);
+      if (loanTypeRef.current && !loanTypeRef.current.contains(e.target as Node)) setLoanTypeFilterOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const toggleStatus = (val: string) => {
+    dispatch(toggleTableStatusFilter(val));
+  };
+
+  const toggleLoanType = (val: string) => {
+    dispatch(toggleTableTypeFilter(val));
+  };
+
+  const clearStatusFilters = () => {
+    selectedStatuses.forEach(s => dispatch(toggleTableStatusFilter(s)));
+    setStatusFilterOpen(false);
+  };
+
+  const clearLoanTypeFilters = () => {
+    selectedLoanTypes.forEach(s => dispatch(toggleTableTypeFilter(s)));
+    setLoanTypeFilterOpen(false);
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-sm text-text-muted">
-        <thead className="bg-[#f9fafb] text-[0.68rem] font-bold uppercase tracking-wider text-gray-500">
+    <div className="overflow-x-auto min-h-[400px]">
+      <table className="w-full border-collapse text-left text-base text-gray-500 whitespace-nowrap">
+        <thead className="bg-[#fafafa] text-[13px] font-bold uppercase tracking-wider text-gray-400">
           <tr>
-            <th className="rounded-tl-xl border-b border-[#e9e9e9] px-5 py-3">Application ID / Applicant</th>
-            <th className="border-b border-[#e9e9e9] px-5 py-3">Type</th>
-            <th className="border-b border-[#e9e9e9] px-5 py-3">
-              <div className="relative inline-flex items-center gap-1.5" ref={statusDropdownRef}>
-                <span>Status</span>
-                <button
-                  type="button"
-                  onClick={() => setFilterOpen(!filterOpen)}
-                  className={`inline-grid h-6 w-6 place-items-center rounded-md transition-colors ${filterOpen
-                    ? 'bg-blue-50 text-blue-600'
-                    : !allChecked
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
-                    }`}
-                >
-                  <Filter size={12} strokeWidth={2.5} />
-                </button>
-
-                {filterOpen && (
-                  <div className="absolute left-0 top-[calc(100%+0.4rem)] z-50 flex min-w-[12rem] flex-col gap-0.5 rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl font-normal normal-case tracking-normal text-text-primary">
-                    <button
-                      type="button"
-                      onClick={() => dispatch(toggleAllStatuses())}
-                      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.82rem] font-medium transition-colors hover:bg-gray-50 ${allChecked ? 'bg-blue-50/50 font-semibold text-blue-600' : ''}`}
-                    >
-                      <span className={`inline-grid h-4 w-4 shrink-0 place-items-center rounded border transition-colors ${allChecked ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
-                        {allChecked && <Check size={10} strokeWidth={3} className="text-white" />}
-                      </span>
-                      All
-                    </button>
-                    {STATUS_OPTIONS.map((opt) => {
-                      const isChecked = selectedStatuses.includes(opt.value);
-                      let dotColor = "bg-gray-400";
-                      if (opt.value === 'danger') dotColor = "bg-red-500";
-                      if (opt.value === 'info') dotColor = "bg-blue-500";
-
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => dispatch(toggleStatus(opt.value))}
-                          className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.82rem] font-medium transition-colors hover:bg-gray-50 ${isChecked ? 'bg-blue-50/50 font-semibold text-blue-600' : ''}`}
-                        >
-                          <span className={`inline-grid h-4 w-4 shrink-0 place-items-center rounded border transition-colors ${isChecked ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
-                            {isChecked && <Check size={10} strokeWidth={3} className="text-white" />}
-                          </span>
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold">Application ID</th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold">PHONE NUMBER</th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold">
+              <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={statusRef}>
+                STATUS <Filter size={16} className="text-gray-400" onClick={() => setStatusFilterOpen(!statusFilterOpen)} />
+                {statusFilterOpen && (
+                  <div className="absolute left-0 top-[calc(100%+0.4rem)] z-50 flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
+                      <Filter size={16} className="text-emerald-600" /> FILTER BY STATUS
+                    </div>
+                    <div className="flex flex-col p-2 max-h-[200px] overflow-y-auto">
+                      {STATUS_OPTIONS.map((opt) => {
+                        const isChecked = selectedStatuses.includes(opt);
+                        return (
+                          <button key={opt} type="button" onClick={() => toggleStatus(opt)} className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-gray-50 text-gray-700">
+                            <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border ${isChecked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white'}`}>
+                              {isChecked && <Check size={14} strokeWidth={3} />}
+                            </span>
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
+                      <button onClick={clearStatusFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
+                      <button onClick={() => setStatusFilterOpen(false)} className="rounded-lg bg-[#10b981] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#059669]">Apply</button>
+                    </div>
                   </div>
                 )}
               </div>
             </th>
-            <th className="border-b border-[#e9e9e9] px-5 py-3">Last Updated</th>
-            <th className="rounded-tr-xl border-b border-[#e9e9e9] px-5 py-3">Action</th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold">
+              <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={loanTypeRef}>
+                LOAN TYPE <Filter size={16} className="text-gray-400" onClick={() => setLoanTypeFilterOpen(!loanTypeFilterOpen)} />
+                {loanTypeFilterOpen && (
+                  <div className="absolute left-0 top-[calc(100%+0.4rem)] z-50 flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
+                      <Filter size={16} className="text-emerald-600" /> FILTER BY LOAN TYPE
+                    </div>
+                    <div className="flex flex-col p-2 max-h-[200px] overflow-y-auto">
+                      {LOAN_TYPE_OPTIONS.map((opt) => {
+                        const isChecked = selectedLoanTypes.includes(opt);
+                        return (
+                          <button key={opt} type="button" onClick={() => toggleLoanType(opt)} className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-gray-50 text-gray-700">
+                            <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border ${isChecked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white'}`}>
+                              {isChecked && <Check size={14} strokeWidth={3} />}
+                            </span>
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
+                      <button onClick={clearLoanTypeFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
+                      <button onClick={() => setLoanTypeFilterOpen(false)} className="rounded-lg bg-[#10b981] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#059669]">Apply</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold">
+              <div className="inline-flex items-center gap-1.5 cursor-pointer">
+                LOAN AMOUNT
+              </div>
+            </th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold text-center leading-tight">
+              STATUS CHANGE<br />DATE
+            </th>
+            <th className="border-b border-gray-100 px-6 py-4 font-semibold text-center">ACTIONS</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#e9e9e9]">
+        <tbody className="divide-y divide-gray-100 bg-white">
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-8 text-center text-sm text-text-muted">
+              <td colSpan={7} className="py-8 text-center text-base text-gray-500">
                 No applications found for this period.
               </td>
             </tr>
@@ -125,41 +164,63 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
             rows.map((row, i) => {
               let badgeColor = "bg-gray-100 text-gray-600 border-gray-200";
               let dotColor = "bg-gray-400";
-              if (row.statusTone === 'danger') {
-                badgeColor = "bg-red-50 text-red-600 border-red-200";
+
+              const statusLower = row.status.toLowerCase();
+              if (statusLower.includes('processing') || statusLower.includes('active') || row.statusTone === 'info') {
+                badgeColor = "bg-blue-50 text-blue-500 border border-blue-200";
+                dotColor = "bg-blue-500";
+              } else if (statusLower.includes('approved') || statusLower.includes('verified') || row.statusTone === 'success') {
+                badgeColor = "bg-emerald-50 text-emerald-600 border border-emerald-200";
+                dotColor = "bg-emerald-500";
+              } else if (statusLower.includes('rejected') || row.statusTone === 'danger') {
+                badgeColor = "bg-red-50 text-red-500 border border-red-200";
                 dotColor = "bg-red-500";
               }
-              if (row.statusTone === 'info') {
-                badgeColor = "bg-blue-50 text-blue-700 border-blue-200";
-                dotColor = "bg-blue-500";
-              }
-              if (row.statusTone === 'success') {
-                badgeColor = "bg-green-50 text-green-700 border-green-200";
-                dotColor = "bg-green-500";
-              }
+
+              // Parse date parts. In slice, updated is 'May 28, 2026 · 09:15 AM'
+              const updatedParts = row.updated.split(' · ');
+              const datePart = updatedParts[0];
+              const timePart = updatedParts[1];
 
               return (
-                <tr key={`${row.id}-${i}`} className="transition-colors hover:bg-gray-50/50">
-                  <td className="px-5 py-4">
-                    <strong className="block text-sm font-bold text-text-primary">{row.id}</strong>
-                    <span className="mt-0.5 inline-block text-xs text-text-muted">{row.applicant}</span>
+                <tr key={`${row.id}-${i}`} className="transition-colors hover:bg-gray-50/50 group">
+                  <td className="px-6 py-5">
+                    <strong className="block text-base font-semibold text-emerald-500">{row.id}</strong>
+                    {row.applicant !== 'Unknown Applicant' && (
+                      <span className="mt-1 block text-sm text-gray-400">{row.applicant}</span>
+                    )}
                   </td>
-                  <td className="px-5 py-4">{row.type}</td>
-                  <td className="px-5 py-4">
-                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${badgeColor}`}>
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
-                      {row.status}
+                  <td className="px-6 py-5 font-medium text-gray-700">
+                    <div className="flex items-center gap-2.5">
+                      <Phone size={16} className="text-gray-400" />
+                      {row.phone}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ${badgeColor}`}>
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
+                      {row.status.replace('Verified', 'Approved').replace('Active', 'Processing')}
                     </span>
                   </td>
-                  <td className="px-5 py-4">{row.updated}</td>
-                  <td className="px-5 py-4">
-                    <button
-                      type="button"
-                      onClick={() => onView?.(row)}
-                      className="inline-flex w-20 items-center justify-center rounded-lg border border-gray-200 bg-white py-1.5 text-xs font-bold text-text-primary shadow-sm transition-all hover:-translate-y-[1px] hover:shadow"
-                    >
-                      {row.action}
-                    </button>
+                  <td className="px-6 py-5 font-medium text-gray-700">{row.type}</td>
+                  <td className="px-6 py-5 font-medium text-gray-700">{row.loanAmount}</td>
+                  <td className="px-6 py-5 text-center">
+                    <div className="flex flex-col text-sm text-gray-500">
+                      <span>{datePart},</span>
+                      <span>{timePart}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => onView?.(row)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95"
+                      >
+                        <Eye size={16} className="text-gray-400" />
+                        View
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
