@@ -46,6 +46,7 @@ function LeadApplicationContent() {
                 source: existingLead?.source || 'Direct Entry',
                 farmerId: existingLead?.farmerId || '',
                 consentDate: existingLead?.consentDate || '',
+                consentRequestId: existingLead?.consentRequestId || null,
                 farmerDetails: {
                     firstName,
                     lastName,

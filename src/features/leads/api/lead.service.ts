@@ -53,6 +53,7 @@ export const leadService = {
       visitDate: item.visitDate || null,
       farmerId: item.farmer_id || null,
       consentDate: item.consent_date || null,
+      consentRequestId: item.consentRequestId || null,
     }));
 
     return { results, totalCount };

@@ -171,12 +171,13 @@ const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
   reducers: {
-    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string }>) {
+    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
       Object.assign(state, initialState);
       if (action.payload.id) state.leadId = action.payload.id;
       if (action.payload.source) state.leadSource = action.payload.source;
       if (action.payload.farmerId) state.farmerId = action.payload.farmerId;
       if (action.payload.consentDate) state.consentDate = action.payload.consentDate;
+      if (action.payload.consentRequestId !== undefined) state.consentRequestId = action.payload.consentRequestId;
       if (action.payload.farmerDetails) {
         state.farmerDetails = { ...state.farmerDetails, ...action.payload.farmerDetails };
       }
