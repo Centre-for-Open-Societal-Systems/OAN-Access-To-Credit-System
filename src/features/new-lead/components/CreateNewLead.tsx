@@ -6,8 +6,12 @@ import { CreditInformationSection } from './CreditInformationSection';
 import { CallDetailsSection } from './CallDetailsSection';
 import { ActivitySection } from './ActivitySection';
 import { ScheduleVisitCard } from './ScheduleVisitCard';
+import { UpcomingVisitCard } from './UpcomingVisitCard';
 import { LeadAssignmentCard } from './LeadAssignmentCard';
 import { InteractionTimelineCard } from './InteractionTimelineCard';
+import { useAppSelector } from '@/store/hooks';
+import { selectLeads } from '@/features/leads/store/leadSlice';
+import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
 
 interface CreateNewLeadProps {
     handleClear: () => void;
@@ -16,6 +20,13 @@ interface CreateNewLeadProps {
 }
 
 export function CreateNewLead({ handleClear, handleSubmit, action }: CreateNewLeadProps) {
+    const leads = useAppSelector(selectLeads);
+    const { leadId } = useAppSelector(selectNewLeadState);
+    
+    // Find current lead and determine if we should show the scheduled visit card
+    const currentLead = leadId ? leads.find(l => l.id.replace('#', '') === leadId.replace('#', '')) : null;
+    const hasScheduledVisit = Boolean(currentLead?.visitDate);
+
     return (
         <div className="flex flex-col-reverse lg:flex-row items-start gap-6 w-full">
             {/* Left Column (Forms) */}
@@ -46,7 +57,14 @@ export function CreateNewLead({ handleClear, handleSubmit, action }: CreateNewLe
 
             {/* Right Column (Sidebar Cards) */}
             <div className="flex flex-col items-start gap-6 w-full lg:w-[314px] shrink-0 lg:sticky lg:top-6">
-                <ScheduleVisitCard />
+                {hasScheduledVisit && currentLead ? (
+                    <UpcomingVisitCard 
+                        visitDate={currentLead.visitDate || undefined} 
+                        location={currentLead.location || undefined} 
+                    />
+                ) : (
+                    <ScheduleVisitCard />
+                )}
                 <LeadAssignmentCard />
                 {action === 'view' && <InteractionTimelineCard />}
             </div>

@@ -39,7 +39,7 @@ export const leadService = {
 
     const results = rawLeads.map((item: any): Lead => ({
       id: item.name,
-      name: item.name,
+      name: item.farmer_name || item.name,
       phone: item.phone_number || '',
       status: item.status || 'New',
       location: item.location || 'Unknown',
@@ -50,6 +50,9 @@ export const leadService = {
       owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
       creation: item.creation || '',
       external_id: item.external_id,
+      visitDate: item.visitDate || null,
+      farmerId: item.farmer_id || null,
+      consentDate: item.consent_date || null,
     }));
 
     return { results, totalCount };

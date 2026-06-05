@@ -52,12 +52,14 @@ interface NewLeadState {
   isOtpVerified: boolean;
   isSubmitting: boolean;
   consentRequestId: string | null;
+  consentDate: string | null;
 }
 
 const initialState: NewLeadState = {
   leadId: '',
   leadSource: '',
   farmerId: '',
+  consentDate: null,
   farmerDetails: {
     firstName: '',
     lastName: '',
@@ -169,9 +171,15 @@ const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
   reducers: {
-    initializeLead(state, action: PayloadAction<{ id?: string; source?: string }>) {
+    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string }>) {
+      Object.assign(state, initialState);
       if (action.payload.id) state.leadId = action.payload.id;
       if (action.payload.source) state.leadSource = action.payload.source;
+      if (action.payload.farmerId) state.farmerId = action.payload.farmerId;
+      if (action.payload.consentDate) state.consentDate = action.payload.consentDate;
+      if (action.payload.farmerDetails) {
+        state.farmerDetails = { ...state.farmerDetails, ...action.payload.farmerDetails };
+      }
     },
     setLeadSource(state, action: PayloadAction<string>) {
       state.leadSource = action.payload;
