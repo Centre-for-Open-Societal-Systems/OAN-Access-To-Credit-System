@@ -27,7 +27,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
       return (
         <div className="flex flex-col items-end gap-1">
           <button
-            onClick={() => navigate(`/leads-application?id=${lead.id.replace('#', '')}&action=visit-scheduled`)}
+            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}/schedule`)}
             className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
           >
             <CalendarCheck {...ICON_PROPS} />
@@ -55,7 +55,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
       return (
         <button
           type="button"
-          onClick={() => navigate(`/leads-application?id=${lead.id.replace('#', '')}&action=view`)}
+          onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <Eye {...ICON_PROPS} />

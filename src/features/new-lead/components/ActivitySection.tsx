@@ -1,17 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, addActivityNote } from '../store/newLeadSlice';
+import { selectNewLeadState, fetchActivitiesThunk, addActivityNoteThunk } from '../store/newLeadSlice';
 import { Edit, Paperclip, Image as ImageIcon } from 'lucide-react';
 
 export function ActivitySection() {
   const dispatch = useAppDispatch();
-  const { activities } = useAppSelector(selectNewLeadState);
+  const { activities, leadId } = useAppSelector(selectNewLeadState);
   const [note, setNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddNote = () => {
-    if (note.trim()) {
-      dispatch(addActivityNote(note));
-      setNote('');
+  useEffect(() => {
+    if (leadId) {
+      dispatch(fetchActivitiesThunk(leadId));
+    }
+  }, [dispatch, leadId]);
+
+  const handleAddNote = async () => {
+    if (note.trim() && leadId && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await dispatch(addActivityNoteThunk({ leadId, content: note })).unwrap();
+        setNote('');
+      } catch (error) {
+        console.error('Failed to add note', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -45,10 +59,10 @@ export function ActivitySection() {
           <button
             type="button"
             onClick={handleAddNote}
-            disabled={!note.trim()}
+            disabled={!note.trim() || !leadId || isSubmitting}
             className="flex flex-row justify-center items-center px-4 py-1.5 bg-white border border-[#16335A] rounded-lg text-[#16335A] font-roboto font-medium text-sm hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add Note
+            {isSubmitting ? 'Adding...' : 'Add Note'}
           </button>
         </div>
       </div>

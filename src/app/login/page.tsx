@@ -70,7 +70,7 @@ export default function Login() {
     dispatch(clearAuthError());
     const result = await dispatch(loginThunk({ usr: username, pwd: password }));
     if (loginThunk.fulfilled.match(result)) {
-      router.push('/leads-dashboard');
+      router.push('/leads');
     }
   };
 

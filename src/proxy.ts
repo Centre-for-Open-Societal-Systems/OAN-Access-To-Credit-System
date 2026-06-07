@@ -7,9 +7,8 @@ export function proxy(request: NextRequest) {
 
   // 1. Define routes that require authentication
   const isDashboardRoute =
-    pathname.startsWith('/leads-dashboard') ||
-    pathname.startsWith('/loans') ||
-    pathname.startsWith('/new-lead-creation');
+    pathname.startsWith('/leads') ||
+    pathname.startsWith('/loans');
 
   if (isDashboardRoute && !token) {
     const loginUrl = new URL('/login', request.url);
@@ -18,7 +17,7 @@ export function proxy(request: NextRequest) {
 
   // 2. Prevent logged-in users from hitting the login page
   if (pathname === '/login' && token) {
-    return NextResponse.redirect(new URL('/leads-dashboard', request.url));
+    return NextResponse.redirect(new URL('/leads', request.url));
   }
 
   return NextResponse.next();

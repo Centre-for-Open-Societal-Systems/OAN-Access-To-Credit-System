@@ -256,7 +256,7 @@ function LeadTable({
                 <tr
                   key={key}
                   className={rowBgClass}
-                  onClick={() => navigate(`/leads-dashboard/${l.id}`)}
+                  onClick={() => navigate(`/leads/${l.id.replace('#', '')}`)}
                 >
                   <td className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-center h-full">

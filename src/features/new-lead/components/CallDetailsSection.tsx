@@ -1,8 +1,16 @@
-import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../store/newLeadSlice';
+import { useEffect } from 'react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { selectNewLeadState, fetchCallDetailsThunk } from '../store/newLeadSlice';
 
 export function CallDetailsSection() {
-  const { callDetails } = useAppSelector(selectNewLeadState);
+  const { callDetails, leadId } = useAppSelector(selectNewLeadState);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (leadId) {
+      dispatch(fetchCallDetailsThunk(leadId));
+    }
+  }, [dispatch, leadId]);
 
   return (
     <section className="flex flex-col items-center pb-6 gap-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">

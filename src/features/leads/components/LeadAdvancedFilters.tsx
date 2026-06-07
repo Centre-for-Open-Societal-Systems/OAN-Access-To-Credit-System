@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { SlidersHorizontal, X, Check, Phone, Calendar, ChevronDown } from 'lucide-react';
 import { KPI_CARDS_LAYOUT } from '../constants/leads.constants';
 import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
+import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
 
 interface LeadAdvancedFiltersProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface LeadAdvancedFiltersProps {
 function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const dispatch = useAppDispatch();
   const activeFilters = useAppSelector(selectAdvFilters);
+  const { leadSourcesOptions } = useAppSelector(selectNewLeadState);
 
   const CALL_STATUS_OPTS = ['All', 'Completed', 'Missed', 'Voicemail'];
   const QUICK_DATE_OPTS = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'];
@@ -41,11 +43,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     'Smallholder farmer direct loan',
   ] as const;
 
-  const LEAD_SOURCE_OPTS = [
-    'Organic',
-    'Call Campaign',
-    'Special Harvest Campaign',
-  ] as const;
+  const dynamicLeadSourceOpts = leadSourcesOptions || [];
 
   const [selStatuses, setSelStatuses] = useState<string[]>(activeFilters.statuses);
   const [callSt, setCallSt] = useState(activeFilters.callStatus);
@@ -397,13 +395,13 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                       }}
                     >
                       <div className="flex flex-col">
-                        {LEAD_SOURCE_OPTS.map((opt, idx) => {
+                        {dynamicLeadSourceOpts.map((opt, idx) => {
                           const isSel = tempSources.includes(opt);
                           return (
                             <div
                               key={opt}
                               onClick={() => toggleSource(opt)}
-                              className={`flex items-center gap-3 py-3 px-4 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === LEAD_SOURCE_OPTS.length - 1 ? 'rounded-b-lg' : ''
+                              className={`flex items-center gap-3 py-3 px-4 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === dynamicLeadSourceOpts.length - 1 ? 'rounded-b-lg' : ''
                                 }`}
                             >
                               <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${isSel
