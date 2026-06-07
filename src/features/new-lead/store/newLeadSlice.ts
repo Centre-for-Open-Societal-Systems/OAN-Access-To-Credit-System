@@ -219,12 +219,12 @@ const formatTiming = (rawDateStr: string, separator: string = ' - ', appendIST: 
   if (!rawDateStr) return 'Unknown time';
   const safeDateStr = rawDateStr.replace(' ', 'T');
   const date = new Date(safeDateStr);
-  
+
   if (isNaN(date.getTime())) return rawDateStr;
-  
+
   const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  
+
   const formattedString = `${formattedDate}${separator}${formattedTime}`;
   return appendIST ? `${formattedString} IST` : formattedString;
 };
@@ -235,26 +235,26 @@ const newLeadSlice = createSlice({
   reducers: {
     initializeLead(state, action: PayloadAction<{ id?: string; source?: string; status?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
       const freshState = getInitialState();
-      
+
       // Explicitly mutate properties instead of returning a completely new object to guarantee immer proxy updates
       state.leadId = action.payload.id || '';
       state.leadSource = action.payload.source || '';
-      state.leadStatus = action.payload.status || 'Open';
+      state.leadStatus = action.payload.status || '';
       state.farmerId = action.payload.farmerId || '';
       state.consentDate = action.payload.consentDate || null;
       state.consentRequestId = action.payload.consentRequestId !== undefined ? action.payload.consentRequestId : null;
-      
+
       state.farmerDetails = {
         ...freshState.farmerDetails,
         ...(action.payload.farmerDetails || {})
       };
-      
+
       state.creditInfo = [];
       state.callDetails = [];
       state.activities = [];
       state.visitSchedule = null;
       state.assignment = null;
-      
+
       state.isLoadingConsent = false;
       state.consentError = null;
       state.isVerifyingOtp = false;
@@ -286,7 +286,7 @@ const newLeadSlice = createSlice({
     clearForm(state) {
       const currentLeadId = state.leadId;
       const freshState = getInitialState();
-      
+
       // Keep the current ID but clear everything else
       Object.assign(state, freshState);
       state.leadId = currentLeadId;
