@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@r
 import type { RootState } from '../../../store';
 import { loanService, GetLoansParams } from '@/features/loans/api/loan.service';
 import { PAGE_SIZE } from '@/features/loans/constants/loans.constants';
+import { getFallbackMockRows } from '@/mocks/loans.mock';
 
 export const fetchLoans = createAsyncThunk(
   'loanDashboard/fetchLoans',
@@ -242,8 +243,8 @@ export const selectAdvancedFilters = (state: RootState) => state.loanDashboard.a
 
 // --- Derived Memoized Selectors ---
 export const selectPagedRowsData = createSelector(
-  [selectRawActivityData, selectActiveTab, selectActivityPage, selectPageSize, selectSearchQuery, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters],
-  (rawActivityData, activeTab, activityPage, pageSize, searchQuery, tableStatusFilters, tableTypeFilters, advancedFilters) => {
+  [selectRawActivityData, selectPageSize],
+  (rawActivityData, pageSize) => {
     let rows = rawActivityData?.message?.results || rawActivityData?.message || rawActivityData?.data || rawActivityData || [];
     if (!Array.isArray(rows)) {
       rows = Array.isArray(rows.results) ? rows.results :
@@ -251,99 +252,9 @@ export const selectPagedRowsData = createSelector(
           (Array.isArray(rows.applications) ? rows.applications : []);
     }
 
-    let total = rawActivityData?.message?.total_count || rawActivityData?.total_count || rawActivityData?.total || 0;
+    let totalCount = rawActivityData?.message?.total_count || rawActivityData?.total_count || rawActivityData?.total || 0;
 
-    const baseFallbackRows = [
-      { id: '#AGL-9823', applicant: 'Adama', phone: '+251 (555) 222-3333', status: 'Approved', type: 'Input loan (seeds, agrochemicals)', loanAmount: 'ETB 1,50,000', updated: 'May 28, 2026 · 09:15 AM' },
-      { id: '#AGL-9822', applicant: 'Bishoftu', phone: '+251 (555) 343-11111', status: 'Processing', type: 'Agricultural term loan', loanAmount: 'ETB 1,45,000', updated: 'May 27, 2026 · 16:30 PM' },
-      { id: '#AGL-9821', applicant: 'Mekelle', phone: '+251 (555) 231-3221', status: 'Processing', type: 'Land loan', loanAmount: 'ETB 1,80,000', updated: 'May 27, 2026 · 14:20 PM' },
-      { id: '#AGL-9820', applicant: 'Dire Dawa', phone: '+251 (555) 231-0198', status: 'Rejected', type: 'Farm equipment loan', loanAmount: 'ETB 1,75,000', updated: 'May 27, 2026 · 11:05 AM' },
-      { id: '#AGL-9819', applicant: 'Harar', phone: '+251 (555) 231-7890', status: 'Approved', type: 'Smallholder farmer direct loan', loanAmount: 'ETB 1,70,000', updated: 'May 27, 2026 · 09:30 AM' },
-    ];
-    
-    // Duplicate heavily to ensure we have enough for 15 items and pagination mock
-    let fallbackMockRows: any[] = [];
-    for (let i = 0; i < 20; i++) {
-      fallbackMockRows = [...fallbackMockRows, ...baseFallbackRows.map(r => ({ ...r, id: r.id + `-${i}` }))];
-    }
-
-    let fullData = rows.length > 0 ? rows : fallbackMockRows;
-    
-    // Apply search filtering locally (for mock)
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      fullData = fullData.filter((r: any) => 
-        (r.id && r.id.toLowerCase().includes(q)) || 
-        (r.phone && r.phone.toLowerCase().includes(q)) || 
-        (r.applicant && r.applicant.toLowerCase().includes(q))
-      );
-    }
-
-    // Apply column filters
-    if (tableStatusFilters.length > 0) {
-      fullData = fullData.filter((r: any) => tableStatusFilters.includes(r.status));
-    }
-    if (tableTypeFilters.length > 0) {
-      fullData = fullData.filter((r: any) => tableTypeFilters.includes(r.type));
-    }
-
-    // Apply Advanced Filters
-    if (advancedFilters.status.length > 0) {
-      fullData = fullData.filter((r: any) => advancedFilters.status.includes(r.status));
-    }
-    if (advancedFilters.type && advancedFilters.type.length > 0) {
-      fullData = fullData.filter((r: any) => advancedFilters.type.includes(r.type));
-    }
-    if (advancedFilters.location.trim()) {
-      const locQ = advancedFilters.location.toLowerCase();
-      fullData = fullData.filter((r: any) => 
-        (r.applicant && r.applicant.toLowerCase().includes(locQ)) ||
-        (r.region && r.region.toLowerCase().includes(locQ))
-      );
-    }
-    if (advancedFilters.amountRange) {
-      fullData = fullData.filter((r: any) => {
-        if (!r.loanAmount) return false;
-        const numVal = parseInt(r.loanAmount.replace(/[^0-9]/g, ''), 10);
-        if (advancedFilters.amountRange === '0-25000') return numVal >= 0 && numVal <= 25000;
-        if (advancedFilters.amountRange === '25001-50000') return numVal >= 25001 && numVal <= 50000;
-        if (advancedFilters.amountRange === '50001-100000') return numVal >= 50001 && numVal <= 100000;
-        if (advancedFilters.amountRange === '100000+') return numVal > 100000;
-        return true;
-      });
-    }
-    if (advancedFilters.dateFrom || advancedFilters.dateTo) {
-      const fromTime = advancedFilters.dateFrom ? new Date(advancedFilters.dateFrom).getTime() : 0;
-      const toTime = advancedFilters.dateTo ? new Date(advancedFilters.dateTo).setHours(23, 59, 59, 999) : Infinity;
-      
-      fullData = fullData.filter((r: any) => {
-        const dStr = r.updated ? r.updated.split(' · ')[0] : null; // e.g. "May 28, 2026"
-        if (!dStr) return false;
-        const rTime = new Date(dStr).getTime();
-        return rTime >= fromTime && rTime <= toTime;
-      });
-    }
-    
-    // Apply tab filtering
-    if (activeTab === 'my') {
-      fullData = fullData.slice(0, 12);
-      total = fullData.length;
-    } else if (activeTab === 'unassigned') {
-      fullData = fullData.slice(0, 15);
-      total = fullData.length;
-    } else {
-      // 'all'
-      if (rows.length === 0) {
-        total = searchQuery.trim() !== '' ? fullData.length : 12493; // Keep big total for "all" mock unless searching
-      }
-    }
-
-    // Apply mock pagination locally if no real rows
-    const startIndex = (activityPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const dataToMap = rows.length > 0 ? fullData.slice(startIndex, endIndex) : fullData.slice(startIndex, endIndex);
-
-    const mapped = dataToMap.map((row: any) => {
+    const mapped = rows.map((row: any) => {
       const rawDate = row.creation ? new Date(row.creation) : new Date();
       const dateStr = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeStr = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -367,8 +278,8 @@ export const selectPagedRowsData = createSelector(
       };
     });
 
-    const totalPages = Math.ceil(total / pageSize) || 1;
-    return { pagedRows: mapped, totalPages, totalCount: total };
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
+    return { pagedRows: mapped, totalPages, totalCount };
   }
 );
 
@@ -383,18 +294,26 @@ export const selectLiveMetrics = createSelector(
 
     return {
       total: {
-        value: summaryData.total?.toString() || '151',
+        value: summaryData.total?.toString() || '—',
       },
       processing: {
-        value: (summaryData.processing ?? summaryData.pending)?.toString() || '30',
+        value: (summaryData.processing ?? summaryData.pending)?.toString() || '—',
       },
       approved: {
-        value: (summaryData.approved ?? summaryData.Approved)?.toString() || '10',
+        value: (summaryData.approved ?? summaryData.Approved)?.toString() || '—',
       },
       rejected: {
-        value: (summaryData.rejected ?? summaryData.Rejected)?.toString() || '5',
+        value: (summaryData.rejected ?? summaryData.Rejected)?.toString() || '—',
       },
     };
+  }
+);
+
+export const selectTabCounts = createSelector(
+  [selectRawSummaryData],
+  (rawSummaryData) => {
+    const summaryData = rawSummaryData?.message || rawSummaryData?.data || rawSummaryData || {};
+    return summaryData.tab_counts || { all: 0, my: 0, unassigned: 0 };
   }
 );
 
@@ -434,12 +353,15 @@ export const selectVisibleNotifications = createSelector(
 );
 
 export const selectQueryParams = createSelector(
-  [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses],
-  (activityPage, pageSize, dateRange, selectedStatuses) => {
+  [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses, selectSearchQuery, selectActiveTab, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters],
+  (activityPage, pageSize, dateRange, selectedStatuses, searchQuery, activeTab, tableStatusFilters, tableTypeFilters, advancedFilters) => {
     const params: Record<string, any> = {
       page: activityPage,
       page_size: pageSize,
     };
+
+    if (searchQuery) params.search_query = searchQuery;
+    if (activeTab && activeTab !== 'all') params.tab = activeTab;
 
     const getCutoffTimestamp = (range: string) => {
       const now = new Date();
@@ -463,17 +385,56 @@ export const selectQueryParams = createSelector(
       params.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    if (advancedFilters.dateFrom) params.from_date = advancedFilters.dateFrom.split('T')[0];
+    if (advancedFilters.dateTo) params.to_date = advancedFilters.dateTo.split('T')[0];
+
     const allChecked = selectedStatuses.length === ALL_STATUS_VALUES.length;
+    let statusesToPass: string[] = [];
+    
     if (!allChecked && selectedStatuses.length > 0) {
-      const statuses = [];
-      if (selectedStatuses.includes('danger')) statuses.push('Rejected');
-      if (selectedStatuses.includes('neutral')) statuses.push('Draft');
-      if (selectedStatuses.includes('info')) statuses.push('Pending Review');
-      if (statuses.length > 0) {
-        params.status = JSON.stringify(statuses);
-      }
-    } else if (selectedStatuses.length === 0) {
+      if (selectedStatuses.includes('danger')) statusesToPass.push('Rejected', 'Action Required');
+      if (selectedStatuses.includes('neutral')) statusesToPass.push('Draft');
+      if (selectedStatuses.includes('info')) statusesToPass.push('Pending Review', 'Processing');
+      if (selectedStatuses.includes('success')) statusesToPass.push('Approved');
+    }
+
+    // Combine with table status filters
+    if (tableStatusFilters.length > 0) {
+      statusesToPass = [...new Set([...statusesToPass, ...tableStatusFilters])];
+    }
+    
+    // Combine with advanced status filters
+    if (advancedFilters.status.length > 0) {
+      statusesToPass = [...new Set([...statusesToPass, ...advancedFilters.status])];
+    }
+
+    if (statusesToPass.length > 0) {
+      params.status = JSON.stringify(statusesToPass);
+    } else if (selectedStatuses.length === 0 && tableStatusFilters.length === 0 && advancedFilters.status.length === 0) {
       params.status = JSON.stringify(['__NONE__']);
+    }
+
+    let typesToPass = [...tableTypeFilters];
+    if (advancedFilters.type.length > 0) {
+      typesToPass = [...new Set([...typesToPass, ...advancedFilters.type])];
+    }
+    if (typesToPass.length > 0) {
+      params.loan_type = JSON.stringify(typesToPass);
+    }
+
+    if (advancedFilters.location) {
+      params.location = advancedFilters.location;
+    }
+
+    if (advancedFilters.amountRange) {
+      // e.g. "0-25000" or "100000+"
+      if (advancedFilters.amountRange.includes('+')) {
+        params.loan_amount_min = advancedFilters.amountRange.replace('+', '');
+      } else {
+        const [min, max] = advancedFilters.amountRange.split('-');
+        params.loan_amount_min = min;
+        params.loan_amount_max = max;
+      }
     }
 
     return params;

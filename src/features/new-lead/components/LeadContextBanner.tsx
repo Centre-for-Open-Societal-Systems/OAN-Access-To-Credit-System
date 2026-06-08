@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { MapPin, Phone } from 'lucide-react';
 import LeadStatusModal, { LeadStatusOutcome } from './modals/LeadStatusModal';

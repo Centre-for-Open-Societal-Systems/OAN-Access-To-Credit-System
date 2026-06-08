@@ -1,3 +1,5 @@
+"use client";
+
 import { ReactNode, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
