@@ -33,6 +33,7 @@ import {
   selectTotalCount,
   selectAdvFilters,
 } from '@/features/leads/store/leadSlice';
+import { fetchLeadMetadataThunk } from '@/features/new-lead/store/newLeadSlice';
 
 export default function LeadsDashboard() {
   const router = useRouter();
@@ -70,6 +71,7 @@ export default function LeadsDashboard() {
   // Initial Summary Fetch
   useEffect(() => {
     dispatch(fetchLeadSummary());
+    dispatch(fetchLeadMetadataThunk());
   }, [dispatch]);
 
   // Load  filtered leads data from backend
@@ -181,7 +183,7 @@ export default function LeadsDashboard() {
           </button>
           <button
             type="button"
-            onClick={() => router.push('/leads-application')}
+            onClick={() => router.push('/leads/new')}
             className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
           >
             <Plus size={18} strokeWidth={2.5} />

@@ -35,9 +35,14 @@ interface NewLeadState {
   // Form fields
   leadId: string;
   leadSource: string;
+  leadStatus: string;
   farmerId: string;
   farmerDetails: FarmerDetails;
-  
+
+  // Metadata options
+  leadSourcesOptions: string[];
+  leadStatusesOptions: string[];
+
   // Child sections (dummy data for now)
   creditInfo: CreditInfo[];
   callDetails: CallDetail[];
@@ -55,9 +60,10 @@ interface NewLeadState {
   consentDate: string | null;
 }
 
-const initialState: NewLeadState = {
+const getInitialState = (): NewLeadState => ({
   leadId: '',
   leadSource: '',
+  leadStatus: '',
   farmerId: '',
   consentDate: null,
   farmerDetails: {
@@ -67,29 +73,22 @@ const initialState: NewLeadState = {
     phoneNumber: '',
     email: '',
   },
-  creditInfo: [
-    { id: '1', type: 'Crop Loan', amount: 'ETB 90,0000', purpose: 'Met with farmer at the cooperative office. He has all his land documents ready. Recommended for the Fertilizer 2026 campaign.' }
-  ],
-  callDetails: [
-    { id: '1', status: 'Missed Call', timing: 'May 23, 2026 • 02:30 PM IST' }
-  ],
-  activities: [
-    { id: '1', author: 'Abebe Kebede', type: 'note', content: 'Met with farmer at the cooperative office. He has all his land documents ready. Recommended for the Fertilizer 2026 campaign.', timestamp: 'May 24, 2026 - 10:30 AM' }
-  ],
+  leadSourcesOptions: [],
+  leadStatusesOptions: [],
+  creditInfo: [],
+  callDetails: [],
+  activities: [],
   visitSchedule: null,
-  assignment: {
-    agentId: 'AG-2024-0156',
-    assigneeName: 'Sara Bekele',
-    region: 'Oromia',
-    date: 'May 15, 2026'
-  },
+  assignment: null,
   isLoadingConsent: false,
   consentError: null,
   isVerifyingOtp: false,
   isOtpVerified: false,
   isSubmitting: false,
   consentRequestId: null,
-};
+});
+
+const initialState: NewLeadState = getInitialState();
 
 export const searchFarmerConsent = createAsyncThunk(
   'newLead/searchConsent',
@@ -108,13 +107,61 @@ export const verifyOtpThunk = createAsyncThunk(
   'newLead/verifyOtp',
   async (payload: { otp_code: string; consent_request: string }, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.verifyOtp({ 
-        consent_request: payload.consent_request, 
-        otp_code: payload.otp_code 
+      const response = await newLeadService.verifyOtp({
+        consent_request: payload.consent_request,
+        otp_code: payload.otp_code
       });
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Verification failed');
+    }
+  }
+);
+
+export const fetchLeadMetadataThunk = createAsyncThunk(
+  'newLead/fetchMetadata',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getLeadMetadata();
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch lead metadata');
+    }
+  }
+);
+
+export const fetchCallDetailsThunk = createAsyncThunk(
+  'newLead/fetchCallDetails',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getCallDetails(leadId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch call details');
+    }
+  }
+);
+
+export const fetchActivitiesThunk = createAsyncThunk(
+  'newLead/fetchActivities',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getActivities(leadId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch activities');
+    }
+  }
+);
+
+export const addActivityNoteThunk = createAsyncThunk(
+  'newLead/addActivityNote',
+  async (payload: { leadId: string; content: string }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.addActivityNote(payload);
+      return { response, content: payload.content };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to add note');
     }
   }
 );
@@ -124,7 +171,7 @@ export const submitNewLeadThunk = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = (getState() as RootState).newLead;
-      
+
       const payload = {
         phone_number: state.farmerDetails.phoneNumber,
         first_name: state.farmerDetails.firstName,
@@ -167,23 +214,58 @@ export const scheduleVisitThunk = createAsyncThunk(
   }
 );
 
+// Helper function to handle strict browser parsing and format dates consistently
+const formatTiming = (rawDateStr: string, separator: string = ' - ', appendIST: boolean = false) => {
+  if (!rawDateStr) return 'Unknown time';
+  const safeDateStr = rawDateStr.replace(' ', 'T');
+  const date = new Date(safeDateStr);
+
+  if (isNaN(date.getTime())) return rawDateStr;
+
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const formattedString = `${formattedDate}${separator}${formattedTime}`;
+  return appendIST ? `${formattedString} IST` : formattedString;
+};
+
 const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
   reducers: {
-    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
-      Object.assign(state, initialState);
-      if (action.payload.id) state.leadId = action.payload.id;
-      if (action.payload.source) state.leadSource = action.payload.source;
-      if (action.payload.farmerId) state.farmerId = action.payload.farmerId;
-      if (action.payload.consentDate) state.consentDate = action.payload.consentDate;
-      if (action.payload.consentRequestId !== undefined) state.consentRequestId = action.payload.consentRequestId;
-      if (action.payload.farmerDetails) {
-        state.farmerDetails = { ...state.farmerDetails, ...action.payload.farmerDetails };
-      }
+    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; status?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
+      const freshState = getInitialState();
+
+      // Explicitly mutate properties instead of returning a completely new object to guarantee immer proxy updates
+      state.leadId = action.payload.id || '';
+      state.leadSource = action.payload.source || '';
+      state.leadStatus = action.payload.status || '';
+      state.farmerId = action.payload.farmerId || '';
+      state.consentDate = action.payload.consentDate || null;
+      state.consentRequestId = action.payload.consentRequestId !== undefined ? action.payload.consentRequestId : null;
+
+      state.farmerDetails = {
+        ...freshState.farmerDetails,
+        ...(action.payload.farmerDetails || {})
+      };
+
+      state.creditInfo = [];
+      state.callDetails = [];
+      state.activities = [];
+      state.visitSchedule = null;
+      state.assignment = null;
+
+      state.isLoadingConsent = false;
+      state.consentError = null;
+      state.isVerifyingOtp = false;
+      state.isOtpVerified = false;
+      state.isSubmitting = false;
     },
     setLeadSource(state, action: PayloadAction<string>) {
       state.leadSource = action.payload;
+    },
+    setLeadStatus(state, action: PayloadAction<string>) {
+      state.leadStatus = action.payload;
     },
     setFarmerId(state, action: PayloadAction<string>) {
       state.farmerId = action.payload;
@@ -198,20 +280,16 @@ const newLeadSlice = createSlice({
     updateFarmerDetails(state, action: PayloadAction<Partial<FarmerDetails>>) {
       state.farmerDetails = { ...state.farmerDetails, ...action.payload };
     },
-    addActivityNote(state, action: PayloadAction<string>) {
-      state.activities.unshift({
-        id: Date.now().toString(),
-        author: 'Current User', // Will be dynamic later
-        type: 'note',
-        content: action.payload,
-        timestamp: new Date().toLocaleString()
-      });
-    },
     setVisitSchedule(state, action: PayloadAction<string>) {
       state.visitSchedule = { date: action.payload };
     },
     clearForm(state) {
-      return { ...initialState, leadId: state.leadId }; // preserve leadId
+      const currentLeadId = state.leadId;
+      const freshState = getInitialState();
+
+      // Keep the current ID but clear everything else
+      Object.assign(state, freshState);
+      state.leadId = currentLeadId;
     }
   },
   extraReducers: (builder) => {
@@ -222,17 +300,17 @@ const newLeadSlice = createSlice({
       })
       .addCase(searchFarmerConsent.fulfilled, (state, action) => {
         state.isLoadingConsent = false;
-        
+
         if (action.payload?.consent_request) {
-           state.consentRequestId = action.payload.consent_request;
+          state.consentRequestId = action.payload.consent_request;
         }
 
         // Mock setting details from response if they exist.
         // In reality, map response to state.farmerDetails here.
         if (action.payload?.farmer) {
           state.farmerDetails = {
-             ...state.farmerDetails,
-             ...action.payload.farmer
+            ...state.farmerDetails,
+            ...action.payload.farmer
           }
         }
       })
@@ -253,13 +331,64 @@ const newLeadSlice = createSlice({
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;
       })
+      .addCase(fetchLeadMetadataThunk.fulfilled, (state, action) => {
+        const message = action.payload?.message;
+        if (message?.status === 'success') {
+          state.leadSourcesOptions = message.sources || [];
+          state.leadStatusesOptions = message.statuses || [];
+        }
+      })
+      .addCase(fetchCallDetailsThunk.fulfilled, (state, action) => {
+        // Prevent race conditions where old thunk resolves after user navigates to a new lead
+        if (state.leadId === '' || (state.leadId.replace('#', '') !== action.meta.arg.replace('#', ''))) return;
+
+        const logsArray = action.payload?.message?.call_logs;
+        if (logsArray) {
+          state.callDetails = logsArray.map((log: any, index: number) => {
+            return {
+              id: log.ref_id ? `${log.ref_id}-${index}` : log.name || log.id || `call-${index}`,
+              status: log.source || log.comment_type || log.status || 'Unknown',
+              timing: formatTiming(log.timestamp || '', ' • ', true)
+            };
+          });
+        }
+      })
+      .addCase(fetchActivitiesThunk.fulfilled, (state, action) => {
+        // Prevent race conditions where old thunk resolves after user navigates to a new lead
+        if (state.leadId === '' || (state.leadId.replace('#', '') !== action.meta.arg.replace('#', ''))) return;
+
+        const timeline = action.payload?.message?.timeline;
+        if (timeline) {
+          state.activities = timeline.map((item: any, index: number) => {
+            return {
+              id: item.name || `activity-${index}`,
+              author: item.comment_by || 'System',
+              type: item.comment_type === 'Comment' ? 'note' : 'activity',
+              content: item.content || '',
+              timestamp: formatTiming(item.creation || item.timestamp || '', ' - ', false)
+            };
+          });
+        }
+      })
+      .addCase(addActivityNoteThunk.fulfilled, (state, action) => {
+        const { response, content } = action.payload;
+        if (response?.message?.status === 'success') {
+          state.activities.unshift({
+            id: response.message.comment_id || `new-${Date.now()}`,
+            author: 'Current User', // Will be dynamic later
+            type: 'note',
+            content: content,
+            timestamp: formatTiming(new Date().toISOString(), ' - ', false)
+          });
+        }
+      })
       .addCase(submitNewLeadThunk.pending, (state) => {
         state.isSubmitting = true;
       })
       .addCase(submitNewLeadThunk.fulfilled, (state, action) => {
         state.isSubmitting = false;
         if (action.payload?.message?.lead_id) {
-           state.leadId = action.payload.message.lead_id;
+          state.leadId = action.payload.message.lead_id;
         }
       })
       .addCase(submitNewLeadThunk.rejected, (state, action) => {
@@ -288,10 +417,10 @@ const newLeadSlice = createSlice({
 export const {
   initializeLead,
   setLeadSource,
+  setLeadStatus,
   setFarmerId,
   addCreditInfo,
   updateFarmerDetails,
-  addActivityNote,
   setVisitSchedule,
   clearForm
 } = newLeadSlice.actions;

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { X, ThumbsUp, Ban, AlertTriangle, Circle, CircleDot, Lock } from 'lucide-react';
 

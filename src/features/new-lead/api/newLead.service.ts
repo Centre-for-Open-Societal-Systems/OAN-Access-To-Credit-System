@@ -29,14 +29,38 @@ export const newLeadService = {
     return new Promise((resolve) => setTimeout(() => resolve([]), 500));
   },
 
-  // Dummy endpoint for call details
-  async getCallDetails(farmerId: string): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve([]), 500));
+  // Fetch call details for a lead
+  async getCallDetails(leadId: string): Promise<any> {
+    const cleanLeadId = leadId.replace(/^#/, '');
+    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_call_logs?lead_id=${cleanLeadId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch call logs');
+    }
+    return response.json();
   },
 
-  // Dummy endpoint for activities
+  // Fetch activities (timeline) for a lead
   async getActivities(leadId: string): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve([]), 500));
+    const cleanLeadId = leadId.replace(/^#/, '');
+    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_timeline?lead_id=${cleanLeadId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch timeline');
+    }
+    return response.json();
+  },
+
+  // Add a new note/comment to the lead's timeline
+  async addActivityNote(data: { leadId: string; content: string }): Promise<any> {
+    const cleanLeadId = data.leadId.replace(/^#/, '');
+    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.add_lead_comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id: cleanLeadId, content: data.content }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add note');
+    }
+    return response.json();
   },
 
   // Dummy endpoint for scheduling visit
@@ -71,5 +95,14 @@ export const newLeadService = {
     return new Promise((resolve) => setTimeout(() => resolve({ 
       message: { lead_id: `#LD-${Math.floor(Math.random() * 10000)}` }
     }), 1000));
+  },
+
+  // Fetch lead metadata (statuses, sources)
+  async getLeadMetadata(): Promise<any> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_metadata');
+    if (!response.ok) {
+      throw new Error('Failed to fetch lead metadata');
+    }
+    return response.json();
   }
 };

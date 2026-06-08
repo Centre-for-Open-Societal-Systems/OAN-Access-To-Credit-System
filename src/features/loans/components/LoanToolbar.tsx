@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectActiveTab, setActiveTab, setSearchQuery, selectSearchQuery, clearAdvancedFilters } from '../store/loanDashboardSlice';
+import { selectActiveTab, setActiveTab, setSearchQuery, selectSearchQuery, clearAdvancedFilters, selectTabCounts } from '../store/loanDashboardSlice';
 import LoanAdvancedFilters from './LoanAdvancedFilters';
 
 export default function LoanToolbar() {
   const dispatch = useAppDispatch();
   const activeTab = useAppSelector(selectActiveTab);
   const currentSearch = useAppSelector(selectSearchQuery);
+  const tabCounts = useAppSelector(selectTabCounts);
   const [localSearch, setLocalSearch] = useState(currentSearch);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -79,7 +80,7 @@ export default function LoanToolbar() {
           className={getTabClass('all')}
           onClick={() => dispatch(setActiveTab('all'))}
         >
-          All Applications <span className={getBadgeClass('all')}>151</span>
+          All Applications <span className={getBadgeClass('all')}>{tabCounts.all > 0 ? tabCounts.all : '—'}</span>
           {activeTab === 'all' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-emerald-500 rounded-t-md " />}
         </button>
 
@@ -87,7 +88,7 @@ export default function LoanToolbar() {
           className={getTabClass('my')}
           onClick={() => dispatch(setActiveTab('my'))}
         >
-          My Applications <span className={getBadgeClass('my')}>12</span>
+          My Applications <span className={getBadgeClass('my')}>{tabCounts.my > 0 ? tabCounts.my : '—'}</span>
           {activeTab === 'my' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-emerald-500 rounded-t-md" />}
         </button>
 
@@ -95,7 +96,7 @@ export default function LoanToolbar() {
           className={getTabClass('unassigned')}
           onClick={() => dispatch(setActiveTab('unassigned'))}
         >
-          Unassigned <span className={getBadgeClass('unassigned')}>15</span>
+          Unassigned <span className={getBadgeClass('unassigned')}>{tabCounts.unassigned > 0 ? tabCounts.unassigned : '—'}</span>
           {activeTab === 'unassigned' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-emerald-500 rounded-t-md" />}
         </button>
       </div>

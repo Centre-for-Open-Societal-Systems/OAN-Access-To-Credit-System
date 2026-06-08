@@ -15,8 +15,8 @@ const navigationSections: NavSection[] = [
     title: 'DASHBOARDS',
     items: [
       { 
-        path: '/leads-dashboard',
-        activePaths: ['/leads-dashboard', '/leads-application'],
+        path: '/leads',
+        activePaths: ['/leads', '/leads/new'],
         label: 'Leads Dashboard', 
         icon: Users 
       },
@@ -42,9 +42,9 @@ const navigationSections: NavSection[] = [
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  '/leads-dashboard': 'Leads Dashboard',
+  '/leads': 'Leads Pipeline',
   '/loans/new-loan-application': 'New Loan Application',
-  '/leads-application': 'Create New Lead',
+  '/leads/new': 'Create New Lead',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

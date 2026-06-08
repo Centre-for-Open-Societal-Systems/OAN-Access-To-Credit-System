@@ -1,10 +1,10 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, setLeadSource } from '../store/newLeadSlice';
+import { selectNewLeadState, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
 import { TextField } from '@/components/ui/TextField';
 
 export function LeadInfoSection() {
   const dispatch = useAppDispatch();
-  const { leadId, leadSource } = useAppSelector(selectNewLeadState);
+  const { leadId, leadSource, leadStatus, leadSourcesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
 
   return (
 
@@ -29,7 +29,7 @@ export function LeadInfoSection() {
             type="text"
             value={leadId || 'LD-1042'}
             readOnly
-            className="w-full h-[42px] rounded-md border border-gray-200  px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50 "
+            className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
           />
         </div>
 
@@ -37,12 +37,25 @@ export function LeadInfoSection() {
           <label className="text-[15px] font-semibold text-[#232F34]">
             Lead Source
           </label>
-          <input
-            type="text"
-            value={leadSource || 'Call Campaign'}
-            readOnly
-            className="w-full h-[42px] rounded-md border border-gray-200  px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
-          />
+          {leadId ? (
+            <input
+              type="text"
+              value={leadSource || 'Call Campaign'}
+              readOnly
+              className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
+            />
+          ) : (
+            <select
+              value={leadSource}
+              onChange={(e) => dispatch(setLeadSource(e.target.value))}
+              className="appearance-none w-full h-[42px] rounded-md border border-gray-300 px-4 text-[15px] text-[#232F34] focus:outline-none focus:ring-2 focus:ring-[#16335A]/20"
+            >
+              <option value="" disabled>Select Source</option>
+              {leadSourcesOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
     </section>

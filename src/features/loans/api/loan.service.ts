@@ -10,6 +10,9 @@ export interface GetLoansParams {
   mobile_phone?: string;
   from_date?: string;
   to_date?: string;
+  search_query?: string;
+  tab?: string;
+  location?: string;
 }
 
 import { fetchApi } from '@/lib/api/fetchApi';
