@@ -24,7 +24,7 @@ pipeline {
                         IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 
                         DOCKER_BUILDKIT=1 docker build \
-                          --build-arg NEXT_PUBLIC_API_BASE_URL=${API_BASE_URL} \
+                          --build-arg API_BASE_URL=${API_BASE_URL} \
                           --tag ${IMAGE_URI}:develop-${BUILD_NUMBER} \
                           --tag ${IMAGE_URI}:develop \
                           --no-cache .
