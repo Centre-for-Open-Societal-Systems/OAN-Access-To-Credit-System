@@ -1,26 +1,16 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
-
+FROM node:20 AS builder
 WORKDIR /app
-
 COPY package.json package-lock.json* ./
 RUN npm install
-
 COPY . .
-
-ARG NEXT_PUBLIC_API_BASE_URL
-ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
-
+ARG API_BASE_URL
+ENV API_BASE_URL=$API_BASE_URL
 RUN npm run build
 
-
 # Stage 2: Run
-FROM node:20-alpine
-
+FROM node:20-slim
 WORKDIR /app
-
 COPY --from=builder /app ./
-
 EXPOSE 3000
-
 CMD ["npm", "run", "start"]
