@@ -24,7 +24,7 @@ pipeline {
                         IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 
                         DOCKER_BUILDKIT=1 docker build \
-                          --build-arg API_BASE_URL=${API_BASE_URL} \
+                          --build-arg API_BASE_URL=https://a2c-backend.oanstaging.com \
                           --tag ${IMAGE_URI}:develop-${BUILD_NUMBER} \
                           --tag ${IMAGE_URI}:develop \
                           --no-cache .
