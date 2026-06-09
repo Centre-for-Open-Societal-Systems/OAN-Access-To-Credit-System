@@ -80,7 +80,9 @@ pipeline {
 
                         
                         cd /opt/oan_a2c_fe
-
+                        cat > .env <<EOF
+                        ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:develop-${BUILD_NUMBER}
+EOF
                         aws ecr get-login-password --region ap-south-1 | \
                         docker login --username AWS --password-stdin \
                         ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
