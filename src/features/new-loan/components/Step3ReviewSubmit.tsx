@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { prevStep, setStep } from '@/features/new-loan/store/newLoanFormSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { prevStep, setStepAPI, submitApplicationAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
+import { updateLeadStatusThunk } from '@/features/new-lead/store/newLeadSlice';
 import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 export function Step3ReviewSubmit() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const params = useParams();
+  const leadId = decodeURIComponent((params?.id as string) || '').replace(/^#/, '');
+  const { applicationId, loadingStates } = useSelector(selectLoanFormState);
 
   const [acknowledged, setAcknowledged] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -33,14 +37,37 @@ export function Step3ReviewSubmit() {
     }, 1000);
   };
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!acknowledged) {
       setShowValidationPopup(true);
       return;
     }
-    // Application submitted successfully
-    dispatch(setStep(4));
+
+    try {
+      if (applicationId) {
+        await dispatch(submitApplicationAPI(applicationId)).unwrap();
+      }
+      
+      // Transition lead status to 'Granted'
+      if (leadId) {
+        try {
+          await dispatch(updateLeadStatusThunk({
+            leadId,
+            status: 'Granted',
+            reason: 'Loan application submitted successfully.'
+          })).unwrap();
+        } catch (statusErr) {
+          console.error("Failed to update lead status to Granted", statusErr);
+        }
+      }
+
+      // Application submitted successfully
+      await dispatch(setStepAPI(4)).unwrap();
+    } catch (error) {
+      console.error("Failed to submit application", error);
+      // Optional: Handle error UI here if needed
+    }
   }
 
   return (
@@ -144,11 +171,15 @@ export function Step3ReviewSubmit() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 font-semibold">
-          <button type="button" onClick={() => dispatch(prevStep())} className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-[#16335A] shadow-sm hover:bg-gray-50 transition-colors">
+          <button type="button" onClick={() => dispatch(prevStep())} disabled={loadingStates.submitApp} className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-[#16335A] shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50">
             <ArrowLeft className="h-4 w-4" /> Previous Step
           </button>
-          <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
-            Submit Application <Send className="h-4 w-4" />
+          <button type="submit" disabled={loadingStates.submitApp} className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors disabled:opacity-50">
+            {loadingStates.submitApp ? (
+              <>Submitting... <Loader2 className="h-4 w-4 animate-spin" /></>
+            ) : (
+              <>Submit Application <Send className="h-4 w-4" /></>
+            )}
           </button>
         </div>
       </div>
