@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, ArrowLeft, Check } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/hooks';
-import { selectLoanCurrentStep, selectLoanFormState, setStep, setApplicationId, resetForm, createLoanApplicationAPI } from '@/features/new-loan/store/newLoanFormSlice';
+import { selectLoanCurrentStep, selectLoanFormState, setStepAPI, fetchLoanApplicationAPI } from '@/features/new-loan/store/newLoanFormSlice';
 import { NewLoanProgressBar } from './NewLoanProgressBar';
 import { Step1ConsentDocs } from './Step1ConsentDocs';
 import { Step2FarmerDetails } from './Step2FarmerDetails';
 import { Step3ReviewSubmit } from './Step3ReviewSubmit';
 import { Step4Success } from './Step4Success';
-import { loanService } from '@/features/loans/api/loan.service';
 
 const STEP_META = [
   { title: 'Consent & Supporting Documents', subtitle: "Obtain farmer's consent and upload required documents" },
@@ -25,7 +24,6 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
   const meta = STEP_META[currentStep > 3 ? 2 : currentStep - 1] || STEP_META[0];
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isFetchingApp, setIsFetchingApp] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -33,31 +31,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
 
   useEffect(() => {
     if (!isMounted || !leadId) return;
-    const currentLeadId = leadId;
-
-    async function fetchAppId() {
-      setIsFetchingApp(true);
-      try {
-        const cleanLeadId = decodeURIComponent(currentLeadId).replace(/^#/, '');
-        const response = await loanService.getLoans({ lead_id: cleanLeadId });
-        if (response?.results && response.results.length > 0) {
-          const app = response.results[0];
-          const appId = app.application_id || app.id;
-          if (appId) {
-            dispatch(setApplicationId(appId));
-            if (app.step && typeof app.step === 'number') {
-              dispatch(setStep(app.step));
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch loan application by leadId:', err);
-      } finally {
-        setIsFetchingApp(false);
-      }
-    }
-
-    fetchAppId();
+    dispatch(fetchLoanApplicationAPI(leadId));
   }, [isMounted, leadId, dispatch]);
 
   const handleSaveDraft = () => {
@@ -74,7 +48,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
 
   // Prevent hydration mismatch by rendering a loading state on first render
   // or before Redux is fully synced with localStorage on the client.
-  if (!isMounted || isFetchingApp) {
+  if (!isMounted || loadingStates.fetchApp) {
     return (
       <div className="flex flex-col h-64 items-center justify-center text-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4 mx-auto" />
@@ -105,7 +79,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
           <button
             onClick={() => {
               if (currentStep > 1) {
-                dispatch(setStep(currentStep - 1));
+                dispatch(setStepAPI(currentStep - 1));
               } else {
                 window.history.back();
               }

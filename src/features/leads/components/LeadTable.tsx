@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Phone, Filter } from 'lucide-react';
 import LeadStatusBadge from './LeadStatusBadge';
-import LeadActionCell from './LeadActionCell';
+import LeadActionCell, { getLeadRoute } from './LeadActionCell';
 import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
 import { Lead } from '@/features/leads/types/leads.types';
@@ -256,7 +256,7 @@ function LeadTable({
                 <tr
                   key={key}
                   className={rowBgClass}
-                  onClick={() => navigate(`/leads/${l.id.replace('#', '')}`)}
+                  onClick={() => navigate(getLeadRoute(l))}
                 >
                   <td className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-center h-full">

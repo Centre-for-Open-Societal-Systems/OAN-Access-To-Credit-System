@@ -39,7 +39,8 @@ export function useLeadInitialization(id?: string) {
         // so it can re-run and populate the farmer details once the leads arrive.
         if (!existingLead && leads.length === 0) {
             dispatch(initializeLead({ id: `#${id}` }));
-            return; 
+            lastInitializedId.current = currentIdKey;
+            return;
         }
 
         const nameParts = existingLead?.name ? existingLead.name.split(' ') : [];
@@ -48,14 +49,15 @@ export function useLeadInitialization(id?: string) {
 
         dispatch(initializeLead({
             id: `#${id}`,
-            source: existingLead?.source || 'Direct Entry',
+            source: existingLead?.source || '',
+            status: existingLead?.status || '',
             farmerId: existingLead?.farmerId || '',
             consentDate: existingLead?.consentDate || '',
             consentRequestId: existingLead?.consentRequestId || null,
             farmerDetails: {
                 firstName,
                 lastName,
-                phoneNumber: existingLead?.phone || '',
+                phoneNumber: existingLead?.farmerPhone || '',
                 location: existingLead?.location || ''
             }
         }));

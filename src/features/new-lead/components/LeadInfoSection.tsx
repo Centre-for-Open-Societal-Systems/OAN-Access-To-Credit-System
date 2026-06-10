@@ -1,10 +1,13 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
 import { TextField } from '@/components/ui/TextField';
+import { useParams } from 'next/navigation';
 
 export function LeadInfoSection() {
   const dispatch = useAppDispatch();
-  const { leadId, leadSource, leadStatus, leadSourcesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+  const { leadSource, leadStatus, leadSourcesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+  const params = useParams();
+  const leadId = params?.id as string;
 
   return (
 

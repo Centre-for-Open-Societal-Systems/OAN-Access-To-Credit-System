@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ThumbsUp, Ban, AlertTriangle, Circle, CircleDot, Lock } from 'lucide-react';
 
-export type LeadStatusOutcome = 'Qualified' | 'Rejected' | null;
+export type LeadStatusOutcome = 'Verified' | 'Rejected' | null;
 
 interface LeadStatusModalProps {
   isOpen: boolean;
@@ -86,31 +86,31 @@ export default function LeadStatusModal({
             </div>
 
             <div className="flex flex-row gap-4">
-              {/* QUALIFIED OPTION */}
+              {/* VERIFIED OPTION */}
               <button
                 type="button"
-                onClick={() => setOutcome('Qualified')}
+                onClick={() => setOutcome('Verified')}
                 className={`flex flex-col flex-1 p-4 rounded-xl border-2 text-left transition-all ${
-                  outcome === 'Qualified'
+                  outcome === 'Verified'
                     ? 'bg-[rgba(237,250,242,0.42)] border-[#16A34A]'
                     : 'bg-white border-[#EDEFF1] hover:border-[#D1DACE]'
                 }`}
               >
                 <div className="flex flex-row justify-between items-start w-full mb-3">
                   <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                    outcome === 'Qualified' ? 'bg-[#F0FDFA]' : 'bg-[#F1F3F4]'
+                    outcome === 'Verified' ? 'bg-[#F0FDFA]' : 'bg-[#F1F3F4]'
                   }`}>
-                    <ThumbsUp size={18} className={outcome === 'Qualified' ? 'text-[#0D9488]' : 'text-[#9CA3AF]'} />
+                    <ThumbsUp size={18} className={outcome === 'Verified' ? 'text-[#0D9488]' : 'text-[#9CA3AF]'} />
                   </div>
-                  {outcome === 'Qualified' ? (
+                  {outcome === 'Verified' ? (
                     <CircleDot size={20} className="text-[#14B8A6]" />
                   ) : (
                     <Circle size={20} className="text-[#E5E7EB]" />
                   )}
                 </div>
-                <h4 className="font-inter font-bold text-[16px] leading-6 text-[#232F34] mb-1">Qualified</h4>
+                <h4 className="font-inter font-bold text-[16px] leading-6 text-[#232F34] mb-1">Verified</h4>
                 <p className="font-inter font-normal text-[12px] leading-5 text-[#9CA3AF]">
-                  Lead meets criteria and is ready to be processed further.
+                  Lead meets criteria and is verified.
                 </p>
               </button>
 
@@ -139,7 +139,7 @@ export default function LeadStatusModal({
                 <h4 className="font-inter font-bold text-[16px] leading-6 text-[#232F34] mb-1">Rejected</h4>
                 <p className="font-inter font-normal text-[12px] leading-5 text-[#9CA3AF]">
                   {isFinalize 
-                    ? 'Lead could not be processed or was rejected after qualification.'
+                    ? 'Lead could not be processed or was rejected after processing.'
                     : 'Lead does not meet requirements or is uninterested.'}
                 </p>
               </button>
@@ -177,7 +177,7 @@ export default function LeadStatusModal({
               <div className="flex flex-col gap-1">
                 <h5 className="font-inter font-semibold text-[14px] leading-5 text-[#232F34] m-0">Confirm Action</h5>
                 <p className="font-inter font-normal text-[12px] leading-4 text-[#9CA3AF] m-0">
-                  Once marked as Processed or Rejected, this lead's status cannot be changed again. All further actions will be locked.
+                  Once marked as Verified or Rejected, this lead's status cannot be changed again. All further actions will be locked.
                 </p>
               </div>
             </div>

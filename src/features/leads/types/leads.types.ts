@@ -33,6 +33,7 @@ export interface Lead {
   assignedTo?: string;
   owner?: 'me' | 'unassigned' | 'other' | string;
   creation: string;
+  farmerPhone?: string;
   [key: string]: any;
 }
 // small trend under summary in Leads

@@ -159,7 +159,46 @@ const leadSlice = createSlice({
       .addCase(fetchLeadSummary.rejected, (state, action) => {
         state.isSummaryLoading = false;
         state.summaryError = action.payload as string;
-      });
+      })
+      // Sync status with details view to avoid stale state / UI flashes
+      .addMatcher(
+        (action) => action.type === 'newLead/updateLeadStatus/fulfilled',
+        (state, action: any) => {
+          const { leadId, status } = action.payload.payload;
+          const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+          if (lead) {
+            lead.status = status;
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'newLead/updateVisitScheduleStatus/fulfilled',
+        (state, action: any) => {
+          const { leadId, status } = action.payload.payload;
+          if (status === 'Completed') {
+            const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+            if (lead) {
+              lead.visitDate = undefined;
+            }
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'newLead/fetchLeadDetails/fulfilled',
+        (state, action: any) => {
+          const leadId = action.meta.arg;
+          const leadData = action.payload?.data;
+          if (leadData) {
+            const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+            if (lead) {
+              lead.status = leadData.status;
+              lead.name = `${leadData.first_name} ${leadData.last_name}`;
+              lead.farmerPhone = leadData.phone_number;
+              lead.location = leadData.location;
+            }
+          }
+        }
+      );
   },
 });
 

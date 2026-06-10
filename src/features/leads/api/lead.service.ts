@@ -39,13 +39,13 @@ export const leadService = {
 
     const results = rawLeads.map((item: any): Lead => ({
       id: item.name,
-      name: item.farmer_name || item.name,
+      name: item.farmer_name || '',
       phone: item.phone_number || '',
-      status: item.status || 'New',
-      location: item.location || 'Unknown',
+      status: item.status || '',
+      location: item.location || '',
       loanType: item.loan_type || '',
       loanAmount: item.loan_amount || '',
-      source: item.lead_source || 'Unknown',
+      source: item.lead_source || '',
       assignedTo: item.assigned_to,
       owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
       creation: item.creation || '',
@@ -77,5 +77,34 @@ export const leadService = {
       throw new Error('Failed to fetch lead');
     }
     return response.json();
+  },
+
+  async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<any> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id, status, reason }),
+    });
+    if (!response.ok) throw new Error('Failed to update lead status');
+    const data = await response.json();
+    return data.message;
+  },
+
+  async getAssignableUsers(search_query: string = ''): Promise<any> {
+    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(search_query)}`);
+    if (!response.ok) throw new Error('Failed to fetch assignable users');
+    const data = await response.json();
+    return data.message;
+  },
+
+  async assignLead(lead_id: string, assigned_to: string): Promise<any> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.assign_lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id, assigned_to }),
+    });
+    if (!response.ok) throw new Error('Failed to assign lead');
+    const data = await response.json();
+    return data.message;
   },
 };

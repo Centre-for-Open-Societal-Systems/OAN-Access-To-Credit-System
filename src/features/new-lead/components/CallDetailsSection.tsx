@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectNewLeadState, fetchCallDetailsThunk } from '../store/newLeadSlice';
+import { useParams } from 'next/navigation';
 
 export function CallDetailsSection() {
-  const { callDetails, leadId } = useAppSelector(selectNewLeadState);
+  const { callDetails } = useAppSelector(selectNewLeadState);
   const dispatch = useAppDispatch();
+  const params = useParams();
+  const leadId = params?.id as string;
 
   useEffect(() => {
     if (leadId) {

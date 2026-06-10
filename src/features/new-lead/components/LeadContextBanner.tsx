@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from 'react';
 import { MapPin, Phone } from 'lucide-react';
-import LeadStatusModal, { LeadStatusOutcome } from './modals/LeadStatusModal';
 
 interface LeadContextBannerProps {
   leadId: string;
@@ -12,6 +10,7 @@ interface LeadContextBannerProps {
   status?: string;
   createdAt?: string;
   actionType?: string | null;
+  actions?: React.ReactNode;
 }
 
 export default function LeadContextBanner({
@@ -22,15 +21,9 @@ export default function LeadContextBanner({
   status = 'INITIATED',
   createdAt = 'May 24, 2026 10:30 AM',
   actionType = 'view',
+  actions,
 }: LeadContextBannerProps) {
   const isVisitScheduled = actionType === 'visit-scheduled';
-  const [modalAction, setModalAction] = useState<'verify' | 'reject' | null>(null);
-
-  const handleModalConfirm = (outcome: LeadStatusOutcome, notes: string) => {
-    console.log('Confirmed:', outcome, notes);
-    // TODO: dispatch actual update action here
-    setModalAction(null);
-  };
 
   // Extract initials for visit-scheduled
   const initials = farmerName
@@ -101,33 +94,11 @@ export default function LeadContextBanner({
         </div>
       </div>
 
-      {/* Buttons only show for generic view */}
-      {!isVisitScheduled && (
+      {actions && (
         <div className="flex-1 flex justify-end gap-3">
-          <button 
-            onClick={() => setModalAction('reject')}
-            className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#374151] hover:bg-slate-50 transition-colors"
-          >
-            ✕ Reject
-          </button>
-          <button 
-            onClick={() => setModalAction('verify')}
-            className="px-4 py-2 bg-[#087F50] rounded-lg text-sm font-medium text-white hover:bg-[#05774A] transition-colors"
-          >
-            ✓ Verify Lead
-          </button>
+          {actions}
         </div>
       )}
-
-      <LeadStatusModal
-        isOpen={modalAction !== null}
-        onClose={() => setModalAction(null)}
-        onConfirm={handleModalConfirm}
-        variant="finalize"
-        currentStatus={status}
-        leadId={leadId}
-        initialOutcome={modalAction === 'reject' ? 'Rejected' : null}
-      />
     </div>
   );
 }

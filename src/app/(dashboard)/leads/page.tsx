@@ -10,7 +10,7 @@ import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import LeadToolbar from '@/features/leads/components/LeadToolbar';
 import LeadTable from '@/features/leads/components/LeadTable';
 import LeadPagination from '@/features/leads/components/LeadPagination';
-import LeadAdvancedFilters from '@/features/leads/components/LeadAdvancedFilters';
+import AdvancedFilters from '@/components/ui/AdvancedFilters';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
@@ -243,7 +243,7 @@ export default function LeadsDashboard() {
         />
       </div>
 
-      {showAdvFilters && <LeadAdvancedFilters onClose={() => setShowAdvFilters(false)} />}
+      {showAdvFilters && <AdvancedFilters onClose={() => setShowAdvFilters(false)} mode="leads" />}
     </div>
   );
 }

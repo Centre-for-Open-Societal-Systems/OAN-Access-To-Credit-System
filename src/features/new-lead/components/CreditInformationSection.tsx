@@ -1,18 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, addCreditInfo } from '../store/newLeadSlice';
+import { selectNewLeadState, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
 import { CreditInformationModal } from './modals/CreditInformationModal';
 
 export function CreditInformationSection() {
   const dispatch = useAppDispatch();
-  const { creditInfo } = useAppSelector(selectNewLeadState);
+  const { creditInfo, leadStatus } = useAppSelector(selectNewLeadState);
+  const params = useParams();
+  const leadId = params?.id as string;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleSubmit = (data: { loanType: string; loanAmount: string; purposeMessage: string }) => {
-    dispatch(addCreditInfo({
-      type: data.loanType,
-      amount: data.loanAmount,
-      purpose: data.purposeMessage
+  const isFinalized = leadStatus?.toLowerCase() === 'rejected' || leadStatus?.toLowerCase() === 'processed';
+
+  useEffect(() => {
+    if (leadId) {
+      dispatch(fetchCreditInfoThunk(leadId));
+    }
+  }, [dispatch, leadId]);
+
+  const handleSubmit = async (data: { loanType: string; loanAmount: string; purposeMessage: string }) => {
+    if (!leadId) return;
+    await dispatch(addCreditInfoThunk({
+      leadId,
+      loan_type: data.loanType,
+      loan_amount: parseFloat(data.loanAmount.replace(/,/g, '')),
+      purpose_message: data.purposeMessage
     }));
     setIsModalOpen(false);
   };
@@ -23,13 +36,15 @@ export function CreditInformationSection() {
         <h2 className="font-inter font-semibold text-lg leading-7 flex items-center text-[#232F34]">
           Credit Information
         </h2>
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="flex flex-row justify-center items-center px-4 py-1 gap-2 h-8 bg-white border border-[#16A34A] rounded-lg text-[#16A34A] font-roboto font-bold text-base leading-6 hover:bg-[#F0FDFA] transition-colors"
-        >
-          + Add
-        </button>
+        {!isFinalized && (
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex flex-row justify-center items-center px-4 py-1 gap-2 h-8 bg-white border border-[#16A34A] rounded-lg text-[#16A34A] font-roboto font-bold text-base leading-6 hover:bg-[#F0FDFA] transition-colors"
+          >
+            + Add
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col items-start px-4 sm:px-6 w-full overflow-hidden">

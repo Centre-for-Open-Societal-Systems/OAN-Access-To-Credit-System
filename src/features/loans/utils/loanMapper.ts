@@ -51,7 +51,7 @@ export function mapLoanRowToFormFields(row: any): Record<string, any> {
     taxId: row.tax_id || '',
 
     // Step 5: Farmer Details
-    fullName: row.full_name || row.applicant || '',
+    fullName: row.full_name || '',
     lastName: row.last_name || '',
     mobilePhone: row.mobile_phone || '',
     dateOfBirth: row.date_of_birth || '',

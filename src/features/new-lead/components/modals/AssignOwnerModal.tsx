@@ -1,19 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
+import { newLeadService } from '../../api/newLead.service';
 
 interface User {
   id: string;
   name: string;
+  email: string;
+  region?: string;
 }
-
-const MOCK_USERS: User[] = [
-  { id: 'AG-101', name: 'Abebe Bekele Tadesse' },
-  { id: 'AG-102', name: 'Abebech Haile Mariam' },
-  { id: 'AG-103', name: 'Mekonnen Birhanu Mitiku' },
-  { id: 'AG-104', name: 'Sara Hailu Dessalegn' },
-  { id: 'AG-105', name: 'Selamawit Tariku Gebre' },
-];
 
 interface AssignOwnerModalProps {
   isOpen: boolean;
@@ -26,11 +21,12 @@ export default function AssignOwnerModal({
   isOpen,
   onClose,
   currentOwnerName,
-
   onAssign,
 }: AssignOwnerModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -48,10 +44,39 @@ export default function AssignOwnerModal({
     };
   }, [isOpen]);
 
-  const filteredUsers = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return MOCK_USERS.filter((u) => u.name.toLowerCase().includes(q));
-  }, [searchQuery]);
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    let active = true;
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await newLeadService.getAssignableUsers(searchQuery);
+        const results = response.message?.results || response.results || [];
+        if (active) {
+          setUsers(results.map((u: any) => ({
+            id: u.agent_id,
+            name: u.full_name,
+            email: u.email,
+            region: u.region
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to fetch assignable users', err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    const delay = setTimeout(() => {
+      fetchUsers();
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(delay);
+    };
+  }, [searchQuery, isOpen, mounted]);
 
   if (!isOpen || !mounted) return null;
 
@@ -127,28 +152,37 @@ export default function AssignOwnerModal({
                 Change Assignment to
               </label>
               <div className="flex flex-col items-start gap-[8px] w-full h-[256px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {isLoading ? (
+                  <div className="flex flex-row items-center justify-center w-full py-12 gap-2 text-[#4B5563]">
+                    <Loader2 className="animate-spin" size={18} />
+                    <span className="font-inter font-normal text-sm">Searching users...</span>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="flex flex-row items-center justify-center w-full py-12 text-[#4B5563]">
+                    <span className="font-inter font-normal text-sm">No users found.</span>
+                  </div>
+                ) : (
+                  users.map((user) => {
+                    const isSelected = selectedUser?.id === user.id;
 
-                {filteredUsers.map((user) => {
-                  const isSelected = selectedUser?.id === user.id;
-
-                  return (
-                    <button
-                      key={user.id}
-                      onClick={() => setSelectedUser(user)}
-                      className={`box-border flex flex-row items-center p-[12px] gap-[12px] w-full h-[54px] rounded-[10px] transition-colors shrink-0 ${isSelected
-                        ? 'bg-[#F4F9FF] border border-[#2B7FFF]'
-                        : 'bg-white border border-[#E5E7EB] hover:bg-gray-50'
-                        }`}
-                    >
-                      <div className="flex flex-row items-center p-0 w-full h-[28px]">
-                        <span className="font-inter font-medium text-[14px] leading-[20px] tracking-[-0.150391px] text-[#101828]">
-                          {user.name}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-
+                    return (
+                      <button
+                        key={user.id}
+                        onClick={() => setSelectedUser(user)}
+                        className={`box-border flex flex-row items-center p-[12px] gap-[12px] w-full h-[54px] rounded-[10px] transition-colors shrink-0 ${isSelected
+                          ? 'bg-[#F4F9FF] border border-[#2B7FFF]'
+                          : 'bg-white border border-[#E5E7EB] hover:bg-gray-50'
+                          }`}
+                      >
+                        <div className="flex flex-row items-center p-0 w-full h-[28px]">
+                          <span className="font-inter font-medium text-[14px] leading-[20px] tracking-[-0.150391px] text-[#101828]">
+                            {user.name}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
 

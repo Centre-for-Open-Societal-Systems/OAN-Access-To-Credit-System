@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectActiveTab, setActiveTab, setSearchQuery, selectSearchQuery, clearAdvancedFilters, selectTabCounts } from '../store/loanDashboardSlice';
-import LoanAdvancedFilters from './LoanAdvancedFilters';
+import AdvancedFilters from '@/components/ui/AdvancedFilters';
 
 export default function LoanToolbar() {
   const dispatch = useAppDispatch();
@@ -101,9 +101,10 @@ export default function LoanToolbar() {
         </button>
       </div>
 
-      <LoanAdvancedFilters
+      <AdvancedFilters
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        mode="loans"
       />
     </div>
   );

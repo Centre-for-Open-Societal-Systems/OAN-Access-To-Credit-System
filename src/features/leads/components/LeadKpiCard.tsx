@@ -9,8 +9,8 @@ interface LeadKpiCardProps {
 function getKpiIconCfg(id: string) {
   switch (id) {
     case 'total': return { bg: 'bg-blue-100', icon: <Users size={28} className="text-blue-500" /> };
-    case 'initiated': return { bg: 'bg-violet-100', icon: <ClipboardList size={28} className="text-violet-500" /> };
-    case 'qualified': return { bg: 'bg-green-100', icon: <CheckCircle2 size={28} className="text-green-500" /> };
+    case 'active': return { bg: 'bg-violet-100', icon: <ClipboardList size={28} className="text-violet-500" /> };
+    case 'verified': return { bg: 'bg-green-100', icon: <CheckCircle2 size={28} className="text-green-500" /> };
     case 'processed': return { bg: 'bg-teal-100', icon: <FileCheck size={28} className="text-teal-500" /> };
     case 'granted': return { bg: 'bg-amber-100', icon: <Clock size={28} className="text-amber-500" /> };
     case 'rejected': return { bg: 'bg-red-100', icon: <XCircle size={28} className="text-red-500" /> };

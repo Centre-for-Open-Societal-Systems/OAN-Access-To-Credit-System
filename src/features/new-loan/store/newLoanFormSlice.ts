@@ -9,15 +9,17 @@ interface LoanFormState {
   otpVerified: boolean;
   uploadedDocuments: Record<string, any>;
   formData: Record<string, any>;
-  farmerData: Record<string, any> | null;
+  loadedSteps: Record<number, boolean>;
+  supportingDocs: any[];
   
   // API loading states
   loadingStates: {
+    createApp: boolean;
     sendOtp: boolean;
     verifyOtp: boolean;
     uploadDoc: boolean;
-    saveFarmer: boolean;
     submitApp: boolean;
+    fetchApp: boolean;
   };
   errors: Record<string, string | null>;
 }
@@ -30,8 +32,10 @@ const loadInitialState = (): LoanFormState => {
         const parsed = JSON.parse(saved);
         return {
           ...parsed,
-          loadingStates: { sendOtp: false, verifyOtp: false, uploadDoc: false, saveFarmer: false, submitApp: false },
-          errors: {}
+          loadingStates: { createApp: false, sendOtp: false, verifyOtp: false, uploadDoc: false, submitApp: false, fetchApp: false },
+          errors: {},
+          loadedSteps: parsed.loadedSteps || {},
+          supportingDocs: parsed.supportingDocs || []
         };
       } catch (e) {
         console.error('Failed to parse saved loan form state');
@@ -45,8 +49,9 @@ const loadInitialState = (): LoanFormState => {
     otpVerified: false,
     uploadedDocuments: {},
     formData: {},
-    farmerData: null,
-    loadingStates: { sendOtp: false, verifyOtp: false, uploadDoc: false, saveFarmer: false, submitApp: false },
+    loadedSteps: {},
+    supportingDocs: [],
+    loadingStates: { createApp: false, sendOtp: false, verifyOtp: false, uploadDoc: false, submitApp: false, fetchApp: false },
     errors: {},
   };
 };
@@ -54,6 +59,98 @@ const loadInitialState = (): LoanFormState => {
 const initialState: LoanFormState = loadInitialState();
 
 // --- ASYNC THUNKS ---
+
+export const createLoanApplicationAPI = createAsyncThunk(
+  'loanForm/createApplication',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await loanService.createLoanApplication(leadId);
+      // Assuming response.message.application_id contains the ID, depending on the backend unwrap
+      const appId = response?.message?.application_id || response?.application_id || response;
+      if (!appId) throw new Error('No Application ID returned');
+      return appId;
+    } catch (err: any) {
+      // If the backend returns the existing application ID in the error response, we can pass it along
+      if (err.responseData?.message?.application_id) {
+        return rejectWithValue({
+          message: err.message || 'Failed to create application',
+          application_id: err.responseData.message.application_id
+        });
+      }
+      return rejectWithValue(err.message || 'Failed to create application');
+    }
+  }
+);
+
+export const fetchLoanApplicationAPI = createAsyncThunk<any, string, { state: RootState }>(
+  'loanForm/fetchApplication',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+      const response = await loanService.getLoans({ lead_id: cleanLeadId });
+      if (response?.results && response.results.length > 0) {
+        return response.results[0];
+      }
+      return null;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch application');
+    }
+  }
+);
+
+export const nextStepAPI = createAsyncThunk<number, void, { state: RootState }>(
+  'loanForm/nextStep',
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
+    const { currentStep, applicationId } = state.loanForm;
+    const nextStepVal = currentStep + 1;
+    if (nextStepVal > 3) return currentStep;
+    
+    try {
+      if (applicationId) {
+        await loanService.updateLoanStep(applicationId, nextStepVal);
+      }
+      return nextStepVal;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to update step');
+    }
+  }
+);
+
+export const prevStepAPI = createAsyncThunk<number, void, { state: RootState }>(
+  'loanForm/prevStep',
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState();
+    const { currentStep, applicationId } = state.loanForm;
+    const prevStepVal = currentStep - 1;
+    if (prevStepVal < 1) return currentStep;
+    
+    try {
+      if (applicationId) {
+        await loanService.updateLoanStep(applicationId, prevStepVal);
+      }
+      return prevStepVal;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to update step');
+    }
+  }
+);
+
+export const setStepAPI = createAsyncThunk<number, number, { state: RootState }>(
+  'loanForm/setStep',
+  async (step: number, { getState, rejectWithValue }) => {
+    const state = getState();
+    const { applicationId } = state.loanForm;
+    try {
+      if (applicationId) {
+        await loanService.updateLoanStep(applicationId, step);
+      }
+      return step;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to update step');
+    }
+  }
+);
 
 export const sendOtpAPI = createAsyncThunk(
   'loanForm/sendOtp',
@@ -91,17 +188,7 @@ export const uploadDocumentAPI = createAsyncThunk(
   }
 );
 
-export const saveFarmerDetailsAPI = createAsyncThunk(
-  'loanForm/saveFarmerDetails',
-  async (payload: any, { rejectWithValue }) => {
-    try {
-      const response = await loanService.saveFarmerDetails(payload);
-      return response;
-    } catch (err: any) {
-      return rejectWithValue(err.message || 'Failed to save farmer details');
-    }
-  }
-);
+
 
 export const submitApplicationAPI = createAsyncThunk(
   'loanForm/submitApplication',
@@ -145,6 +232,14 @@ export const newLoanFormSlice = createSlice({
         if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
       }
     },
+    markStepLoaded: (state, action: PayloadAction<number>) => {
+      state.loadedSteps[action.payload] = true;
+      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
+    },
+    setSupportingDocs: (state, action: PayloadAction<any[]>) => {
+      state.supportingDocs = action.payload;
+      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
+    },
     resetForm: () => {
       if (typeof window !== 'undefined') localStorage.removeItem('loan_form_state');
       return { 
@@ -154,8 +249,9 @@ export const newLoanFormSlice = createSlice({
         otpVerified: false,
         uploadedDocuments: {},
         formData: {},
-        farmerData: null,
-        loadingStates: { sendOtp: false, verifyOtp: false, uploadDoc: false, saveFarmer: false, submitApp: false }, 
+        loadedSteps: {},
+        supportingDocs: [],
+        loadingStates: { createApp: false, sendOtp: false, verifyOtp: false, uploadDoc: false, submitApp: false, fetchApp: false }, 
         errors: {} 
       };
     },
@@ -164,6 +260,50 @@ export const newLoanFormSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // createApplication
+    builder.addCase(createLoanApplicationAPI.pending, (state) => { state.loadingStates.createApp = true; state.errors.createApp = null; });
+    builder.addCase(createLoanApplicationAPI.fulfilled, (state, action) => {
+      state.loadingStates.createApp = false;
+      state.applicationId = action.payload;
+    });
+    builder.addCase(createLoanApplicationAPI.rejected, (state, action) => { state.loadingStates.createApp = false; state.errors.createApp = action.payload as string; });
+
+    // fetchLoanApplicationAPI
+    builder.addCase(fetchLoanApplicationAPI.pending, (state) => { state.loadingStates.fetchApp = true; state.errors.fetchApp = null; });
+    builder.addCase(fetchLoanApplicationAPI.fulfilled, (state, action) => {
+      state.loadingStates.fetchApp = false;
+      if (action.payload) {
+        const app = action.payload;
+        state.applicationId = app.application_id || app.id || null;
+        if (app.step && typeof app.step === 'number') {
+          state.currentStep = app.step;
+        }
+      } else {
+        // Clear applicationId to avoid stale state from previous lead
+        state.applicationId = null;
+        state.currentStep = 1;
+      }
+    });
+    builder.addCase(fetchLoanApplicationAPI.rejected, (state, action) => { state.loadingStates.fetchApp = false; state.errors.fetchApp = action.payload as string; });
+
+    // nextStepAPI
+    builder.addCase(nextStepAPI.fulfilled, (state, action) => {
+      state.currentStep = action.payload;
+      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
+    });
+
+    // prevStepAPI
+    builder.addCase(prevStepAPI.fulfilled, (state, action) => {
+      state.currentStep = action.payload;
+      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
+    });
+
+    // setStepAPI
+    builder.addCase(setStepAPI.fulfilled, (state, action) => {
+      state.currentStep = action.payload;
+      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
+    });
+
     // sendOtp
     builder.addCase(sendOtpAPI.pending, (state) => { state.loadingStates.sendOtp = true; state.errors.sendOtp = null; });
     builder.addCase(sendOtpAPI.fulfilled, (state, action) => {
@@ -188,14 +328,6 @@ export const newLoanFormSlice = createSlice({
     });
     builder.addCase(uploadDocumentAPI.rejected, (state, action) => { state.loadingStates.uploadDoc = false; state.errors.uploadDoc = action.payload as string; });
 
-    // saveFarmerDetails
-    builder.addCase(saveFarmerDetailsAPI.pending, (state) => { state.loadingStates.saveFarmer = true; state.errors.saveFarmer = null; });
-    builder.addCase(saveFarmerDetailsAPI.fulfilled, (state, action) => {
-      state.loadingStates.saveFarmer = false;
-      state.farmerData = action.meta.arg; // save the local state payload into global Redux
-    });
-    builder.addCase(saveFarmerDetailsAPI.rejected, (state, action) => { state.loadingStates.saveFarmer = false; state.errors.saveFarmer = action.payload as string; });
-
     // submitApplication
     builder.addCase(submitApplicationAPI.pending, (state) => { state.loadingStates.submitApp = true; state.errors.submitApp = null; });
     builder.addCase(submitApplicationAPI.fulfilled, (state) => {
@@ -212,7 +344,9 @@ export const {
   nextStep,
   prevStep,
   resetForm,
-  clearError
+  clearError,
+  markStepLoaded,
+  setSupportingDocs
 } = newLoanFormSlice.actions;
 
 export const selectLoanFormState = (state: RootState) => state.loanForm;

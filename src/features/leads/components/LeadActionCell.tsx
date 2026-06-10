@@ -18,29 +18,37 @@ const ICON_PROPS = {
   className: "text-[#3A474E]"
 } as const;
 
+export function getLeadRoute(lead: Lead): string {
+  const status = lead.status?.toLowerCase();
+  if (status === 'verified' && lead.visitDate) {
+    return `/leads/${lead.id.replace('#', '')}/schedule`;
+  }
+  return `/leads/${lead.id.replace('#', '')}`;
+}
+
 // 2.  to prevent unnecessary parent-driven row re-renders
 const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
 
+  if (status === 'verified' && lead.visitDate) {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <button
+          onClick={() => navigate(getLeadRoute(lead))}
+          className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
+        >
+          <CalendarCheck {...ICON_PROPS} />
+          <span>Visit Scheduled</span>
+        </button>
+        <span className="inline-flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+          <Calendar size={10} className="text-text-muted" />
+          <span className="text-[10px] font-normal text-text-muted text-right">{lead.visitDate}</span>
+        </span>
+      </div>
+    );
+  }
+
   switch (status) {
-    case 'visit scheduled':
-      return (
-        <div className="flex flex-col items-end gap-1">
-          <button
-            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}/schedule`)}
-            className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
-          >
-            <CalendarCheck {...ICON_PROPS} />
-            <span>Visit Scheduled</span>
-          </button>
-          {lead.visitDate && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
-              <Calendar size={10} className="text-text-muted" />
-              <span className="text-[10px] font-normal text-text-muted text-right">{lead.visitDate}</span>
-            </span>
-          )}
-        </div>
-      );
 
     case 'rejected':
       return (
@@ -55,7 +63,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
       return (
         <button
           type="button"
-          onClick={() => navigate(`/leads/${lead.id.replace('#', '')}`)}
+          onClick={() => navigate(getLeadRoute(lead))}
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <Eye {...ICON_PROPS} />

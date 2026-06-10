@@ -31,12 +31,16 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     } else if (responseData?.message) {
       errorMsg = typeof responseData.message === 'string' ? responseData.message : JSON.stringify(responseData.message);
     }
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    (err as any).responseData = responseData;
+    throw err;
   }
 
   // Handle Frappe's "200 OK" application-level errors
   if (responseData?.message?.status === 'error') {
-    throw new Error(responseData.message.message || 'Application Error');
+    const err = new Error(responseData.message.message || 'Application Error');
+    (err as any).responseData = responseData;
+    throw err;
   }
 
   return responseData?.message ?? responseData;

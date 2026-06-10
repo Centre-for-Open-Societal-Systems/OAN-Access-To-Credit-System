@@ -19,6 +19,7 @@ export interface Activity {
   id: string;
   author: string;
   type: 'note' | 'activity';
+  title?: string;
   content: string;
   timestamp: string;
 }
@@ -29,11 +30,12 @@ export interface FarmerDetails {
   location: string;
   phoneNumber: string;
   email: string;
+  gender?: string;
 }
 
 interface NewLeadState {
+  activeLeadId: string | null;
   // Form fields
-  leadId: string;
   leadSource: string;
   leadStatus: string;
   farmerId: string;
@@ -42,13 +44,14 @@ interface NewLeadState {
   // Metadata options
   leadSourcesOptions: string[];
   leadStatusesOptions: string[];
+  loanTypesOptions: string[];
 
   // Child sections (dummy data for now)
   creditInfo: CreditInfo[];
   callDetails: CallDetail[];
   activities: Activity[];
-  visitSchedule: { date: string } | null;
-  assignment: { agentId: string; assigneeName: string; region: string; date: string } | null;
+  visitSchedule: { id?: string; date: string; location?: string } | null;
+  assignment: { agentId?: string; assigneeName: string; region?: string; date?: string } | null;
 
   // UI state
   isLoadingConsent: boolean;
@@ -61,7 +64,7 @@ interface NewLeadState {
 }
 
 const getInitialState = (): NewLeadState => ({
-  leadId: '',
+  activeLeadId: null,
   leadSource: '',
   leadStatus: '',
   farmerId: '',
@@ -75,6 +78,7 @@ const getInitialState = (): NewLeadState => ({
   },
   leadSourcesOptions: [],
   leadStatusesOptions: [],
+  loanTypesOptions: [],
   creditInfo: [],
   callDetails: [],
   activities: [],
@@ -120,7 +124,14 @@ export const verifyOtpThunk = createAsyncThunk(
 
 export const fetchLeadMetadataThunk = createAsyncThunk(
   'newLead/fetchMetadata',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState() as RootState;
+    if (
+      state.newLead.leadSourcesOptions?.length > 0 &&
+      state.newLead.leadStatusesOptions?.length > 0
+    ) {
+      return null;
+    }
     try {
       const response = await newLeadService.getLeadMetadata();
       return response;
@@ -166,6 +177,90 @@ export const addActivityNoteThunk = createAsyncThunk(
   }
 );
 
+export const fetchVisitSchedulesThunk = createAsyncThunk(
+  'newLead/fetchVisitSchedules',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getVisitSchedules(leadId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch visit schedules');
+    }
+  }
+);
+
+export const fetchLeadDetailsThunk = createAsyncThunk(
+  'newLead/fetchLeadDetails',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getLeadDetails(leadId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch lead details');
+    }
+  }
+);
+
+export const fetchSpecificLeadThunk = createAsyncThunk(
+  'newLead/fetchSpecificLead',
+  async (leadId: string, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getSpecificLead(leadId);
+      const leads = extractList(response, 'results');
+      if (leads && leads.length > 0) {
+        const lead = leads[0];
+        if (lead.assigned_to) {
+          dispatch(fetchAssignmentInfoThunk(lead.assigned_to));
+        }
+      }
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch specific lead');
+    }
+  }
+);
+
+export const fetchCreditInfoThunk = createAsyncThunk(
+  'newLead/fetchCreditInfo',
+  async (leadId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.getCreditInfo(leadId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch credit info');
+    }
+  }
+);
+
+export const addCreditInfoThunk = createAsyncThunk(
+  'newLead/addCreditInfo',
+  async (payload: { leadId: string; loan_type: string; loan_amount: number | string; purpose_message?: string }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.addCreditInfo({
+        lead_id: decodeURIComponent(payload.leadId).replace(/^#/, ''),
+        ...payload
+      });
+      return { response, payload };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to add credit info');
+    }
+  }
+);
+
+export const fetchAssignmentInfoThunk = createAsyncThunk(
+  'newLead/fetchAssignmentInfo',
+  async (assigneeEmail: string, { rejectWithValue }) => {
+    try {
+      console.log("fetching assignment info for email", assigneeEmail);
+      const response = await newLeadService.getAssignableUsers(assigneeEmail);
+      console.log("assignment info response", response);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch assignment info');
+    }
+  }
+);
+
 export const submitNewLeadThunk = createAsyncThunk(
   'newLead/submitLead',
   async (_, { getState, rejectWithValue }) => {
@@ -191,7 +286,7 @@ export const submitNewLeadThunk = createAsyncThunk(
 
 export const assignLeadThunk = createAsyncThunk(
   'newLead/assignLead',
-  async (payload: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string; region?: string; date?: string }, { rejectWithValue }) => {
+  async (payload: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string; region?: string; date?: string; email?: string }, { rejectWithValue }) => {
     try {
       const response = await newLeadService.assignLead(payload);
       // Pass the payload down so we can update local state
@@ -202,14 +297,73 @@ export const assignLeadThunk = createAsyncThunk(
   }
 );
 
+export const updateLeadStatusThunk = createAsyncThunk(
+  'newLead/updateLeadStatus',
+  async (payload: { leadId: string; status: string; reason: string }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.updateLeadStatus({
+        lead_id: payload.leadId,
+        status: payload.status,
+        reason: payload.reason
+      });
+      return { response, payload };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update lead status');
+    }
+  }
+);
+
 export const scheduleVisitThunk = createAsyncThunk(
   'newLead/scheduleVisit',
   async (payload: { leadId: string; date: string; time?: string; location?: string; agenda?: string; region?: string; zone?: string; woreda?: string; kebele?: string; address?: string; }, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.scheduleVisit({ leadId: payload.leadId, date: payload.date });
+      let formattedTime = "09:00:00";
+      if (payload.time) {
+        if (payload.time.includes('M')) {
+          const [timePart, modifier] = payload.time.split(' ');
+          const [hoursStr, minutes] = timePart.split(':');
+          let hours = parseInt(hoursStr, 10);
+
+          if (hours === 12) hours = 0;
+          if (modifier.toUpperCase() === 'PM') hours += 12;
+
+          formattedTime = `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+        } else {
+          // Fallback in case it's already HH:mm or HH:mm:ss
+          formattedTime = payload.time.length === 5 ? `${payload.time}:00` : payload.time;
+        }
+      }
+
+      const apiPayload = {
+        lead_id: decodeURIComponent(payload.leadId).replace(/^#/, ''),
+        visit_date: payload.date,
+        visit_time: formattedTime,
+        region: payload.region,
+        zone: payload.zone,
+        woreda: payload.woreda,
+        kebele: payload.kebele,
+        meeting_location: payload.location,
+        notes: payload.agenda,
+      };
+      const response = await newLeadService.scheduleVisit(apiPayload);
       return { ...response, payload };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to schedule visit');
+    }
+  }
+);
+
+export const updateVisitScheduleStatusThunk = createAsyncThunk(
+  'newLead/updateVisitScheduleStatus',
+  async (payload: { leadId: string; scheduleId: string; status: string }, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.updateVisitScheduleStatus({
+        schedule_id: payload.scheduleId,
+        status: payload.status,
+      });
+      return { response, payload };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update visit schedule status');
     }
   }
 );
@@ -229,31 +383,57 @@ const formatTiming = (rawDateStr: string, separator: string = ' - ', appendIST: 
   return appendIST ? `${formattedString} IST` : formattedString;
 };
 
+// Helpers for robust Frappe API payload extraction
+const extractList = (payload: any, key: string): any[] => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload[key])) return payload[key];
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.results)) return payload.results;
+  if (Array.isArray(payload.message)) return payload.message;
+  if (payload.message && Array.isArray(payload.message[key])) return payload.message[key];
+  if (payload.data && Array.isArray(payload.data[key])) return payload.data[key];
+
+  // Fallback: if it's an object with exactly one key that is an array, return it
+  const values = Object.values(payload);
+  if (values.length === 1 && Array.isArray(values[0])) return values[0];
+
+  return [];
+};
+
+const extractData = (payload: any): any => {
+  if (!payload) return {};
+  if (Array.isArray(payload)) return payload;
+  return payload.data || payload.results || payload;
+};
+
 const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
   reducers: {
     initializeLead(state, action: PayloadAction<{ id?: string; source?: string; status?: string; farmerDetails?: Partial<FarmerDetails>; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
       const freshState = getInitialState();
+      const isSameLead = action.payload.id === state.activeLeadId;
+
+      state.activeLeadId = action.payload.id || null;
 
       // Explicitly mutate properties instead of returning a completely new object to guarantee immer proxy updates
-      state.leadId = action.payload.id || '';
-      state.leadSource = action.payload.source || '';
+      state.farmerDetails = {
+        ...freshState.farmerDetails,
+        ...(action.payload.farmerDetails || {})
+      };
       state.leadStatus = action.payload.status || '';
       state.farmerId = action.payload.farmerId || '';
       state.consentDate = action.payload.consentDate || null;
       state.consentRequestId = action.payload.consentRequestId !== undefined ? action.payload.consentRequestId : null;
 
-      state.farmerDetails = {
-        ...freshState.farmerDetails,
-        ...(action.payload.farmerDetails || {})
-      };
-
-      state.creditInfo = [];
-      state.callDetails = [];
-      state.activities = [];
-      state.visitSchedule = null;
-      state.assignment = null;
+      if (!isSameLead) {
+        state.creditInfo = [];
+        state.callDetails = [];
+        state.activities = [];
+        state.visitSchedule = null;
+        state.assignment = null;
+      }
 
       state.isLoadingConsent = false;
       state.consentError = null;
@@ -284,12 +464,7 @@ const newLeadSlice = createSlice({
       state.visitSchedule = { date: action.payload };
     },
     clearForm(state) {
-      const currentLeadId = state.leadId;
-      const freshState = getInitialState();
-
-      // Keep the current ID but clear everything else
-      Object.assign(state, freshState);
-      state.leadId = currentLeadId;
+      return initialState;
     }
   },
   extraReducers: (builder) => {
@@ -300,17 +475,16 @@ const newLeadSlice = createSlice({
       })
       .addCase(searchFarmerConsent.fulfilled, (state, action) => {
         state.isLoadingConsent = false;
+        const payload = extractData(action.payload);
 
-        if (action.payload?.consent_request) {
-          state.consentRequestId = action.payload.consent_request;
+        if (payload.consent_request) {
+          state.consentRequestId = payload.consent_request;
         }
 
-        // Mock setting details from response if they exist.
-        // In reality, map response to state.farmerDetails here.
-        if (action.payload?.farmer) {
+        if (payload.farmer) {
           state.farmerDetails = {
             ...state.farmerDetails,
-            ...action.payload.farmer
+            ...payload.farmer
           }
         }
       })
@@ -324,57 +498,126 @@ const newLeadSlice = createSlice({
       .addCase(verifyOtpThunk.fulfilled, (state, action) => {
         state.isVerifyingOtp = false;
         state.isOtpVerified = true;
-        state.farmerDetails.firstName = action.payload.firstName;
-        state.farmerDetails.lastName = action.payload.lastName;
-        state.farmerDetails.phoneNumber = action.payload.phoneNumber;
+        const payload = extractData(action.payload);
+        state.farmerDetails.firstName = payload.firstName;
+        state.farmerDetails.lastName = payload.lastName;
+        state.farmerDetails.phoneNumber = payload.phoneNumber;
       })
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;
       })
       .addCase(fetchLeadMetadataThunk.fulfilled, (state, action) => {
-        const message = action.payload?.message;
-        if (message?.status === 'success') {
-          state.leadSourcesOptions = message.sources || [];
-          state.leadStatusesOptions = message.statuses || [];
+        if (!action.payload) return;
+        const payload = extractData(action.payload);
+        if (payload.status === 'success' || payload.loan_types) {
+          state.leadSourcesOptions = payload.sources || [];
+          state.leadStatusesOptions = payload.statuses || [];
+          state.loanTypesOptions = payload.loan_types || [];
         }
       })
       .addCase(fetchCallDetailsThunk.fulfilled, (state, action) => {
-        // Prevent race conditions where old thunk resolves after user navigates to a new lead
-        if (state.leadId === '' || (state.leadId.replace('#', '') !== action.meta.arg.replace('#', ''))) return;
-
-        const logsArray = action.payload?.message?.call_logs;
-        if (logsArray) {
-          state.callDetails = logsArray.map((log: any, index: number) => {
-            return {
-              id: log.ref_id ? `${log.ref_id}-${index}` : log.name || log.id || `call-${index}`,
-              status: log.source || log.comment_type || log.status || 'Unknown',
-              timing: formatTiming(log.timestamp || '', ' • ', true)
-            };
-          });
-        }
+        const logsArray = extractList(action.payload, 'call_logs');
+        state.callDetails = logsArray.map((log: any, index: number) => ({
+          id: log.ref_id ? `${log.ref_id}-${index}` : log.name || log.id || `call-${index}`,
+          status: log.source || log.comment_type || log.status || 'Unknown',
+          timing: formatTiming(log.timestamp || '', ' • ', true)
+        }));
       })
       .addCase(fetchActivitiesThunk.fulfilled, (state, action) => {
-        // Prevent race conditions where old thunk resolves after user navigates to a new lead
-        if (state.leadId === '' || (state.leadId.replace('#', '') !== action.meta.arg.replace('#', ''))) return;
-
-        const timeline = action.payload?.message?.timeline;
-        if (timeline) {
-          state.activities = timeline.map((item: any, index: number) => {
-            return {
-              id: item.name || `activity-${index}`,
-              author: item.comment_by || 'System',
-              type: item.comment_type === 'Comment' ? 'note' : 'activity',
-              content: item.content || '',
-              timestamp: formatTiming(item.creation || item.timestamp || '', ' - ', false)
-            };
-          });
+        const timeline = extractList(action.payload, 'timeline');
+        state.activities = timeline.map((item: any, index: number) => ({
+          id: item.name || `activity-${index}`,
+          author: item.owner || 'System',
+          type: item.event_type === 'Commented' ? 'note' : 'activity',
+          title: item.event_title || item.event_type || 'Activity',
+          content: item.event_description || '',
+          timestamp: formatTiming(item.creation || item.timestamp || '', ' - ', false)
+        }));
+      })
+      .addCase(fetchCreditInfoThunk.fulfilled, (state, action) => {
+        const info = extractList(action.payload, 'credit_info');
+        state.creditInfo = info.map((item: any, index: number) => ({
+          id: item.name || `cr-${index}`,
+          type: item.loan_type || 'Unknown',
+          amount: item.loan_amount || '0',
+          purpose: item.purpose_message || ''
+        }));
+      })
+      .addCase(fetchLeadDetailsThunk.fulfilled, (state, action) => {
+        const lead = extractData(action.payload);
+        if (lead && Object.keys(lead).length > 0 && !Array.isArray(lead)) {
+          state.farmerDetails = {
+            firstName: lead.first_name || '',
+            lastName: lead.last_name || '',
+            phoneNumber: lead.phone_number || '',
+            location: lead.location || '',
+            email: lead.email || '',
+            gender: lead.gender || ''
+          };
+          state.farmerId = lead.farmer_id || '';
         }
       })
+      .addCase(fetchSpecificLeadThunk.fulfilled, (state, action) => {
+        const leads = extractList(action.payload, 'results');
+        if (leads && leads.length > 0) {
+          const lead = leads[0];
+          if (lead.status) state.leadStatus = lead.status;
+          if (lead.lead_source) state.leadSource = lead.lead_source;
+        }
+      })
+      .addCase(fetchVisitSchedulesThunk.fulfilled, (state, action) => {
+        let schedules = extractData(action.payload);
+
+        if (!Array.isArray(schedules) && schedules && Object.keys(schedules).length > 0) {
+          schedules = [schedules];
+        }
+
+        if (Array.isArray(schedules) && schedules.length > 0) {
+          // Sort descending by creation date using string comparison to avoid NaN issues in JS Date parsing
+          const sortedSchedules = [...schedules].sort((a, b) => {
+            const dateA = a.creation || '';
+            const dateB = b.creation || '';
+            return dateB.localeCompare(dateA);
+          });
+          
+          // Filter out completed schedules so they don't count as active scheduled visits
+          const activeSchedules = sortedSchedules.filter((s: any) => s.status !== 'Completed');
+          
+          if (activeSchedules.length > 0) {
+            const latest = activeSchedules[0];
+            state.visitSchedule = {
+              id: latest.name,
+              date: latest.visit_date,
+              location: latest.meeting_location || (latest.region ? `${latest.region}, ${latest.zone}` : '')
+            };
+          } else {
+            state.visitSchedule = null;
+          }
+        } else {
+          state.visitSchedule = null;
+        }
+      })
+      .addCase(updateVisitScheduleStatusThunk.fulfilled, (state, action) => {
+        const { status } = action.payload.payload;
+        if (status === 'Completed') {
+          state.visitSchedule = null;
+        }
+      })
+      .addCase(addCreditInfoThunk.fulfilled, (state, action) => {
+        const { payload } = action.payload;
+        state.creditInfo.push({
+          id: `cr-${Date.now()}`,
+          type: payload.loan_type,
+          amount: String(payload.loan_amount),
+          purpose: payload.purpose_message || ''
+        });
+      })
       .addCase(addActivityNoteThunk.fulfilled, (state, action) => {
-        const { response, content } = action.payload;
-        if (response?.message?.status === 'success') {
+        const { response = {}, content } = action.payload || {};
+        const resData = response.message || response;
+        if (resData.status === 'success') {
           state.activities.unshift({
-            id: response.message.comment_id || `new-${Date.now()}`,
+            id: resData.comment_id || `new-${Date.now()}`,
             author: 'Current User', // Will be dynamic later
             type: 'note',
             content: content,
@@ -387,9 +630,7 @@ const newLeadSlice = createSlice({
       })
       .addCase(submitNewLeadThunk.fulfilled, (state, action) => {
         state.isSubmitting = false;
-        if (action.payload?.message?.lead_id) {
-          state.leadId = action.payload.message.lead_id;
-        }
+        // state.leadId is removed, rely on URL redirect instead
       })
       .addCase(submitNewLeadThunk.rejected, (state, action) => {
         state.isSubmitting = false;
@@ -398,18 +639,37 @@ const newLeadSlice = createSlice({
       .addCase(assignLeadThunk.fulfilled, (state, action) => {
         const p = action.payload.payload;
         state.assignment = {
-          agentId: p.assigneeId || 'AG-0000-0000',
+          agentId: p.assigneeId,
           assigneeName: p.assigneeName,
-          region: p.region || 'Addis Ababa',
-          date: p.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          region: p.region,
+          date: p.date
         };
       })
       .addCase(scheduleVisitThunk.fulfilled, (state, action) => {
         const p = action.payload.payload;
-        // The time is not stored in the state definition currently, but date is.
-        // We'll format the date string to be shown in the UI.
-        const formattedDate = p.time ? `${p.date} • ${p.time}` : p.date;
-        state.visitSchedule = { date: formattedDate };
+        state.visitSchedule = {
+          date: p.date,
+          location: p.location || (p.region ? `${p.region}, ${p.zone}` : '')
+        };
+      })
+      .addCase(updateLeadStatusThunk.fulfilled, (state, action) => {
+        state.leadStatus = action.payload.payload.status;
+      })
+      .addCase(fetchAssignmentInfoThunk.fulfilled, (state, action) => {
+        const results = action.payload.message?.results || action.payload.results || [];
+        if (results && results.length > 0) {
+          const user = results[0];
+          state.assignment = {
+            agentId: user.agent_id,
+            assigneeName: user.full_name,
+            region: user.region,
+            date: undefined
+          };
+        } else {
+          state.assignment = {
+            assigneeName: action.meta.arg
+          };
+        }
       });
   }
 });

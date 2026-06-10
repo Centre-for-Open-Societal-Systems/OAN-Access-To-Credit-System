@@ -1,86 +1,131 @@
 import { fetchApi } from '@/lib/api/fetchApi';
 
 export const newLeadService = {
+  async simulateWebhook(lead_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.dev.simulate_webhook', {
+      method: 'POST',
+      body: JSON.stringify({ lead_id: decodeURIComponent(lead_id).replace(/^#/, '') }),
+    });
+  },
+
   // NOTE: duplicated later need to make it universal  
   async sendOtpAndCreateConsent(data: { farmerId: string; phoneNumber?: string }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({ 
-      success: true, 
-      consent_request: `REQ-${Date.now()}`,
-      farmer: {
-        firstName: 'Abebe',
-        lastName: 'Kebede',
-        phoneNumber: data.phoneNumber || '+251 911 234 567',
-        location: 'Jimma Zone'
-      }
-    }), 800));
+    return fetchApi('oan_a2c.consent.consent.send_otp_and_create_consent', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({ 
-      success: true,
-      firstName: 'Abebe',
-      lastName: 'Kebede',
-      phoneNumber: '+251 911 234 567'
-    }), 800));
+    return fetchApi('oan_a2c.consent.consent.verify_otp', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
-  // Dummy endpoint for credit info (will be replaced later)
-  async getCreditInfo(farmerId: string): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve([]), 500));
+  // Fetch full details of a lead (farmer details, etc.)
+  async getLeadDetails(leadId: string): Promise<any> {
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_basic_profile?lead_id=${cleanLeadId}`);
+  },
+
+  // Fetch the specific lead to populate status robustly (especially on page reload)
+  async getSpecificLead(leadId: string): Promise<any> {
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.get_leads?search_query=${cleanLeadId}`);
+  },
+  // Fetch credit information for a lead
+  async getCreditInfo(leadId: string): Promise<any> {
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.get_lead_credit_infos?lead_id=${cleanLeadId}`);
+  },
+
+  // Add credit information for a lead
+  async addCreditInfo(data: { lead_id: string; loan_type: string; loan_amount: number | string; purpose_message?: string }): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.leads.add_lead_credit_info', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   // Fetch call details for a lead
   async getCallDetails(leadId: string): Promise<any> {
-    const cleanLeadId = leadId.replace(/^#/, '');
-    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_call_logs?lead_id=${cleanLeadId}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch call logs');
-    }
-    return response.json();
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.get_lead_call_logs?lead_id=${cleanLeadId}`);
   },
 
   // Fetch activities (timeline) for a lead
   async getActivities(leadId: string): Promise<any> {
-    const cleanLeadId = leadId.replace(/^#/, '');
-    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_timeline?lead_id=${cleanLeadId}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch timeline');
-    }
-    return response.json();
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.get_lead_timeline?lead_id=${cleanLeadId}`);
   },
 
   // Add a new note/comment to the lead's timeline
   async addActivityNote(data: { leadId: string; content: string }): Promise<any> {
-    const cleanLeadId = data.leadId.replace(/^#/, '');
-    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.add_lead_comment`, {
+    const cleanLeadId = decodeURIComponent(data.leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.add_lead_comment`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lead_id: cleanLeadId, content: data.content }),
     });
-    if (!response.ok) {
-      throw new Error('Failed to add note');
-    }
-    return response.json();
   },
 
-  // Dummy endpoint for scheduling visit
-  async scheduleVisit(data: { leadId: string; date: string }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 500));
+  // Endpoint for scheduling visit
+  async scheduleVisit(data: {
+    lead_id: string;
+    visit_date: string;
+    visit_time: string;
+    region?: string;
+    zone?: string;
+    woreda?: string;
+    kebele?: string;
+    meeting_location?: string;
+    notes?: string;
+  }): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.leads.schedule_visit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
-  // Dummy endpoint for assignment
-  async getAssignmentInfo(leadId: string): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({
-      agentId: 'AG-2024-0156',
-      assigneeName: 'Sara Bekele',
-      region: 'Oromia',
-      date: 'May 15, 2026'
-    }), 500));
+  // Fetch visit schedules for a lead
+  async getVisitSchedules(leadId: string): Promise<any> {
+    const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
+    return fetchApi(`oan_a2c.api.v1.leads.get_visit_schedules?lead_id=${cleanLeadId}&start=0&page_length=50`);
   },
 
-  // Dummy endpoint for assigning lead to an owner
-  async assignLead(data: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({ success: true, ...data }), 500));
+  // Update visit schedule status
+  async updateVisitScheduleStatus(data: { schedule_id: string; status: string }): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.leads.update_visit_schedule_status', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Fetch assignable users matching search query
+  async getAssignableUsers(searchQuery: string): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(searchQuery)}`);
+  },
+
+
+  // Hit the actual assign_lead API endpoint
+  async assignLead(data: { leadId: string; assigneeName: string; assigneeId?: string; email?: string; region?: string }): Promise<any> {
+    const cleanLeadId = decodeURIComponent(data.leadId).replace(/^#/, '');
+    const response = await fetchApi('oan_a2c.api.v1.leads.assign_lead', {
+      method: 'POST',
+      body: JSON.stringify({
+        lead_id: cleanLeadId,
+        assigned_to: data.email || data.assigneeId
+      })
+    });
+    return {
+      payload: {
+        assigneeId: data.assigneeId,
+        assigneeName: data.assigneeName,
+        region: data.region,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      },
+      response
+    };
   },
 
   // API to create a new lead
@@ -92,17 +137,26 @@ export const newLeadService = {
     lead_source: string;
     external_id?: string;
   }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({ 
+    return new Promise((resolve) => setTimeout(() => resolve({
       message: { lead_id: `#LD-${Math.floor(Math.random() * 10000)}` }
     }), 1000));
   },
 
   // Fetch lead metadata (statuses, sources)
   async getLeadMetadata(): Promise<any> {
-    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_metadata');
-    if (!response.ok) {
-      throw new Error('Failed to fetch lead metadata');
-    }
-    return response.json();
+    return fetchApi('oan_a2c.api.v1.leads.get_lead_metadata');
+  },
+
+  // Update lead status (e.g. Processed, Rejected)
+  async updateLeadStatus(data: { lead_id: string; status: string; reason?: string }): Promise<any> {
+    const cleanLeadId = decodeURIComponent(data.lead_id).replace(/^#/, '');
+    return fetchApi('oan_a2c.api.v1.leads.update_lead_status', {
+      method: 'POST',
+      body: JSON.stringify({
+        lead_id: cleanLeadId,
+        status: data.status,
+        reason: data.reason
+      }),
+    });
   }
 };

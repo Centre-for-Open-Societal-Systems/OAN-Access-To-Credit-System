@@ -32,8 +32,7 @@ const navigationSections: NavSection[] = [
     title: 'WORKFLOW',
     items: [
       {
-        path: '/loans/new-loan-application',
-        activePaths: ['/loans/new-loan-application'],
+        path: '#', // Dynamically overridden in component
         label: 'New Loan Application',
         icon: ListChecks,
       },
@@ -58,7 +57,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const activeItem = navigationSections
     .flatMap((section) => section.items)
-    .find((item) => item.path === pathname || item.activePaths?.includes(pathname));
+    .find((item) => 
+      item.path === pathname || 
+      item.activePaths?.includes(pathname) || 
+      (item.label === 'New Loan Application' && pathname.endsWith('/new-loan-application'))
+    );
 
   const pageTitle = activeItem?.label ?? PAGE_TITLES[pathname] ?? 'Dashboard';
 
@@ -81,6 +84,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }
 
+  const filteredNavigationSections = navigationSections.map(section => {
+    if (section.title === 'WORKFLOW') {
+      return {
+        ...section,
+        items: section.items.map(item => ({
+          ...item,
+          path: pathname.endsWith('/new-loan-application') ? pathname : item.path
+        }))
+      };
+    }
+    return section;
+  }).filter(section => {
+    if (section.title === 'WORKFLOW') {
+      return pathname.endsWith('/new-loan-application');
+    }
+    return true;
+  });
+
   return (
     <div
       id="dashboard-shell"
@@ -93,7 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onClick={() => setIsMobileOpen(false)}
         />
       )}
-      <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileOpen} sections={navigationSections} />
+      <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileOpen} sections={filteredNavigationSections} />
       <main id="dashboard-main" className="dashboard-main">
         <TopHeader
           isSidebarCollapsed={isSidebarCollapsed}

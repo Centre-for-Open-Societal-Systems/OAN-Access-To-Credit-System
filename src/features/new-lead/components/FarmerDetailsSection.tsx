@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, updateFarmerDetails } from '../store/newLeadSlice';
 import { TextField } from '@/components/ui/TextField';
+import { useParams } from 'next/navigation';
 
 export function FarmerDetailsSection() {
   const dispatch = useAppDispatch();
@@ -10,7 +11,8 @@ export function FarmerDetailsSection() {
     dispatch(updateFarmerDetails({ [field]: value }));
   };
 
-  const isLocked = Boolean(useAppSelector(selectNewLeadState).leadId) || isOtpVerified;
+  const params = useParams();
+  const isLocked = Boolean(params?.id) || isOtpVerified;
   // filed are mostly duplicated can we use case here?
   return (
     <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">

@@ -47,93 +47,93 @@ export function Step4Success() {
   const handleReturnToDashboard = () => {
     dispatch(resetForm());
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    router.push('/loans/new-loan-application'); // Ensure we are on the right route
+    router.push('/loan-application-dashboard'); // Ensure we are on the right route
   };
 
   return (
     <>
       <div className="animate-in fade-in zoom-in duration-500 flex flex-col items-center w-full shadow-lg rounded-2xl">
-      {/* Top Green Banner */}
-      <div className="w-full bg-[#16A34A] rounded-t-2xl px-6 py-12 flex flex-col items-center text-center text-white relative overflow-hidden">
-        {/* Abstract circles */}
-        <div className="absolute top-0 left-0 w-64 h-64 bg-green-500 rounded-full mix-blend-multiply filter blur-2xl opacity-50 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-green-700 rounded-full mix-blend-multiply filter blur-2xl opacity-50 translate-x-1/2 translate-y-1/2"></div>
+        {/* Top Green Banner */}
+        <div className="w-full bg-[#16A34A] rounded-t-2xl px-6 py-12 flex flex-col items-center text-center text-white relative overflow-hidden">
+          {/* Abstract circles */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-green-500 rounded-full mix-blend-multiply filter blur-2xl opacity-50 -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-64 h-64 bg-green-700 rounded-full mix-blend-multiply filter blur-2xl opacity-50 translate-x-1/2 translate-y-1/2"></div>
 
-        <div className="relative z-10 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#1bc65b] mb-6 border-4 border-[#32cd6d] shadow-sm">
-          <Check className="h-8 w-8 text-white" strokeWidth={4} />
-        </div>
-
-        <h2 className="text-[28px] font-bold mb-3 relative z-10 tracking-tight">Application Submitted Successfully!</h2>
-        <p className="text-green-50 text-[15px] max-w-xl mb-6 relative z-10">
-          The loan application for <span className="font-bold text-white">Abebe Bekele Tadesse</span> has been securely transmitted to Coop Bank.
-        </p>
-
-        <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-[#117b38] px-4 py-1.5 text-xs font-bold text-white shadow-inner">
-          <Check size={14} strokeWidth={3} /> Verified & Submitted
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="w-full bg-white rounded-b-2xl border-x border-b border-gray-200 p-8 space-y-10">
-
-        {/* Info Cards */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border border-gray-100 bg-gray-50/50 rounded-xl p-4">
-
-          <div className="flex items-center gap-4 pl-2">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-              <User size={24} />
-            </div>
-            <div>
-              <h3 className="text-[15px] font-bold text-gray-900">Abebe Bekele Tadesse</h3>
-              <p className="text-[13px] text-gray-500 font-medium mt-0.5">Input Loan - Seed Loan</p>
-            </div>
+          <div className="relative z-10 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#1bc65b] mb-6 border-4 border-[#32cd6d] shadow-sm">
+            <Check className="h-8 w-8 text-white" strokeWidth={4} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 pr-6 shadow-sm min-w-[200px]">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-green-50 text-[#16A34A]">
-                <FileText size={16} strokeWidth={2.5} />
+          <h2 className="text-[28px] font-bold mb-3 relative z-10 tracking-tight">Application Submitted Successfully!</h2>
+          <p className="text-green-50 text-[15px] max-w-xl mb-6 relative z-10">
+            The loan application for <span className="font-bold text-white">Abebe Bekele Tadesse</span> has been securely transmitted to Coop Bank.
+          </p>
+
+          <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-[#117b38] px-4 py-1.5 text-xs font-bold text-white shadow-inner">
+            <Check size={14} strokeWidth={3} /> Verified & Submitted
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="w-full bg-white rounded-b-2xl border-x border-b border-gray-200 p-8 space-y-10">
+
+          {/* Info Cards */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border border-gray-100 bg-gray-50/50 rounded-xl p-4">
+
+            <div className="flex items-center gap-4 pl-2">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <User size={24} />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Application ID</p>
-                <p className="text-sm font-bold text-gray-900">APP-2026-2676</p>
+                <h3 className="text-[15px] font-bold text-gray-900">Abebe Bekele Tadesse</h3>
+                <p className="text-[13px] text-gray-500 font-medium mt-0.5">Input Loan - Seed Loan</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 pr-6 shadow-sm min-w-[200px]">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-green-50 text-[#16A34A]">
-                <Calendar size={16} strokeWidth={2.5} />
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 pr-6 shadow-sm min-w-[200px]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-green-50 text-[#16A34A]">
+                  <FileText size={16} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Application ID</p>
+                  <p className="text-sm font-bold text-gray-900">APP-2026-2676</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Submitted On</p>
-                <p className="text-sm font-bold text-gray-900">Jun 2, 2026 05:27 PM</p>
+
+              <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 pr-6 shadow-sm min-w-[200px]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-green-50 text-[#16A34A]">
+                  <Calendar size={16} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Submitted On</p>
+                  <p className="text-sm font-bold text-gray-900">Jun 2, 2026 05:27 PM</p>
+                </div>
               </div>
             </div>
+
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-4 pb-2">
+            <button className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+              <Download size={16} /> Download PDF
+            </button>
+            <button
+              onClick={() => setShowSummaryPopup(true)}
+              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16A34A] bg-white px-6 py-2.5 text-sm font-bold text-[#16A34A] shadow-sm hover:bg-green-50 transition-colors"
+            >
+              View Summary
+            </button>
+            <button
+              onClick={handleReturnToDashboard}
+              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#15803d] transition-colors"
+            >
+              <LayoutDashboard size={16} /> Return to Dashboard
+            </button>
           </div>
 
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-4 pb-2">
-          <button className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-            <Download size={16} /> Download PDF
-          </button>
-          <button
-            onClick={() => setShowSummaryPopup(true)}
-            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16A34A] bg-white px-6 py-2.5 text-sm font-bold text-[#16A34A] shadow-sm hover:bg-green-50 transition-colors"
-          >
-            View Summary
-          </button>
-          <button
-            onClick={handleReturnToDashboard}
-            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#15803d] transition-colors"
-          >
-            <LayoutDashboard size={16} /> Return to Dashboard
-          </button>
-        </div>
-
       </div>
-    </div>
 
       {showSummaryPopup && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -162,7 +162,7 @@ export function Step4Success() {
 
             {/* Content Body */}
             <div className="p-6 overflow-y-auto space-y-8 flex-1">
-              
+
               {/* Farmer Information */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
@@ -216,7 +216,7 @@ export function Step4Success() {
             {/* Footer */}
             <div className="border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row items-center justify-between shrink-0 bg-white rounded-b-xl gap-4 sm:gap-0">
               <p className="text-xs text-gray-400">Generated on May 14, 2026 • 08:03 PM</p>
-              <button 
+              <button
                 onClick={() => setShowSummaryPopup(false)}
                 className="w-full sm:w-auto px-8 py-2.5 bg-[#2E7250] text-white text-sm font-bold rounded-md hover:bg-[#23583e] transition-colors"
               >

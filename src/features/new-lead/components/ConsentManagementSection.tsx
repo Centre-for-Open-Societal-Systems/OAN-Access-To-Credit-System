@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, setFarmerId, searchFarmerConsent } from '../store/newLeadSlice';
+import { selectNewLeadState, setFarmerId, searchFarmerConsent, fetchLeadDetailsThunk } from '../store/newLeadSlice';
+import { newLeadService } from '../api/newLead.service';
 import { OTPVerificationModal } from './modals/OTPVerificationModal';
-import { Eye, X, FileText, CheckCircle2, Folder } from 'lucide-react';
+import { Eye, X, FileText, CheckCircle2, Folder, Loader2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
 export function ConsentManagementSection() {
   const dispatch = useAppDispatch();
-  const { leadId, farmerId, isLoadingConsent, consentError, isOtpVerified, consentDate, consentRequestId } = useAppSelector(selectNewLeadState);
+  const { farmerId, isLoadingConsent, consentError, isOtpVerified, consentDate, consentRequestId } = useAppSelector(selectNewLeadState);
+  const params = useParams();
+  const leadId = params?.id as string;
   const consent_id = consentRequestId;
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
@@ -15,6 +19,24 @@ export function ConsentManagementSection() {
     const resultAction = await dispatch(searchFarmerConsent(farmerId));
     if (searchFarmerConsent.fulfilled.match(resultAction)) {
       setIsOtpModalOpen(true);
+    }
+  };
+
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  const handleSimulateWebhook = async () => {
+    if (!leadId || isSimulating) return;
+    setIsSimulating(true);
+    try {
+      await newLeadService.simulateWebhook(leadId);
+      // Give the backend a second to process the webhook and then refetch
+      setTimeout(() => {
+        dispatch(fetchLeadDetailsThunk(leadId));
+        setIsSimulating(false);
+      }, 1000);
+    } catch (e) {
+      console.error('Webhook simulation failed', e);
+      setIsSimulating(false);
     }
   };
 
@@ -89,14 +111,21 @@ export function ConsentManagementSection() {
                   <p className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
                 </div>
                 
-                {/* Upload Dropzone */}
-                <div className="flex flex-row items-center p-[12px_8px] gap-[10px] w-full bg-white border border-[#E5E7EB] rounded-[4px] mt-1 h-[86px] box-border cursor-pointer hover:bg-gray-50 transition-colors">
+                {/* Upload Dropzone (Simulates Webhook) */}
+                <div 
+                  onClick={handleSimulateWebhook}
+                  className={`flex flex-row items-center p-[12px_8px] gap-[10px] w-full bg-white border border-[#E5E7EB] rounded-[4px] mt-1 h-[86px] box-border ${isSimulating ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'} transition-colors`}
+                >
                   <div className="flex justify-center items-center w-[64px] h-[64px] bg-[#F5F5F5] rounded-full shadow-[0px_1px_2px_rgba(0,0,0,0.05)] shrink-0">
-                    <Folder size={24} className="text-[#9CA3AF] fill-current" />
+                    {isSimulating ? (
+                      <Loader2 size={24} className="text-[#9CA3AF] animate-spin" />
+                    ) : (
+                      <Folder size={24} className="text-[#9CA3AF] fill-current" />
+                    )}
                   </div>
                   <div className="flex flex-col items-center justify-center flex-1 h-[60px] pb-1">
                     <span className="font-inter font-medium text-[14px] leading-[20px] text-center text-[#111827]">
-                      Drag and drop files here<br />Or<br />Click Browse files to select a file
+                      {isSimulating ? 'Simulating Webhook Consent...' : <>Drag and drop files here<br />Or<br />Click Browse files to simulate webhook</>}
                     </span>
                   </div>
                 </div>

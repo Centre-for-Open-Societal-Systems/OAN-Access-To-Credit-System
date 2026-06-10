@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, fetchActivitiesThunk, addActivityNoteThunk } from '../store/newLeadSlice';
+import { useParams } from 'next/navigation';
 import { Edit, Paperclip, Image as ImageIcon } from 'lucide-react';
 
 export function ActivitySection() {
+  const { activities } = useAppSelector(selectNewLeadState);
   const dispatch = useAppDispatch();
-  const { activities, leadId } = useAppSelector(selectNewLeadState);
+  const params = useParams();
+  const leadId = params?.id as string;
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,14 +83,14 @@ export function ActivitySection() {
                 {activity.author}
               </span>
               <div className="flex items-center px-2 py-0.5 bg-[#DEEBFF] border border-[#16335A]/20 rounded text-[#16335A] font-roboto font-medium text-[10px]">
-                Field Visit
+                {(activity as any).title || activity.type || 'Field Visit'}
               </div>
             </div>
             <span className="font-roboto font-normal text-xs text-[#6B7280]">
               {activity.timestamp}
             </span>
           </div>
-          <p className="font-roboto font-normal text-sm leading-5 text-[#111827] w-full mt-2">
+          <p className="font-roboto font-normal text-sm leading-5 text-[#111827] w-full mt-2 whitespace-pre-line">
             {activity.content}
           </p>
         </div>

@@ -46,7 +46,8 @@ const ALL_STATUS_VALUES = ['danger', 'info', 'neutral'];
 
 export interface AdvancedFilters {
   status: string[];
-  amountRange: string;
+  minLoan: number | null;
+  maxLoan: number | null;
   type: string[];
   location: string;
   dateFrom: string;
@@ -91,7 +92,8 @@ const initialState: LoanDashboardState = {
   pageSize: 10,
   advancedFilters: {
     status: [],
-    amountRange: '',
+    minLoan: null,
+    maxLoan: null,
     type: [],
     location: '',
     dateFrom: '',
@@ -172,7 +174,8 @@ const loanDashboardSlice = createSlice({
     clearAdvancedFilters: (state) => {
       state.advancedFilters = {
         status: [],
-        amountRange: '',
+        minLoan: null,
+        maxLoan: null,
         type: [],
         location: '',
         dateFrom: '',
@@ -245,36 +248,35 @@ export const selectAdvancedFilters = (state: RootState) => state.loanDashboard.a
 export const selectPagedRowsData = createSelector(
   [selectRawActivityData, selectPageSize],
   (rawActivityData, pageSize) => {
-    let rows = rawActivityData?.message?.results || rawActivityData?.message || rawActivityData?.data || rawActivityData || [];
-    if (!Array.isArray(rows)) {
-      rows = Array.isArray(rows.results) ? rows.results :
-        Array.isArray(rows.data) ? rows.data :
-          (Array.isArray(rows.applications) ? rows.applications : []);
-    }
-
-    let totalCount = rawActivityData?.message?.total_count || rawActivityData?.total_count || rawActivityData?.total || 0;
+    // fetchApi automatically unwraps the "message" envelope, so the data is directly on rawActivityData
+    let rows = rawActivityData?.results || [];
+    
+    let totalCount = rawActivityData?.total || 0;
 
     const mapped = rows.map((row: any) => {
       const rawDate = row.creation ? new Date(row.creation) : new Date();
       const dateStr = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeStr = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      // Mock Application ID starting with #AGL- if not present
-      const appId = row.id || row.name || '9823';
+      const appId = row.application_id || '';
       const formattedId = appId.startsWith('#AGL-') ? appId : `#AGL-${appId.replace(/\D/g, '').slice(-4) || '9823'}`;
+
+      const firstName = row.first_name || '';
+      const lastName = row.last_name || '';
+      const applicantName = `${firstName} ${lastName}`.trim();
 
       return {
         ...row,
         id: formattedId,
-        applicant: row.applicant || row.farmer || row.full_name || 'Unknown Applicant',
-        phone: row.phone || '+251 (555) 222-3333',
-        loanAmount: row.loanAmount || row.loan_amount || 'ETB 1,50,000',
-        type: row.type || row.loan_type || 'Unknown Type',
+        applicant: applicantName,
+        phone: row.phone_number || '',
+        loanAmount: row.loan_amount ? `ETB ${row.loan_amount.toLocaleString()}` : '—',
+        type: row.loan_type || 'Unknown Type',
         status: row.status || 'Draft',
         statusTone: row.status === 'Approved' ? 'success' : row.status === 'Rejected' ? 'danger' : row.status === 'Draft' ? 'neutral' : 'info',
-        updated: row.updated || `${dateStr} · ${timeStr}`,
-        timestamp: row.timestamp || rawDate.getTime(),
-        action: row.action || 'View',
+        updated: `${dateStr} · ${timeStr}`,
+        timestamp: rawDate.getTime(),
+        action: 'View',
       };
     });
 
@@ -290,20 +292,21 @@ export const selectTotalCount = createSelector([selectPagedRowsData], (data) => 
 export const selectLiveMetrics = createSelector(
   [selectRawSummaryData],
   (rawSummaryData) => {
-    const summaryData = rawSummaryData?.message || rawSummaryData?.data || rawSummaryData || {};
+    // fetchApi automatically unwraps the "message" envelope
+    const summaryData = rawSummaryData?.summary || {};
 
     return {
       total: {
         value: summaryData.total?.toString() || '—',
       },
       processing: {
-        value: (summaryData.processing ?? summaryData.pending)?.toString() || '—',
+        value: summaryData.processing?.toString() || '—',
       },
       approved: {
-        value: (summaryData.approved ?? summaryData.Approved)?.toString() || '—',
+        value: summaryData.approved?.toString() || '—',
       },
       rejected: {
-        value: (summaryData.rejected ?? summaryData.Rejected)?.toString() || '—',
+        value: summaryData.rejected?.toString() || '—',
       },
     };
   }
@@ -312,8 +315,7 @@ export const selectLiveMetrics = createSelector(
 export const selectTabCounts = createSelector(
   [selectRawSummaryData],
   (rawSummaryData) => {
-    const summaryData = rawSummaryData?.message || rawSummaryData?.data || rawSummaryData || {};
-    return summaryData.tab_counts || { all: 0, my: 0, unassigned: 0 };
+    return rawSummaryData?.summary?.tab_counts || { all: 0, my: 0, unassigned: 0 };
   }
 );
 
@@ -409,9 +411,9 @@ export const selectQueryParams = createSelector(
     }
 
     if (statusesToPass.length > 0) {
-      params.status = JSON.stringify(statusesToPass);
+      params.status = statusesToPass.join(',');
     } else if (selectedStatuses.length === 0 && tableStatusFilters.length === 0 && advancedFilters.status.length === 0) {
-      params.status = JSON.stringify(['__NONE__']);
+      params.status = '__NONE__';
     }
 
     let typesToPass = [...tableTypeFilters];
@@ -419,22 +421,18 @@ export const selectQueryParams = createSelector(
       typesToPass = [...new Set([...typesToPass, ...advancedFilters.type])];
     }
     if (typesToPass.length > 0) {
-      params.loan_type = JSON.stringify(typesToPass);
+      params.loan_type = typesToPass.join(',');
     }
 
     if (advancedFilters.location) {
       params.location = advancedFilters.location;
     }
 
-    if (advancedFilters.amountRange) {
-      // e.g. "0-25000" or "100000+"
-      if (advancedFilters.amountRange.includes('+')) {
-        params.loan_amount_min = advancedFilters.amountRange.replace('+', '');
-      } else {
-        const [min, max] = advancedFilters.amountRange.split('-');
-        params.loan_amount_min = min;
-        params.loan_amount_max = max;
-      }
+    if (advancedFilters.minLoan !== null && advancedFilters.minLoan !== undefined) {
+      params.loan_amount_min = String(advancedFilters.minLoan);
+    }
+    if (advancedFilters.maxLoan !== null && advancedFilters.maxLoan !== undefined) {
+      params.loan_amount_max = String(advancedFilters.maxLoan);
     }
 
     return params;

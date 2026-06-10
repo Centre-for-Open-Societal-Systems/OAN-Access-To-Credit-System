@@ -35,10 +35,6 @@ export const loanService = {
     return fetchApi('oan_a2c.api.v1.loan_applications.get_loan_summary');
   },
 
-  async getBasicProfile(application_id: string): Promise<any> {
-    return fetchApi(`oan_a2c.api.v1.loan_applications.get_basic_profile?application_id=${application_id}`);
-  },
-
   async getFullProfile(application_id: string): Promise<any> {
     return fetchApi(`oan_a2c.api.v1.loan_applications.get_full_profile?application_id=${application_id}`);
   },

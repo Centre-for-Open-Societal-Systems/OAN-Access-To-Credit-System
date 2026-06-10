@@ -7,12 +7,15 @@ import { SelectField } from '@/components/ui/SelectField';
 
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { TimePickerField } from '@/components/ui/TimePickerField';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { scheduleVisitThunk, selectNewLeadState } from '../store/newLeadSlice';
+import { useParams, useRouter } from 'next/navigation';
 
 interface ScheduleNewVisitFormProps {
   asModal?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
-  onSave?: (scheduleDetails: any) => void;
+  onSave?: (scheduleDetails: any) => void | Promise<void>;
 }
 
 export const ScheduleNewVisitForm = ({ 
@@ -21,7 +24,9 @@ export const ScheduleNewVisitForm = ({
   onClose, 
   onSave 
 }: ScheduleNewVisitFormProps) => {
-  const [date, setDate] = useState('');
+  const { visitSchedule } = useAppSelector(selectNewLeadState);
+  
+  const [date, setDate] = useState(visitSchedule?.date || '');
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
   const [agenda, setAgenda] = useState('');
@@ -29,8 +34,12 @@ export const ScheduleNewVisitForm = ({
   const [zone, setZone] = useState('');
   const [woreda, setWoreda] = useState('');
   const [kebele, setKebele] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const [mounted, setMounted] = useState(false);
+  const dispatch = useAppDispatch();
+  const params = useParams();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -49,12 +58,36 @@ export const ScheduleNewVisitForm = ({
 
   if (asModal && !isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!date || !woreda) {
+      alert('Please fill in all required fields (Date, Woreda).');
+      return;
+    }
+
     const payload = { date, time, location, agenda, region, zone, woreda, kebele };
-    if (onSave) {
-      onSave(payload);
-    } else {
-      console.log("Saving schedule:", payload);
+    
+    setIsSaving(true);
+    try {
+      if (onSave) {
+        await onSave(payload);
+      } else {
+        const activeLeadId = params?.id as string;
+        if (!activeLeadId) {
+          alert('Error: Lead ID not found');
+          return;
+        }
+        await dispatch(scheduleVisitThunk({
+          leadId: activeLeadId,
+          ...payload
+        })).unwrap();
+        // Redirect back to lead details page
+        router.push(`/leads/${activeLeadId.replace(/^#/, '')}`);
+      }
+    } catch (err: any) {
+      console.error("Failed to save schedule:", err);
+      alert(typeof err === 'string' ? err : err.message || 'Failed to save schedule');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -181,9 +214,10 @@ export const ScheduleNewVisitForm = ({
           </button>
           <button
             onClick={handleSave}
-            className="flex justify-center items-center px-4 py-2 bg-[#16A34A] rounded-md text-white font-inter font-medium text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#15803d] transition-colors"
+            disabled={isSaving}
+            className="flex justify-center items-center px-4 py-2 bg-[#16A34A] rounded-md text-white font-inter font-medium text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#15803d] transition-colors disabled:opacity-50"
           >
-            Save Schedule
+            {isSaving ? 'Saving...' : 'Save Schedule'}
           </button>
         </div>
       </div>
