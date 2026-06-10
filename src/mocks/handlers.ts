@@ -112,8 +112,47 @@ export const handlers = [
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_applications', ({ request }) => {
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_all_loans', ({ request }) => {
     const url = new URL(request.url);
+    const leadIdQuery = url.searchParams.get('lead_id');
+    const pageSize = parseInt(url.searchParams.get('page_size') || '10', 10);
+
+    if (leadIdQuery) {
+      if (leadIdQuery === 'TEST_LEAD_999') {
+        return HttpResponse.json({
+          message: {
+            status: "success",
+            results: [],
+            total: 0,
+            page: 1,
+            page_size: pageSize
+          }
+        });
+      }
+
+      return HttpResponse.json({
+        message: {
+          status: "success",
+          results: [
+            {
+              application_id: `APP-2026-03538`,
+              status: "Draft",
+              step: 1,
+              lead_id: leadIdQuery,
+              loan_amount: 312043.42,
+              loan_type: "Land loan",
+              location: "Somali, Jigjiga",
+              phone_number: "+251962959859",
+              creation: "2026-06-09 17:43:35.892144"
+            }
+          ],
+          total: 1,
+          page: 1,
+          page_size: pageSize
+        }
+      });
+    }
+
     const searchQuery = url.searchParams.get('search_query')?.toLowerCase() || '';
     const statusQuery = url.searchParams.get('status') || '';
     const locationQuery = url.searchParams.get('location')?.toLowerCase() || '';
@@ -126,7 +165,6 @@ export const handlers = [
     
     // Pagination params
     const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(url.searchParams.get('page_size') || '10', 10);
 
     let filteredRows = getFallbackMockRows();
 
@@ -198,15 +236,31 @@ export const handlers = [
     const startIndex = (page - 1) * pageSize;
     const paginatedRows = filteredRows.slice(startIndex, startIndex + pageSize);
 
+    // Map paginatedRows to the new backend format so UI can parse it correctly
+    const mappedRows = paginatedRows.map((r: any) => ({
+      application_id: r.id,
+      first_name: r.applicant?.split(' ')[0] || '',
+      last_name: r.applicant?.split(' ').slice(1).join(' ') || '',
+      phone_number: r.phone,
+      status: r.status,
+      loan_amount: parseFloat((r.loanAmount || '0').replace(/[^0-9.]/g, '')),
+      loan_type: r.type,
+      location: r.region,
+      creation: new Date().toISOString().replace('T', ' ').slice(0, 26) // Mock creation time
+    }));
+
     return HttpResponse.json({
       message: {
-        results: paginatedRows,
-        total_count: totalCount
+        status: "success",
+        results: mappedRows,
+        total: totalCount,
+        page,
+        page_size: pageSize
       }
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_summary', () => {
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_loan_summary', () => {
     const allRows = getFallbackMockRows();
     const summary = allRows.reduce((acc: any, row: any) => {
       acc.total = (acc.total || 0) + 1;
@@ -226,7 +280,206 @@ export const handlers = [
     };
 
     return HttpResponse.json({
-      message: summary
+      message: {
+        status: "success",
+        summary
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_basic_profile', ({ request }) => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        data: {
+          first_name: "Pending",
+          last_name: "Pending",
+          phone_number: "+251999999999",
+          email: null,
+          location: null
+        }
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_full_profile', ({ request }) => {
+    const url = new URL(request.url);
+    const appId = url.searchParams.get('application_id') || 'APP-2026-00083';
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        data: {
+          name: appId,
+          owner: "Administrator",
+          creation: new Date().toISOString(),
+          modified: new Date().toISOString(),
+          modified_by: "admin@example.com",
+          docstatus: 0,
+          idx: 0,
+          lead_id: null,
+          farmer_id: null,
+          first_name: "Pending",
+          last_name: "Pending",
+          phone_number: "+251999999999",
+          email: null,
+          location: null,
+          date_of_birth: null,
+          gender: "",
+          marital_status: "",
+          size_of_family: 0,
+          number_of_children: 0,
+          no_of_females_family: 0,
+          no_of_males_family: 0,
+          source_of_income: null,
+          education_level: "",
+          family_member_owns_land_independently: 0,
+          total_farmland_size_as_landowner: 0.0,
+          total_farmland_size_as_crop_sharing: 0.0,
+          total_farmland_size_as_rented: 0.0,
+          farmland_size_hectares: 0.0,
+          land_ownership_status: null,
+          soil_fertility_minerals: null,
+          moisture_levels: null,
+          certification_id: null,
+          certification_photo_url: null,
+          consent_id: null,
+          doctype: "A2C Loan Application"
+        }
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_credit_info', ({ request }) => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        data: {
+          loan_amount: 50000.0,
+          loan_type: "Input Loan",
+          loan_reason: null,
+          status: "Under Review"
+        }
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.edit_credit_info', () => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        message: "Credit info updated successfully"
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_supporting_documents', () => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        files: []
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.upload_supporting_documents', () => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        message: "Document uploaded successfully"
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', async ({ request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        lead_id: data.lead_id || "LEAD-2026-00202",
+        new_status: data.status || "Processed",
+        message: "Lead status updated successfully."
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users', ({ request }) => {
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        results: [
+          {
+            email: "arnavjagadeesh12@gmail.com",
+            full_name: "arnav",
+            agent_id: "arnav",
+            region: "Oromia"
+          }
+        ]
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.assign_lead', async ({ request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        lead_id: data.lead_id || "LEAD-2026-00202",
+        assigned_to: data.assigned_to || "arnavjagadeesh12@gmail.com",
+        assigned_date: "2026-06-08",
+        message: "Lead assigned successfully."
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.schedule_visit', async ({ request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        schedule_id: "VSCH-2026-00267",
+        message: "Visit scheduled successfully."
+      }
+    });
+  }),
+
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.update_visit_schedule_status', async ({ request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        schedule_id: data.schedule_id || "VSCH-2026-03598",
+        new_status: data.status || "Completed",
+        message: "Visit schedule status updated successfully."
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules', ({ request }) => {
+    const url = new URL(request.url);
+    const leadId = url.searchParams.get('lead_id') || "LEAD-2026-00202";
+    return HttpResponse.json({
+      message: {
+        status: "success",
+        start: 0,
+        page_length: 20,
+        total_count: 1,
+        results: [
+          {
+            name: "VSCH-2026-00267",
+            lead: leadId,
+            visit_date: "2026-06-10",
+            visit_time: "14:30:00",
+            meeting_location: "Cooperative Office",
+            region: "Oromia",
+            zone: "East Shewa",
+            woreda: "Ada'ama",
+            kebele: "Kebele 02",
+            status: "Scheduled",
+            scheduled_by: "arnavjagadeesh12@gmail.com",
+            creation: new Date().toISOString()
+          }
+        ]
+      }
     });
   }),
 ];

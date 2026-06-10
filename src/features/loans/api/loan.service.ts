@@ -13,6 +13,7 @@ export interface GetLoansParams {
   search_query?: string;
   tab?: string;
   location?: string;
+  lead_id?: string;
 }
 
 import { fetchApi } from '@/lib/api/fetchApi';
@@ -26,84 +27,56 @@ export const loanService = {
       });
     }
 
-    const path = `oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_applications?${searchParams.toString()}`;
+    const path = `oan_a2c.api.v1.loan_applications.get_all_loans?${searchParams.toString()}`;
     return fetchApi(path);
   },
 
   async getLoanSummary(): Promise<any> {
-    return fetchApi('oan_a2c.openagrinet_access_to_credit.doctype.loan_application.loan_application.get_loan_summary');
+    return fetchApi('oan_a2c.api.v1.loan_applications.get_loan_summary');
   },
 
-  async saveLoanDetails(data: {
-    loan_type: string;
-    purpose_of_loan: string;
-    requested_loan_amount: number;
-    primary_crop: string;
-    [key: string]: any;
-  }): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.loan_details', {
+  async getBasicProfile(application_id: string): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_basic_profile?application_id=${application_id}`);
+  },
+
+  async getFullProfile(application_id: string): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_full_profile?application_id=${application_id}`);
+  },
+
+  async getCreditInfo(application_id: string): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_credit_info?application_id=${application_id}`);
+  },
+
+  async editCreditInfo(data: any): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.loan_applications.edit_credit_info', {
       method: 'POST',
-      body: JSON.stringify({ action: 'save', ...data }),
+      body: JSON.stringify(data),
     });
   },
 
-  async saveBankDetails(data: {
-    application_id: string;
-    bank_account_name: string;
-    bank_account_number: string;
-    bank_name: string;
-    total_amount_borrowing: number;
-    [key: string]: any;
-  }): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.bank_details', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'save', ...data }),
-    });
+  async getSupportingDocuments(application_id: string): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_supporting_documents?application_id=${application_id}`);
   },
 
-  async saveFarmerDetails(data: {
-    application_id: string;
-    full_name: string;
-    last_name: string;
-    mobile_phone: string;
-    gender: string;
-    woreda: string;
-    kebele: string;
-    marital_status: string;
-    [key: string]: any;
-  }): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.farmer_details', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'save', ...data }),
-    });
-  },
+
+
 
   async uploadSupportingDocument(application_id: string, document_type: string, file: File): Promise<any> {
     const formData = new FormData();
-    formData.append('action', 'upload');
-    formData.append('application_id', application_id);
     formData.append('document_type', document_type);
     formData.append('file', file);
 
-    return fetchApi('oan_a2c.api.loan_app_api.supporting_documents', {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.upload_supporting_documents?application_id=${application_id}`, {
       method: 'POST',
-      body: formData, // FormData doesn't need Content-Type, fetch sets it with boundary
+      body: formData,
     });
   },
 
   async listSupportingDocuments(application_id: string): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.supporting_documents', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'list', application_id }),
-    });
+    return fetchApi(`oan_a2c.api.v1.loan_applications.get_supporting_documents?application_id=${application_id}`);
   },
 
-  async getConsentData(application_id: string): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.get_consent_data', {
-      method: 'POST',
-      body: JSON.stringify({ application_id }),
-    });
-  },
+
 
   async sendOtpAndCreateConsent(data: any): Promise<any> {
     return fetchApi('oan_a2c.consent.consent.send_otp_and_create_consent', {
@@ -119,40 +92,26 @@ export const loanService = {
     });
   },
 
-  async reviewApplication(application_id: string): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.application_manager', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'review', application_id }),
-    });
-  },
+
 
   async submitApplication(application_id: string): Promise<any> {
-    return fetchApi('oan_a2c.api.loan_app_api.application_manager', {
+    return fetchApi('oan_a2c.api.v1.loan_applications.update_loan_status', {
       method: 'POST',
-      body: JSON.stringify({ action: 'submit', application_id }),
+      body: JSON.stringify({ application_id, status: 'Processing' }),
     });
   },
 
-  // Mock implementation for getLoan for now if needed by other components,
-  // since a specific get endpoint wasn't provided for a single loan by id.
-  async getLoan(id: string): Promise<LoanApplication> {
-    const response = await fetch(`/api/loans/${id}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch loan');
-    }
-    return response.json();
+  async createLoanApplication(lead_id: string): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.loan_applications.create_loan_application', {
+      method: 'POST',
+      body: JSON.stringify({ lead_id: decodeURIComponent(lead_id).replace(/^#/, '') }),
+    });
   },
 
-  async updateLoanStatus(id: string, status: string): Promise<any> {
-    // Fallback to mock API if production endpoint doesn't exist
-    const response = await fetch(`/api/loans/${id}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+  async updateLoanStatus(application_id: string, status: string): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.loan_applications.update_loan_status', {
+      method: 'POST',
+      body: JSON.stringify({ application_id, status }),
     });
-    if (!response.ok) {
-      throw new Error('Failed to update loan status');
-    }
-    return response.json();
   },
 };
