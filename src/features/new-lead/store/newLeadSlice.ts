@@ -18,7 +18,7 @@ export interface CallDetail {
 export interface Activity {
   id: string;
   author: string;
-  type: 'note' | 'activity';
+  type: string;
   title?: string;
   content: string;
   timestamp: string;
@@ -104,8 +104,12 @@ export const searchFarmerThunk = createAsyncThunk(
     try {
       const response = await newLeadService.searchFarmer(faydaId);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Farmer not found.');
+    } catch (error) {
+      const err = error as Error & { responseData?: { exc_type?: string } };
+      if (err.responseData?.exc_type === 'DoesNotExistError') {
+        return rejectWithValue(`Farmer with Fayda ID '${faydaId}' not found.`);
+      }
+      return rejectWithValue(err.message || 'Unknown Cause: Farmer search failed.');
     }
   }
 );
@@ -116,24 +120,24 @@ export const searchFarmerConsent = createAsyncThunk(
     try {
       const response = await newLeadService.sendOtpAndCreateConsent({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId });
       // The backend response structure for this API is assumed to contain a success flag and possibly a consent_request id
-      return response as { success: boolean; consent_request?: string; farmer?: Partial<FarmerDetails> };
+      return response as { success: boolean; consent_request?: string; masked_phone?: string; };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to search farmer');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to search farmer');
     }
   }
 );
-
 export const verifyOtpThunk = createAsyncThunk(
   'newLead/verifyOtp',
-  async (payload: { otp_code: string; leadId: string }, { rejectWithValue }) => {
+  async (payload: { otp_code: string; leadId: string }, { dispatch, rejectWithValue }) => {
     try {
       const response = await newLeadService.verifyOtp({
         leadId: payload.leadId,
         otp_code: payload.otp_code
       });
+      await dispatch(fetchLeadDetailsThunk(payload.leadId));
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Verification failed');
+      return rejectWithValue(error.message || 'Unknown Cause: Verification failed');
     }
   }
 );
@@ -152,7 +156,7 @@ export const fetchLeadMetadataThunk = createAsyncThunk(
       const response = await newLeadService.getLeadMetadata();
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch lead metadata');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch lead metadata');
     }
   }
 );
@@ -164,7 +168,7 @@ export const fetchCallDetailsThunk = createAsyncThunk(
       const response = await newLeadService.getCallDetails(leadId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch call details');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch call details');
     }
   }
 );
@@ -176,19 +180,21 @@ export const fetchActivitiesThunk = createAsyncThunk(
       const response = await newLeadService.getActivities(leadId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch activities');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch activities');
     }
   }
 );
 
 export const addActivityNoteThunk = createAsyncThunk(
   'newLead/addActivityNote',
-  async (payload: { leadId: string; content: string }, { rejectWithValue }) => {
+  async (payload: { leadId: string; content: string }, { getState, rejectWithValue }) => {
     try {
       const response = await newLeadService.addActivityNote(payload);
-      return { response, content: payload.content };
+      const state = getState() as RootState;
+      const officerName = state.auth?.user?.officerName || 'Current User';
+      return { response, content: payload.content, officerName };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to add note');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to add note');
     }
   }
 );
@@ -200,7 +206,7 @@ export const fetchVisitSchedulesThunk = createAsyncThunk(
       const response = await newLeadService.getVisitSchedules(leadId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch visit schedules');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch visit schedules');
     }
   }
 );
@@ -212,7 +218,7 @@ export const fetchLeadDetailsThunk = createAsyncThunk(
       const response = await newLeadService.getLeadDetails(leadId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch lead details');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch lead details');
     }
   }
 );
@@ -231,7 +237,7 @@ export const fetchSpecificLeadThunk = createAsyncThunk(
       }
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch specific lead');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch specific lead');
     }
   }
 );
@@ -243,7 +249,7 @@ export const fetchCreditInfoThunk = createAsyncThunk(
       const response = await newLeadService.getCreditInfo(leadId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch credit info');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch credit info');
     }
   }
 );
@@ -270,7 +276,7 @@ export const fetchAssignmentInfoThunk = createAsyncThunk(
       const response = await newLeadService.getAssignableUsers(assigneeEmail);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch assignment info');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch assignment info');
     }
   }
 );
@@ -293,7 +299,7 @@ export const submitNewLeadThunk = createAsyncThunk(
       const response = await newLeadService.createLead(payload);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create lead');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to create lead');
     }
   }
 );
@@ -306,7 +312,7 @@ export const assignLeadThunk = createAsyncThunk(
       // Pass the payload down so we can update local state
       return { ...response, payload };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to assign lead');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to assign lead');
     }
   }
 );
@@ -322,7 +328,7 @@ export const updateLeadStatusThunk = createAsyncThunk(
       });
       return { response, payload };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update lead status');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to update lead status');
     }
   }
 );
@@ -362,7 +368,7 @@ export const scheduleVisitThunk = createAsyncThunk(
       const response = await newLeadService.scheduleVisit(apiPayload);
       return { ...response, payload };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to schedule visit');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to schedule visit');
     }
   }
 );
@@ -377,7 +383,7 @@ export const updateVisitScheduleStatusThunk = createAsyncThunk(
       });
       return { response, payload };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update visit schedule status');
+      return rejectWithValue(error.message || 'Unknown Cause: Failed to update visit schedule status');
     }
   }
 );
@@ -540,20 +546,9 @@ const newLeadSlice = createSlice({
       .addCase(verifyOtpThunk.pending, (state) => {
         state.isVerifyingOtp = true;
       })
-      .addCase(verifyOtpThunk.fulfilled, (state, action) => {
+      .addCase(verifyOtpThunk.fulfilled, (state) => {
         state.isVerifyingOtp = false;
         state.isOtpVerified = true;
-        const payload = action.payload && typeof action.payload.message === 'object'
-          ? action.payload.message
-          : action.payload;
-
-        const farmerPreview = payload?.farmer_preview;
-        if (farmerPreview) {
-          state.farmerDetails.firstName = farmerPreview.given_name || '';
-          state.farmerDetails.lastName = farmerPreview.family_name || '';
-          state.farmerDetails.phoneNumber = farmerPreview.phone_no?.[0] || '';
-          state.farmerDetails.email = farmerPreview.email || '';
-        }
       })
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;
@@ -578,11 +573,11 @@ const newLeadSlice = createSlice({
       .addCase(fetchActivitiesThunk.fulfilled, (state, action) => {
         const timeline = extractList(action.payload, 'timeline');
         state.activities = timeline.map((item: any, index: number) => ({
-          id: item.name || `activity-${index}`,
-          author: item.owner || 'System',
-          type: item.event_type === 'Commented' ? 'note' : 'activity',
-          title: item.event_title || item.event_type || 'Activity',
-          content: item.event_description || '',
+          id: item.name || `unknown_activity-${index}`,
+          author: item.owner || 'unknown',
+          type: item.event_type || 'unknown',
+          title: item.event_title || 'unknown',
+          content: item.event_description || 'unknown',
           timestamp: formatTiming(item.creation || item.timestamp || '', ' - ', false)
         }));
       })
@@ -666,12 +661,11 @@ const newLeadSlice = createSlice({
       })
       .addCase(addActivityNoteThunk.fulfilled, (state, action) => {
         const { response = {}, content } = action.payload || {};
-        const resData = response.message || response;
-        if (resData.status === 'success') {
+        if (response.status === 'success') {
           state.activities.unshift({
-            id: resData.comment_id || `new-${Date.now()}`,
-            author: 'Current User', // Will be dynamic later
-            type: 'note',
+            id: response.comment_id || `new-${Date.now()}`,
+            author: 'Current User',
+            type: 'Commented',
             content: content,
             timestamp: formatTiming(new Date().toISOString(), ' - ', false)
           });
@@ -680,11 +674,11 @@ const newLeadSlice = createSlice({
       .addCase(submitNewLeadThunk.pending, (state) => {
         state.isSubmitting = true;
       })
-      .addCase(submitNewLeadThunk.fulfilled, (state, action) => {
+      .addCase(submitNewLeadThunk.fulfilled, (state) => {
         state.isSubmitting = false;
         // state.leadId is removed, rely on URL redirect instead
       })
-      .addCase(submitNewLeadThunk.rejected, (state, action) => {
+      .addCase(submitNewLeadThunk.rejected, (state) => {
         state.isSubmitting = false;
         // Could store error state here if needed
       })
@@ -738,5 +732,10 @@ export const {
 } = newLeadSlice.actions;
 
 export const selectNewLeadState = (state: RootState) => state.newLead;
+
+export const selectIsLeadFinalized = (state: RootState) => {
+  const status = state.newLead.leadStatus?.toLowerCase() || '';
+  return ['rejected', 'processed', 'granted'].includes(status);
+};
 
 export default newLeadSlice.reducer;

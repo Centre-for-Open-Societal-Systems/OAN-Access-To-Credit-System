@@ -290,19 +290,16 @@ export const newLoanFormSlice = createSlice({
     // nextStepAPI
     builder.addCase(nextStepAPI.fulfilled, (state, action) => {
       state.currentStep = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     });
 
     // prevStepAPI
     builder.addCase(prevStepAPI.fulfilled, (state, action) => {
       state.currentStep = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     });
 
     // setStepAPI
     builder.addCase(setStepAPI.fulfilled, (state, action) => {
       state.currentStep = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     });
 
     // sendOtp

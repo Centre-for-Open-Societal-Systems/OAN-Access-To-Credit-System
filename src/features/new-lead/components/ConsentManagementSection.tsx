@@ -15,6 +15,7 @@ export function ConsentManagementSection() {
   const leadId = params?.id as string;
   const consent_id = consentRequestId;
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [maskedPhone, setMaskedPhone] = useState<string>('');
 
   const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
 
@@ -71,28 +72,14 @@ export function ConsentManagementSection() {
         leadId
       }));
       if (searchFarmerConsent.fulfilled.match(resultAction)) {
+        const payload = resultAction.payload;
+        if (payload?.masked_phone) {
+          setMaskedPhone(payload.masked_phone);
+        }
         setIsOtpModalOpen(true);
       }
     } catch (e) {
       console.error('Failed to convert file to base64', e);
-    }
-  };
-
-  const [isSimulating, setIsSimulating] = useState(false);
-
-  const handleSimulateWebhook = async () => {
-    if (!leadId || isSimulating) return;
-    setIsSimulating(true);
-    try {
-      await newLeadService.simulateWebhook(leadId);
-      // Give the backend a second to process the webhook and then refetch
-      setTimeout(() => {
-        dispatch(fetchLeadDetailsThunk(leadId));
-        setIsSimulating(false);
-      }, 1000);
-    } catch (e) {
-      console.error('Webhook simulation failed', e);
-      setIsSimulating(false);
     }
   };
 
@@ -227,9 +214,9 @@ export function ConsentManagementSection() {
                 <h5 className="font-inter font-medium text-[14px] leading-5 text-[#111827]">Signed Consent Form</h5>
                 <p className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
               </div>
-              
+
               {/* Upload Dropzone */}
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className="flex flex-row items-center p-[12px_8px] gap-[10px] w-full bg-white border border-dashed border-[#D1D5DB] hover:border-[#16A34A] rounded-[4px] mt-1 h-[86px] box-border cursor-pointer hover:bg-gray-50 transition-colors"
               >
@@ -258,6 +245,7 @@ export function ConsentManagementSection() {
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
         farmerId={farmerId}
+        maskedPhone={maskedPhone}
       />
     </section>
   );

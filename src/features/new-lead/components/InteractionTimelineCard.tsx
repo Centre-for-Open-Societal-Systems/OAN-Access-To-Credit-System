@@ -24,8 +24,9 @@ function getIconForEventType(eventType: string) {
 
 export function InteractionTimelineCard() {
   const { activities } = useAppSelector(selectNewLeadState);
+  const auditActivities = activities.filter((activity) => activity.type !== 'Commented');
 
-  if (activities.length === 0) {
+  if (auditActivities.length === 0) {
     return (
       <div className="flex flex-col items-start p-5 gap-6 w-full bg-white border border-[#D4D4D4] rounded-xl shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.03)]">
         <div className="flex flex-row items-center pb-3 w-full border-b border-black/10">
@@ -60,13 +61,13 @@ export function InteractionTimelineCard() {
 
       {/* Timeline Container */}
       <div className="flex flex-col items-start pl-3 gap-6 w-full relative">
-        {activities.map((activity, index) => {
+        {auditActivities.map((activity, index) => {
           const Icon = getIconForEventType(activity.title || activity.type || '');
           
           return (
             <div key={activity.id} className="flex flex-col items-start w-full relative">
               {/* Vertical line connecting to next item */}
-              {index < activities.length - 1 && (
+              {index < auditActivities.length - 1 && (
                 <div className="absolute w-[2px] bg-[#D4D4D4] left-[-1px] top-[28px] bottom-[-24px]" />
               )}
               

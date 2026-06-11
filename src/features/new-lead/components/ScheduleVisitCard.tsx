@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '../store/newLeadSlice';
+import { selectNewLeadState, selectIsLeadFinalized, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '../store/newLeadSlice';
 import { Calendar, CalendarCheck, Clock, MapPin, Pencil, CheckCircle } from 'lucide-react';
-import { ScheduleNewVisitForm } from './ScheduleNewVisitForm';
+import { ScheduleNewVisitForm } from './modals/ScheduleNewVisitForm';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -19,6 +19,7 @@ export function ScheduleVisitCard({
 }: ScheduleVisitCardProps) {
   const dispatch = useAppDispatch();
   const { visitSchedule } = useAppSelector(selectNewLeadState);
+  const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,6 +112,7 @@ export function ScheduleVisitCard({
               onChange={(val) => dispatch(setVisitSchedule(val))}
               required
               minDate={new Date(new Date().setHours(0, 0, 0, 0))}
+              disabled={isFinalized}
             />
           </div>
         )}
@@ -126,16 +128,20 @@ export function ScheduleVisitCard({
             isPassed ? (
               <button
                 onClick={handleCompleteVisit}
-                disabled={isCompleting}
-                className="flex flex-row justify-center items-center px-4 py-2 gap-2 w-full h-[38px] bg-[#16A34A] border border-[#15803D] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md hover:bg-[#15803d] transition-colors disabled:opacity-50"
+                disabled={isCompleting || isFinalized}
+                className={`flex flex-row justify-center items-center px-4 py-2 gap-2 w-full h-[38px] border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md transition-colors ${
+                  isFinalized
+                    ? 'bg-[#E5E7EB] border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
+                    : 'bg-[#16A34A] border-[#15803D] hover:bg-[#15803d] text-white disabled:opacity-50'
+                }`}
               >
                 {isCompleting ? (
                   <span className="text-white font-inter font-medium text-sm leading-5">Completing...</span>
                 ) : (
                   <>
-                    <CheckCircle size={14} className="text-white" />
-                    <span className="font-inter font-medium text-sm leading-5 text-white text-center">
-                      Complete Visit Report
+                    <CheckCircle size={14} className={isFinalized ? 'text-[#9CA3AF]' : 'text-white'} />
+                    <span className={`font-inter font-medium text-sm leading-5 text-center ${isFinalized ? 'text-[#9CA3AF]' : 'text-white'}`}>
+                      Complete Visit
                     </span>
                   </>
                 )}
@@ -143,9 +149,14 @@ export function ScheduleVisitCard({
             ) : (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex flex-row justify-center items-center px-4 py-2 gap-2 w-full bg-white border border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md text-[#374151] font-inter font-medium text-sm hover:bg-slate-50 transition-colors"
+                disabled={isFinalized}
+                className={`flex flex-row justify-center items-center px-4 py-2 gap-2 w-full border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-inter font-medium text-sm transition-colors ${
+                  isFinalized
+                    ? 'bg-[#E5E7EB] border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
+                    : 'bg-white border-[#D1D5DB] text-[#374151] hover:bg-slate-50'
+                }`}
               >
-                <Pencil size={14} className="text-[#374151]" />
+                <Pencil size={14} className={isFinalized ? 'text-[#9CA3AF]' : 'text-[#374151]'} />
                 Reschedule
               </button>
             )
@@ -153,9 +164,14 @@ export function ScheduleVisitCard({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="flex flex-row justify-center items-center px-4 py-2 gap-2 w-full bg-white border border-[#D1D5DB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md text-[#374151] font-inter font-medium text-sm hover:bg-slate-50 transition-colors"
+              disabled={isFinalized}
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-2 w-full border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-inter font-medium text-sm transition-colors ${
+                isFinalized
+                  ? 'bg-[#E5E7EB] border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
+                  : 'bg-white border-[#D1D5DB] text-[#374151] hover:bg-slate-50'
+              }`}
             >
-              <CalendarCheck size={14} />
+              <CalendarCheck size={14} className={isFinalized ? 'text-[#9CA3AF]' : 'text-[#374151]'} />
               Schedule
             </button>
           )}

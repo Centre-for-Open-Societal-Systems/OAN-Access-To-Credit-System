@@ -8,18 +8,18 @@ interface OTPVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   farmerId: string;
+  maskedPhone?: string;
 }
 
-export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificationModalProps) {
+export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }: OTPVerificationModalProps) {
   const dispatch = useAppDispatch();
-  const { isVerifyingOtp } = useAppSelector(selectNewLeadState);
+  const { isVerifyingOtp, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
   const params = useParams();
   const leadId = params?.id as string || '';
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { consentRequestId } = useAppSelector(selectNewLeadState);
 
   useEffect(() => {
     if (isOpen) {
@@ -139,7 +139,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
                 Enter Verification Code
               </h3>
               <p className="font-inter font-normal text-[14px] leading-5 text-center text-[#6B7280] m-0">
-                A 6-digit code has been sent to the farmer's registered phone number.
+                A 6-digit code has been sent to the farmer's registered phone {maskedPhone}.
               </p>
 
               {/* Inputs */}
