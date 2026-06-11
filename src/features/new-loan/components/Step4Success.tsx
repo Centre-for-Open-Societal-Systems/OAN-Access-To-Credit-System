@@ -1,53 +1,51 @@
 import React, { useState } from 'react';
-import { User, FileText, Calendar, Download, LayoutDashboard, Check, X, Lock, Building } from 'lucide-react';
+import { User, FileText, Calendar, Download, LayoutDashboard, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
-import { resetForm, setStep } from '@/features/new-loan/store/newLoanFormSlice';
+import { resetForm } from '@/features/new-loan/store/newLoanFormSlice';
 import type { RootState } from '@/store';
+import LoanApplicationModal from '@/features/loans/components/LoanApplicationModal';
+import { LoanTableRow } from '@/features/loans/components/LoanTable';
 
 export function Step4Success() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [showSummaryPopup, setShowSummaryPopup] = useState(false);
   const formData = useSelector((state: RootState) => state.loanForm.formData);
+  const applicationId = useSelector((state: RootState) => state.loanForm.applicationId);
 
-  const newLoanApplicationData = {
-    farmerInformation: [
-      { label: "Full Name", value: formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : "—" },
-      { label: "Father's Name", value: formData.fatherName || "—" },
-      { label: "Farmer ID", value: formData.farmId || "FR - 1234567890" },
-      { label: "Date of Birth", value: formData.dateOfBirth || "—" },
-      { label: "Gender", value: formData.gender || "—" },
-      { label: "Marital Status", value: formData.maritalStatus || "—" },
-      { label: "Mobile Phone", value: formData.mobilePhone || "—" },
-      { label: "Education Level", value: formData.educationLevel || "—" },
-      { label: "National ID", value: formData.idNumber || "—" },
-      { label: "Region", value: formData.region || "Oromia" },
-      { label: "Woreda", value: formData.woreda || "Bishoftu" },
-      { label: "Kebele", value: formData.kebele || "—" },
-    ],
-    loanDetails: [
-      { label: "Loan Type", value: formData.loanType || "input" },
-      { label: "Purpose", value: formData.purpose || "Agro-processing (e.g., milling grain)" },
-      { label: "Requested Amount", value: formData.requestedAmount || "—" },
-      { label: "Duration", value: formData.duration || "12 Months (1 Year)" },
-      { label: "Primary Crops", value: formData.primaryCrop || "Teff" },
-      { label: "Crop Variety", value: formData.cropVariety || "Seed + S-Hela/Acherr + Stellar Star" },
-      { label: "Land Size", value: formData.landSize || "—" },
-      { label: "Expected Yield", value: formData.expectedYield || "—" },
-    ],
-    bankingInformation: [
-      { label: "Bank Account No.", value: formData.accountNumber || "—" },
-      { label: "IFSC / FSC Code", value: formData.ifscCode || "—" },
-      { label: "Bank Name", value: formData.bankName || "—" },
-      { label: "Account Holder", value: formData.accountName || "—" },
-    ]
+  const farmerName = `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || "—";
+
+  const formattedSubmittedDate = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }) + ' ' + new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const modalData: LoanTableRow = {
+    id: applicationId || '—',
+    applicant: farmerName,
+    type: formData.loanType || "—",
+    status: "Pending Review",
+    statusTone: "neutral",
+    updated: formattedSubmittedDate,
+    amount: formData.requestedAmount ? `ETB ${parseFloat(formData.requestedAmount).toLocaleString()}` : "—",
+    phone: formData.mobilePhone || "—",
+    region: formData.region || "—",
+    loanTerm: formData.duration || "—",
+    loanAmount: formData.requestedAmount ? `ETB ${parseFloat(formData.requestedAmount).toLocaleString()}` : "—",
+    action: "view",
+    timestamp: Date.now(),
   };
 
   const handleReturnToDashboard = () => {
     dispatch(resetForm());
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    router.push('/loan-application-dashboard'); // Ensure we are on the right route
+    router.push('/loan-application-dashboard');
   };
 
   return (
@@ -65,7 +63,7 @@ export function Step4Success() {
 
           <h2 className="text-[28px] font-bold mb-3 relative z-10 tracking-tight">Application Submitted Successfully!</h2>
           <p className="text-green-50 text-[15px] max-w-xl mb-6 relative z-10">
-            The loan application for <span className="font-bold text-white">Abebe Bekele Tadesse</span> has been securely transmitted to Coop Bank.
+            The loan application for <span className="font-bold text-white">{farmerName}</span> has been securely transmitted to Coop Bank.
           </p>
 
           <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-[#117b38] px-4 py-1.5 text-xs font-bold text-white shadow-inner">
@@ -84,8 +82,8 @@ export function Step4Success() {
                 <User size={24} />
               </div>
               <div>
-                <h3 className="text-[15px] font-bold text-gray-900">Abebe Bekele Tadesse</h3>
-                <p className="text-[13px] text-gray-500 font-medium mt-0.5">Input Loan - Seed Loan</p>
+                <h3 className="text-[15px] font-bold text-gray-900">{farmerName}</h3>
+                <p className="text-[13px] text-gray-500 font-medium mt-0.5">{formData.loanType || "—"} - {formData.purpose || "—"}</p>
               </div>
             </div>
 
@@ -96,7 +94,7 @@ export function Step4Success() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Application ID</p>
-                  <p className="text-sm font-bold text-gray-900">APP-2026-2676</p>
+                  <p className="text-sm font-bold text-gray-900">{applicationId || '—'}</p>
                 </div>
               </div>
 
@@ -106,7 +104,7 @@ export function Step4Success() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Submitted On</p>
-                  <p className="text-sm font-bold text-gray-900">Jun 2, 2026 05:27 PM</p>
+                  <p className="text-sm font-bold text-gray-900">{formattedSubmittedDate}</p>
                 </div>
               </div>
             </div>
@@ -135,97 +133,11 @@ export function Step4Success() {
         </div>
       </div>
 
-      {showSummaryPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-[#2E7250] px-6 py-5 flex items-start justify-between shrink-0 rounded-t-xl">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-1">Application Summary</h3>
-                <p className="text-xs text-green-100 font-medium">ID: APP-2026-6579 • Submitted May 14, 2026 at 08:03 PM</p>
-              </div>
-              <button onClick={() => setShowSummaryPopup(false)} className="rounded p-1 text-white/70 hover:bg-white/10 hover:text-white transition-colors border border-white/20 bg-white/10">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Status Banner */}
-            <div className="bg-[#F0FDF4] px-6 py-4 flex items-center gap-3 border-b border-green-100 shrink-0">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#16A34A] text-white shadow-sm">
-                <Check size={14} strokeWidth={3} />
-              </div>
-              <div>
-                <p className="text-[15px] font-bold text-[#16A34A]">Submitted & Pending Review</p>
-                <p className="text-[13px] text-green-600 font-medium">Transmitted to Cooperative Bank of Oromia via SFTP</p>
-              </div>
-            </div>
-
-            {/* Content Body */}
-            <div className="p-6 overflow-y-auto space-y-8 flex-1">
-
-              {/* Farmer Information */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <User className="h-5 w-5 text-[#2E7250] fill-[#2E7250]/10" />
-                  <h4 className="text-[15px] font-bold text-gray-900">Farmer Information</h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-4">
-                  {newLoanApplicationData.farmerInformation.map((field, idx) => (
-                    <div key={idx}>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{field.label}</p>
-                      <p className="text-sm font-bold text-gray-900">{field.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Loan Details */}
-              <div className="border-t border-gray-100 pt-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <Lock className="h-5 w-5 text-yellow-600 fill-yellow-600/10" />
-                  <h4 className="text-[15px] font-bold text-gray-900">Loan Details</h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-4">
-                  {newLoanApplicationData.loanDetails.map((field, idx) => (
-                    <div key={idx}>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{field.label}</p>
-                      <p className="text-sm font-bold text-gray-900">{field.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Banking Information */}
-              <div className="border-t border-gray-100 pt-8 pb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Building className="h-5 w-5 text-[#2E7250] fill-[#2E7250]/10" />
-                  <h4 className="text-[15px] font-bold text-gray-900">Banking Information</h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-4">
-                  {newLoanApplicationData.bankingInformation.map((field, idx) => (
-                    <div key={idx}>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{field.label}</p>
-                      <p className="text-sm font-bold text-gray-900">{field.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row items-center justify-between shrink-0 bg-white rounded-b-xl gap-4 sm:gap-0">
-              <p className="text-xs text-gray-400">Generated on May 14, 2026 • 08:03 PM</p>
-              <button
-                onClick={() => setShowSummaryPopup(false)}
-                className="w-full sm:w-auto px-8 py-2.5 bg-[#2E7250] text-white text-sm font-bold rounded-md hover:bg-[#23583e] transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LoanApplicationModal
+        isOpen={showSummaryPopup}
+        onClose={() => setShowSummaryPopup(false)}
+        data={modalData}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { LeadLayoutGrid } from '@/features/leads/components/LeadLayoutGrid';
-import { ScheduleNewVisitForm } from '@/features/new-lead/components/ScheduleNewVisitForm';
+import { ScheduleNewVisitForm } from '@/features/new-lead/components/modals/ScheduleNewVisitForm';
 import { VisitHistoryCard } from '@/features/new-lead/components/VisitHistoryCard';
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
 

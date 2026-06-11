@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, assignLeadThunk } from '../store/newLeadSlice';
+import { selectNewLeadState, selectIsLeadFinalized, assignLeadThunk } from '../store/newLeadSlice';
 import AssignOwnerModal from './modals/AssignOwnerModal';
 import { useParams } from 'next/navigation';
 
 export function LeadAssignmentCard() {
   const { assignment } = useAppSelector(selectNewLeadState);
+  const isFinalized = useAppSelector(selectIsLeadFinalized);
   const dispatch = useAppDispatch();
   const params = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,8 +79,13 @@ export function LeadAssignmentCard() {
 
       <button
         type="button"
+        disabled={isFinalized}
         onClick={() => setIsModalOpen(true)}
-        className="flex flex-row justify-center items-center px-4 py-3 gap-2 w-full bg-[#16A34A] rounded-lg text-white font-roboto font-bold text-base hover:bg-[#15803d] transition-colors mt-2"
+        className={`flex flex-row justify-center items-center px-4 py-3 gap-2 w-full rounded-lg font-roboto font-bold text-base transition-colors mt-2 ${
+          isFinalized
+            ? 'bg-[#E5E7EB] border border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
+            : 'bg-[#16A34A] text-white hover:bg-[#15803d]'
+        }`}
       >
         {hasAssignment ? 'Change Assignee' : 'Assign Owner'}
       </button>

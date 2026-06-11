@@ -1,11 +1,12 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
+import { selectNewLeadState, selectIsLeadFinalized, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
 import { TextField } from '@/components/ui/TextField';
 import { useParams } from 'next/navigation';
 
 export function LeadInfoSection() {
   const dispatch = useAppDispatch();
-  const { leadSource, leadStatus, leadSourcesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+  const { leadSource, leadSourcesOptions } = useAppSelector(selectNewLeadState);
+  const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const leadId = params?.id as string;
 
@@ -40,7 +41,7 @@ export function LeadInfoSection() {
           <label className="text-[15px] font-semibold text-[#232F34]">
             Lead Source
           </label>
-          {leadId ? (
+          {leadId || isFinalized ? (
             <input
               type="text"
               value={leadSource || 'Call Campaign'}
@@ -50,6 +51,7 @@ export function LeadInfoSection() {
           ) : (
             <select
               value={leadSource}
+              disabled={isFinalized}
               onChange={(e) => dispatch(setLeadSource(e.target.value))}
               className="appearance-none w-full h-[42px] rounded-md border border-gray-300 px-4 text-[15px] text-[#232F34] focus:outline-none focus:ring-2 focus:ring-[#16335A]/20"
             >

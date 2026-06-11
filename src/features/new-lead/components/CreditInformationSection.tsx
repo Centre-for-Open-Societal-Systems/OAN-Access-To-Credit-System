@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
+import { selectNewLeadState, selectIsLeadFinalized, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
 import { CreditInformationModal } from './modals/CreditInformationModal';
 
 export function CreditInformationSection() {
   const dispatch = useAppDispatch();
-  const { creditInfo, leadStatus } = useAppSelector(selectNewLeadState);
+  const { creditInfo } = useAppSelector(selectNewLeadState);
+  const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const leadId = params?.id as string;
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const isFinalized = leadStatus?.toLowerCase() === 'rejected' || leadStatus?.toLowerCase() === 'processed';
 
   useEffect(() => {
     if (leadId) {

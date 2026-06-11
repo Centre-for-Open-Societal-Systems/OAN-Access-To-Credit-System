@@ -8,7 +8,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { TimePickerField } from '@/components/ui/TimePickerField';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { scheduleVisitThunk, selectNewLeadState } from '../store/newLeadSlice';
+import { scheduleVisitThunk, selectNewLeadState } from '../../store/newLeadSlice';
 import { useParams, useRouter } from 'next/navigation';
 
 interface ScheduleNewVisitFormProps {

@@ -25,21 +25,24 @@ export const newLeadService = {
       consent_form_filename: data.consentFormFilename,
       consent_form_base64: data.consentFormBase64,
     };
-    return fetchApi('oan_a2c.api.v1.consent.consent.request_otp', {
+    return fetchApi('oan_a2c.api.v1.consent.api.request_otp', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
-  async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
-    // Return mock success response since backend verification is not yet implemented/correct
-    return {
-      status: "success",
-      message: "OTP verified successfully.",
-      firstName: "Abraha",
-      lastName: "Gebru",
-      phoneNumber: "+251911223344"
-    };
+  async verifyOtp(data: { leadId?: string; otp_code: string }): Promise<any> {
+    if (!data.leadId) {
+      throw new Error('leadId is required for OTP verification');
+    }
+    const cleanLeadId = decodeURIComponent(data.leadId).replace(/^#/, '');
+    return fetchApi('oan_a2c.api.v1.consent.api.verify_otp_for_lead', {
+      method: 'POST',
+      body: JSON.stringify({
+        lead_id: cleanLeadId,
+        otp_code: data.otp_code
+      }),
+    });
   },
 
   // Fetch full details of a lead (farmer details, etc.)

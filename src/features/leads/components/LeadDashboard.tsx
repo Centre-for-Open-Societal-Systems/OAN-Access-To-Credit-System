@@ -42,7 +42,7 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
             await dispatch(createLoanApplicationAPI(leadId)).unwrap();
             await dispatch(updateLeadStatusThunk({
                 leadId,
-                status: 'Processed',
+                status: 'Verified',
                 reason: 'Loan application created.'
             })).unwrap();
             router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
@@ -94,9 +94,12 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
         setModalAction(null);
     };
 
+    const isFinalized = ['rejected', 'processed', 'granted'].includes(status?.toLowerCase() || '');
+    const hasApplication = ['verified', 'processed', 'granted'].includes(status?.toLowerCase() || '');
+
     return (
         <>
-            {status?.toLowerCase() === 'processed' ? (
+            {isFinalized ? (
                 <>
                     <button
                         disabled
@@ -110,12 +113,14 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                     >
                         ✓ Verify Lead
                     </button>
-                    <button
-                        onClick={() => router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`)}
-                        className="px-4 py-2 bg-[#16A34A] rounded-lg text-sm font-medium text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
-                    >
-                        Open Application
-                    </button>
+                    {hasApplication && (
+                        <button
+                            onClick={() => router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`)}
+                            className="px-4 py-2 bg-[#16A34A] rounded-lg text-sm font-medium text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
+                        >
+                            Open Application
+                        </button>
+                    )}
                 </>
             ) : status?.toLowerCase() === 'verified' ? (
                 <>

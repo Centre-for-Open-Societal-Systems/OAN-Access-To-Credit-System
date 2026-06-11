@@ -26,7 +26,19 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
       throw new Error('UNAUTHORIZED');
     }
     let errorMsg = `API Request failed with status ${response.status}`;
-    if (responseData?.message?.message) {
+    if (responseData?._server_messages) {
+      try {
+        const msgs = JSON.parse(responseData._server_messages);
+        if (Array.isArray(msgs) && msgs.length > 0) {
+          const firstMsg = typeof msgs[0] === 'string' ? JSON.parse(msgs[0]) : msgs[0];
+          if (firstMsg?.message) {
+            errorMsg = firstMsg.message;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    } else if (responseData?.message?.message) {
       errorMsg = responseData.message.message;
     } else if (responseData?.message) {
       errorMsg = typeof responseData.message === 'string' ? responseData.message : JSON.stringify(responseData.message);

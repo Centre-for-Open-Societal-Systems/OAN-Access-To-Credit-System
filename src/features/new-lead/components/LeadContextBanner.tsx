@@ -15,11 +15,11 @@ interface LeadContextBannerProps {
 
 export default function LeadContextBanner({
   leadId,
-  farmerName = 'Abebe Kebede',
-  location = 'Oromia, Jimma Zone',
-  phoneNumber = '+251 911 234 567',
-  status = 'INITIATED',
-  createdAt = 'May 24, 2026 10:30 AM',
+  farmerName = 'Unknown Farmer',
+  location = 'Unknown Location',
+  phoneNumber = 'No Phone',
+  status = 'Unknown Status',
+  createdAt = '',
   actionType = 'view',
   actions,
 }: LeadContextBannerProps) {
@@ -72,7 +72,7 @@ export default function LeadContextBanner({
             <span className="flex items-center gap-1">
               <MapPin size={14} className="text-[#6B7280]" />
               <span className="font-inter font-normal text-sm leading-5 text-[#6B7280]">
-                {isVisitScheduled ? location : 'Addis Ababa'}
+                {location}
               </span>
             </span>
             <span className="text-[#D1D5DB]">|</span>
@@ -86,7 +86,7 @@ export default function LeadContextBanner({
                 </>
               ) : (
                 <span className="font-inter font-normal text-sm leading-5 text-[#6B7280]">
-                  Created: {createdAt}
+                  {createdAt ? `Created: ${createdAt}` : 'Unknown Date'}
                 </span>
               )}
             </span>

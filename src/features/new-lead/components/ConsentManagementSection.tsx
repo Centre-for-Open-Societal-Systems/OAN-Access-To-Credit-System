@@ -9,14 +9,15 @@ import { useParams } from 'next/navigation';
 
 export function ConsentManagementSection() {
   const dispatch = useAppDispatch();
-  const { farmerId, isLoadingConsent, consentError, isOtpVerified, consentDate, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
+  const { farmerId, isLoadingConsent, isSearchingFarmer, searchedFarmer, consentError, isOtpVerified, consentDate, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
   const officerName = useAppSelector(selectOfficerName) || 'AgriBank';
   const params = useParams();
   const leadId = params?.id as string;
   const consent_id = consentRequestId;
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [maskedPhone, setMaskedPhone] = useState<string>('');
 
-  const isVerified = isOtpVerified || !!consentDate;
+  const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [consentFile, setConsentFile] = useState<File | null>(null);
@@ -71,28 +72,14 @@ export function ConsentManagementSection() {
         leadId
       }));
       if (searchFarmerConsent.fulfilled.match(resultAction)) {
+        const payload = resultAction.payload;
+        if (payload?.masked_phone) {
+          setMaskedPhone(payload.masked_phone);
+        }
         setIsOtpModalOpen(true);
       }
     } catch (e) {
       console.error('Failed to convert file to base64', e);
-    }
-  };
-
-  const [isSimulating, setIsSimulating] = useState(false);
-
-  const handleSimulateWebhook = async () => {
-    if (!leadId || isSimulating) return;
-    setIsSimulating(true);
-    try {
-      await newLeadService.simulateWebhook(leadId);
-      // Give the backend a second to process the webhook and then refetch
-      setTimeout(() => {
-        dispatch(fetchLeadDetailsThunk(leadId));
-        setIsSimulating(false);
-      }, 1000);
-    } catch (e) {
-      console.error('Webhook simulation failed', e);
-      setIsSimulating(false);
     }
   };
 
@@ -118,7 +105,9 @@ export function ConsentManagementSection() {
               <div className="flex flex-row items-center gap-1.5 mt-1">
                 <CheckCircle2 size={20} className="text-[#16A34A]" fill="#16A34A" color="white" />
                 <span className="text-[12px] font-bold text-[#16A34A] leading-[20px]">View Consent Details</span>
-                <span className="text-[12px] font-medium text-[#6B7280] leading-[20px] ml-1">provided on {consentDate || 'N/A'}</span>
+                <span className="text-[12px] font-medium text-[#6B7280] leading-[20px] ml-1">
+                  {consentDate ? `provided on ${consentDate}` : 'verified via registry'}
+                </span>
               </div>
             </>
           ) : (
@@ -138,21 +127,21 @@ export function ConsentManagementSection() {
                       dispatch(searchFarmerThunk(farmerId.trim()));
                     }
                   }}
-                  disabled={!farmerId?.trim() || isLoadingConsent}
+                  disabled={!farmerId?.trim() || isLoadingConsent || isSearchingFarmer}
                   className="h-[42px] px-6 rounded-md border border-[#16A34A] text-[15px] font-medium text-[#16A34A] hover:bg-[#F0FDFA] transition-colors bg-white shadow-sm flex items-center justify-center shrink-0 disabled:opacity-50"
                 >
-                  Search
+                  {isSearchingFarmer ? 'Searching...' : 'Search'}
                 </button>
               </div>
-              {farmerDetails?.firstName && (
+              {searchedFarmer?.firstName && (
                 <div className="text-[13px] text-green-600 font-medium bg-[#F0FDFA] border border-[#DCFCE7] rounded px-3 py-1.5 w-full">
-                  Farmer: {farmerDetails.firstName} {farmerDetails.lastName} ({farmerDetails.phoneNumber})
+                  Farmer: {searchedFarmer.firstName} {searchedFarmer.lastName} ({searchedFarmer.phoneNumber})
                 </div>
               )}
               <button
                 type="button"
                 onClick={handleSendOtp}
-                disabled={!farmerId || isLoadingConsent || !consentFile}
+                disabled={!searchedFarmer?.firstName || isLoadingConsent || isSearchingFarmer || !consentFile}
                 className="w-full h-[42px] rounded-md bg-[#16A34A] text-[15px] font-medium text-white hover:bg-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
               >
                 {isLoadingConsent ? 'Sending...' : 'Send OTP'}
@@ -166,7 +155,7 @@ export function ConsentManagementSection() {
 
         {/* Right Column: Signed Consent Form */}
         <div className="flex flex-col items-start p-4 gap-3 flex-1 w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mt-4 md:mt-0">
-          {(consentFile || consent_id) ? (
+          {(consentFile || consent_id || isVerified) ? (
             <>
               <div className="flex flex-row justify-between items-start w-full">
                 <div className="flex flex-col items-start gap-0">
@@ -204,11 +193,11 @@ export function ConsentManagementSection() {
                   </div>
                   <div className="flex flex-col items-start flex-1 min-w-0">
                     <span className="font-inter font-medium text-[14px] leading-5 text-[#111827] truncate w-full">
-                      {consentFile ? consentFile.name : 'consent_signed_2024.pdf'}
+                      {consentFile ? consentFile.name : 'consent_signed_verified.pdf'}
                     </span>
                     <div className="flex flex-row justify-between items-center w-full mt-0.5">
                       <span className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">
-                        {consentFile ? `${(consentFile.size / (1024 * 1024)).toFixed(1)} MB` : '1.2 MB'}
+                        {consentFile ? `${(consentFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Verified'}
                       </span>
                       <span className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">100%</span>
                     </div>
@@ -225,9 +214,9 @@ export function ConsentManagementSection() {
                 <h5 className="font-inter font-medium text-[14px] leading-5 text-[#111827]">Signed Consent Form</h5>
                 <p className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
               </div>
-              
+
               {/* Upload Dropzone */}
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className="flex flex-row items-center p-[12px_8px] gap-[10px] w-full bg-white border border-dashed border-[#D1D5DB] hover:border-[#16A34A] rounded-[4px] mt-1 h-[86px] box-border cursor-pointer hover:bg-gray-50 transition-colors"
               >
@@ -256,6 +245,7 @@ export function ConsentManagementSection() {
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
         farmerId={farmerId}
+        maskedPhone={maskedPhone}
       />
     </section>
   );
