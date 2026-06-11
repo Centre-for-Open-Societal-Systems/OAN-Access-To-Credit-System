@@ -78,17 +78,16 @@ pipeline {
 
                         set -e
 
-                        
                         cd /opt/oan_a2c_fe
-                        cat > .env <<EOF
-                        ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:develop-${BUILD_NUMBER}
-                        API_BASE_URL=https://a2c-backend.oanstaging.com
-EOF
+                        cat > .env <<ENVEOF
+ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:develop-${BUILD_NUMBER}
+API_BASE_URL=https://a2c-backend.oanstaging.com
+ENVEOF
+
                         aws ecr get-login-password --region ap-south-1 | \
                         docker login --username AWS --password-stdin \
                         ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
 
-                      
                         docker compose pull
                         docker compose down || true
                         docker compose up -d
@@ -97,9 +96,53 @@ EOF
 
                         curl -sf http://localhost:3000
 
-                        echo "=== Frontend deployed ==="
+                        echo "=== Staging Frontend deployed ==="
                         docker compose ps
+SSHEOF
+                    '''
+                }
+            }
+        }
 
+        stage('Deploy to Development') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID'),
+                    sshUserPrivateKey(
+                        credentialsId: 'frontend-uat-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    ),
+                    string(credentialsId: 'FRONTEND_UAT_IP', variable: 'DEV_IP')
+                ]) {
+                    sh '''
+                        ssh -i ${SSH_KEY} \
+                        -o StrictHostKeyChecking=no \
+                        ${SSH_USER}@${DEV_IP} <<SSHEOF
+
+                        set -e
+
+                        cd /home/ubuntu/frontend
+
+                        cat > .env <<ENVEOF
+ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:develop-${BUILD_NUMBER}
+API_BASE_URL=https://a2c-backend-development.oanstaging.com
+ENVEOF
+
+                        aws ecr get-login-password --region ap-south-1 | \
+                        docker login --username AWS --password-stdin \
+                        ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
+
+                        docker compose pull
+                        docker compose down || true
+                        docker compose up -d
+
+                        sleep 15
+
+                        curl -sf http://localhost:3000 || echo "Warning: health check failed"
+
+                        echo "=== Development Frontend deployed ==="
+                        docker compose ps
 SSHEOF
                     '''
                 }
@@ -125,9 +168,11 @@ SSHEOF
     post {
         success {
             echo "Frontend staging deployment successful! Build: develop-${BUILD_NUMBER}"
+            echo "Frontend development deployment successful! Build: develop-${BUILD_NUMBER}"
         }
         failure {
             echo "Frontend staging deployment failed!"
+            echo "Frontend development deployment failed!"
         }
     }
 }
