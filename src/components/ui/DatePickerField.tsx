@@ -18,11 +18,13 @@ interface DatePickerFieldProps {
   minDate?: Date;
   maxDate?: Date;
   usePortal?: boolean;
+  align?: 'left' | 'right';
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
-export function DatePickerField({ id, label, value, onChange, required, error, disabled, placeholder = 'dd/mm/yyyy', minDate, maxDate, usePortal = true }: DatePickerFieldProps) {
+export function DatePickerField({ id, label, value, onChange, required, error, disabled, placeholder = 'dd/mm/yyyy', minDate, maxDate, usePortal = true, align = 'left', onOpenChange }: DatePickerFieldProps) {
   const today = new Date();
-  
+
   // Use today as fallback if value is empty, but don't set it to state
   const initialDate = value ? new Date(value + 'T00:00:00') : today;
   const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +39,10 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
   const selectedDate = value ? new Date(value + 'T00:00:00') : null;
 
   useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
+
+  useEffect(() => {
     function h(e: MouseEvent) {
       if (
         ref.current && !ref.current.contains(e.target as Node) &&
@@ -48,7 +54,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
     }
     if (isOpen) {
       document.addEventListener('mousedown', h);
-      
+
       // Calculate position
       if (ref.current) {
         const rect = ref.current.getBoundingClientRect();
@@ -141,11 +147,11 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
       </button>
 
       {isOpen && typeof document !== 'undefined' && (usePortal ? createPortal(
-        <div ref={dropdownRef} className="absolute z-[9999] mt-1.5 w-[280px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden origin-top animate-in fade-in slide-in-from-top-2 duration-200"
-             style={{ 
-               top: dropdownPos.top,
-               left: dropdownPos.left
-             }}>
+        <div ref={dropdownRef} className="absolute z-[9999] mt-1.5 w-[280px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden origin-top"
+          style={{
+            top: dropdownPos.top,
+            left: dropdownPos.left
+          }}>
           {/* Calendar header */}
           <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
             <button type="button" onClick={() => setMode(m => m === 'year' ? 'day' : 'year')}
@@ -156,11 +162,11 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
             <div className="flex items-center gap-2">
               <button type="button" onClick={prevMonth}
                 className="flex h-7 w-7 items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
               </button>
               <button type="button" onClick={nextMonth}
                 className="flex h-7 w-7 items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
               </button>
             </div>
           </div>
@@ -218,7 +224,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
         </div>,
         document.body
       ) : (
-        <div ref={dropdownRef} className="absolute left-0 top-[calc(100%+4px)] z-50 w-[280px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden origin-top animate-in fade-in slide-in-from-top-2 duration-200">
+        <div ref={dropdownRef} className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-[calc(100%+4px)] z-50 w-[280px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden origin-top animate-in fade-in slide-in-from-top-2 duration-200`}>
           <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
             <button type="button" onClick={() => setMode(m => m === 'year' ? 'day' : 'year')}
               className="flex items-center gap-1 text-sm font-semibold text-gray-900 hover:text-gray-600 transition-colors">
@@ -228,11 +234,11 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
             <div className="flex items-center gap-2">
               <button type="button" onClick={prevMonth}
                 className="flex h-7 w-7 items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
               </button>
               <button type="button" onClick={nextMonth}
                 className="flex h-7 w-7 items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
               </button>
             </div>
           </div>

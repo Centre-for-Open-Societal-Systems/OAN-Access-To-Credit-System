@@ -6,7 +6,7 @@ import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
 import { Lead } from '@/features/leads/types/leads.types';
 
-type Align = 'center';
+type Align = 'left' | 'center' | 'right';
 
 interface ColumnDef {
   id: string;
@@ -17,7 +17,7 @@ interface ColumnDef {
 }
 
 const TABLE_COLS: ColumnDef[] = [
-  { id: 'LEAD ID', label: 'LEAD ID', align: 'center' },
+  { id: 'LEAD ID', label: 'LEAD ID', align: 'left' },
   { id: 'PHONE NUMBER', label: 'PHONE NUMBER', align: 'center' },
   { id: 'STATUS', label: 'STATUS', align: 'center', isFilterable: true },
   { id: 'LOAN TYPE', label: 'LOAN TYPE', align: 'center', isFilterable: true },
@@ -108,7 +108,7 @@ function LeadTable({
 
   const getCellClassName = (align: Align, isHeader = false) => {
     const alignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left';
-    const typoClass = isHeader ? '' : 'font-sans font-medium text-[14px] leading-[20px] text-[#232F34]';
+    const typoClass = isHeader ? '' : 'font-sans font-medium text-base text-[#232F34]';
     return `${CELL_CLASS} ${alignClass} ${typoClass}`.trim();
   };
 
@@ -116,12 +116,12 @@ function LeadTable({
     switch (colId) {
       case 'LEAD ID':
         return (
-          <div className="flex flex-col items-center justify-center h-full">
-            <span className="text-[#00A63E] hover:underline">
+          <div className="flex flex-col items-start justify-start h-full">
+            <span className="text-base font-semibold text-[#16A34A] hover:underline">
               {l.id}
             </span>
             {l.location && (
-              <span className="font-normal text-[12px] leading-[16px] text-[#6B7280]">
+              <span className="mt-1 block font-normal text-sm text-[#6B7280] text-left">
                 {l.location}
               </span>
             )}
@@ -130,8 +130,8 @@ function LeadTable({
       case 'PHONE NUMBER':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Phone size={12} className="text-[#6B7280] shrink-0" />
-            <span className="whitespace-nowrap">
+            <Phone size={16} className="text-[#6B7280] shrink-0" />
+            <span className="whitespace-nowrap text-base">
               {l.phone}
             </span>
           </div>
@@ -153,7 +153,7 @@ function LeadTable({
       case 'STATUS CHANGE DATE':
         return (
           <div className="flex flex-col items-center justify-center h-full">
-            <span className="font-normal text-[#3A474E]">
+            <span className="flex flex-col text-sm text-gray-500">
               {formatStatusDate(l.creation)}
             </span>
           </div>
@@ -189,8 +189,8 @@ function LeadTable({
 
               return (
                 <th key={col.id} className={getCellClassName(col.align, true)}>
-                  <div className={`flex items-center gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
-                    <span className="font-sans font-medium text-[12px] uppercase tracking-[0.6px] text-[#6B7280]">
+                  <div className={`flex items-start gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-[#6B7280]">
                       {col.label}
                     </span>
 
@@ -202,7 +202,7 @@ function LeadTable({
                           onClick={() => onSetOpenColFilter(prev => prev === col.id ? null : col.id)}
                           className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col.id || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
                         >
-                          <Filter size={12} strokeWidth={2.5} />
+                          <Filter size={16} strokeWidth={2.5} />
                         </button>
                         {isActive && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1E6865]" />}
                         {openColFilter === col.id && (
@@ -218,8 +218,8 @@ function LeadTable({
                     )}
 
                     {col.isSortable && (
-                      <span className="inline-flex cursor-pointer text-[#AEB4BA] hover:text-[#3A474E] text-[10px] select-none">
-                        ⇅
+                      <span className="inline-flex cursor-pointer text-[#AEB4BA] hover:text-[#3A474E] text-[12px] select-none">
+
                       </span>
                     )}
                   </div>
@@ -249,8 +249,8 @@ function LeadTable({
               // Custom Background for Visit Scheduled row status
               const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
               const rowBgClass = isVisitScheduled
-                ? "bg-[rgba(240,253,250,0.3)] border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
-                : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-slate-50/50 transition-colors cursor-pointer";
+                ? " border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
+                : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
 
               return (
                 <tr

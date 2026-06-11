@@ -78,17 +78,17 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
       {/* ── Brand ────────────────────────────────────────────────────────── */}
       <div
         className={[
-          'flex shrink-0 items-center gap-4 border-b border-white/[0.08]',
+          'flex shrink-0 items-center gap-0 border-b border-white/[0.08]',
           'px-[0.45rem] pb-0 pt-[0.9rem]',
           isCollapsed ? 'min-[900px]:justify-center min-[900px]:gap-0 min-[900px]:px-0' : '',
         ].join(' ')}
       >
         {/* Left Side: Logo Graphic */}
-        <div className={`flex shrink-0 items-center justify-center ${isCollapsed ? 'w-full' : ''}`}>
+        <div className={`flex shrink-0 items-center justify-center ${isCollapsed ? 'w-full py-2' : ''}`}>
           <img
             src="/logo.png"
             alt="OARI Logo"
-            className="h-20 w-auto max-w-[220px] object-contain -mt-1.5"
+            className={`object-contain transition-all duration-300 ${isCollapsed ? 'w-[80%] h-auto max-h-12' : 'h-20 w-auto max-w-[220px] -mt-1.5'}`}
             id="primary-logo-img"
             onError={(e) => {
               e.currentTarget.classList.add('hidden');
@@ -98,7 +98,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
           />
           {/* Fallback graphic hidden by default (shows if image fails to load) */}
           <div id="fallback-logo-graphic" className="hidden items-center justify-center">
-            <span className="text-[2.2rem] font-extrabold text-[#c4ea48] leading-none" style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '-0.08em' }}>
+            <span className={`font-extrabold text-[#c4ea48] leading-none ${isCollapsed ? 'text-xl' : 'text-[2.2rem]'}`} style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '-0.08em' }}>
               oari
             </span>
           </div>
@@ -159,7 +159,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
                       'hover:translate-x-[1px] hover:bg-white/[0.06] hover:text-white',
                       isActive
                         ? 'bg-white/[0.12] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] font-bold'
-                        : 'bg-transparent text-white/[0.76] font-medium',
+                        : 'bg-transparent text-white/[0.76] font-normal',
                       isCollapsed
                         ? 'min-[900px]:justify-center min-[900px]:gap-0 min-[900px]:px-[0.35rem]'
                         : '',
@@ -174,6 +174,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
                     <span
                       className={[
                         'min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+                        isActive ? 'font-bold' : 'font-normal',
                         isCollapsed ? 'min-[900px]:hidden' : '',
                       ].join(' ')}
                     >

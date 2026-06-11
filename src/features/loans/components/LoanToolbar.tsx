@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectActiveTab, setActiveTab, setSearchQuery, selectSearchQuery, clearAdvancedFilters, selectTabCounts } from '../store/loanDashboardSlice';
-import AdvancedFilters from '@/components/ui/AdvancedFilters';
+import LoanAdvancedFilters from './LoanAdvancedFilters';
 
 export default function LoanToolbar() {
   const dispatch = useAppDispatch();
@@ -42,16 +42,16 @@ export default function LoanToolbar() {
             <Search size={18} className="text-gray-400" />
             <input
               type="text"
-              placeholder="Search by Lead ID, Name, or Phone Number..."
+              placeholder="Search by Application ID, Lead ID, or Phone Number"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="ml-3 w-full bg-transparent text-base text-gray-900 outline-none placeholder:text-gray-400"
+              className="ml-3 w-full bg-transparent text-base text-gray-900 outline-none font-normal placeholder:text-gray-400"
             />
           </div>
           <button
             onClick={handleSearch}
-            className="w-full sm:w-auto rounded-lg bg-[#16A34A] px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+            className="w-full sm:w-auto rounded-lg bg-[#16A34A] px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c] active:scale-95"
           >
             Search
           </button>
@@ -68,7 +68,7 @@ export default function LoanToolbar() {
           </button>
           <button
             onClick={() => dispatch(clearAdvancedFilters())}
-            className="text-base font-semibold text-emerald-600 transition hover:text-emerald-700 whitespace-nowrap"
+            className="text-base font-semibold text-[#16A34A] transition hover:text-[#10883c] whitespace-nowrap"
           >
             Clear Filters
           </button>
@@ -101,10 +101,9 @@ export default function LoanToolbar() {
         </button>
       </div>
 
-      <AdvancedFilters
+      <LoanAdvancedFilters
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        mode="loans"
       />
     </div>
   );

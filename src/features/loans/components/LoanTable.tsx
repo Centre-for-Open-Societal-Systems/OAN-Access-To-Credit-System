@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { Filter, Check, Phone, Eye, ArrowUpDown } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
@@ -27,7 +28,7 @@ interface LoanTableProps {
   onView?: (row: LoanTableRow) => void;
 }
 
-const STATUS_OPTIONS = ['Approved', 'Processing', 'Rejected',];
+const STATUS_OPTIONS = ['Granted', 'Processing', 'Rejected'];
 const LOAN_TYPE_OPTIONS = [
   'Input loan (seeds, agrochemicals)',
   'Agricultural term loan',
@@ -50,14 +51,43 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
   const statusRef = useRef<HTMLDivElement>(null);
   const loanTypeRef = useRef<HTMLDivElement>(null);
 
+  const [statusPos, setStatusPos] = useState({ top: 0, left: 0 });
+  const [loanTypePos, setLoanTypePos] = useState({ top: 0, left: 0 });
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusFilterOpen(false);
-      if (loanTypeRef.current && !loanTypeRef.current.contains(e.target as Node)) setLoanTypeFilterOpen(false);
+      // Use querySelector to check if click is inside portal
+      const target = e.target as Node;
+      const isInsidePortal = document.querySelector('.loan-filter-portal')?.contains(target);
+      if (isInsidePortal) return;
+
+      if (statusRef.current && !statusRef.current.contains(target)) setStatusFilterOpen(false);
+      if (loanTypeRef.current && !loanTypeRef.current.contains(target)) setLoanTypeFilterOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (statusFilterOpen && statusRef.current) {
+      const rect = statusRef.current.getBoundingClientRect();
+      setStatusPos({ top: rect.bottom + 6, left: rect.left });
+    }
+    if (loanTypeFilterOpen && loanTypeRef.current) {
+      const rect = loanTypeRef.current.getBoundingClientRect();
+      setLoanTypePos({ top: rect.bottom + 6, left: rect.left });
+    }
+  }, [statusFilterOpen, loanTypeFilterOpen]);
+
+  useEffect(() => {
+    if (statusFilterOpen || loanTypeFilterOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [statusFilterOpen, loanTypeFilterOpen]);
 
   const toggleStatus = (val: string) => {
     dispatch(toggleTableStatusFilter(val));
@@ -87,8 +117,8 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">
               <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={statusRef}>
                 STATUS <Filter size={16} className="text-gray-400" onClick={() => setStatusFilterOpen(!statusFilterOpen)} />
-                {statusFilterOpen && (
-                  <div className="absolute left-0 top-[calc(100%+0.4rem)] z-50 flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+                {statusFilterOpen && typeof document !== 'undefined' && createPortal(
+                  <div style={{ position: 'fixed', top: statusPos.top, left: statusPos.left }} className="loan-filter-portal z-[9999] flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
                       <Filter size={16} className="text-emerald-600" /> FILTER BY STATUS
                     </div>
@@ -107,17 +137,18 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
                     </div>
                     <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
                       <button onClick={clearStatusFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
-                      <button onClick={() => setStatusFilterOpen(false)} className="rounded-lg bg-[#10b981] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#059669]">Apply</button>
+                      <button onClick={() => setStatusFilterOpen(false)} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
                     </div>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </th>
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">
               <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={loanTypeRef}>
                 LOAN TYPE <Filter size={16} className="text-gray-400" onClick={() => setLoanTypeFilterOpen(!loanTypeFilterOpen)} />
-                {loanTypeFilterOpen && (
-                  <div className="absolute left-0 top-[calc(100%+0.4rem)] z-50 flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+                {loanTypeFilterOpen && typeof document !== 'undefined' && createPortal(
+                  <div style={{ position: 'fixed', top: loanTypePos.top, left: loanTypePos.left }} className="loan-filter-portal z-[9999] flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
                       <Filter size={16} className="text-emerald-600" /> FILTER BY LOAN TYPE
                     </div>
@@ -136,9 +167,10 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
                     </div>
                     <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
                       <button onClick={clearLoanTypeFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
-                      <button onClick={() => setLoanTypeFilterOpen(false)} className="rounded-lg bg-[#10b981] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#059669]">Apply</button>
+                      <button onClick={() => setLoanTypeFilterOpen(false)} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
                     </div>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </th>
@@ -169,7 +201,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
               if (statusLower.includes('processing') || statusLower.includes('active') || row.statusTone === 'info') {
                 badgeColor = "bg-blue-50 text-blue-500 border border-blue-200";
                 dotColor = "bg-blue-500";
-              } else if (statusLower.includes('approved') || statusLower.includes('verified') || row.statusTone === 'success') {
+              } else if (statusLower.includes('approved') || statusLower.includes('granted') || statusLower.includes('verified') || row.statusTone === 'success') {
                 badgeColor = "bg-emerald-50 text-emerald-600 border border-emerald-200";
                 dotColor = "bg-emerald-500";
               } else if (statusLower.includes('rejected') || row.statusTone === 'danger') {
@@ -185,7 +217,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
               return (
                 <tr key={`${row.id}-${i}`} className="transition-colors hover:bg-gray-50/50 group">
                   <td className="px-6 py-5">
-                    <strong className="block text-base font-semibold text-emerald-500">{row.id}</strong>
+                    <strong className="block text-base font-semibold text-[#16A34A]">{row.id}</strong>
                     {row.applicant !== 'Unknown Applicant' && (
                       <span className="mt-1 block text-sm text-gray-400">{row.applicant}</span>
                     )}
@@ -199,7 +231,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
                   <td className="px-6 py-5">
                     <span className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ${badgeColor}`}>
                       <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
-                      {row.status.replace('Verified', 'Approved').replace('Active', 'Processing')}
+                      {row.status.replace(/Verified|Approved/gi, 'Granted').replace(/Active/gi, 'Processing')}
                     </span>
                   </td>
                   <td className="px-6 py-5 font-medium text-gray-700">{row.type}</td>

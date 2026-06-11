@@ -13,9 +13,9 @@ import LoanApplicationModal from '@/features/loans/components/LoanApplicationMod
 import { Users, FileText, Award, XCircle } from 'lucide-react';
 
 const METRIC_CONFIG = [
-  { key: 'total', label: 'Overall Applications', icon: Users, tone: 'blue' },
+  { key: 'total', label: <span className="font-medium text-gray-500"><strong className="font-bold text-gray-700">Overall</strong> Applications</span>, icon: Users, tone: 'blue' },
   { key: 'processing', label: 'Processing', icon: FileText, tone: 'cyan' },
-  { key: 'approved', label: 'Approved', icon: Award, tone: 'orange' },
+  { key: 'approved', label: 'Granted', icon: Award, tone: 'green' },
   { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'red' },
 ];
 
@@ -43,12 +43,12 @@ export default function LoanApplicationDashboard() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {METRIC_CONFIG.map((cfg, index) => (
-          <LoanKpiCard key={cfg.label} cfg={cfg} index={index} />
+          <LoanKpiCard key={cfg.key} cfg={cfg} index={index} />
         ))}
       </section>
 
       <section className="mt-8">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
           <LoanToolbar />
           <LoanTable onView={handleView} />
           <LoanPagination />
