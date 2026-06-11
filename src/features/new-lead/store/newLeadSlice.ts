@@ -450,6 +450,7 @@ const newLeadSlice = createSlice({
       }
 
       state.isLoadingConsent = false;
+      state.searchedFarmer = null;
       state.consentError = null;
       state.isVerifyingOtp = false;
       state.isOtpVerified = false;
