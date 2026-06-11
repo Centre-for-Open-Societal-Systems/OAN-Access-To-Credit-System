@@ -6,7 +6,7 @@ import { selectLiveMetrics } from '../store/loanDashboardSlice';
 interface MetricConfig {
   icon: LucideIcon;
   tone: string;
-  label: string;
+  label: React.ReactNode;
   key: string;
 }
 
@@ -24,6 +24,7 @@ const LoanKpiCard = React.memo(({ cfg, index = 0 }: LoanKpiCardProps) => {
   const toneStyles: Record<string, string> = {
     blue: 'bg-blue-100 text-blue-600',
     cyan: 'bg-cyan-100 text-cyan-600',
+    green: 'bg-green-100 text-green-600',
     orange: 'bg-orange-100 text-orange-600',
     red: 'bg-red-100 text-red-600',
   };

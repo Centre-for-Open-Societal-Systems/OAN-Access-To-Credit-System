@@ -29,14 +29,13 @@ export const fetchLeadSummary = createAsyncThunk(
 
 export interface AdvFilters {
   statuses: string[];
-  callStatus: string;
   quickDate: string;
   dateFrom: string;
   dateTo: string;
   location: string;
   minAmount: number | null;
   maxAmount: number | null;
-  loanType: string | null;
+  loanType: string[];
   leadSources: string[];
 }
 
@@ -60,14 +59,13 @@ interface LeadState {
 
 const initialFilters: AdvFilters = {
   statuses: [],
-  callStatus: 'All',
   quickDate: '',
   dateFrom: '',
   dateTo: '',
   location: '',
   minAmount: null,
   maxAmount: null,
-  loanType: null,
+  loanType: [],
   leadSources: [],
 };
 

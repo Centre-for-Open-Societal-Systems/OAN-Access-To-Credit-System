@@ -71,7 +71,6 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
   // Leads-specific local state
   const [callSt, setCallSt] = useState('All');
   const [tempSources, setTempSources] = useState<string[]>([]);
-  const [tempLoanType, setTempLoanType] = useState<string | null>(null);
 
   // Loans-specific local state
   const [tempLoanTypes, setTempLoanTypes] = useState<string[]>([]);
@@ -126,9 +125,8 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
         setDateFrom(leadsFilters.dateFrom || '');
         setDateTo(leadsFilters.dateTo || '');
         setQuickDate(leadsFilters.quickDate || '');
-        setCallSt(leadsFilters.callStatus || 'All');
         setTempSources(leadsFilters.leadSources || []);
-        setTempLoanType(leadsFilters.loanType);
+        setTempLoanTypes(leadsFilters.loanType || []);
 
         const min = leadsFilters.minAmount;
         const max = leadsFilters.maxAmount;
@@ -188,11 +186,11 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
         (quickDate || dateFrom || dateTo ? 1 : 0) +
         (location.trim() ? 1 : 0) +
         (tempIndex !== 4 ? 1 : 0) +
-        (tempLoanType ? 1 : 0) +
+        (tempLoanTypes.length > 0 ? 1 : 0) +
         (tempSources.length > 0 ? 1 : 0)
       );
     }
-  }, [mode, selStatuses, tempIndex, tempLoanTypes, location, dateFrom, dateTo, callSt, quickDate, tempLoanType, tempSources]);
+  }, [mode, selStatuses, tempIndex, tempLoanTypes, location, dateFrom, dateTo, callSt, quickDate, tempSources]);
 
   const handleApply = () => {
     const activeRange = RANGE_STEPS[tempIndex];
@@ -209,14 +207,13 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
     } else {
       dispatch(setAdvFilters({
         statuses: selStatuses,
-        callStatus: callSt,
         quickDate,
         dateFrom,
         dateTo,
         location,
         minAmount: activeRange.min,
         maxAmount: activeRange.max,
-        loanType: tempLoanType,
+        loanType: tempLoanTypes,
         leadSources: tempSources,
       }));
     }
@@ -242,7 +239,7 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
       setDateTo('');
       setLocation('');
       setTempIndex(4);
-      setTempLoanType(null);
+      setTempLoanTypes([]);
       setTempSources([]);
     }
   };
@@ -251,21 +248,21 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
 
   const statusesToMap = mode === 'loans'
     ? Object.keys(LOAN_STATUS_DOT_CFG).map(status => ({
-        id: status,
-        label: status,
-        dot: LOAN_STATUS_DOT_CFG[status]
-      }))
+      id: status,
+      label: status,
+      dot: LOAN_STATUS_DOT_CFG[status]
+    }))
     : KPI_CARDS_LAYOUT.filter(item => item.id !== 'total').map(item => ({
-        id: item.id,
-        label: item.label,
-        dot: CATEGORY_DOT_CFG[item.id] ?? 'bg-slate-400'
-      }));
+      id: item.id,
+      label: item.label,
+      dot: CATEGORY_DOT_CFG[item.id] ?? 'bg-slate-400'
+    }));
 
   const sidebarContent = (
     <>
       <div className="fixed inset-0 z-40 bg-black/25 transition-opacity" onClick={onClose} />
       <aside className="fixed right-0 top-0 z-50 flex h-full w-[540px] flex-col bg-white shadow-2xl font-sans">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2.5">
@@ -279,7 +276,7 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
 
         {/* Scrollable Body */}
         <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-          
+
           {/* Status */}
           <section>
             <p className="mb-3 text-base font-semibold text-[#232F34]">Status</p>
@@ -292,14 +289,12 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                   <div
                     key={s}
                     onClick={() => toggleStatus(s)}
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${
-                      sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-3 transition ${sel ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${
-                        sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
-                      }`}>
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition ${sel ? 'border-green-600 bg-green-600' : 'border-gray-300 bg-white'
+                        }`}>
                         {sel && <Check size={12} strokeWidth={3} className="text-white" />}
                       </div>
                       <span className={`text-base font-medium ${sel ? 'text-green-700' : 'text-[#232F34]'}`}>{label}</span>
@@ -321,11 +316,10 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                     key={o}
                     type="button"
                     onClick={() => setCallSt(o)}
-                    className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${
-                      callSt === o
-                        ? 'border-green-600 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-text-primary'
-                    }`}
+                    className={`rounded-xl border px-5 py-2.5 text-base font-medium transition ${callSt === o
+                      ? 'border-green-600 bg-green-50 text-green-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-text-primary'
+                      }`}
                   >
                     {o}
                   </button>
@@ -341,9 +335,8 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
               <button
                 type="button"
                 onClick={() => setIsAmountOpen(prev => !prev)}
-                className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${
-                  isAmountOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
-                }`}
+                className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${isAmountOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
+                  }`}
               >
                 <span className={selectedAmountSummary ? 'text-[#232F34] font-medium' : 'text-[#8E9AA0]'}>
                   {selectedAmountSummary || 'Select Loan Amount'}
@@ -431,15 +424,12 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
               <button
                 type="button"
                 onClick={() => setIsLoanTypeOpen(prev => !prev)}
-                className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${
-                  isLoanTypeOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
-                }`}
+                className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${isLoanTypeOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
+                  }`}
                 style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
               >
-                <span className={(mode === 'loans' ? tempLoanTypes.length > 0 : tempLoanType) ? 'text-[#232F34] font-medium' : 'text-[#8E9AA0]'}>
-                  {mode === 'loans'
-                    ? (tempLoanTypes.length > 0 ? `${tempLoanTypes.length} Selected` : 'Select Loan Type')
-                    : (tempLoanType || 'Select Loan Type')}
+                <span className={tempLoanTypes.length > 0 ? 'text-[#232F34] font-medium' : 'text-[#8E9AA0]'}>
+                  {tempLoanTypes.length > 0 ? `${tempLoanTypes.length} Selected` : 'Select Loan Type'}
                 </span>
                 <ChevronDown size={14} className={`text-gray-400 transition-transform ${isLoanTypeOpen ? 'rotate-180 text-green-600' : ''}`} />
               </button>
@@ -451,24 +441,18 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                 >
                   <div className="flex flex-col max-h-60 overflow-y-auto">
                     {dynamicLoanTypes.map((opt, idx) => {
-                      const isSel = mode === 'loans' ? tempLoanTypes.includes(opt) : tempLoanType === opt;
+                      const isSel = tempLoanTypes.includes(opt);
                       return (
                         <div
                           key={opt}
                           onClick={() => {
-                            if (mode === 'loans') {
-                              setTempLoanTypes(prev => isSel ? prev.filter(x => x !== opt) : [...prev, opt]);
-                            } else {
-                              setTempLoanType(isSel ? null : opt);
-                            }
+                            setTempLoanTypes(prev => isSel ? prev.filter(x => x !== opt) : [...prev, opt]);
                           }}
-                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${
-                            idx === dynamicLoanTypes.length - 1 ? 'rounded-b-lg' : ''
-                          }`}
+                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === dynamicLoanTypes.length - 1 ? 'rounded-b-lg' : ''
+                            }`}
                         >
-                          <div className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border-2 transition-all ${
-                            isSel ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-400 bg-white'
-                          }`}>
+                          <div className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border-2 transition-all ${isSel ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-400 bg-white'
+                            }`}>
                             {isSel && <Check size={14} strokeWidth={4} className="text-white" />}
                           </div>
                           <span className="text-[15px] font-medium text-[#4B5563] tracking-wide">{opt}</span>
@@ -489,9 +473,8 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                 <button
                   type="button"
                   onClick={() => setIsSourcesOpen(prev => !prev)}
-                  className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${
-                    isSourcesOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none ${isSourcesOpen ? 'border-green-600 bg-white ring-2 ring-green-600/15' : 'border-gray-200 bg-white hover:border-green-600/50'
+                    }`}
                   style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
                 >
                   <span className="text-[#8E9AA0] font-sans">Select Lead Source</span>
@@ -530,13 +513,11 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                           <div
                             key={opt}
                             onClick={() => toggleSource(opt)}
-                            className={`flex items-center gap-3 py-3 px-4 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${
-                              idx === dynamicLeadSources.length - 1 ? 'rounded-b-lg' : ''
-                            }`}
+                            className={`flex items-center gap-3 py-3 px-4 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === dynamicLeadSources.length - 1 ? 'rounded-b-lg' : ''
+                              }`}
                           >
-                            <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
-                              isSel ? 'border-green-600 bg-green-600' : 'border-[#A6A9AF] bg-white'
-                            }`}>
+                            <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${isSel ? 'border-green-600 bg-green-600' : 'border-[#A6A9AF] bg-white'
+                              }`}>
                               {isSel && <Check size={12} strokeWidth={3} className="text-white" />}
                             </div>
                             <span className="text-sm font-normal text-[#4B5563] font-sans">{opt}</span>
@@ -593,53 +574,51 @@ function AdvancedFilters({ onClose, isOpen = true, mode = 'leads' }: AdvancedFil
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-3 flex flex-wrap gap-2">
               {mode === 'loans'
                 ? LOANS_QUICK_DATE_OPTS.map(o => (
-                    <button
-                      key={o.label}
-                      type="button"
-                      onClick={() => {
-                        setQuickDate(o.label);
-                        const to = new Date();
-                        const from = new Date();
-                        if (o.days === 1) {
-                          from.setDate(from.getDate() - 1);
-                          to.setDate(to.getDate() - 1);
-                        } else {
-                          from.setDate(from.getDate() - o.days);
-                        }
-                        setDateFrom(from.toISOString().split('T')[0]);
-                        setDateTo(to.toISOString().split('T')[0]);
-                      }}
-                      className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${
-                        quickDate === o.label
-                          ? 'border-green-600 bg-green-50 text-green-700'
-                          : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  <button
+                    key={o.label}
+                    type="button"
+                    onClick={() => {
+                      setQuickDate(o.label);
+                      const to = new Date();
+                      const from = new Date();
+                      if (o.days === 1) {
+                        from.setDate(from.getDate() - 1);
+                        to.setDate(to.getDate() - 1);
+                      } else {
+                        from.setDate(from.getDate() - o.days);
+                      }
+                      setDateFrom(from.toISOString().split('T')[0]);
+                      setDateTo(to.toISOString().split('T')[0]);
+                    }}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${quickDate === o.label
+                      ? 'border-green-600 bg-green-50 text-green-700'
+                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'
                       }`}
-                    >
-                      {o.label}
-                    </button>
-                  ))
+                  >
+                    {o.label}
+                  </button>
+                ))
                 : LEADS_QUICK_DATE_OPTS.map(o => (
-                    <button
-                      key={o}
-                      type="button"
-                      onClick={() => {
-                        setQuickDate(o);
-                        setDateFrom('');
-                        setDateTo('');
-                      }}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                        quickDate === o
-                          ? 'border-green-600 bg-green-50 text-green-700'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-text-primary'
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => {
+                      setQuickDate(o);
+                      setDateFrom('');
+                      setDateTo('');
+                    }}
+                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${quickDate === o
+                      ? 'border-green-600 bg-green-50 text-green-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-text-primary'
                       }`}
-                    >
-                      {o}
-                    </button>
-                  ))}
+                  >
+                    {o}
+                  </button>
+                ))}
             </div>
           </section>
 
