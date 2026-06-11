@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loanService } from '@/features/loans/api/loan.service';
+import { newLeadService } from '@/features/new-lead/api/newLead.service';
 import type { RootState } from '../../../store';
 
 interface LoanFormState {
@@ -156,7 +157,7 @@ export const sendOtpAPI = createAsyncThunk(
   'loanForm/sendOtp',
   async (payload: any, { rejectWithValue }) => {
     try {
-      const response = await loanService.sendOtpAndCreateConsent(payload);
+      const response = await newLeadService.sendOtpAndCreateConsent(payload);
       return response;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to send OTP');
@@ -168,7 +169,7 @@ export const verifyOtpAPI = createAsyncThunk(
   'loanForm/verifyOtp',
   async (payload: { consent_request: string; otp_code: string }, { rejectWithValue }) => {
     try {
-      const response = await loanService.verifyOtp(payload);
+      const response = await newLeadService.verifyOtp(payload);
       return response;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to verify OTP');

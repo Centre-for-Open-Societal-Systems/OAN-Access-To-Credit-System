@@ -94,11 +94,23 @@ const getInitialState = (): NewLeadState => ({
 
 const initialState: NewLeadState = getInitialState();
 
+export const searchFarmerThunk = createAsyncThunk(
+  'newLead/searchFarmer',
+  async (faydaId: string, { rejectWithValue }) => {
+    try {
+      const response = await newLeadService.searchFarmer(faydaId);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Farmer not found.');
+    }
+  }
+);
+
 export const searchFarmerConsent = createAsyncThunk(
   'newLead/searchConsent',
-  async (farmerId: string, { rejectWithValue }) => {
+  async ({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId }: { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName?: string; leadId?: string }, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.sendOtpAndCreateConsent({ farmerId });
+      const response = await newLeadService.sendOtpAndCreateConsent({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId });
       // The backend response structure for this API is assumed to contain a success flag and possibly a consent_request id
       return response as { success: boolean; consent_request?: string; farmer?: Partial<FarmerDetails> };
     } catch (error: any) {
@@ -469,6 +481,25 @@ const newLeadSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(searchFarmerThunk.pending, (state) => {
+        state.isLoadingConsent = true;
+        state.consentError = null;
+      })
+      .addCase(searchFarmerThunk.fulfilled, (state, action) => {
+        state.isLoadingConsent = false;
+        const payload = action.payload.message || action.payload;
+        if (payload.status === 'success' && payload.farmer) {
+          const nameParts = payload.farmer.name?.split(' ') || [];
+          state.farmerDetails.firstName = nameParts[0] || '';
+          state.farmerDetails.lastName = nameParts.slice(1).join(' ') || '';
+          state.farmerDetails.phoneNumber = payload.farmer.phone || '';
+          state.consentError = null;
+        }
+      })
+      .addCase(searchFarmerThunk.rejected, (state, action) => {
+        state.isLoadingConsent = false;
+        state.consentError = action.payload as string || 'Farmer not found.';
+      })
       .addCase(searchFarmerConsent.pending, (state) => {
         state.isLoadingConsent = true;
         state.consentError = null;

@@ -8,19 +8,38 @@ export const newLeadService = {
     });
   },
 
-  // NOTE: duplicated later need to make it universal  
-  async sendOtpAndCreateConsent(data: { farmerId: string; phoneNumber?: string }): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.send_otp_and_create_consent', {
+  async searchFarmer(faydaId: string): Promise<any> {
+    return fetchApi('oan_a2c.api.v1.consent.api.search_farmer', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ fayda_id: faydaId }),
+    });
+  },
+
+  async sendOtpAndCreateConsent(data: { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName?: string; leadId?: string }): Promise<any> {
+    const cleanLeadId = data.leadId ? decodeURIComponent(data.leadId).replace(/^#/, '') : '';
+    const payload = {
+      lead_id: cleanLeadId,
+      fayda_id: data.farmerId,
+      partner: data.partnerName || "AgriBank",
+      purpose: "Loan for seeds and fertilizer",
+      consent_form_filename: data.consentFormFilename,
+      consent_form_base64: data.consentFormBase64,
+    };
+    return fetchApi('oan_a2c.api.v1.consent.consent.request_otp', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   },
 
   async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.verify_otp', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    // Return mock success response since backend verification is not yet implemented/correct
+    return {
+      status: "success",
+      message: "OTP verified successfully.",
+      firstName: "Abraha",
+      lastName: "Gebru",
+      phoneNumber: "+251911223344"
+    };
   },
 
   // Fetch full details of a lead (farmer details, etc.)

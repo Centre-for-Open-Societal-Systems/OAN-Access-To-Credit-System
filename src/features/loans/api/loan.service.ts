@@ -81,20 +81,6 @@ export const loanService = {
 
 
 
-  async sendOtpAndCreateConsent(data: any): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.send_otp_and_create_consent', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  async verifyOtp(data: { consent_request: string; otp_code: string }): Promise<any> {
-    return fetchApi('oan_a2c.consent.consent.verify_otp', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
 
 
   async submitApplication(application_id: string): Promise<any> {
