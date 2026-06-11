@@ -8,6 +8,7 @@ import {
   User, Hash, Key, Smartphone, Banknote,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { newLeadService } from '@/features/new-lead/api/newLead.service';
 
 import { ReactNode } from 'react';
 
@@ -650,6 +651,47 @@ function Step3({ form, setField, errors }: StepProps) {
   const [consentFileProgress, setConsentFileProgress] = useState(null);
   const [consentUploadedAt, setConsentUploadedAt] = useState(null);
   const [viewingConsent, setViewingConsent] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [searchResult, setSearchResult] = useState<any>(null);
+  const [searchSuccessMessage, setSearchSuccessMessage] = useState('');
+
+  async function handleFarmerSearch() {
+    const term = form.farmerSearch?.trim();
+    if (!term) {
+      setSearchError('Please enter a Farmer ID or National ID.');
+      setSearchResult(null);
+      setSearchSuccessMessage('');
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError('');
+    setSearchResult(null);
+    setSearchSuccessMessage('');
+    try {
+      const response = await newLeadService.searchFarmer(term);
+      if (response && (response.status === 'success' || response.farmer)) {
+        const farmerObj = response.farmer || response;
+        setSearchResult(farmerObj);
+        setSearchSuccessMessage(response.message || 'Farmer found successfully.');
+        setField('faydaId')(farmerObj.id || response.farmer_db_id || term);
+        if (farmerObj.name) {
+          const parts = farmerObj.name.split(' ');
+          setField('fullName')(parts[0] || '');
+          setField('lastName')(parts.slice(1).join(' ') || '');
+        }
+        if (farmerObj.phone || farmerObj.mobile) {
+          setField('mobilePhone')(farmerObj.phone || farmerObj.mobile);
+        }
+      } else {
+        setSearchError(response?.message || 'Farmer not found.');
+      }
+    } catch (err: any) {
+      setSearchError(err.message || 'Farmer not found.');
+    } finally {
+      setSearchLoading(false);
+    }
+  }
 
   function startCountdown(s: number = 102) {
     setCountdown(s);
@@ -729,10 +771,30 @@ function Step3({ form, setField, errors }: StepProps) {
                   onChange={e => setField('farmerSearch')(e.target.value)}
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-3 text-sm shadow-sm focus:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20"
                 />
-                <button className="flex items-center gap-1.5 rounded-lg bg-[#16A34A] px-4 py-3 text-sm font-medium text-white hover:bg-[#10883c] transition-colors">
-                  Search
+                <button
+                  type="button"
+                  onClick={handleFarmerSearch}
+                  disabled={searchLoading}
+                  className="flex items-center gap-1.5 rounded-lg bg-[#16A34A] px-4 py-3 text-sm font-medium text-white hover:bg-[#10883c] transition-colors disabled:opacity-60"
+                >
+                  {searchLoading ? 'Searching...' : 'Search'}
                 </button>
               </div>
+              {searchError && (
+                <p className="text-xs text-red-500 font-medium mt-1">{searchError}</p>
+              )}
+              {searchResult && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3 mt-1.5 text-xs text-green-800">
+                  <div className="flex items-start gap-1.5">
+                    <Check size={14} className="mt-0.5 shrink-0 text-green-600 animate-bounce" />
+                    <div>
+                      <p className="font-semibold text-green-900">{searchSuccessMessage || 'Farmer found successfully.'}</p>
+                      <p className="mt-0.5">Name: <strong className="font-bold">{searchResult.name}</strong></p>
+                      <p>Phone: <strong className="font-bold">{searchResult.phone || searchResult.mobile || 'N/A'}</strong></p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Farmer ID (Fayda) */}
@@ -849,8 +911,8 @@ function Step3({ form, setField, errors }: StepProps) {
             </div>
 
             {/* Send OTP Request */}
-            <button onClick={handleSendOtp} disabled={otpVerified}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors ${otpVerified ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400' : 'bg-[#16A34A] text-white hover:bg-[#10883c]'}`}>
+            <button onClick={handleSendOtp} disabled={otpVerified || !searchResult || !consentFile}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors ${(otpVerified || !searchResult || !consentFile) ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400' : 'bg-[#16A34A] text-white hover:bg-[#10883c]'}`}>
               <Send size={15} /> {otpSent && !otpVerified ? 'Resend OTP Request' : 'Send OTP Request'}
             </button>
           </div>

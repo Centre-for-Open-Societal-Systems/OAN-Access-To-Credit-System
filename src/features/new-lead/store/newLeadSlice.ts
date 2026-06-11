@@ -55,6 +55,8 @@ interface NewLeadState {
 
   // UI state
   isLoadingConsent: boolean;
+  isSearchingFarmer: boolean;
+  searchedFarmer: FarmerDetails | null;
   consentError: string | null;
   isVerifyingOtp: boolean;
   isOtpVerified: boolean;
@@ -85,6 +87,8 @@ const getInitialState = (): NewLeadState => ({
   visitSchedule: null,
   assignment: null,
   isLoadingConsent: false,
+  isSearchingFarmer: false,
+  searchedFarmer: null,
   consentError: null,
   isVerifyingOtp: false,
   isOtpVerified: false,
@@ -121,10 +125,10 @@ export const searchFarmerConsent = createAsyncThunk(
 
 export const verifyOtpThunk = createAsyncThunk(
   'newLead/verifyOtp',
-  async (payload: { otp_code: string; consent_request: string }, { rejectWithValue }) => {
+  async (payload: { otp_code: string; leadId: string }, { rejectWithValue }) => {
     try {
       const response = await newLeadService.verifyOtp({
-        consent_request: payload.consent_request,
+        leadId: payload.leadId,
         otp_code: payload.otp_code
       });
       return response;
@@ -461,6 +465,7 @@ const newLeadSlice = createSlice({
     },
     setFarmerId(state, action: PayloadAction<string>) {
       state.farmerId = action.payload;
+      state.searchedFarmer = null;
     },
     addCreditInfo(state, action: PayloadAction<Omit<CreditInfo, 'id'>>) {
       const newCreditInfo: CreditInfo = {
@@ -482,22 +487,32 @@ const newLeadSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(searchFarmerThunk.pending, (state) => {
-        state.isLoadingConsent = true;
+        state.isSearchingFarmer = true;
+        state.searchedFarmer = null;
         state.consentError = null;
       })
       .addCase(searchFarmerThunk.fulfilled, (state, action) => {
-        state.isLoadingConsent = false;
-        const payload = action.payload.message || action.payload;
-        if (payload.status === 'success' && payload.farmer) {
-          const nameParts = payload.farmer.name?.split(' ') || [];
-          state.farmerDetails.firstName = nameParts[0] || '';
-          state.farmerDetails.lastName = nameParts.slice(1).join(' ') || '';
-          state.farmerDetails.phoneNumber = payload.farmer.phone || '';
+        state.isSearchingFarmer = false;
+        const payload = action.payload;
+        if (payload && (payload.status === 'success' || payload.farmer)) {
+          const farmerObj = payload.farmer || payload;
+          const nameParts = farmerObj.name?.split(' ') || [];
+          state.searchedFarmer = {
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            phoneNumber: farmerObj.phone || farmerObj.mobile || '',
+            email: farmerObj.email || '',
+            location: farmerObj.location || '',
+          };
           state.consentError = null;
+        } else {
+          state.searchedFarmer = null;
+          state.consentError = (payload && typeof payload.message === 'string') ? payload.message : 'Farmer not found.';
         }
       })
       .addCase(searchFarmerThunk.rejected, (state, action) => {
-        state.isLoadingConsent = false;
+        state.isSearchingFarmer = false;
+        state.searchedFarmer = null;
         state.consentError = action.payload as string || 'Farmer not found.';
       })
       .addCase(searchFarmerConsent.pending, (state) => {
@@ -529,10 +544,11 @@ const newLeadSlice = createSlice({
       .addCase(verifyOtpThunk.fulfilled, (state, action) => {
         state.isVerifyingOtp = false;
         state.isOtpVerified = true;
-        const payload = extractData(action.payload);
-        state.farmerDetails.firstName = payload.firstName;
-        state.farmerDetails.lastName = payload.lastName;
-        state.farmerDetails.phoneNumber = payload.phoneNumber;
+        const payload = action.payload.message;
+        state.farmerDetails.firstName = payload.farmer_preview.given_name;
+        state.farmerDetails.lastName = payload.farmer_preview.family_name;
+        state.farmerDetails.phoneNumber = payload.farmer_preview.phone_no[0];
+        state.farmerDetails.email = payload.farmer_preview.email;
       })
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;

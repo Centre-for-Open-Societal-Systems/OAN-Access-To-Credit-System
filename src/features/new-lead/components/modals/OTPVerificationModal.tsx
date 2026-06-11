@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { X, ShieldCheck, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { verifyOtpThunk, selectNewLeadState } from '../../store/newLeadSlice';
@@ -12,7 +13,9 @@ interface OTPVerificationModalProps {
 export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificationModalProps) {
   const dispatch = useAppDispatch();
   const { isVerifyingOtp } = useAppSelector(selectNewLeadState);
-  
+  const params = useParams();
+  const leadId = params?.id as string || '';
+
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -58,7 +61,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
       if (index < 6) newOtp[index] = char;
     });
     setOtp(newOtp);
-    
+
     // Focus last filled input
     const focusIndex = Math.min(pastedData.length, 5);
     inputRefs.current[focusIndex]?.focus();
@@ -72,23 +75,23 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
     }
 
     setError(null);
-    if (!consentRequestId) {
-      alert("Missing consent request ID. Please try again.");
+    if (!leadId) {
+      alert("Missing Lead ID. Please try again.");
       return;
     }
 
-    const result = await dispatch(verifyOtpThunk({ otp_code: code, consent_request: consentRequestId }));
+    const result = await dispatch(verifyOtpThunk({ otp_code: code, leadId }));
     if (verifyOtpThunk.fulfilled.match(result)) {
       onClose(); // Verification successful, close modal
     } else {
-      setError(result.payload as string || 'Verification failed. Try 123456.');
+      setError(result.payload as string || 'Verification failed. Try again.');
     }
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="relative flex flex-col bg-white rounded-[10px] w-full max-w-[605px] overflow-hidden shadow-2xl">
-        
+
         {/* Header */}
         <div className="flex flex-row justify-between items-center px-6 h-[77px] border-b border-[#E5E7EB]">
           <h2 className="font-roboto font-bold text-[18px] leading-7 text-[#111827] m-0">
@@ -104,7 +107,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
 
         {/* Body Container */}
         <div className="flex flex-col px-6 pt-6 gap-4 pb-6">
-          
+
           {/* Consent Summary */}
           <div className="flex flex-col items-start p-4 bg-[#EFF6FF] border border-[#DBEAFE] rounded-lg">
             <div className="flex flex-row items-start gap-3">
@@ -125,7 +128,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId }: OTPVerificat
           {/* OTP Verification Area */}
           <div className="flex flex-col justify-center items-center p-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl h-[387.5px]">
             <div className="flex flex-col items-center gap-2 max-w-[384px] w-full">
-              
+
               {/* Icon Circle */}
               <div className="flex justify-center items-center w-16 h-16 bg-white border border-[#F3F4F6] rounded-full shadow-[0px_1px_2px_rgba(0,0,0,0.05)] mb-2">
                 <Check size={24} className="text-[#22C55E]" strokeWidth={3} />

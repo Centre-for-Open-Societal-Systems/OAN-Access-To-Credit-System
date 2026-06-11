@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation';
 
 export function ConsentManagementSection() {
   const dispatch = useAppDispatch();
-  const { farmerId, isLoadingConsent, consentError, isOtpVerified, consentDate, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
+  const { farmerId, isLoadingConsent, isSearchingFarmer, searchedFarmer, consentError, isOtpVerified, consentDate, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
   const officerName = useAppSelector(selectOfficerName) || 'AgriBank';
   const params = useParams();
   const leadId = params?.id as string;
@@ -138,21 +138,21 @@ export function ConsentManagementSection() {
                       dispatch(searchFarmerThunk(farmerId.trim()));
                     }
                   }}
-                  disabled={!farmerId?.trim() || isLoadingConsent}
+                  disabled={!farmerId?.trim() || isLoadingConsent || isSearchingFarmer}
                   className="h-[42px] px-6 rounded-md border border-[#16A34A] text-[15px] font-medium text-[#16A34A] hover:bg-[#F0FDFA] transition-colors bg-white shadow-sm flex items-center justify-center shrink-0 disabled:opacity-50"
                 >
-                  Search
+                  {isSearchingFarmer ? 'Searching...' : 'Search'}
                 </button>
               </div>
-              {farmerDetails?.firstName && (
+              {searchedFarmer?.firstName && (
                 <div className="text-[13px] text-green-600 font-medium bg-[#F0FDFA] border border-[#DCFCE7] rounded px-3 py-1.5 w-full">
-                  Farmer: {farmerDetails.firstName} {farmerDetails.lastName} ({farmerDetails.phoneNumber})
+                  Farmer: {searchedFarmer.firstName} {searchedFarmer.lastName} ({searchedFarmer.phoneNumber})
                 </div>
               )}
               <button
                 type="button"
                 onClick={handleSendOtp}
-                disabled={!farmerId || isLoadingConsent || !consentFile}
+                disabled={!searchedFarmer?.firstName || isLoadingConsent || isSearchingFarmer || !consentFile}
                 className="w-full h-[42px] rounded-md bg-[#16A34A] text-[15px] font-medium text-white hover:bg-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
               >
                 {isLoadingConsent ? 'Sending...' : 'Send OTP'}
