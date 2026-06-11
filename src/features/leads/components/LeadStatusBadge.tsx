@@ -19,16 +19,16 @@ const mapStatusToKpiLabel = (status?: string): string => {
 
 const STATUS_STYLE_MAP: Record<string, { badgeClass: string; dotClass: string }> = {
   Active: {
-    badgeClass: "bg-blue-50 text-blue-500 border border-blue-200",
-    dotClass: "bg-blue-500"
+    badgeClass: "bg-green-50 text-green-600 border border-green-200",
+    dotClass: "bg-green-500"
   },
   Verified: {
-    badgeClass: "bg-emerald-50 text-emerald-600 border border-emerald-200",
-    dotClass: "bg-emerald-500"
+    badgeClass: "bg-teal-50 text-teal-600 border border-teal-200",
+    dotClass: "bg-teal-500"
   },
   Processed: {
-    badgeClass: "bg-emerald-50 text-emerald-600 border border-emerald-200",
-    dotClass: "bg-emerald-500"
+    badgeClass: "bg-cyan-50 text-cyan-600 border border-cyan-200",
+    dotClass: "bg-cyan-500"
   },
   Granted: {
     badgeClass: "bg-emerald-50 text-emerald-600 border border-emerald-200",
@@ -39,15 +39,15 @@ const STATUS_STYLE_MAP: Record<string, { badgeClass: string; dotClass: string }>
     dotClass: "bg-red-500"
   },
   Dormant: {
-    badgeClass: "bg-gray-50 text-gray-500 border border-gray-200",
-    dotClass: "bg-gray-500"
+    badgeClass: "bg-orange-50 text-orange-500 border border-orange-200",
+    dotClass: "bg-orange-500"
   }
 };
 
 function LeadStatusBadge({ status }: LeadStatusBadgeProps) {
   const kpiLabel = mapStatusToKpiLabel(status);
   
-  const displayLabel = kpiLabel.replace('Verified', 'Approved').replace('Active', 'Processing');
+  const displayLabel = kpiLabel;
 
   const cfg = STATUS_STYLE_MAP[kpiLabel] ?? {
     badgeClass: 'bg-gray-100 text-gray-600 border border-gray-200',

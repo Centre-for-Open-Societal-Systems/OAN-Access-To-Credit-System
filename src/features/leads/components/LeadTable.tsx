@@ -219,7 +219,7 @@ function LeadTable({
 
                     {col.isSortable && (
                       <span className="inline-flex cursor-pointer text-[#AEB4BA] hover:text-[#3A474E] text-[12px] select-none">
-                        ⇅
+
                       </span>
                     )}
                   </div>
@@ -249,8 +249,8 @@ function LeadTable({
               // Custom Background for Visit Scheduled row status
               const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
               const rowBgClass = isVisitScheduled
-                ? "bg-[rgba(240,253,250,0.3)] border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
-                : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-slate-50/50 transition-colors cursor-pointer";
+                ? " border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
+                : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
 
               return (
                 <tr

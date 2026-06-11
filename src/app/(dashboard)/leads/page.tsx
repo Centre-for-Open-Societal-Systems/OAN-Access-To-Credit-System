@@ -56,6 +56,7 @@ export default function LeadsDashboard() {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
   const [tabCounts, setTabCounts] = useState({ all: 0, my: 0, unassigned: 0 });
+  const [sliderIndex, setSliderIndex] = useState(0);
 
   useEffect(() => {
     // Calculate counts dynamically from allLeads since the backend doesn't filter by assigned_to
@@ -85,9 +86,9 @@ export default function LeadsDashboard() {
     const end_date = advFilters.dateTo || resolvedPreset?.end;
 
     // Combine Statuses
-    // NOTE: only we are expanding (e.g. "Active" expands to ['Initiated', 'Open'])
-    const expandedAdvStatuses = advFilters.statuses.flatMap(id => LEAD_STATUS_MAP[id] || [id]);
-    const allStatuses = Array.from(new Set([...colStatusFilter, ...expandedAdvStatuses]));
+    const expandedAdvStatuses = advFilters.statuses.flatMap(id => LEAD_STATUS_MAP[id.toLowerCase()] || [id]);
+    const expandedColStatuses = colStatusFilter.flatMap(id => LEAD_STATUS_MAP[id.toLowerCase()] || [id]);
+    const allStatuses = Array.from(new Set([...expandedColStatuses, ...expandedAdvStatuses]));
     const statusParam = allStatuses.length > 0 ? allStatuses.join(',') : undefined;
 
     // Combine Search
@@ -149,13 +150,13 @@ export default function LeadsDashboard() {
       if (activeTab === 'unassigned') return !lead.assignedTo || lead.owner === 'unassigned';
       return true;
     });
-    
+
     // If backend returns all leads ignoring pagination, paginate locally
     if (allLeads.length > pageSize) {
       const start = (currentPage - 1) * pageSize;
       return filtered.slice(start, start + pageSize);
     }
-    
+
     // Otherwise just ensure we never exceed pageSize
     return filtered.slice(0, pageSize);
   }, [allLeads, activeTab, currentPage, pageSize]);
@@ -176,17 +177,26 @@ export default function LeadsDashboard() {
     setCurrentPage(1);
   };
 
+  const handleSliderScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollLeft, scrollWidth, clientWidth } = e.currentTarget;
+    if (scrollWidth <= clientWidth) return;
+    const scrollPercentage = scrollLeft / (scrollWidth - clientWidth);
+    if (scrollPercentage > 0.6) setSliderIndex(2);
+    else if (scrollPercentage > 0.3) setSliderIndex(1);
+    else setSliderIndex(0);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="relative flex items-center justify-between rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
+      <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Welcome back, Agent</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 font-semibold w-full md:w-auto mt-2 md:mt-0">
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-2.5 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-2.5 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
           >
             <Download size={18} />
             Export CSV
@@ -194,7 +204,7 @@ export default function LeadsDashboard() {
           <button
             type="button"
             onClick={() => router.push('/leads/new')}
-            className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
           >
             <Plus size={18} strokeWidth={2.5} />
             Create New Lead
@@ -202,12 +212,26 @@ export default function LeadsDashboard() {
         </div>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {liveKpiStats.map((s: any, i: number) => (
-          <div key={s.id} className="min-w-[240px] shrink-0">
-            <LeadKpiCard stat={s} index={i} />
-          </div>
-        ))}
+      <div className="flex flex-col gap-1">
+        <div 
+          className="flex w-full justify-start gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory"
+          onScroll={handleSliderScroll}
+        >
+          {liveKpiStats.map((s: any, i: number) => (
+            <div key={s.id} className="flex-1 min-w-[175px] shrink-0 snap-start">
+              <LeadKpiCard stat={s} index={i} />
+            </div>
+          ))}
+        </div>
+        {/* Mobile Slider Indicator (3 dots) */}
+        <div className="flex md:hidden justify-center items-center gap-1.5 pb-1">
+          {[0, 1, 2].map(idx => (
+            <div
+              key={idx}
+              className={`h-2 rounded-full transition-colors duration-300 ${sliderIndex === idx ? 'w-2 bg-[#16A34A]' : 'w-2 bg-gray-200'}`}
+            ></div>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#e9e9e9] bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">

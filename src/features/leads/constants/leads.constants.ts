@@ -14,14 +14,14 @@ export const STATUS_CFG: Record<string, StatusConfig> = {
   'Not Interested': { dot: 'bg-orange-400',  badge: 'bg-orange-50 text-orange-700 border-orange-200'    },
 };
 
-export const STATUS_OPTS = ['All', 'Initiated', 'Qualified', 'Processed', 'Disqualified', 'Rejected'] as const;
+export const STATUS_OPTS = ['All', 'Active', 'Verified', 'Processed', 'Rejected', 'Dormant'] as const;
 
 export const DATE_OPTS = ['All Time', 'Last 7 Days', 'Last 30 Days', 'This Month'] as const;
 
 export const PAGE_SIZE = 10;
 
 export const COL_FILTER_OPTS: Record<string, string[]> = {
-  'STATUS':    STATUS_OPTS.filter(o => o !== 'All' && o !== 'Disqualified'),
+  'STATUS':    STATUS_OPTS.filter(o => o !== 'All'),
   'LOAN TYPE': ['Tractor Loan', 'Crop Loan', 'Livestock Loan', 'Other'],
 };
 
@@ -30,18 +30,20 @@ export const KPI_CARDS_LAYOUT = [
   { id: 'initiated',    label: 'Active'        },
   { id: 'qualified',    label: 'Verified'      },
   { id: 'processed',    label: 'Processed'     },
-  { id: 'granted',      label: 'Granted'       },
   { id: 'rejected',     label: 'Rejected'      },
   { id: 'dormant',      label: 'Dormant'       },
 ] as const;
 
 export const LEAD_STATUS_MAP: Record<string, string[]> = {
-  initiated: ['Initiated', 'Open'],
-  qualified: ['Qualified'],
+  active: ['Initiated', 'Open'],
+  verified: ['Qualified'],
   processed: ['Processed'],
   granted: ['Granted'],
   rejected: ['Rejected', 'Not Interested'],
   dormant: ['Dormant', 'Disqualified'],
+  
+  initiated: ['Initiated', 'Open'],
+  qualified: ['Qualified'],
 };
 
 export const resolveDateFilter = (filterKey: string): { start?: string; end?: string } => {

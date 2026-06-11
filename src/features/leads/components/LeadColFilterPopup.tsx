@@ -61,32 +61,32 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
       className="flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900"
     >
       <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
-        <Filter size={16} className="text-emerald-600" /> 
+        <Filter size={16} className="text-emerald-600" />
         {col === 'CALL START TIME' ? 'FILTER BY DATE' : `FILTER BY ${col}`}
       </div>
-      <div className="flex flex-col p-2 max-h-[200px] overflow-y-auto">
-        {opts.map(o => {
+      <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium">
+        {opts.map((o, idx) => {
           const sel = selected.includes(o);
           return (
             <button
               key={o}
               type="button"
               onMouseDown={e => { e.preventDefault(); toggle(o); }}
-              className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-gray-50 text-gray-700 text-left"
+              className={`flex items-center gap-4 px-5 py-3 text-[15px] font-medium transition-colors hover:bg-gray-50 text-[#4B5563] text-left ${idx !== opts.length - 1 ? 'border-b border-[#F3F3F3]' : ''}`}
             >
-              <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border ${sel ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white'}`}>
-                {sel && <Check size={14} strokeWidth={3} />}
+              <span className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[2px] border transition-all duration-200 ease-in-out rounded-sm ${sel ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-[#9CA3AF] bg-white'}`}>
+                <Check size={12} strokeWidth={3} className={`transition-all duration-200 ease-in-out rounded-sm  ${sel ? 'scale-100 opacity-100' : 'scale-50 opacity-0 rounded-sm'}`} />
               </span>
               {o}
             </button>
           );
         })}
       </div>
-      <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
+      <div className="flex items-center justify-between border-t border-gray-100 p-3 bg-gray-50/50 rounded-b-xl font-bold">
         <button
           type="button"
           onClick={() => { setSelected([]); onApply([]); onClose(); }}
-          className="text-base font-medium text-gray-400 hover:text-gray-600"
+          className="text-base font-medium text-gray-500 hover:text-gray-600"
         >
           Clear
         </button>

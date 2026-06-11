@@ -46,7 +46,7 @@ export default function LoanToolbar() {
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="ml-3 w-full bg-transparent text-base text-gray-900 outline-none font-medium placeholder:text-gray-400"
+              className="ml-3 w-full bg-transparent text-base text-gray-900 outline-none font-normal placeholder:text-gray-400"
             />
           </div>
           <button

@@ -28,7 +28,7 @@ interface LoanTableProps {
   onView?: (row: LoanTableRow) => void;
 }
 
-const STATUS_OPTIONS = ['Approved', 'Processing', 'Rejected',];
+const STATUS_OPTIONS = ['Granted', 'Processing', 'Rejected'];
 const LOAN_TYPE_OPTIONS = [
   'Input loan (seeds, agrochemicals)',
   'Agricultural term loan',
@@ -201,7 +201,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
               if (statusLower.includes('processing') || statusLower.includes('active') || row.statusTone === 'info') {
                 badgeColor = "bg-blue-50 text-blue-500 border border-blue-200";
                 dotColor = "bg-blue-500";
-              } else if (statusLower.includes('approved') || statusLower.includes('verified') || row.statusTone === 'success') {
+              } else if (statusLower.includes('approved') || statusLower.includes('granted') || statusLower.includes('verified') || row.statusTone === 'success') {
                 badgeColor = "bg-emerald-50 text-emerald-600 border border-emerald-200";
                 dotColor = "bg-emerald-500";
               } else if (statusLower.includes('rejected') || row.statusTone === 'danger') {
@@ -231,7 +231,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
                   <td className="px-6 py-5">
                     <span className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ${badgeColor}`}>
                       <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
-                      {row.status.replace('Verified', 'Approved').replace('Active', 'Processing')}
+                      {row.status.replace(/Verified|Approved/gi, 'Granted').replace(/Active/gi, 'Processing')}
                     </span>
                   </td>
                   <td className="px-6 py-5 font-medium text-gray-700">{row.type}</td>
