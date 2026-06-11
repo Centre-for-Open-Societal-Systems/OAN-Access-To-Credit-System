@@ -267,9 +267,7 @@ export const fetchAssignmentInfoThunk = createAsyncThunk(
   'newLead/fetchAssignmentInfo',
   async (assigneeEmail: string, { rejectWithValue }) => {
     try {
-      console.log("fetching assignment info for email", assigneeEmail);
       const response = await newLeadService.getAssignableUsers(assigneeEmail);
-      console.log("assignment info response", response);
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch assignment info');
@@ -544,11 +542,17 @@ const newLeadSlice = createSlice({
       .addCase(verifyOtpThunk.fulfilled, (state, action) => {
         state.isVerifyingOtp = false;
         state.isOtpVerified = true;
-        const payload = action.payload.message;
-        state.farmerDetails.firstName = payload.farmer_preview.given_name;
-        state.farmerDetails.lastName = payload.farmer_preview.family_name;
-        state.farmerDetails.phoneNumber = payload.farmer_preview.phone_no[0];
-        state.farmerDetails.email = payload.farmer_preview.email;
+        const payload = action.payload && typeof action.payload.message === 'object'
+          ? action.payload.message
+          : action.payload;
+
+        const farmerPreview = payload?.farmer_preview;
+        if (farmerPreview) {
+          state.farmerDetails.firstName = farmerPreview.given_name || '';
+          state.farmerDetails.lastName = farmerPreview.family_name || '';
+          state.farmerDetails.phoneNumber = farmerPreview.phone_no?.[0] || '';
+          state.farmerDetails.email = farmerPreview.email || '';
+        }
       })
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;
@@ -626,10 +630,10 @@ const newLeadSlice = createSlice({
             const dateB = b.creation || '';
             return dateB.localeCompare(dateA);
           });
-          
+
           // Filter out completed schedules so they don't count as active scheduled visits
           const activeSchedules = sortedSchedules.filter((s: any) => s.status !== 'Completed');
-          
+
           if (activeSchedules.length > 0) {
             const latest = activeSchedules[0];
             state.visitSchedule = {

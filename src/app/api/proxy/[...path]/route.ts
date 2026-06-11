@@ -20,8 +20,8 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
   const search = request.nextUrl.search;
   const targetUrl = `${baseUrl}/${targetPath}${search}`;
 
-  // Read auth_token cookie
   const authToken = request.cookies.get('auth_token')?.value;
+  console.log(`[PROXY] targetUrl: ${targetUrl}, method: ${request.method}, hasToken: ${!!authToken}`);
 
   // Prepare headers 
   const headers = new Headers();

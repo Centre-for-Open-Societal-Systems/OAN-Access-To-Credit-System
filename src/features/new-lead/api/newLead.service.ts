@@ -25,7 +25,7 @@ export const newLeadService = {
       consent_form_filename: data.consentFormFilename,
       consent_form_base64: data.consentFormBase64,
     };
-    return fetchApi('oan_a2c.api.v1.consent.consent.request_otp', {
+    return fetchApi('oan_a2c.api.v1.consent.api.request_otp', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -36,7 +36,7 @@ export const newLeadService = {
       throw new Error('leadId is required for OTP verification');
     }
     const cleanLeadId = decodeURIComponent(data.leadId).replace(/^#/, '');
-    return fetchApi('oan_a2c.api.v1.consent.consent.verify_otp_for_lead', {
+    return fetchApi('oan_a2c.api.v1.consent.api.verify_otp_for_lead', {
       method: 'POST',
       body: JSON.stringify({
         lead_id: cleanLeadId,

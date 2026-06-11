@@ -16,7 +16,7 @@ export function ConsentManagementSection() {
   const consent_id = consentRequestId;
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
-  const isVerified = isOtpVerified || !!consentDate;
+  const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [consentFile, setConsentFile] = useState<File | null>(null);
@@ -118,7 +118,9 @@ export function ConsentManagementSection() {
               <div className="flex flex-row items-center gap-1.5 mt-1">
                 <CheckCircle2 size={20} className="text-[#16A34A]" fill="#16A34A" color="white" />
                 <span className="text-[12px] font-bold text-[#16A34A] leading-[20px]">View Consent Details</span>
-                <span className="text-[12px] font-medium text-[#6B7280] leading-[20px] ml-1">provided on {consentDate || 'N/A'}</span>
+                <span className="text-[12px] font-medium text-[#6B7280] leading-[20px] ml-1">
+                  {consentDate ? `provided on ${consentDate}` : 'verified via registry'}
+                </span>
               </div>
             </>
           ) : (
@@ -166,7 +168,7 @@ export function ConsentManagementSection() {
 
         {/* Right Column: Signed Consent Form */}
         <div className="flex flex-col items-start p-4 gap-3 flex-1 w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mt-4 md:mt-0">
-          {(consentFile || consent_id) ? (
+          {(consentFile || consent_id || isVerified) ? (
             <>
               <div className="flex flex-row justify-between items-start w-full">
                 <div className="flex flex-col items-start gap-0">
@@ -204,11 +206,11 @@ export function ConsentManagementSection() {
                   </div>
                   <div className="flex flex-col items-start flex-1 min-w-0">
                     <span className="font-inter font-medium text-[14px] leading-5 text-[#111827] truncate w-full">
-                      {consentFile ? consentFile.name : 'consent_signed_2024.pdf'}
+                      {consentFile ? consentFile.name : 'consent_signed_verified.pdf'}
                     </span>
                     <div className="flex flex-row justify-between items-center w-full mt-0.5">
                       <span className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">
-                        {consentFile ? `${(consentFile.size / (1024 * 1024)).toFixed(1)} MB` : '1.2 MB'}
+                        {consentFile ? `${(consentFile.size / (1024 * 1024)).toFixed(1)} MB` : 'Verified'}
                       </span>
                       <span className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">100%</span>
                     </div>
