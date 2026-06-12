@@ -66,16 +66,14 @@ export const createLoanApplicationAPI = createAsyncThunk(
   async (leadId: string, { rejectWithValue }) => {
     try {
       const response = await loanService.createLoanApplication(leadId);
-      // Assuming response.message.application_id contains the ID, depending on the backend unwrap
-      const appId = response?.message?.application_id || response?.application_id || response;
+      const appId = response?.name || (typeof response === 'string' ? response : null);
       if (!appId) throw new Error('No Application ID returned');
       return appId;
     } catch (err: any) {
-      // If the backend returns the existing application ID in the error response, we can pass it along
-      if (err.responseData?.message?.application_id) {
+      if (err.responseData?.message?.name) {
         return rejectWithValue({
           message: err.message || 'Failed to create application',
-          application_id: err.responseData.message.application_id
+          name: err.responseData.message.name
         });
       }
       return rejectWithValue(err.message || 'Failed to create application');
@@ -275,7 +273,7 @@ export const newLoanFormSlice = createSlice({
       state.loadingStates.fetchApp = false;
       if (action.payload) {
         const app = action.payload;
-        state.applicationId = app.application_id || app.id || null;
+        state.applicationId = app.application_id || null;
         if (app.step && typeof app.step === 'number') {
           state.currentStep = app.step;
         }

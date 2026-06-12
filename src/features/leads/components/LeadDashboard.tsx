@@ -32,8 +32,29 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
     const [modalAction, setModalAction] = useState<'verify' | 'reject' | null>(null);
     const [isCreatingApp, setIsCreatingApp] = useState(false);
     const [createAppError, setCreateAppError] = useState<string | null>(null);
+    const [existingAppId, setExistingAppId] = useState<string | null>(null);
+    const [checkingExisting, setCheckingExisting] = useState(false);
     const dispatch = useAppDispatch();
     const router = useRouter();
+
+    useEffect(() => {
+        const checkExistingApp = async () => {
+            const cleanLeadId = leadId.replace(/^#/, '');
+            if (!cleanLeadId) return;
+            setCheckingExisting(true);
+            try {
+                const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
+                if (loansResponse?.results && loansResponse.results.length > 0) {
+                    setExistingAppId(loansResponse.results[0].application_id || loansResponse.results[0].name || null);
+                }
+            } catch (err) {
+                console.error('Failed to check existing application:', err);
+            } finally {
+                setCheckingExisting(false);
+            }
+        };
+        checkExistingApp();
+    }, [leadId]);
 
     const handleNewLoanApplication = async () => {
         setIsCreatingApp(true);
@@ -45,20 +66,29 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                 status: 'Verified',
                 reason: 'Loan application created.'
             })).unwrap();
+            // Refetch existing application
+            const cleanLeadId = leadId.replace(/^#/, '');
+            const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
+            if (loansResponse?.results && loansResponse.results.length > 0) {
+                const foundId = loansResponse.results[0].application_id || loansResponse.results[0].name;
+                if (foundId) {
+                    dispatch(setApplicationId(foundId));
+                }
+            }
             router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
         } catch (e: any) {
             console.warn('Failed to create loan application:', e);
             const errorMessage = typeof e === 'string' ? e : e.message || 'Failed to create loan application';
-            const existingAppId = e.application_id;
+            const existingAppIdFromErr = e.name;
 
-            if (errorMessage.includes('Loan application already exists')) {
+            if (errorMessage.includes('Loan application already exists') || e.message?.includes('already exists') || existingAppIdFromErr) {
                 try {
                     // Try to fetch the existing application ID if we don't have it
-                    let foundAppId = existingAppId;
+                    let foundAppId = existingAppIdFromErr;
                     if (!foundAppId) {
                         const loansResponse = await loanService.getLoans({ search_query: leadId.replace(/^#/, '') });
                         if (loansResponse?.results && loansResponse.results.length > 0) {
-                            foundAppId = loansResponse.results[0].id;
+                            foundAppId = loansResponse.results[0].name;
                         }
                     }
 
@@ -95,7 +125,7 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
     };
 
     const isFinalized = ['rejected', 'processed', 'granted'].includes(status?.toLowerCase() || '');
-    const hasApplication = ['verified', 'processed', 'granted'].includes(status?.toLowerCase() || '');
+    const canHaveApplication = ['verified', 'processed', 'granted'].includes(status?.toLowerCase() || '');
 
     return (
         <>
@@ -113,9 +143,14 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                     >
                         ✓ Verify Lead
                     </button>
-                    {hasApplication && (
+                    {canHaveApplication && (
                         <button
-                            onClick={() => router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`)}
+                            onClick={() => {
+                                if (existingAppId) {
+                                    dispatch(setApplicationId(existingAppId));
+                                }
+                                router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
+                            }}
                             className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
                         >
                             Open Application
@@ -136,13 +171,25 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                     >
                         ✓ Verify Lead
                     </button>
-                    <button
-                        onClick={handleNewLoanApplication}
-                        disabled={isCreatingApp}
-                        className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
-                    >
-                        {isCreatingApp ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '+ New Loan Application'}
-                    </button>
+                    {existingAppId ? (
+                        <button
+                            onClick={() => {
+                                dispatch(setApplicationId(existingAppId));
+                                router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
+                            }}
+                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
+                        >
+                            Open Application
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleNewLoanApplication}
+                            disabled={isCreatingApp || checkingExisting}
+                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
+                        >
+                            {isCreatingApp ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '+ New Loan Application'}
+                        </button>
+                    )}
                 </>
             ) : (
                 <>
