@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  frontend:
+    image: ${ECR_IMAGE}
+    container_name: oan_a2c_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - API_BASE_URL=https://a2c-backend.oanstaging.com
+
+volumes: {}
