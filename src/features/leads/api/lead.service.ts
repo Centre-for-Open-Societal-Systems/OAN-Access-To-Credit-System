@@ -74,7 +74,7 @@ export const leadService = {
         id: item.name,
         name: item.farmer_name || '',
         phone: item.phone_number || '',
-        status: latestSchedule && latestSchedule.status === 'Missed' ? 'Missed' : (item.status || ''),
+        status: latestSchedule && latestSchedule.status === 'Missed' ? 'Active' : (item.status || ''),
         location: item.location || '',
         loanType: item.loan_type || '',
         loanAmount: item.loan_amount || '',
