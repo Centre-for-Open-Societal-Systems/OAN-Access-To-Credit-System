@@ -44,8 +44,9 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
             setCheckingExisting(true);
             try {
                 const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
-                if (loansResponse?.results && loansResponse.results.length > 0) {
-                    setExistingAppId(loansResponse.results[0].application_id || loansResponse.results[0].name || null);
+                const results = loansResponse?.data || [];
+                if (results.length > 0) {
+                    setExistingAppId(results[0].application_id || null);
                 }
             } catch (err) {
                 console.error('Failed to check existing application:', err);
@@ -69,8 +70,9 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
             // Refetch existing application
             const cleanLeadId = leadId.replace(/^#/, '');
             const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
-            if (loansResponse?.results && loansResponse.results.length > 0) {
-                const foundId = loansResponse.results[0].application_id || loansResponse.results[0].name;
+            const results = loansResponse?.data || [];
+            if (results.length > 0) {
+                const foundId = results[0].application_id;
                 if (foundId) {
                     dispatch(setApplicationId(foundId));
                 }
@@ -86,9 +88,10 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                     // Try to fetch the existing application ID if we don't have it
                     let foundAppId = existingAppIdFromErr;
                     if (!foundAppId) {
-                        const loansResponse = await loanService.getLoans({ search_query: leadId.replace(/^#/, '') });
-                        if (loansResponse?.results && loansResponse.results.length > 0) {
-                            foundAppId = loansResponse.results[0].name;
+                        const loansResponse = await loanService.getLoans({ lead_id: leadId.replace(/^#/, '') });
+                        const results = loansResponse?.data || [];
+                        if (results.length > 0) {
+                            foundAppId = results[0].application_id;
                         }
                     }
 

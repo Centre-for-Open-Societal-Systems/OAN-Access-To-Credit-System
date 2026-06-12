@@ -252,10 +252,16 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        results: mappedRows,
-        total: totalCount,
-        page,
-        page_size: pageSize
+        message: "Loan applications retrieved successfully",
+        data: mappedRows,
+        meta: {},
+        pagination: {
+          page: page,
+          limit: pageSize,
+          total: totalCount,
+          total_pages: Math.ceil(totalCount / pageSize) || 1,
+          has_next: (page * pageSize) < totalCount
+        }
       }
     });
   }),
@@ -388,6 +394,15 @@ export const handlers = [
       message: {
         status: "success",
         files: []
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document', () => {
+    return new HttpResponse("Mock document content", {
+      headers: {
+        'Content-Type': 'text/plain',
+        'Content-Disposition': 'attachment; filename="mock_document.txt"'
       }
     });
   }),

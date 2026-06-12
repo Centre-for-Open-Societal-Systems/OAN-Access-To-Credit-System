@@ -87,8 +87,9 @@ export const fetchLoanApplicationAPI = createAsyncThunk<any, string, { state: Ro
     try {
       const cleanLeadId = decodeURIComponent(leadId).replace(/^#/, '');
       const response = await loanService.getLoans({ lead_id: cleanLeadId });
-      if (response?.results && response.results.length > 0) {
-        return response.results[0];
+      const results = response?.data || [];
+      if (results.length > 0) {
+        return results[0];
       }
       return null;
     } catch (err: any) {

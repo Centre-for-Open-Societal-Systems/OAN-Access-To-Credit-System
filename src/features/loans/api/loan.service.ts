@@ -4,13 +4,12 @@ export interface GetLoansParams {
   page?: number;
   page_size?: number;
   status?: string; // stringified array e.g. '["Draft", "Approved"]'
-  loan_amount_min?: string;
-  loan_amount_max?: string;
+  min_loan_amount?: string;
+  max_loan_amount?: string;
   loan_type?: string;
-  mobile_phone?: string;
+  phone_number?: string;
   from_date?: string;
   to_date?: string;
-  search_query?: string;
   tab?: string;
   location?: string;
   lead_id?: string;
@@ -23,7 +22,9 @@ export const loanService = {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        if (value) searchParams.append(key, value.toString());
+        if (value !== undefined && value !== null && value !== '') {
+          searchParams.append(key, value.toString());
+        }
       });
     }
 
@@ -33,6 +34,10 @@ export const loanService = {
 
   async getLoanSummary(): Promise<any> {
     return fetchApi('oan_a2c.api.v1.loan_applications.get_loan_summary');
+  },
+
+  async downloadSupportingDocument(file_id: string, view = 0): Promise<any> {
+    return fetchApi(`oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${file_id}&view=${view}`);
   },
 
   async getFullProfile(application_id: string): Promise<any> {

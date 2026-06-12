@@ -249,9 +249,9 @@ export const selectPagedRowsData = createSelector(
   [selectRawActivityData, selectPageSize],
   (rawActivityData, pageSize) => {
     // fetchApi automatically unwraps the "message" envelope, so the data is directly on rawActivityData
-    let rows = rawActivityData?.results || [];
+    let rows = rawActivityData?.data || [];
     
-    let totalCount = rawActivityData?.total || 0;
+    let totalCount = rawActivityData?.pagination?.total ?? 0;
 
     const mapped = rows.map((row: any) => {
       const rawDate = row.creation ? new Date(row.creation) : new Date();
@@ -280,7 +280,7 @@ export const selectPagedRowsData = createSelector(
       };
     });
 
-    const totalPages = Math.ceil(totalCount / pageSize) || 1;
+    const totalPages = rawActivityData?.pagination?.total_pages || 1;
     return { pagedRows: mapped, totalPages, totalCount };
   }
 );
@@ -429,10 +429,10 @@ export const selectQueryParams = createSelector(
     }
 
     if (advancedFilters.minLoan !== null && advancedFilters.minLoan !== undefined) {
-      params.loan_amount_min = String(advancedFilters.minLoan);
+      params.min_loan_amount = String(advancedFilters.minLoan);
     }
     if (advancedFilters.maxLoan !== null && advancedFilters.maxLoan !== undefined) {
-      params.loan_amount_max = String(advancedFilters.maxLoan);
+      params.max_loan_amount = String(advancedFilters.maxLoan);
     }
 
     return params;
