@@ -477,29 +477,74 @@ export const handlers = [
 
   http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules', ({ request }) => {
     const url = new URL(request.url);
-    const leadId = url.searchParams.get('lead_id') || "LEAD-2026-00202";
+    const leadId = url.searchParams.get('lead_id');
+
+    const mockSchedules = [
+      {
+        name: "VSCH-2026-00267",
+        lead: "LD-9823",
+        visit_date: "2026-06-10",
+        visit_time: "14:30:00",
+        meeting_location: "Cooperative Office",
+        region: "Oromia",
+        zone: "East Shewa",
+        woreda: "Ada'ama",
+        kebele: "Kebele 02",
+        status: "Scheduled",
+        scheduled_by: "arnavjagadeesh12@gmail.com",
+        creation: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        name: "VSCH-2026-00055",
+        lead: "LD-9825",
+        visit_date: "2026-06-11",
+        visit_time: "9:00:00",
+        meeting_location: "",
+        region: "Amhara",
+        zone: "Jimma",
+        woreda: "Limmu Kosa",
+        kebele: "Kebele 1",
+        status: "Missed",
+        scheduled_by: "test_agent@coopbank.com",
+        creation: new Date().toISOString()
+      }
+    ];
+
+    if (leadId) {
+      const filtered = mockSchedules.filter(s => s.lead.replace('#', '') === leadId.replace('#', ''));
+      return HttpResponse.json({
+        message: {
+          status: "success",
+          start: 0,
+          page_length: 20,
+          total_count: filtered.length,
+          results: filtered.length > 0 ? filtered : [
+            {
+              name: "VSCH-2026-00267",
+              lead: leadId,
+              visit_date: "2026-06-10",
+              visit_time: "14:30:00",
+              meeting_location: "Cooperative Office",
+              region: "Oromia",
+              zone: "East Shewa",
+              woreda: "Ada'ama",
+              kebele: "Kebele 02",
+              status: "Scheduled",
+              scheduled_by: "arnavjagadeesh12@gmail.com",
+              creation: new Date().toISOString()
+            }
+          ]
+        }
+      });
+    }
+
     return HttpResponse.json({
       message: {
         status: "success",
         start: 0,
         page_length: 20,
-        total_count: 1,
-        results: [
-          {
-            name: "VSCH-2026-00267",
-            lead: leadId,
-            visit_date: "2026-06-10",
-            visit_time: "14:30:00",
-            meeting_location: "Cooperative Office",
-            region: "Oromia",
-            zone: "East Shewa",
-            woreda: "Ada'ama",
-            kebele: "Kebele 02",
-            status: "Scheduled",
-            scheduled_by: "arnavjagadeesh12@gmail.com",
-            creation: new Date().toISOString()
-          }
-        ]
+        total_count: mockSchedules.length,
+        results: mockSchedules
       }
     });
   }),

@@ -33,7 +33,7 @@ export function LeadInfoSection() {
           </label>
           <input
             type="text"
-            value={leadId || 'LD-1042'}
+            value={leadId || ''}
             readOnly
             className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
           />

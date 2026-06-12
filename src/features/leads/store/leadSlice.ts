@@ -52,8 +52,6 @@ interface LeadState {
   search: string;
   activeTab: string;
   dateFilter: string;
-  colStatusFilter: string[];
-  colCallTimeFilter: string[];
   advFilters: AdvFilters;
 }
 
@@ -81,8 +79,6 @@ const initialState: LeadState = {
   search: '',
   activeTab: 'all',
   dateFilter: 'All Time',
-  colStatusFilter: [],
-  colCallTimeFilter: [],
   advFilters: initialFilters,
 };
 
@@ -112,10 +108,10 @@ const leadSlice = createSlice({
       state.dateFilter = action.payload;
     },
     setColStatusFilter(state, action: PayloadAction<string[]>) {
-      state.colStatusFilter = action.payload;
+      state.advFilters.statuses = action.payload;
     },
     setColCallTimeFilter(state, action: PayloadAction<string[]>) {
-      state.colCallTimeFilter = action.payload;
+      state.advFilters.loanType = action.payload;
     },
     setAdvFilters(state, action: PayloadAction<AdvFilters>) {
       state.advFilters = action.payload;
@@ -124,8 +120,6 @@ const leadSlice = createSlice({
       state.search = '';
       state.activeTab = 'all';
       state.dateFilter = 'All Time';
-      state.colStatusFilter = [];
-      state.colCallTimeFilter = [];
       state.advFilters = initialFilters;
     },
   },
@@ -223,8 +217,8 @@ export const selectIsSummaryLoading = (state: RootState) => state.leads.isSummar
 export const selectSearch = (state: RootState) => state.leads.search;
 export const selectActiveTab = (state: RootState) => state.leads.activeTab;
 export const selectDateFilter = (state: RootState) => state.leads.dateFilter;
-export const selectColStatusFilter = (state: RootState) => state.leads.colStatusFilter;
-export const selectColCallTimeFilter = (state: RootState) => state.leads.colCallTimeFilter;
+export const selectColStatusFilter = (state: RootState) => state.leads.advFilters.statuses;
+export const selectColCallTimeFilter = (state: RootState) => state.leads.advFilters.loanType;
 export const selectAdvFilters = (state: RootState) => state.leads.advFilters;
 
 // ── Backend Filter Pass-Through ──

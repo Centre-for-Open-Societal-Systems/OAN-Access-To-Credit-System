@@ -3,13 +3,37 @@ export interface StatusConfig {
   badge: string;
 }
 
-export const STATUS_CFG: Record<string, StatusConfig> = {
-  Active: { dot: 'bg-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-  Verified: { dot: 'bg-green-500', badge: 'bg-green-50 text-green-700 border-green-200' },
-  Processed: { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  Granted: { dot: 'bg-indigo-500', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  Dormant: { dot: 'bg-gray-400', badge: 'bg-gray-50 text-gray-700 border-gray-200' },
-  Rejected: { dot: 'bg-orange-400', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
+
+export interface StatusStyle {
+  badgeClass: string;
+  dotClass: string;
+}
+
+export const STATUS_STYLE_MAP: Record<string, StatusStyle> = {
+  Active: {
+    badgeClass: "bg-green-50 text-green-600 border border-green-200",
+    dotClass: "bg-green-500"
+  },
+  Verified: {
+    badgeClass: "bg-teal-50 text-teal-600 border border-teal-200",
+    dotClass: "bg-teal-500"
+  },
+  Processed: {
+    badgeClass: "bg-cyan-50 text-cyan-600 border border-cyan-200",
+    dotClass: "bg-cyan-500"
+  },
+  Granted: {
+    badgeClass: "bg-emerald-50 text-emerald-600 border border-emerald-200",
+    dotClass: "bg-emerald-500"
+  },
+  Rejected: {
+    badgeClass: "bg-red-50 text-red-500 border border-red-200",
+    dotClass: "bg-red-500"
+  },
+  Dormant: {
+    badgeClass: "bg-orange-50 text-orange-500 border border-orange-200",
+    dotClass: "bg-orange-500"
+  }
 };
 
 export const STATUS_OPTS = ['All', 'Active', 'Verified', 'Processed', 'Rejected', 'Dormant'] as const;
@@ -18,10 +42,6 @@ export const DATE_OPTS = ['All Time', 'Last 7 Days', 'Last 30 Days', 'This Month
 
 export const PAGE_SIZE = 10;
 
-export const COL_FILTER_OPTS: Record<string, string[]> = {
-  'STATUS': STATUS_OPTS.filter(o => o !== 'All'),
-  'LOAN TYPE': ['Tractor Loan', 'Crop Loan', 'Livestock Loan', 'Other'],
-};
 
 export const KPI_CARDS_LAYOUT = [
   { id: 'total', label: 'Overall Leads' },

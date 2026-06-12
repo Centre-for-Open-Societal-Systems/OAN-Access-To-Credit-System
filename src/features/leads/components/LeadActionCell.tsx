@@ -20,7 +20,19 @@ const ICON_PROPS = {
 
 export function getLeadRoute(lead: Lead): string {
   const status = lead.status?.toLowerCase();
-  if (status === 'verified' && lead.visitDate) {
+  const scheduleStatus = lead.scheduleStatus?.toLowerCase();
+  
+  if (status === 'granted' || status === 'rejected') {
+    return `/leads/${lead.id.replace('#', '')}`;
+  }
+  
+  if (
+    (status === 'verified' && lead.visitDate) ||
+    status === 'visit scheduled' ||
+    status === 'missed' ||
+    scheduleStatus === 'missed' ||
+    scheduleStatus === 'scheduled'
+  ) {
     return `/leads/${lead.id.replace('#', '')}/schedule`;
   }
   return `/leads/${lead.id.replace('#', '')}`;
@@ -29,7 +41,28 @@ export function getLeadRoute(lead: Lead): string {
 // 2.  to prevent unnecessary parent-driven row re-renders
 const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
-  console.log(lead);
+  const scheduleStatus = lead.scheduleStatus?.toLowerCase();
+
+  if (status === 'missed' || scheduleStatus === 'missed') {
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <button
+          onClick={() => navigate(getLeadRoute(lead))}
+          className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
+        >
+          <CalendarCheck {...ICON_PROPS} />
+          <span className='text-[14px]'>Visit Scheduled</span>
+        </button>
+        {lead.visitDate && (
+          <span className="inline-flex items-center justify-center gap-1 text-[10px] text-text-muted mt-0.5 w-full">
+            <Calendar size={12} className="text-text-muted" />
+            <span className="text-[12px] font-normal text-text-muted text-center">{lead.visitDate}</span>
+          </span>
+        )}
+      </div>
+    );
+  }
+
   if (status === 'verified' && lead.visitDate) {
     return (
       <div className="flex flex-col items-end gap-1">
@@ -53,7 +86,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
       return (
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => navigate(`/leads/${lead.id.replace('#', '')}/schedule`)}
+            onClick={() => navigate(getLeadRoute(lead))}
             className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
           >
             <CalendarCheck {...ICON_PROPS} />
@@ -75,6 +108,15 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           <span className='text-[14px]'>Rejected</span>
         </span>
       );
+
+    case 'granted':
+      return (
+        <span className={BADGE_CLASS}>
+          <CheckCircle {...ICON_PROPS} className="text-[#10B981] shrink-0" />
+          <span className='text-[14px]'>Granted</span>
+        </span>
+      );
+
     case 'view':
     default:
       return (

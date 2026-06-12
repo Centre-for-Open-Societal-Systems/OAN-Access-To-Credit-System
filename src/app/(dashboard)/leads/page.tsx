@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
 
-import { PAGE_SIZE, KPI_CARDS_LAYOUT, LEAD_STATUS_MAP, resolveDateFilter } from '@/features/leads/constants/leads.constants';
+import { KPI_CARDS_LAYOUT, LEAD_STATUS_MAP, resolveDateFilter } from '@/features/leads/constants/leads.constants';
 
 import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import LeadToolbar from '@/features/leads/components/LeadToolbar';
@@ -26,7 +26,6 @@ import {
   selectColCallTimeFilter,
   setSearch,
   setActiveTab,
-  setDateFilter,
   setColStatusFilter,
   setColCallTimeFilter,
   resetFilters,
@@ -34,10 +33,12 @@ import {
   selectAdvFilters,
 } from '@/features/leads/store/leadSlice';
 import { fetchLeadMetadataThunk } from '@/features/new-lead/store/newLeadSlice';
+import { selectOfficerName } from '@/features/auth/store/authSlice';
 
 export default function LeadsDashboard() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const officerName = useAppSelector(selectOfficerName);
   const allLeads = useAppSelector(selectLeads) || [];
   const isLoading = useAppSelector(selectIsLeadsLoading);
   const leadSummary = useAppSelector(selectLeadSummary);
@@ -86,9 +87,7 @@ export default function LeadsDashboard() {
     const end_date = advFilters.dateTo || resolvedPreset?.end;
 
     // Combine Statuses
-    const expandedAdvStatuses = advFilters.statuses.flatMap(id => LEAD_STATUS_MAP[id.toLowerCase()] || [id]);
-    const expandedColStatuses = colStatusFilter.flatMap(id => LEAD_STATUS_MAP[id.toLowerCase()] || [id]);
-    const allStatuses = Array.from(new Set([...expandedColStatuses, ...expandedAdvStatuses]));
+    const allStatuses = advFilters.statuses.flatMap(id => LEAD_STATUS_MAP[id.toLowerCase()] || [id]);
     const statusParam = allStatuses.length > 0 ? allStatuses.join(',') : undefined;
 
     // Combine Search
@@ -114,7 +113,7 @@ export default function LeadsDashboard() {
       loan_type,
       lead_source
     }));
-  }, [dispatch, colStatusFilter, search, advFilters, dateFilter]);
+  }, [dispatch, colStatusFilter, colCallTimeFilter, search, advFilters, dateFilter]);
 
   // fetched only once during mount or when dependencies change
   useEffect(() => {
@@ -190,7 +189,7 @@ export default function LeadsDashboard() {
     <div className="space-y-4">
       <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Welcome back, Agent</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Welcome back, {officerName || 'Agent'}</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 font-semibold w-full md:w-auto mt-2 md:mt-0">

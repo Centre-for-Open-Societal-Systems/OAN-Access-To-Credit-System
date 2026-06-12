@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { SlidersHorizontal, X, Check, Phone, Calendar, ChevronDown } from 'lucide-react';
-import { KPI_CARDS_LAYOUT } from '../constants/leads.constants';
+import { KPI_CARDS_LAYOUT, STATUS_STYLE_MAP } from '../constants/leads.constants';
 import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
 import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
 import { DatePickerField } from '@/components/ui/DatePickerField';
@@ -14,7 +14,7 @@ interface LeadAdvancedFiltersProps {
 function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const dispatch = useAppDispatch();
   const activeFilters = useAppSelector(selectAdvFilters);
-  const { leadSourcesOptions } = useAppSelector(selectNewLeadState);
+  const { leadSourcesOptions, loanTypesOptions } = useAppSelector(selectNewLeadState);
 
   const [mounted, setMounted] = useState(false);
 
@@ -28,13 +28,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     { label: 'Last 7 Days', days: 7 },
     { label: 'Last 30 Days', days: 30 },
   ];
-  const CATEGORY_DOT_CFG: Record<string, string> = {
-    initiated: 'bg-green-500',
-    qualified: 'bg-teal-500',
-    processed: 'bg-cyan-500',
-    rejected: 'bg-red-500',
-    dormant: 'bg-orange-500',
-  };
+
 
 
   const RANGE_STEPS = [
@@ -45,24 +39,16 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     { label: 'All Amounts', value: 'all', min: null, max: null, display: 'All Amounts' },
   ] as const;
 
-  const LOAN_TYPE_OPTS = [
-    'Input loan (seeds, agrochemicals)',
-    'Agricultural term loan',
-    'Smallholder short-term loan',
-    'Land loan',
-    'Farm equipment loan',
-    'Smallholder farmer direct loan',
-  ] as const;
 
-  const LEAD_SOURCE_OPTS = [
-    'Organic',
-    'Call Campaign',
-    'Special Harvest Campaign',
-  ] as const;
 
   const LOCATION_OPTS = ['Region', 'Woreda', 'Kebele'] as const;
 
-  const [selStatuses, setSelStatuses] = useState<string[]>(activeFilters.statuses);
+  const [selStatuses, setSelStatuses] = useState<string[]>(() =>
+    activeFilters.statuses.map(s => {
+      const match = KPI_CARDS_LAYOUT.find(item => item.id.toLowerCase() === s.toLowerCase() || item.label.toLowerCase() === s.toLowerCase());
+      return match ? match.label : s;
+    })
+  );
   const [quickDate, setQuickDate] = useState(activeFilters.quickDate);
   const [dateFrom, setDateFrom] = useState(activeFilters.dateFrom);
   const [dateTo, setDateTo] = useState(activeFilters.dateTo);
@@ -110,6 +96,20 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const sourcesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setSelStatuses(activeFilters.statuses.map(s => {
+      const match = KPI_CARDS_LAYOUT.find(item => item.id.toLowerCase() === s.toLowerCase() || item.label.toLowerCase() === s.toLowerCase());
+      return match ? match.label : s;
+    }));
+    setQuickDate(activeFilters.quickDate);
+    setDateFrom(activeFilters.dateFrom);
+    setDateTo(activeFilters.dateTo);
+    setLocation(activeFilters.location || '');
+    setTempIndex(getInitialIndex());
+    setTempLoanTypes(activeFilters.loanType || []);
+    setTempSources(activeFilters.leadSources || []);
+  }, [activeFilters]);
+
+  useEffect(() => {
     function clickOutside(e: MouseEvent) {
       if (amountRef.current && !amountRef.current.contains(e.target as Node)) {
         setIsAmountOpen(false);
@@ -149,7 +149,11 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     return () => document.removeEventListener('mousedown', clickOutside);
   }, [isLocationOpen]);
 
-  const toggleStatus = (s: string) => setSelStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+  const toggleStatus = (s: string) => {
+    const layoutItem = KPI_CARDS_LAYOUT.find(item => item.id === s);
+    const label = layoutItem ? layoutItem.label : s;
+    setSelStatuses(p => p.includes(label) ? p.filter(x => x !== label) : [...p, label]);
+  };
   const toggleSource = (s: string) => setTempSources(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
   const selectedAmountSummary = useMemo(() => {
@@ -193,8 +197,8 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
               {KPI_CARDS_LAYOUT.filter(item => item.id !== 'total').map(item => {
                 const s = item.id;
                 const label = item.label;
-                const sel = selStatuses.includes(s);
-                const dot = CATEGORY_DOT_CFG[s] ?? 'bg-slate-400';
+                const sel = selStatuses.includes(label);
+                const dot = STATUS_STYLE_MAP[label]?.dotClass ?? 'bg-slate-400';
                 return (
                   <div
                     key={s}
@@ -341,13 +345,13 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   }}
                 >
                   <div className="flex flex-col">
-                    {LOAN_TYPE_OPTS.map((opt, idx) => {
+                    {loanTypesOptions.map((opt, idx) => {
                       const isSel = tempLoanTypes.includes(opt);
                       return (
                         <div
                           key={opt}
                           onClick={() => setTempLoanTypes(prev => isSel ? prev.filter(x => x !== opt) : [...prev, opt])}
-                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === LOAN_TYPE_OPTS.length - 1 ? 'rounded-b-lg' : ''
+                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === loanTypesOptions.length - 1 ? 'rounded-b-lg' : ''
                             }`}
                         >
                           <div className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border-2 transition-all ${isSel
@@ -396,13 +400,13 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                   }}
                 >
                   <div className="flex flex-col">
-                    {LEAD_SOURCE_OPTS.map((opt, idx) => {
+                    {leadSourcesOptions.map((opt, idx) => {
                       const isSel = tempSources.includes(opt);
                       return (
                         <div
                           key={opt}
                           onClick={() => toggleSource(opt)}
-                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === LEAD_SOURCE_OPTS.length - 1 ? 'rounded-b-lg' : ''
+                          className={`flex items-center gap-4 py-4 px-6 border-b border-[#F3F3F3] last:border-0 hover:bg-slate-50 cursor-pointer select-none ${idx === leadSourcesOptions.length - 1 ? 'rounded-b-lg' : ''
                             }`}
                         >
                           <div className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border-2 transition-all ${isSel
