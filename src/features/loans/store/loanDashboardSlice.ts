@@ -259,7 +259,7 @@ export const selectPagedRowsData = createSelector(
       const timeStr = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
       const appId = row.application_id || '';
-      const formattedId = appId.startsWith('#AGL-') ? appId : `#AGL-${appId.replace(/\D/g, '').slice(-4) || '9823'}`;
+      const formattedId = appId;
 
       const firstName = row.first_name || '';
       const lastName = row.last_name || '';
@@ -293,7 +293,7 @@ export const selectLiveMetrics = createSelector(
   [selectRawSummaryData],
   (rawSummaryData) => {
     // fetchApi automatically unwraps the "message" envelope
-    const summaryData = rawSummaryData?.summary || {};
+    const summaryData = rawSummaryData?.data || {};
 
     return {
       total: {
@@ -315,7 +315,7 @@ export const selectLiveMetrics = createSelector(
 export const selectTabCounts = createSelector(
   [selectRawSummaryData],
   (rawSummaryData) => {
-    return rawSummaryData?.summary?.tab_counts || { all: 0, my: 0, unassigned: 0 };
+    return rawSummaryData?.data?.tab_counts || { all: 0, my: 0, unassigned: 0 };
   }
 );
 

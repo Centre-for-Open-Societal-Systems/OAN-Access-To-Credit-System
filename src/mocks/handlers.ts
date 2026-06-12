@@ -288,7 +288,7 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        summary
+        data: summary
       }
     });
   }),
@@ -393,7 +393,7 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        files: []
+        data: []
       }
     });
   }),

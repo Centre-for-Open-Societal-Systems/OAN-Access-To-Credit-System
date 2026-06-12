@@ -50,8 +50,8 @@ export function Step1ConsentDocs() {
   const loadDocs = (appId: string) => {
     loanService.listSupportingDocuments(appId)
       .then(res => {
-        if (Array.isArray(res?.files)) {
-          const fetchedDocs = res.files.map((f: any) => ({
+        if (Array.isArray(res?.data)) {
+          const fetchedDocs = res.data.map((f: any) => ({
             id: f.name,
             type: 'Uploaded Document',
             name: f.file_name,

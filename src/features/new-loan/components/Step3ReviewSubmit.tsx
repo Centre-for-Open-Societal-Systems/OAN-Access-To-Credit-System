@@ -48,19 +48,6 @@ export function Step3ReviewSubmit() {
       if (applicationId) {
         await dispatch(submitApplicationAPI(applicationId)).unwrap();
       }
-      
-      // Transition lead status to 'Granted'
-      if (leadId) {
-        try {
-          await dispatch(updateLeadStatusThunk({
-            leadId,
-            status: 'Granted',
-            reason: 'Loan application submitted successfully.'
-          })).unwrap();
-        } catch (statusErr) {
-          console.error("Failed to update lead status to Granted", statusErr);
-        }
-      }
 
       // Application submitted successfully
       await dispatch(setStepAPI(4)).unwrap();
