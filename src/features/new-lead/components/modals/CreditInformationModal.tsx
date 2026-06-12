@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronDown } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { selectNewLeadState } from '../../store/newLeadSlice';
+import { SelectField } from '@/components/ui/SelectField';
 
 interface CreditInformationModalProps {
   isOpen: boolean;
@@ -16,6 +18,12 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
   const [loanAmount, setLoanAmount] = useState('');
   const [purposeMessage, setPurposeMessage] = useState('');
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Update default value if options change
   useEffect(() => {
     if (loanTypesOptions.length > 0 && (!loanType || loanType === '')) {
@@ -23,7 +31,7 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
     }
   }, [loanTypesOptions]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = () => {
     onSubmit({
@@ -33,11 +41,11 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
     });
   };
 
-  return (
+  const modalContent = (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4"
         onClick={onClose}
       >
         {/* Modal Container */}
@@ -68,19 +76,12 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
                 <label className="font-roboto font-medium text-[14px] leading-[20px] text-[#111827]">
                   Loan Type <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-full">
-                  <select
+                <div className="w-full relative z-50">
+                  <SelectField
+                    options={loanTypesOptions}
                     value={loanType}
-                    onChange={(e) => setLoanType(e.target.value)}
-                    className="box-border flex flex-row items-center p-[8px_16px] w-full h-[44px] bg-white border border-[#D1D5DB] rounded-[8px] appearance-none font-roboto font-normal text-[14px] leading-[16px] text-[#111827] outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
-                  >
-                    {loanTypesOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                  <div className="absolute right-[16px] top-[14px] pointer-events-none opacity-50">
-                    <ChevronDown size={16} color="#717182" strokeWidth={1.33333} />
-                  </div>
+                    onChange={setLoanType}
+                  />
                 </div>
               </div>
 
@@ -139,4 +140,6 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
       </div>
     </>
   );
+
+  return createPortal(modalContent, document.body);
 }

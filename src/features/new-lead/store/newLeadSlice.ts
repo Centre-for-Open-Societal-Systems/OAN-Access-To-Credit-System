@@ -661,15 +661,14 @@ const newLeadSlice = createSlice({
       })
       .addCase(addActivityNoteThunk.fulfilled, (state, action) => {
         const { response = {}, content } = action.payload || {};
-        if (response.status === 'success') {
-          state.activities.unshift({
-            id: response.comment_id || `new-${Date.now()}`,
-            author: 'Current User',
-            type: 'Commented',
-            content: content,
-            timestamp: formatTiming(new Date().toISOString(), ' - ', false)
-          });
-        }
+        // Since the API request succeeded, we can safely add the activity
+        state.activities.unshift({
+          id: response.comment_id || response.message?.name || `new-${Date.now()}`,
+          author: 'Current User',
+          type: 'Commented',
+          content: content,
+          timestamp: formatTiming(new Date().toISOString(), ' - ', false)
+        });
       })
       .addCase(submitNewLeadThunk.pending, (state) => {
         state.isSubmitting = true;

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectNewLeadState, fetchCallDetailsThunk } from '../store/newLeadSlice';
 import { useParams } from 'next/navigation';
+import { PhoneCall } from 'lucide-react';
 
 export function CallDetailsSection() {
   const { callDetails } = useAppSelector(selectNewLeadState);
@@ -16,9 +17,10 @@ export function CallDetailsSection() {
   }, [dispatch, leadId]);
 
   return (
-    <section className="flex flex-col items-center pb-6 gap-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
+    <section className="flex flex-col items-center pb-6 gap-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
       <div className="flex flex-row items-center p-5 px-6 w-full border-b border-[#F1F3F4]">
-        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center text-[#232F34]">
+        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
+          <PhoneCall size={20} className="text-[#6B7280]" />
           Call Details
         </h2>
       </div>
@@ -26,12 +28,12 @@ export function CallDetailsSection() {
       <div className="flex flex-col items-start px-4 sm:px-6 w-full overflow-hidden">
         <div className="w-full overflow-x-auto">
           <div className="min-w-[400px] w-full">
-            <div className="w-full bg-[#EEF4FB]/50 border-b border-[#D4D4D4] flex flex-row">
+            <div className="w-full bg-[#EEF4FB]/50 border-b border-[#D4D4D4] flex flex-row ">
               <div className="p-3 px-4 flex-1">
-                <span className="font-roboto font-medium text-xs leading-4 tracking-wide text-[#6B7280]">Call Status</span>
+                <span className="font-inter font-semibold text-sm leading-4 tracking-wide text-[#4F4F58]">Call Status</span>
               </div>
               <div className="p-3 px-4 flex-1">
-                <span className="font-roboto font-medium text-xs leading-4 tracking-wide text-[#6B7280]">Call Timing</span>
+                <span className="font-inter font-semibold text-sm leading-4 tracking-wide text-[#4F4F58]">Call Timing</span>
               </div>
             </div>
 
@@ -61,8 +63,12 @@ export function CallDetailsSection() {
                 </div>
               ))}
               {callDetails.length === 0 && (
-                <div className="p-4 text-center text-sm text-gray-500 w-full">
-                  No call history found.
+                <div className="flex flex-col items-center justify-center py-12 w-full animate-in fade-in zoom-in duration-500">
+                  <div className="bg-[#EFF6FF] rounded-full p-4 mb-3 border border-[#DBEAFE] shadow-sm">
+                    <PhoneCall size={32} className="text-[#3B82F6] animate-bounce" />
+                  </div>
+                  <h3 className="text-[#232F34] font-semibold text-[15px]">No call history found</h3>
+                  <p className="text-[#6B7280] text-[13px] mt-1">Any recorded calls will be listed here.</p>
                 </div>
               )}
             </div>

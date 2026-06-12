@@ -103,20 +103,20 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                 <>
                     <button
                         disabled
-                        className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#D1D5DB] cursor-not-allowed"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#D1D5DB] cursor-not-allowed"
                     >
                         ✕ Reject
                     </button>
                     <button
                         disabled
-                        className="px-4 py-2 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#6B7280] cursor-not-allowed"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-semibold text-[#6B7280] cursor-not-allowed"
                     >
                         ✓ Verify Lead
                     </button>
                     {hasApplication && (
                         <button
                             onClick={() => router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`)}
-                            className="px-4 py-2 bg-[#16A34A] rounded-lg text-sm font-medium text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
+                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
                         >
                             Open Application
                         </button>
@@ -126,20 +126,20 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                 <>
                     <button
                         onClick={() => setModalAction('reject')}
-                        className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#374151] hover:bg-slate-50 transition-colors"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-colors"
                     >
                         ✕ Reject
                     </button>
                     <button
                         disabled
-                        className="px-4 py-2 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#6B7280] cursor-not-allowed"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-semibold text-[#6B7280] cursor-not-allowed"
                     >
                         ✓ Verify Lead
                     </button>
                     <button
                         onClick={handleNewLoanApplication}
                         disabled={isCreatingApp}
-                        className="px-4 py-2 bg-[#16A34A] rounded-lg text-sm font-medium text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
+                        className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
                     >
                         {isCreatingApp ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '+ New Loan Application'}
                     </button>
@@ -148,13 +148,13 @@ function LeadDashboardActions({ leadId, status }: { leadId: string, status: stri
                 <>
                     <button
                         onClick={() => setModalAction('reject')}
-                        className="px-4 py-2 bg-white border border-[#D4D4D4] rounded-lg text-sm font-medium text-[#374151] hover:bg-slate-50 transition-colors"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-colors"
                     >
                         ✕ Reject
                     </button>
                     <button
                         onClick={() => setModalAction('verify')}
-                        className="px-4 py-2 bg-[#087F50] rounded-lg text-sm font-medium text-white hover:bg-[#05774A] transition-colors"
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#087F50] rounded-lg text-sm font-semibold text-white hover:bg-[#05774A] transition-colors"
                     >
                         ✓ Verify Lead
                     </button>
@@ -213,7 +213,7 @@ export function LeadDashboard({ id }: LeadDashboardProps) {
             actions={<LeadDashboardActions leadId={`#${id}`} status={leadStatus} />}
         />
     ) : (
-        <div className="flex flex-row justify-between items-center p-6 w-full bg-white border border-[#D4D4D4] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)]">
+        <div className="flex flex-row justify-between items-center p-6 w-full bg-white border border-[#F1F3F4] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
             <div className="flex flex-col items-start gap-1">
                 <h1 className="font-roboto font-bold text-2xl leading-8 text-[#111827]">
                     Create New Lead

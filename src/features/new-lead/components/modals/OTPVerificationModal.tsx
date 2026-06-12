@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
 import { X, ShieldCheck, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -21,6 +22,12 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
   const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setOtp(Array(6).fill(''));
@@ -30,7 +37,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;
@@ -88,8 +95,8 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
       <div className="relative flex flex-col bg-white rounded-[10px] w-full max-w-[605px] overflow-hidden shadow-2xl">
 
         {/* Header */}
@@ -192,4 +199,6 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

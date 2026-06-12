@@ -54,7 +54,7 @@ export function LeadLayoutGrid({ children, sidebar, titleBanner, isViewMode = fa
                         className="flex flex-row justify-center items-center gap-2 h-6 text-[#374151] hover:text-[#111827] transition-colors"
                     >
                         <ArrowLeft size={16} />
-                        <span className=" text-base leading-6">Back</span>
+                        <span className=" text-base leading-6 font-semibold">Back</span>
                     </button>
                 </div>
 
@@ -70,7 +70,7 @@ export function LeadLayoutGrid({ children, sidebar, titleBanner, isViewMode = fa
 
                         {/* Form Actions Bottom */}
                         {!isViewMode && (
-                            <div className="flex flex-col sm:flex-row justify-end items-center p-4 sm:p-6 w-full bg-white border border-[#D4D4D4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl gap-4 font-semibold">
+                            <div className="flex flex-col sm:flex-row justify-end items-center p-4 sm:p-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl gap-4 font-semibold">
                                 <button
                                     onClick={handleClear}
                                     className="flex justify-center items-center px-5 py-2.5 w-full sm:w-auto bg-white border border-[#D1D5DC] rounded-[10px] text-[#364153] font-inter font-medium text-sm hover:bg-gray-50 transition-colors"
@@ -90,7 +90,7 @@ export function LeadLayoutGrid({ children, sidebar, titleBanner, isViewMode = fa
 
                     {/* Right Column (Sidebar Cards) */}
                     {sidebar && (
-                        <div className="flex flex-col items-start gap-6 w-full lg:w-[314px] shrink-0 lg:sticky lg:top-6">
+                        <div className="flex flex-col items-start gap-6 w-full lg:w-[314px] shrink-0 lg:sticky lg:top-6 font-semibold">
                             {sidebar}
                         </div>
                     )}

@@ -40,9 +40,9 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           <CalendarCheck {...ICON_PROPS} />
           <span>Visit Scheduled</span>
         </button>
-        <span className="inline-flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+        <span className="inline-flex items-center gap-1 text-[12px] text-text-muted mt-0.5">
           <Calendar size={10} className="text-text-muted" />
-          <span className="text-[10px] font-normal text-text-muted text-right">{lead.visitDate}</span>
+          <span className="text-[12px] font-normal text-text-muted text-right">{lead.visitDate}</span>
         </span>
       </div>
     );

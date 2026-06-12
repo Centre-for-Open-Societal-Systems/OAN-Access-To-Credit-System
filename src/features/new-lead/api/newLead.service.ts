@@ -85,6 +85,12 @@ export const newLeadService = {
   // Add a new note/comment to the lead's timeline
   async addActivityNote(data: { leadId: string; content: string }): Promise<any> {
     const cleanLeadId = decodeURIComponent(data.leadId).replace(/^#/, '');
+    if (cleanLeadId === 'new') {
+      return new Promise((resolve) => setTimeout(() => resolve({
+        status: 'success',
+        comment_id: `new-${Date.now()}`
+      }), 500));
+    }
     return fetchApi(`oan_a2c.api.v1.leads.add_lead_comment`, {
       method: 'POST',
       body: JSON.stringify({ lead_id: cleanLeadId, content: data.content }),
