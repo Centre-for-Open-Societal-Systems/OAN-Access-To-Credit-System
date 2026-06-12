@@ -2,6 +2,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectNewLeadState, selectIsLeadFinalized, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
 import { TextField } from '@/components/ui/TextField';
 import { useParams } from 'next/navigation';
+import { FileText } from 'lucide-react';
 
 export function LeadInfoSection() {
   const dispatch = useAppDispatch();
@@ -16,9 +17,10 @@ export function LeadInfoSection() {
 
 
 
-    <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
+    <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
       <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
-        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center text-[#232F34]">
+        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
+          <FileText size={20} className="text-[#6B7280]" />
           Lead Information
         </h2>
       </div>

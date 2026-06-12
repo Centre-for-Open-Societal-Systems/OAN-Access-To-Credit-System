@@ -55,7 +55,7 @@ function LeadToolbar({
           <button
             type="button"
             onClick={() => onSearchSubmit(localSearch)}
-            className="flex sm:inline-flex items-center justify-center rounded-lg bg-[#16A34A] px-6 py-3 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95 shrink-0"
+            className="flex sm:inline-flex items-center justify-center rounded-lg bg-[#16A34A] px-6 py-2.5 text-base font-semibold text-white transition hover:bg-[#10883c] active:scale-95 shrink-0"
           >
             Search
           </button>
@@ -66,7 +66,7 @@ function LeadToolbar({
           <button
             type="button"
             onClick={onShowAdvFilters}
-            className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-3 text-base font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 active:scale-95 whitespace-nowrap"
+            className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 active:scale-95 whitespace-nowrap"
           >
             <SlidersHorizontal size={18} className="text-[#6B7280]" />
             Advanced Filters

@@ -34,17 +34,17 @@ export default function LeadContextBanner({
     .toUpperCase();
 
   return (
-    <div className="box-border flex flex-row items-center p-5 w-full h-[90px] bg-white border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-xl">
-      <div className="flex flex-row items-center gap-4">
+    <div className="box-border flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-5 w-full min-h-[90px] gap-4 md:gap-0 bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
+      <div className="flex flex-row items-center gap-3 md:gap-4 w-full md:w-auto">
         {/* Avatar Background */}
         {isVisitScheduled ? (
-          <div className="flex flex-row justify-center items-center p-[9.5px_0px_10.5px] w-12 h-12 bg-[#DCFCE7] rounded-full">
+          <div className="flex flex-row justify-center items-center shrink-0 w-12 h-12 bg-[#DCFCE7] rounded-full">
             <span className="font-inter font-bold text-lg leading-7 text-center text-[#15803D]">
               {initials}
             </span>
           </div>
         ) : (
-          <div className="flex flex-row justify-center items-center p-[9.5px_0px_10.5px] w-12 h-12 bg-[#F0FDF4] rounded-full">
+          <div className="flex flex-row justify-center items-center shrink-0 w-12 h-12 bg-[#F0FDF4] rounded-full">
             {/* Using a simple user icon SVG for the generic view */}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#059669]">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -54,48 +54,18 @@ export default function LeadContextBanner({
         )}
 
         {/* Text Container */}
-        <div className="flex flex-col items-start w-[308.42px]">
+        <div className="flex flex-col items-start flex-1 min-w-0">
           {/* Header Row */}
-          <div className="flex flex-row items-center gap-2 h-7 -my-[0.5px]">
-            <h2 className="font-inter font-bold text-lg leading-7 text-[#111827]">
+          <div className="flex flex-row items-center gap-2">
+            <h2 className="font-inter font-bold text-lg md:text-xl leading-7 text-[#111827] truncate">
               {isVisitScheduled ? farmerName : leadId}
             </h2>
-            {!isVisitScheduled && (
-              <span className="bg-[#F3F4F6] text-[#4B5563] text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                {status}
-              </span>
-            )}
-          </div>
-
-          {/* Subtitle Row */}
-          <div className="flex flex-row items-center gap-2 h-5 mt-1">
-            <span className="flex items-center gap-1">
-              <MapPin size={14} className="text-[#6B7280]" />
-              <span className="font-inter font-normal text-sm leading-5 text-[#6B7280]">
-                {location}
-              </span>
-            </span>
-            <span className="text-[#D1D5DB]">|</span>
-            <span className="flex items-center gap-1">
-              {isVisitScheduled ? (
-                <>
-                  <Phone size={14} className="text-[#6B7280]" />
-                  <span className="font-inter font-normal text-sm leading-5 text-[#6B7280]">
-                    {phoneNumber}
-                  </span>
-                </>
-              ) : (
-                <span className="font-inter font-normal text-sm leading-5 text-[#6B7280]">
-                  {createdAt ? `Created: ${createdAt}` : 'Unknown Date'}
-                </span>
-              )}
-            </span>
           </div>
         </div>
       </div>
 
       {actions && (
-        <div className="flex-1 flex justify-end gap-3">
+        <div className="flex flex-row flex-wrap md:flex-nowrap justify-start md:justify-end items-center gap-2 md:gap-3 w-full md:w-auto font-semibold">
           {actions}
         </div>
       )}

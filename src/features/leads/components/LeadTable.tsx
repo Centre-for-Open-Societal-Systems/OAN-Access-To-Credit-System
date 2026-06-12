@@ -199,7 +199,11 @@ function LeadTable({
                         <button
                           ref={el => { anchorRefs.current[col.id] = { current: el }; }}
                           type="button"
-                          onClick={() => onSetOpenColFilter(prev => prev === col.id ? null : col.id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onSetOpenColFilter(prev => prev === col.id ? null : col.id);
+                          }}
                           className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col.id || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
                         >
                           <Filter size={16} strokeWidth={2.5} />
@@ -230,7 +234,7 @@ function LeadTable({
         </thead>
         <tbody className="bg-white">
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
+            Array.from({ length: 10 }).map((_, i) => (
               <tr key={i} className="animate-pulse border-b border-[#F1F3F4] h-[64px]">
                 <td className="w-[56px] p-0 text-center align-middle">
                   <div className="h-[13px] w-[13px] rounded-[2.5px] bg-slate-200 mx-auto" />

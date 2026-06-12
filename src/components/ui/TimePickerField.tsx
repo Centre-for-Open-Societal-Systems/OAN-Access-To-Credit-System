@@ -63,7 +63,6 @@ export function TimePickerField({ id, label, value, onChange, required, error, d
           <Clock size={16} className="shrink-0 text-gray-400" />
           {displayValue || placeholder}
         </span>
-        <Clock size={16} className="shrink-0 text-[#111827]" />
       </button>
 
       {isOpen && (

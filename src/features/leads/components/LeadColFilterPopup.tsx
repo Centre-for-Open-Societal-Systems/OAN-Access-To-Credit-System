@@ -43,13 +43,6 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [anchorRef, onClose]);
 
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, []);
 
   const opts = COL_FILTER_OPTS[col] ?? [];
   const toggle = (v: string) => setSelected(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
@@ -64,7 +57,7 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
         <Filter size={16} className="text-emerald-600" />
         {col === 'CALL START TIME' ? 'FILTER BY DATE' : `FILTER BY ${col}`}
       </div>
-      <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium">
+      <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {opts.map((o, idx) => {
           const sel = selected.includes(o);
           return (

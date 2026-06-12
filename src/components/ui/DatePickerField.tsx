@@ -143,7 +143,6 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
           <Calendar size={16} className="shrink-0 text-gray-400" />
           {displayValue || placeholder}
         </span>
-        <Calendar size={16} className="shrink-0 text-gray-800" />
       </button>
 
       {isOpen && typeof document !== 'undefined' && (usePortal ? createPortal(

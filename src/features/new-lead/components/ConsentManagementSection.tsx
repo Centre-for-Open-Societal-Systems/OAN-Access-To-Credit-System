@@ -4,7 +4,7 @@ import { selectNewLeadState, setFarmerId, searchFarmerThunk, searchFarmerConsent
 import { selectOfficerName } from '@/features/auth/store/authSlice';
 import { newLeadService } from '../api/newLead.service';
 import { OTPVerificationModal } from './modals/OTPVerificationModal';
-import { Eye, X, FileText, CheckCircle2, Folder, Loader2 } from 'lucide-react';
+import { Eye, X, FileText, CheckCircle2, Folder, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 export function ConsentManagementSection() {
@@ -84,16 +84,17 @@ export function ConsentManagementSection() {
   };
 
   return (
-    <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
+    <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
       <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
-        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center text-[#232F34]">
+        <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
+          <ShieldCheck size={20} className="text-[#6B7280]" />
           Consent Management
         </h2>
       </div>
 
-      <div className="flex flex-col md:flex-row items-start px-6 gap-12 w-full">
+      <div className="flex flex-row flex-wrap items-start px-4 sm:px-6 gap-6 sm:gap-8 w-full">
         {/* Left Column: Request Details */}
-        <div className="flex flex-col items-start gap-1 flex-1 w-full">
+        <div className="flex flex-col items-start gap-1 flex-1 min-w-[260px] sm:min-w-[280px] w-full">
           <label className="text-[14px] font-medium text-[#374151] mb-1">
             Farmer ID / Fayda ID <span className="text-red-500">*</span>
           </label>
@@ -104,15 +105,15 @@ export function ConsentManagementSection() {
               </div>
               <div className="flex flex-row items-center gap-1.5 mt-1">
                 <CheckCircle2 size={20} className="text-[#16A34A]" fill="#16A34A" color="white" />
-                <span className="text-[12px] font-bold text-[#16A34A] leading-[20px]">View Consent Details</span>
-                <span className="text-[12px] font-medium text-[#6B7280] leading-[20px] ml-1">
+                <span className="text-[14px] font-bold text-[#16A34A] leading-[20px]">View Consent Details</span>
+                <span className="text-[14px] font-medium text-[#6B7280] leading-[20px] ml-1">
                   {consentDate ? `provided on ${consentDate}` : 'verified via registry'}
                 </span>
               </div>
             </>
           ) : (
             <div className="flex flex-col gap-3 w-full">
-              <div className="flex flex-row gap-3 w-full">
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
                 <input
                   type="text"
                   value={farmerId}
@@ -147,20 +148,23 @@ export function ConsentManagementSection() {
                 {isLoadingConsent ? 'Sending...' : 'Send OTP'}
               </button>
               {consentError && (
-                <p className="text-sm text-red-500 mt-1">{consentError}</p>
+                <div className="flex items-start gap-2 w-full mt-1 bg-[#FEF2F2] text-[#DC2626] p-3 rounded-md border border-[#FECACA]">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <p className="text-[14px] font-medium leading-[20px]">{consentError}</p>
+                </div>
               )}
             </div>
           )}
         </div>
 
         {/* Right Column: Signed Consent Form */}
-        <div className="flex flex-col items-start p-4 gap-3 flex-1 w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mt-4 md:mt-0">
+        <div className="flex flex-col items-start p-4 gap-3 flex-1 min-w-[260px] sm:min-w-[280px] w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mt-0">
           {(consentFile || consent_id || isVerified) ? (
             <>
               <div className="flex flex-row justify-between items-start w-full">
                 <div className="flex flex-col items-start gap-0">
-                  <h5 className="font-inter font-medium text-[14px] leading-5 text-[#111827]">Signed Consent Form</h5>
-                  <p className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
+                  <h5 className="font-inter font-medium text-[16px] leading-5 text-[#111827]">Signed Consent Form</h5>
+                  <p className="font-inter font-normal text-[14px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
                 </div>
                 <div className="flex flex-row items-center gap-2">
                   {previewUrl && (
@@ -211,21 +215,22 @@ export function ConsentManagementSection() {
           ) : (
             <>
               <div className="flex flex-col items-start gap-0 w-full">
-                <h5 className="font-inter font-medium text-[14px] leading-5 text-[#111827]">Signed Consent Form</h5>
-                <p className="font-inter font-normal text-[12px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
+                <h5 className="font-inter font-medium text-[16px] leading-5 text-[#111827]">Signed Consent Form</h5>
+                <p className="font-inter font-normal text-[14px] leading-4 text-[#6B7280]">Physical copy signed by farmer</p>
               </div>
 
               {/* Upload Dropzone */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-row items-center p-[12px_8px] gap-[10px] w-full bg-white border border-dashed border-[#D1D5DB] hover:border-[#16A34A] rounded-[4px] mt-1 h-[86px] box-border cursor-pointer hover:bg-gray-50 transition-colors"
+                className="flex flex-col sm:flex-row items-center justify-center p-[16px_12px] gap-[12px] sm:gap-[16px] w-full bg-white border border-dashed border-[#D1D5DB] hover:border-[#16A34A] rounded-[4px] mt-1 min-h-[86px] box-border cursor-pointer hover:bg-gray-50 transition-colors"
               >
-                <div className="flex justify-center items-center w-[64px] h-[64px] bg-[#F5F5F5] rounded-full shadow-[0px_1px_2px_rgba(0,0,0,0.05)] shrink-0">
+                <div className="flex justify-center items-center w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-[#F5F5F5] rounded-full shadow-[0px_1px_2px_rgba(0,0,0,0.05)] shrink-0">
                   <Folder size={24} className="text-[#9CA3AF] fill-current" />
                 </div>
-                <div className="flex flex-col items-center justify-center flex-1 h-[60px] pb-1">
-                  <span className="font-inter font-medium text-[14px] leading-[20px] text-center text-[#111827]">
-                    Drag and drop files here<br />Or<br />Click to Browse files
+                <div className="flex flex-col items-center justify-center">
+                  <span className="font-inter font-medium text-[13px] sm:text-[14px] leading-[20px] text-center text-[#111827]">
+                    Drag and drop files here <span className="sm:hidden">or Click to Browse files</span>
+                    <span className="hidden sm:inline"><br />Or<br />Click to Browse files</span>
                   </span>
                 </div>
               </div>
