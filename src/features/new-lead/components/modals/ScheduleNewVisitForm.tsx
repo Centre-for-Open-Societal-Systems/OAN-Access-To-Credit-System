@@ -197,14 +197,14 @@ export const ScheduleNewVisitForm = ({
         <div className="flex flex-row justify-end items-center pt-4 w-full gap-4 border-t border-[#E5E7EB] mt-4 font-semibold">
           <button
             onClick={asModal && onClose ? onClose : undefined}
-            className="flex justify-center items-center px-4 py-2 bg-white border border-[#D1D5DC] rounded-md text-[#374151] font-inter font-semibold text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-gray-50 transition-colors"
+            className="flex justify-center items-center px-4 py-3 bg-white border border-[#D1D5DC] rounded-md text-[#374151] font-inter font-semibold text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex justify-center items-center px-4 py-2 bg-[#16A34A] rounded-md text-white font-inter font-semibold text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#15803d] transition-colors disabled:opacity-50"
+            className="flex justify-center items-center px-4 py-3 bg-[#16A34A] rounded-md text-white font-inter font-semibold text-sm shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#15803d] transition-colors disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save Schedule'}
           </button>

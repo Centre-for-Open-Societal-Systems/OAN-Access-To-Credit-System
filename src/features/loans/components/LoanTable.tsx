@@ -6,9 +6,10 @@ import {
   selectPagedRows,
   selectTableStatusFilters,
   selectTableTypeFilters,
-  toggleTableStatusFilter,
-  toggleTableTypeFilter,
+  setTableStatusFilters,
+  setTableTypeFilters,
 } from '../store/loanDashboardSlice';
+import LoanEmptyState from './LoanEmptyState';
 
 export interface LoanTableRow {
   id: string;
@@ -28,7 +29,7 @@ interface LoanTableProps {
   onView?: (row: LoanTableRow) => void;
 }
 
-const STATUS_OPTIONS = ['Granted', 'Processing', 'Rejected'];
+const STATUS_OPTIONS = ['Processing', 'Granted', 'Rejected'];
 const LOAN_TYPE_OPTIONS = [
   'Input loan (seeds, agrochemicals)',
   'Agricultural term loan',
@@ -48,18 +49,27 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
   const selectedStatuses = useAppSelector(selectTableStatusFilters);
   const selectedLoanTypes = useAppSelector(selectTableTypeFilters);
 
-  const statusRef = useRef<HTMLDivElement>(null);
-  const loanTypeRef = useRef<HTMLDivElement>(null);
+  const [localStatuses, setLocalStatuses] = useState<string[]>([]);
+  const [localLoanTypes, setLocalLoanTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (statusFilterOpen) setLocalStatuses(selectedStatuses);
+  }, [statusFilterOpen, selectedStatuses]);
+
+  useEffect(() => {
+    if (loanTypeFilterOpen) setLocalLoanTypes(selectedLoanTypes);
+  }, [loanTypeFilterOpen, selectedLoanTypes]);
+
+  const statusRef = useRef<HTMLButtonElement>(null);
+  const loanTypeRef = useRef<HTMLButtonElement>(null);
 
   const [statusPos, setStatusPos] = useState({ top: 0, left: 0 });
   const [loanTypePos, setLoanTypePos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      // Use querySelector to check if click is inside portal
       const target = e.target as Node;
-      const isInsidePortal = document.querySelector('.loan-filter-portal')?.contains(target);
-      if (isInsidePortal) return;
+      if ((target as Element).closest?.('.loan-filter-popup')) return;
 
       if (statusRef.current && !statusRef.current.contains(target)) setStatusFilterOpen(false);
       if (loanTypeRef.current && !loanTypeRef.current.contains(target)) setLoanTypeFilterOpen(false);
@@ -68,43 +78,43 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (statusFilterOpen && statusRef.current) {
-      const rect = statusRef.current.getBoundingClientRect();
-      setStatusPos({ top: rect.bottom + 6, left: rect.left });
-    }
-    if (loanTypeFilterOpen && loanTypeRef.current) {
-      const rect = loanTypeRef.current.getBoundingClientRect();
-      setLoanTypePos({ top: rect.bottom + 6, left: rect.left });
-    }
-  }, [statusFilterOpen, loanTypeFilterOpen]);
-
-  useEffect(() => {
-    if (statusFilterOpen || loanTypeFilterOpen) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalStyle;
-      };
-    }
-  }, [statusFilterOpen, loanTypeFilterOpen]);
-
-  const toggleStatus = (val: string) => {
-    dispatch(toggleTableStatusFilter(val));
+  const toggleLocalStatus = (val: string) => {
+    setLocalStatuses(prev => prev.includes(val) ? prev.filter(s => s !== val) : [...prev, val]);
   };
 
-  const toggleLoanType = (val: string) => {
-    dispatch(toggleTableTypeFilter(val));
+  const toggleLocalLoanType = (val: string) => {
+    setLocalLoanTypes(prev => prev.includes(val) ? prev.filter(s => s !== val) : [...prev, val]);
   };
 
-  const clearStatusFilters = () => {
-    selectedStatuses.forEach(s => dispatch(toggleTableStatusFilter(s)));
+  const handleApplyStatus = () => {
+    dispatch(setTableStatusFilters(localStatuses));
     setStatusFilterOpen(false);
   };
 
-  const clearLoanTypeFilters = () => {
-    selectedLoanTypes.forEach(s => dispatch(toggleTableTypeFilter(s)));
+  const handleApplyLoanType = () => {
+    dispatch(setTableTypeFilters(localLoanTypes));
     setLoanTypeFilterOpen(false);
+  };
+
+  const handleClearStatus = () => {
+    setLocalStatuses([]);
+    dispatch(setTableStatusFilters([]));
+    setStatusFilterOpen(false);
+  };
+
+  const handleClearLoanType = () => {
+    setLocalLoanTypes([]);
+    dispatch(setTableTypeFilters([]));
+    setLoanTypeFilterOpen(false);
+  };
+
+  const hasFilters = selectedStatuses.length > 0 || selectedLoanTypes.length > 0;
+
+  const handleClearFilters = () => {
+    dispatch(setTableStatusFilters([]));
+    dispatch(setTableTypeFilters([]));
+    setLocalStatuses([]);
+    setLocalLoanTypes([]);
   };
 
   return (
@@ -115,62 +125,82 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">Application ID</th>
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">PHONE NUMBER</th>
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">
-              <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={statusRef}>
-                STATUS <Filter size={16} className="text-gray-400" onClick={() => setStatusFilterOpen(!statusFilterOpen)} />
-                {statusFilterOpen && typeof document !== 'undefined' && createPortal(
-                  <div style={{ position: 'fixed', top: statusPos.top, left: statusPos.left }} className="loan-filter-portal z-[9999] flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+              <div className="relative inline-flex items-center gap-1.5">
+                STATUS
+                <button
+                  ref={statusRef}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStatusFilterOpen(!statusFilterOpen);
+                  }}
+                  className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${statusFilterOpen || selectedStatuses.length > 0 ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
+                >
+                  <Filter size={16} strokeWidth={2.5} />
+                </button>
+                {statusFilterOpen && (
+                  <div className="loan-filter-popup absolute top-full left-0 mt-2 z-[99] flex min-w-[240px] w-max flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
                       <Filter size={16} className="text-emerald-600" /> FILTER BY STATUS
                     </div>
-                    <div className="flex flex-col p-2 max-h-[200px] overflow-y-auto">
-                      {STATUS_OPTIONS.map((opt) => {
-                        const isChecked = selectedStatuses.includes(opt);
+                    <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      {STATUS_OPTIONS.map((opt, idx) => {
+                        const isChecked = localStatuses.includes(opt);
                         return (
-                          <button key={opt} type="button" onClick={() => toggleStatus(opt)} className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-gray-50 text-gray-700">
-                            <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border ${isChecked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white'}`}>
-                              {isChecked && <Check size={14} strokeWidth={3} />}
+                          <button key={opt} type="button" onClick={() => toggleLocalStatus(opt)} className={`flex items-center gap-4 px-5 py-3 text-[15px] font-medium transition-colors hover:bg-gray-50 text-[#4B5563] text-left ${idx !== STATUS_OPTIONS.length - 1 ? 'border-b border-[#F3F3F3]' : ''}`}>
+                            <span className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[2px] border transition-all duration-200 ease-in-out rounded-sm ${isChecked ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-[#9CA3AF] bg-white'}`}>
+                              <Check size={12} strokeWidth={3} className={`transition-all duration-200 ease-in-out rounded-sm  ${isChecked ? 'scale-100 opacity-100' : 'scale-50 opacity-0 rounded-sm'}`} />
                             </span>
-                            {opt}
+                            <span className="flex-1 text-[15px] whitespace-normal">{opt}</span>
                           </button>
                         );
                       })}
                     </div>
-                    <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
-                      <button onClick={clearStatusFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
-                      <button onClick={() => setStatusFilterOpen(false)} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
+                    <div className="flex items-center justify-between border-t border-gray-100 p-3 bg-gray-50/50 rounded-b-xl font-bold">
+                      <button onClick={handleClearStatus} className="text-lg font-medium text-gray-500 hover:text-gray-600">Clear</button>
+                      <button onClick={handleApplyStatus} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
                     </div>
-                  </div>,
-                  document.body
+                  </div>
                 )}
               </div>
             </th>
             <th className="border-b border-gray-100 px-6 py-4 font-semibold">
-              <div className="relative inline-flex items-center gap-1.5 cursor-pointer" ref={loanTypeRef}>
-                LOAN TYPE <Filter size={16} className="text-gray-400" onClick={() => setLoanTypeFilterOpen(!loanTypeFilterOpen)} />
-                {loanTypeFilterOpen && typeof document !== 'undefined' && createPortal(
-                  <div style={{ position: 'fixed', top: loanTypePos.top, left: loanTypePos.left }} className="loan-filter-portal z-[9999] flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
+              <div className="relative inline-flex items-center gap-1.5">
+                LOAN TYPE
+                <button
+                  ref={loanTypeRef}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLoanTypeFilterOpen(!loanTypeFilterOpen);
+                  }}
+                  className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${loanTypeFilterOpen || selectedLoanTypes.length > 0 ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
+                >
+                  <Filter size={16} strokeWidth={2.5} />
+                </button>
+                {loanTypeFilterOpen && (
+                  <div className="loan-filter-popup absolute top-full left-0 mt-2 z-[99] flex min-w-[240px] w-max flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
                       <Filter size={16} className="text-emerald-600" /> FILTER BY LOAN TYPE
                     </div>
-                    <div className="flex flex-col p-2 max-h-[200px] overflow-y-auto">
-                      {LOAN_TYPE_OPTIONS.map((opt) => {
-                        const isChecked = selectedLoanTypes.includes(opt);
+                    <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      {LOAN_TYPE_OPTIONS.map((opt, idx) => {
+                        const isChecked = localLoanTypes.includes(opt);
                         return (
-                          <button key={opt} type="button" onClick={() => toggleLoanType(opt)} className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-gray-50 text-gray-700">
-                            <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border ${isChecked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white'}`}>
-                              {isChecked && <Check size={14} strokeWidth={3} />}
+                          <button key={opt} type="button" onClick={() => toggleLocalLoanType(opt)} className={`flex items-center gap-4 px-5 py-3 text-[15px] font-medium transition-colors hover:bg-gray-50 text-[#4B5563] text-left ${idx !== LOAN_TYPE_OPTIONS.length - 1 ? 'border-b border-[#F3F3F3]' : ''}`}>
+                            <span className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[2px] border transition-all duration-200 ease-in-out rounded-sm ${isChecked ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-[#9CA3AF] bg-white'}`}>
+                              <Check size={12} strokeWidth={3} className={`transition-all duration-200 ease-in-out rounded-sm  ${isChecked ? 'scale-100 opacity-100' : 'scale-50 opacity-0 rounded-sm'}`} />
                             </span>
-                            {opt}
+                            <span className="flex-1 text-[15px] whitespace-normal">{opt}</span>
                           </button>
                         );
                       })}
                     </div>
-                    <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
-                      <button onClick={clearLoanTypeFilters} className="text-base font-medium text-gray-400 hover:text-gray-600">Clear</button>
-                      <button onClick={() => setLoanTypeFilterOpen(false)} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
+                    <div className="flex items-center justify-between border-t border-gray-100 p-3 bg-gray-50/50 rounded-b-xl font-bold">
+                      <button onClick={handleClearLoanType} className="text-base font-medium text-gray-500 hover:text-gray-600">Clear</button>
+                      <button onClick={handleApplyLoanType} className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]">Apply</button>
                     </div>
-                  </div>,
-                  document.body
+                  </div>
                 )}
               </div>
             </th>
@@ -187,11 +217,7 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {rows.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="py-8 text-center text-base text-gray-500">
-                No applications found for this period.
-              </td>
-            </tr>
+            <LoanEmptyState hasFilters={hasFilters} onClearFilters={handleClearFilters} />
           ) : (
             rows.map((row, i) => {
               let badgeColor = "bg-gray-100 text-gray-600 border-gray-200";
@@ -199,8 +225,8 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
 
               const statusLower = row.status.toLowerCase();
               if (statusLower.includes('processing') || statusLower.includes('active') || row.statusTone === 'info') {
-                badgeColor = "bg-blue-50 text-blue-500 border border-blue-200";
-                dotColor = "bg-blue-500";
+                badgeColor = "bg-cyan-100 text-cyan-600 border border-cyan-300";
+                dotColor = "bg-cyan-600";
               } else if (statusLower.includes('approved') || statusLower.includes('granted') || statusLower.includes('verified') || row.statusTone === 'success') {
                 badgeColor = "bg-emerald-50 text-emerald-600 border border-emerald-200";
                 dotColor = "bg-emerald-500";
