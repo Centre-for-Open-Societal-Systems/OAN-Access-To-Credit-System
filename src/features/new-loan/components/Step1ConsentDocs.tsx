@@ -29,10 +29,8 @@ export function Step1ConsentDocs() {
       const url = URL.createObjectURL(selectedSupportingDoc.file);
       setSupportPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
-    } else if (selectedSupportingDoc.fileUrl) {
-      const url = selectedSupportingDoc.fileUrl.startsWith('/')
-        ? `/api/proxy${selectedSupportingDoc.fileUrl}`
-        : selectedSupportingDoc.fileUrl;
+    } else if (selectedSupportingDoc.id) {
+      const url = `/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${selectedSupportingDoc.id}&view=1`;
       setSupportPreviewUrl(url);
     } else {
       setSupportPreviewUrl(null);
@@ -52,13 +50,12 @@ export function Step1ConsentDocs() {
   const loadDocs = (appId: string) => {
     loanService.listSupportingDocuments(appId)
       .then(res => {
-        if (res?.status === 'success' && Array.isArray(res.files)) {
-          const fetchedDocs = res.files.map((f: any) => ({
+        if (Array.isArray(res?.data)) {
+          const fetchedDocs = res.data.map((f: any) => ({
             id: f.name,
             type: 'Uploaded Document',
             name: f.file_name,
             description: `Uploaded on ${f.creation}`,
-            fileUrl: f.file_url,
           }));
           setSupportingDocs(fetchedDocs);
         }
@@ -194,8 +191,8 @@ export function Step1ConsentDocs() {
       let url = '';
       if (doc.file) {
         url = URL.createObjectURL(doc.file);
-      } else if (doc.fileUrl) {
-        url = doc.fileUrl.startsWith('/') ? `/api/proxy${doc.fileUrl}` : doc.fileUrl;
+      } else if (doc.id) {
+        url = `/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${doc.id}&view=0`;
       }
       
       if (url) {
