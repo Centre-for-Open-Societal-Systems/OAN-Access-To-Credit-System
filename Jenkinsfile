@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION   = 'ap-south-1'
-        ECR_REPO     = 'oan-a2c-frontend'
-        BACKEND_IP   = '10.0.2.100'
-        API_BASE_URL = 'https://a2c-backend.oanstaging.com'
+        AWS_REGION          = 'ap-south-1'
+        ECR_REPO            = 'oan-a2c-frontend'
+        BACKEND_IP          = '10.0.2.100'
+        STAGING_API_URL     = 'https://a2c-backend.oanstaging.com'
+        DEVELOPMENT_API_URL = 'https://a2c-backend-development.oanstaging.com'
     }
 
     stages {
@@ -15,7 +16,7 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Staging Image') {
             steps {
                 withCredentials([
                     string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID')
@@ -24,12 +25,32 @@ pipeline {
                         IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 
                         DOCKER_BUILDKIT=1 docker build \
-                          --build-arg API_BASE_URL=https://a2c-backend.oanstaging.com \
+                          --build-arg API_BASE_URL=${STAGING_API_URL} \
+                          --tag ${IMAGE_URI}:staging-${BUILD_NUMBER} \
+                          --tag ${IMAGE_URI}:staging \
+                          --no-cache .
+
+                        echo "Built staging image: ${IMAGE_URI}:staging-${BUILD_NUMBER}"
+                    '''
+                }
+            }
+        }
+
+        stage('Build Development Image') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID')
+                ]) {
+                    sh '''
+                        IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+
+                        DOCKER_BUILDKIT=1 docker build \
+                          --build-arg API_BASE_URL=${DEVELOPMENT_API_URL} \
                           --tag ${IMAGE_URI}:develop-${BUILD_NUMBER} \
                           --tag ${IMAGE_URI}:develop \
                           --no-cache .
 
-                        echo "Built ${IMAGE_URI}:develop-${BUILD_NUMBER}"
+                        echo "Built development image: ${IMAGE_URI}:develop-${BUILD_NUMBER}"
                     '''
                 }
             }
@@ -54,8 +75,13 @@ pipeline {
                           --repository-name ${ECR_REPO} \
                           --region ${AWS_REGION}
 
+                        docker push ${IMAGE_URI}:staging-${BUILD_NUMBER}
+                        docker push ${IMAGE_URI}:staging
                         docker push ${IMAGE_URI}:develop-${BUILD_NUMBER}
                         docker push ${IMAGE_URI}:develop
+
+                        echo "Pushed staging: ${IMAGE_URI}:staging-${BUILD_NUMBER}"
+                        echo "Pushed develop: ${IMAGE_URI}:develop-${BUILD_NUMBER}"
                     '''
                 }
             }
@@ -77,10 +103,10 @@ pipeline {
                         ${SSH_USER}@${BACKEND_IP} <<SSHEOF
 
                         set -e
-
                         cd /opt/oan_a2c_fe
+
                         cat > .env <<ENVEOF
-ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:develop-${BUILD_NUMBER}
+ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:staging-${BUILD_NUMBER}
 API_BASE_URL=https://a2c-backend.oanstaging.com
 ENVEOF
 
@@ -93,7 +119,6 @@ ENVEOF
                         docker compose up -d
 
                         sleep 15
-
                         curl -sf http://localhost:3000
 
                         echo "=== Staging Frontend deployed ==="
@@ -121,7 +146,6 @@ SSHEOF
                         ${SSH_USER}@${DEV_IP} <<SSHEOF
 
                         set -e
-
                         cd /home/ubuntu/frontend
 
                         cat > .env <<ENVEOF
@@ -138,7 +162,6 @@ ENVEOF
                         docker compose up -d
 
                         sleep 15
-
                         curl -sf http://localhost:3000 || echo "Warning: health check failed"
 
                         echo "=== Development Frontend deployed ==="
@@ -157,6 +180,7 @@ SSHEOF
                     sh '''
                         IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 
+                        docker rmi ${IMAGE_URI}:staging-${BUILD_NUMBER} || true
                         docker rmi ${IMAGE_URI}:develop-${BUILD_NUMBER} || true
                         docker system prune -f || true
                     '''
@@ -167,12 +191,11 @@ SSHEOF
 
     post {
         success {
-            echo "Frontend staging deployment successful! Build: develop-${BUILD_NUMBER}"
-            echo "Frontend development deployment successful! Build: develop-${BUILD_NUMBER}"
+            echo "Staging frontend deployed successfully! Image: staging-${BUILD_NUMBER}"
+            echo "Development frontend deployed successfully! Image: develop-${BUILD_NUMBER}"
         }
         failure {
-            echo "Frontend staging deployment failed!"
-            echo "Frontend development deployment failed!"
+            echo "Frontend pipeline failed!"
         }
     }
 }
