@@ -56,7 +56,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
         {lead.visitDate && (
           <span className="inline-flex items-center justify-center gap-1 text-[10px] text-text-muted mt-0.5 w-full">
             <Calendar size={12} className="text-text-muted" />
-            <span className="text-[12px] font-normal text-[#EF4444] text-center">{lead.visitDate}</span>
+            <span className="text-[12px] font-normal text-text-muted text-center">{lead.visitDate}</span>
           </span>
         )}
       </div>

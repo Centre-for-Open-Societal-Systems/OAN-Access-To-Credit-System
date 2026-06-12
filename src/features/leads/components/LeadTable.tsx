@@ -118,7 +118,7 @@ function LeadTable({
         const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
         return (
           <div className="flex flex-col items-start justify-start h-full">
-            <span className={`text-base font-semibold ${isBlocked ? 'text-gray-500' : 'text-[#16A34A] hover:underline'}`}>
+            <span className={`text-base font-semibold ${isBlocked ? 'text-gray-500' : 'text-[#1E6865] hover:underline'}`}>
               {l.id}
             </span>
             {l.location && (
@@ -247,15 +247,17 @@ function LeadTable({
             visible.map(l => {
               const key = l.id + l.phone;
 
-              // Custom Background for Visit Scheduled row status
-              const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled' || l.status?.toLowerCase() === 'missed';
+              const isSelected = selectedRows.includes(key);
+              const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
               const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
               
               const rowBgClass = isBlocked
                 ? "bg-white border-t border-[#F1F3F4] h-[64px]"
-                : isVisitScheduled
-                  ? " border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
-                  : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
+                : isSelected
+                  ? "bg-[#F1F5F9] border-t border-[#F1F3F4] h-[64px] hover:bg-[#E2E8F0] transition-colors cursor-pointer"
+                  : isVisitScheduled
+                    ? "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
+                    : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
 
               return (
                 <tr
