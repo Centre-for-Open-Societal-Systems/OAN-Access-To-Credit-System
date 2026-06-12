@@ -4,9 +4,7 @@
   display: grid;
   min-height: 100vh;
   grid-template-columns: var(--dashboard-sidebar-width) minmax(0, 1fr);
-  background:
-    radial-gradient(circle at top right, rgba(23, 53, 95, 0.05), transparent 30%),
-    linear-gradient(180deg, #f8fbff 0%, var(--page-bg) 100%);
+  background: #F9FAFB;
   color: var(--text-primary);
 }
 

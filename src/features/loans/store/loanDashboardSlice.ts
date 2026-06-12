@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@r
 import type { RootState } from '../../../store';
 import { loanService, GetLoansParams } from '@/features/loans/api/loan.service';
 import { PAGE_SIZE } from '@/features/loans/constants/loans.constants';
+import { getFallbackMockRows } from '@/mocks/loans.mock';
 
 export const fetchLoans = createAsyncThunk(
   'loanDashboard/fetchLoans',
@@ -27,7 +28,31 @@ export const fetchLoanSummary = createAsyncThunk(
   }
 );
 
+export const updateLoanStatus = createAsyncThunk(
+  'loanDashboard/updateLoanStatus',
+  async ({ id, status }: { id: string; status: string }, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await loanService.updateLoanStatus(id, status);
+      // Re-fetch loans after a successful update to refresh the list
+      dispatch(fetchLoans());
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update loan status');
+    }
+  }
+);
+
 const ALL_STATUS_VALUES = ['danger', 'info', 'neutral'];
+
+export interface AdvancedFilters {
+  status: string[];
+  minLoan: number | null;
+  maxLoan: number | null;
+  type: string[];
+  location: string;
+  dateFrom: string;
+  dateTo: string;
+}
 
 interface LoanDashboardState {
   rawActivityData: any;
@@ -41,6 +66,12 @@ interface LoanDashboardState {
   dateRange: string;
   selectedStatuses: string[];
   activityPage: number;
+  activeTab: 'all' | 'my' | 'unassigned';
+  searchQuery: string;
+  tableStatusFilters: string[];
+  tableTypeFilters: string[];
+  pageSize: number;
+  advancedFilters: AdvancedFilters;
 }
 
 const initialState: LoanDashboardState = {
@@ -54,12 +85,57 @@ const initialState: LoanDashboardState = {
   dateRange: 'last30',
   selectedStatuses: [...ALL_STATUS_VALUES],
   activityPage: 1,
+  activeTab: 'all',
+  searchQuery: '',
+  tableStatusFilters: [],
+  tableTypeFilters: [],
+  pageSize: 10,
+  advancedFilters: {
+    status: [],
+    minLoan: null,
+    maxLoan: null,
+    type: [],
+    location: '',
+    dateFrom: '',
+    dateTo: '',
+  }
 };
 
 const loanDashboardSlice = createSlice({
   name: 'loanDashboard',
   initialState,
   reducers: {
+    toggleTableStatusFilter: (state, action: PayloadAction<string>) => {
+      const val = action.payload;
+      if (state.tableStatusFilters.includes(val)) {
+        state.tableStatusFilters = state.tableStatusFilters.filter(s => s !== val);
+      } else {
+        state.tableStatusFilters.push(val);
+      }
+      state.activityPage = 1;
+    },
+    toggleTableTypeFilter: (state, action: PayloadAction<string>) => {
+      const val = action.payload;
+      if (state.tableTypeFilters.includes(val)) {
+        state.tableTypeFilters = state.tableTypeFilters.filter(s => s !== val);
+      } else {
+        state.tableTypeFilters.push(val);
+      }
+      state.activityPage = 1;
+    },
+    clearTableFilters: (state) => {
+      state.tableStatusFilters = [];
+      state.tableTypeFilters = [];
+      state.activityPage = 1;
+    },
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+      state.activityPage = 1;
+    },
+    setActiveTab: (state, action: PayloadAction<'all' | 'my' | 'unassigned'>) => {
+      state.activeTab = action.payload;
+      state.activityPage = 1; // Reset pagination on tab change
+    },
     setDateRange: (state, action: PayloadAction<string>) => {
       state.dateRange = action.payload;
     },
@@ -86,6 +162,26 @@ const loanDashboardSlice = createSlice({
     },
     setActivityPage: (state, action: PayloadAction<number>) => {
       state.activityPage = action.payload;
+    },
+    setPageSize: (state, action: PayloadAction<number>) => {
+      state.pageSize = action.payload;
+      state.activityPage = 1; // reset to page 1
+    },
+    setAdvancedFilters: (state, action: PayloadAction<AdvancedFilters>) => {
+      state.advancedFilters = action.payload;
+      state.activityPage = 1;
+    },
+    clearAdvancedFilters: (state) => {
+      state.advancedFilters = {
+        status: [],
+        minLoan: null,
+        maxLoan: null,
+        type: [],
+        location: '',
+        dateFrom: '',
+        dateTo: '',
+      };
+      state.activityPage = 1;
     }
   },
   extraReducers: (builder) => {
@@ -119,7 +215,20 @@ const loanDashboardSlice = createSlice({
   },
 });
 
-export const { setDateRange, toggleStatus, toggleAllStatuses, setActivityPage } = loanDashboardSlice.actions;
+export const { 
+  setDateRange, 
+  toggleStatus, 
+  toggleAllStatuses, 
+  setActivityPage, 
+  setActiveTab, 
+  setSearchQuery,
+  toggleTableStatusFilter,
+  toggleTableTypeFilter,
+  clearTableFilters,
+  setPageSize,
+  setAdvancedFilters,
+  clearAdvancedFilters
+} = loanDashboardSlice.actions;
 
 // --- Basic Selectors ---
 export const selectRawActivityData = (state: RootState) => state.loanDashboard.rawActivityData;
@@ -128,78 +237,85 @@ export const selectRawSummaryData = (state: RootState) => state.loanDashboard.ra
 export const selectDateRange = (state: RootState) => state.loanDashboard.dateRange;
 export const selectSelectedStatuses = (state: RootState) => state.loanDashboard.selectedStatuses;
 export const selectActivityPage = (state: RootState) => state.loanDashboard.activityPage;
+export const selectActiveTab = (state: RootState) => state.loanDashboard.activeTab;
+export const selectSearchQuery = (state: RootState) => state.loanDashboard.searchQuery;
+export const selectTableStatusFilters = (state: RootState) => state.loanDashboard.tableStatusFilters;
+export const selectTableTypeFilters = (state: RootState) => state.loanDashboard.tableTypeFilters;
+export const selectPageSize = (state: RootState) => state.loanDashboard.pageSize;
+export const selectAdvancedFilters = (state: RootState) => state.loanDashboard.advancedFilters;
 
 // --- Derived Memoized Selectors ---
 export const selectPagedRowsData = createSelector(
-  [selectRawActivityData],
-  (rawActivityData) => {
-    let rows = rawActivityData?.message?.results || rawActivityData?.message || rawActivityData?.data || rawActivityData || [];
-    if (!Array.isArray(rows)) {
-      rows = Array.isArray(rows.results) ? rows.results :
-        Array.isArray(rows.data) ? rows.data :
-          (Array.isArray(rows.applications) ? rows.applications : []);
-    }
-
-    let total = rawActivityData?.message?.total_count || rawActivityData?.total_count || rawActivityData?.total || 0;
+  [selectRawActivityData, selectPageSize],
+  (rawActivityData, pageSize) => {
+    // fetchApi automatically unwraps the "message" envelope, so the data is directly on rawActivityData
+    let rows = rawActivityData?.data || [];
+    
+    let totalCount = rawActivityData?.pagination?.total ?? 0;
 
     const mapped = rows.map((row: any) => {
       const rawDate = row.creation ? new Date(row.creation) : new Date();
       const dateStr = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeStr = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+      const appId = row.application_id || '';
+      const formattedId = appId;
+
+      const firstName = row.first_name || '';
+      const lastName = row.last_name || '';
+      const applicantName = `${firstName} ${lastName}`.trim();
+
       return {
         ...row,
-        id: row.id || row.name || 'UNKNOWN',
-        applicant: row.applicant || row.farmer || row.full_name || 'Unknown Applicant',
-        type: row.type || row.loan_type || 'Unknown Type',
+        id: formattedId,
+        applicant: applicantName,
+        phone: row.phone_number || '',
+        loanAmount: row.loan_amount ? `ETB ${row.loan_amount.toLocaleString()}` : '—',
+        type: row.loan_type || 'Unknown Type',
         status: row.status || 'Draft',
         statusTone: row.status === 'Approved' ? 'success' : row.status === 'Rejected' ? 'danger' : row.status === 'Draft' ? 'neutral' : 'info',
-        updated: row.updated || `${dateStr} · ${timeStr}`,
-        timestamp: row.timestamp || rawDate.getTime(),
-        action: row.action || 'View',
+        updated: `${dateStr} · ${timeStr}`,
+        timestamp: rawDate.getTime(),
+        action: 'View',
       };
     });
 
-    if (total === 0 && mapped.length > 0) {
-      total = mapped.length;
-    }
-
-    const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
-    return { pagedRows: mapped, totalPages };
+    const totalPages = rawActivityData?.pagination?.total_pages || 1;
+    return { pagedRows: mapped, totalPages, totalCount };
   }
 );
 
 export const selectPagedRows = createSelector([selectPagedRowsData], (data) => data.pagedRows);
 export const selectTotalPages = createSelector([selectPagedRowsData], (data) => data.totalPages);
+export const selectTotalCount = createSelector([selectPagedRowsData], (data) => data.totalCount);
 
 export const selectLiveMetrics = createSelector(
   [selectRawSummaryData],
   (rawSummaryData) => {
-    const summaryData = rawSummaryData?.message || rawSummaryData?.data || rawSummaryData || {};
-    const defaultMetric = { value: '0', trend: '0%', dir: 'up' as const };
+    // fetchApi automatically unwraps the "message" envelope
+    const summaryData = rawSummaryData?.data || {};
 
     return {
       total: {
-        value: summaryData.total?.toString() || defaultMetric.value,
-        trend: defaultMetric.trend,
-        dir: defaultMetric.dir
+        value: summaryData.total?.toString() || '—',
+      },
+      processing: {
+        value: summaryData.processing?.toString() || '—',
       },
       approved: {
-        value: (summaryData.approved ?? summaryData.Approved)?.toString() || defaultMetric.value,
-        trend: defaultMetric.trend,
-        dir: defaultMetric.dir
-      },
-      pending: {
-        value: (summaryData.pending ?? summaryData['Pending Review'] ?? summaryData.Draft)?.toString() || defaultMetric.value,
-        trend: defaultMetric.trend,
-        dir: defaultMetric.dir
+        value: summaryData.approved?.toString() || '—',
       },
       rejected: {
-        value: (summaryData.rejected ?? summaryData.Rejected)?.toString() || defaultMetric.value,
-        trend: defaultMetric.trend,
-        dir: defaultMetric.dir
+        value: summaryData.rejected?.toString() || '—',
       },
     };
+  }
+);
+
+export const selectTabCounts = createSelector(
+  [selectRawSummaryData],
+  (rawSummaryData) => {
+    return rawSummaryData?.data?.tab_counts || { all: 0, my: 0, unassigned: 0 };
   }
 );
 
@@ -239,12 +355,15 @@ export const selectVisibleNotifications = createSelector(
 );
 
 export const selectQueryParams = createSelector(
-  [selectActivityPage, selectDateRange, selectSelectedStatuses],
-  (activityPage, dateRange, selectedStatuses) => {
+  [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses, selectSearchQuery, selectActiveTab, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters],
+  (activityPage, pageSize, dateRange, selectedStatuses, searchQuery, activeTab, tableStatusFilters, tableTypeFilters, advancedFilters) => {
     const params: Record<string, any> = {
       page: activityPage,
-      page_size: PAGE_SIZE,
+      page_size: pageSize,
     };
+
+    if (searchQuery) params.search_query = searchQuery;
+    if (activeTab && activeTab !== 'all') params.tab = activeTab;
 
     const getCutoffTimestamp = (range: string) => {
       const now = new Date();
@@ -268,17 +387,52 @@ export const selectQueryParams = createSelector(
       params.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    if (advancedFilters.dateFrom) params.from_date = advancedFilters.dateFrom.split('T')[0];
+    if (advancedFilters.dateTo) params.to_date = advancedFilters.dateTo.split('T')[0];
+
     const allChecked = selectedStatuses.length === ALL_STATUS_VALUES.length;
+    let statusesToPass: string[] = [];
+    
     if (!allChecked && selectedStatuses.length > 0) {
-      const statuses = [];
-      if (selectedStatuses.includes('danger')) statuses.push('Rejected');
-      if (selectedStatuses.includes('neutral')) statuses.push('Draft');
-      if (selectedStatuses.includes('info')) statuses.push('Pending Review');
-      if (statuses.length > 0) {
-        params.status = JSON.stringify(statuses);
-      }
-    } else if (selectedStatuses.length === 0) {
-      params.status = JSON.stringify(['__NONE__']);
+      if (selectedStatuses.includes('danger')) statusesToPass.push('Rejected', 'Action Required');
+      if (selectedStatuses.includes('neutral')) statusesToPass.push('Draft');
+      if (selectedStatuses.includes('info')) statusesToPass.push('Pending Review', 'Processing');
+      if (selectedStatuses.includes('success')) statusesToPass.push('Approved');
+    }
+
+    // Combine with table status filters
+    if (tableStatusFilters.length > 0) {
+      statusesToPass = [...new Set([...statusesToPass, ...tableStatusFilters])];
+    }
+    
+    // Combine with advanced status filters
+    if (advancedFilters.status.length > 0) {
+      statusesToPass = [...new Set([...statusesToPass, ...advancedFilters.status])];
+    }
+
+    if (statusesToPass.length > 0) {
+      params.status = statusesToPass.join(',');
+    } else if (selectedStatuses.length === 0 && tableStatusFilters.length === 0 && advancedFilters.status.length === 0) {
+      params.status = '__NONE__';
+    }
+
+    let typesToPass = [...tableTypeFilters];
+    if (advancedFilters.type.length > 0) {
+      typesToPass = [...new Set([...typesToPass, ...advancedFilters.type])];
+    }
+    if (typesToPass.length > 0) {
+      params.loan_type = typesToPass.join(',');
+    }
+
+    if (advancedFilters.location) {
+      params.location = advancedFilters.location;
+    }
+
+    if (advancedFilters.minLoan !== null && advancedFilters.minLoan !== undefined) {
+      params.min_loan_amount = String(advancedFilters.minLoan);
+    }
+    if (advancedFilters.maxLoan !== null && advancedFilters.maxLoan !== undefined) {
+      params.max_loan_amount = String(advancedFilters.maxLoan);
     }
 
     return params;

@@ -9,6 +9,9 @@ export interface GetLeadsParams {
   lead_source?: string;
   start_date?: string;
   end_date?: string;
+  min_amount?: number;
+  max_amount?: number;
+  loan_type?: string;
 }
 
 // output for Get Leads API 
@@ -24,12 +27,13 @@ export interface Lead {
   phone: string;
   status: 'New' | 'Attempted' | 'Connected' | 'Follow Up' | 'Application Started' | 'Application Submitted' | 'Not Interested' | 'Invalid' | string;
   location: string;
-  cropFocus: string;
-  farmSize: string;
+  loanType: string;
+  loanAmount: string;
   source: string;
   assignedTo?: string;
   owner?: 'me' | 'unassigned' | 'other' | string;
-  callStartTime?: string;
+  creation: string;
+  farmerPhone?: string;
   [key: string]: any;
 }
 // small trend under summary in Leads

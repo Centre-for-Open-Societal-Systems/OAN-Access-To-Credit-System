@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
 
   // 1. Define routes that require authentication
   const isDashboardRoute =
-    pathname.startsWith('/leads-dashboard') ||
-    pathname.startsWith('/loans') ||
-    pathname.startsWith('/new-lead-creation');
+    pathname.startsWith('/leads') ||
+    pathname.startsWith('/loans');
 
   if (isDashboardRoute && !token) {
     const loginUrl = new URL('/login', request.url);
@@ -18,7 +17,7 @@ export function middleware(request: NextRequest) {
 
   // 2. Prevent logged-in users from hitting the login page
   if (pathname === '/login' && token) {
-    return NextResponse.redirect(new URL('/leads-dashboard', request.url));
+    return NextResponse.redirect(new URL('/leads', request.url));
   }
 
   return NextResponse.next();

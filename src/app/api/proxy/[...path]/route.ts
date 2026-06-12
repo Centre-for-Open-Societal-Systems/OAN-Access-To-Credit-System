@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
-  return handleProxy(request, params.path);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const resolvedParams = await params;
+  return handleProxy(request, resolvedParams.path);
 }
 
 // Statically export other HTTP verbs by aliasing the GET reference
@@ -16,11 +17,11 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
 
   // Construct the target URL
   const targetPath = pathArray.join('/');
-  const { search } = new URL(request.url);
+  const search = request.nextUrl.search;
   const targetUrl = `${baseUrl}/${targetPath}${search}`;
 
-  // Read auth_token cookie
   const authToken = request.cookies.get('auth_token')?.value;
+  console.log(`[PROXY] targetUrl: ${targetUrl}, method: ${request.method}, hasToken: ${!!authToken}`);
 
   // Prepare headers 
   const headers = new Headers();

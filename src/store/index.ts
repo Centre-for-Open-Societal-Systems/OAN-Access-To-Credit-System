@@ -3,6 +3,7 @@ import authReducer, { logout } from '../features/auth/store/authSlice';
 import leadReducer from '../features/leads/store/leadSlice';
 import loanFormReducer from '../features/new-loan/store/newLoanFormSlice';
 import loanDashboardReducer from '../features/loans/store/loanDashboardSlice';
+import newLeadReducer from '../features/new-lead/store/newLeadSlice';
 
 const AUTH_ACTIONS = ['auth/login/fulfilled', 'auth/logout', 'auth/hydrate'];
 
@@ -53,6 +54,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     leads: leadReducer,
+    newLead: newLeadReducer,
     loanForm: loanFormReducer,
     loanDashboard: loanDashboardReducer,
   },

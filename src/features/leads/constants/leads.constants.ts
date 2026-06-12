@@ -3,45 +3,62 @@ export interface StatusConfig {
   badge: string;
 }
 
-export const STATUS_CFG: Record<string, StatusConfig> = {
-  Initiated:        { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border-blue-200'         },
-  Open:             { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border-blue-200'         },
-  Qualified:        { dot: 'bg-green-500',   badge: 'bg-green-50 text-green-700 border-green-200'       },
-  Processed:        { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  Disqualified:     { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 border-red-200'             },
-  Dormant:          { dot: 'bg-red-400',     badge: 'bg-red-50 text-red-700 border-red-200'             },
-  Rejected:         { dot: 'bg-orange-400',  badge: 'bg-orange-50 text-orange-700 border-orange-200'    },
-  'Not Interested': { dot: 'bg-orange-400',  badge: 'bg-orange-50 text-orange-700 border-orange-200'    },
+
+export interface StatusStyle {
+  badgeClass: string;
+  dotClass: string;
+}
+
+export const STATUS_STYLE_MAP: Record<string, StatusStyle> = {
+  Active: {
+    badgeClass: "bg-green-50 text-green-600 border border-green-200",
+    dotClass: "bg-green-500"
+  },
+  Verified: {
+    badgeClass: "bg-teal-50 text-teal-600 border border-teal-200",
+    dotClass: "bg-teal-500"
+  },
+  Processed: {
+    badgeClass: "bg-cyan-50 text-cyan-600 border border-cyan-200",
+    dotClass: "bg-cyan-500"
+  },
+  Granted: {
+    badgeClass: "bg-emerald-50 text-emerald-600 border border-emerald-200",
+    dotClass: "bg-emerald-500"
+  },
+  Rejected: {
+    badgeClass: "bg-red-50 text-red-500 border border-red-200",
+    dotClass: "bg-red-500"
+  },
+  Dormant: {
+    badgeClass: "bg-orange-50 text-orange-500 border border-orange-200",
+    dotClass: "bg-orange-500"
+  }
 };
 
-export const STATUS_OPTS = ['All', 'Initiated', 'Qualified', 'Processed', 'Disqualified', 'Rejected'] as const;
+export const STATUS_OPTS = ['All', 'Active', 'Verified', 'Processed', 'Rejected', 'Dormant'] as const;
 
 export const DATE_OPTS = ['All Time', 'Last 7 Days', 'Last 30 Days', 'This Month'] as const;
 
 export const PAGE_SIZE = 10;
 
-export const COL_FILTER_OPTS: Record<string, string[]> = {
-  'STATUS':    STATUS_OPTS.filter(o => o !== 'All' && o !== 'Disqualified'),
-  'LOAN TYPE': ['Tractor Loan', 'Crop Loan', 'Livestock Loan', 'Other'],
-};
 
 export const KPI_CARDS_LAYOUT = [
-  { id: 'total',        label: 'Overall Leads' },
-  { id: 'initiated',    label: 'Active'        },
-  { id: 'qualified',    label: 'Verified'      },
-  { id: 'processed',    label: 'Processed'     },
-  { id: 'granted',      label: 'Granted'       },
-  { id: 'rejected',     label: 'Rejected'      },
-  { id: 'dormant',      label: 'Dormant'       },
+  { id: 'total', label: 'Overall Leads' },
+  { id: 'active', label: 'Active' },
+  { id: 'verified', label: 'Verified' },
+  { id: 'processed', label: 'Processed' },
+  { id: 'rejected', label: 'Rejected' },
+  { id: 'dormant', label: 'Dormant' },
 ] as const;
 
 export const LEAD_STATUS_MAP: Record<string, string[]> = {
-  initiated: ['Initiated', 'Open'],
-  qualified: ['Qualified'],
+  active: ['Active'],
+  verified: ['Verified'],
   processed: ['Processed'],
   granted: ['Granted'],
-  rejected: ['Rejected', 'Not Interested'],
-  dormant: ['Dormant', 'Disqualified'],
+  rejected: ['Rejected'],
+  dormant: ['Dormant'],
 };
 
 export const resolveDateFilter = (filterKey: string): { start?: string; end?: string } => {

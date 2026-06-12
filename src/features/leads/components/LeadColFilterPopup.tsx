@@ -1,60 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Filter } from 'lucide-react';
-import { COL_FILTER_OPTS } from '../constants/leads.constants';
+import { useAppSelector } from '@/store/hooks';
+import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
 
-/* ─── DateSelect ────────────────────────────────────────────────────── */
-interface DateSelectProps {
-  value: string;
-  options: readonly string[];
-  onChange: (val: string) => void;
-}
-
-export function DateSelect({ value, options, onChange }: DateSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [isOpen]);
-
-  return (
-    <div ref={ref} className="relative w-44">
-      <button
-        type="button"
-        onClick={() => setIsOpen(o => !o)}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:outline-none ${isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}
-      >
-        <span className="text-gray-900">{value}</span>
-        <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
-      </button>
-      <ul
-        className={`absolute right-0 z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-xl transition-all ${isOpen ? 'pointer-events-auto scale-y-100 opacity-100' : 'pointer-events-none scale-y-95 opacity-0'}`}
-        style={{ transformOrigin: 'top' }}
-      >
-        {options.map(opt => {
-          const sel = value === opt;
-          return (
-            <li
-              key={opt}
-              onMouseDown={() => { onChange(opt); setIsOpen(false); }}
-              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${sel ? 'font-medium text-[#16A34A]' : 'text-gray-800 hover:bg-gray-50'}`}
-            >
-              {opt}
-              {sel && <Check size={13} strokeWidth={2.5} className="text-[#4a7c59]" />}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
 
 /* ─── LeadColFilterPopup ────────────────────────────────────────────── */
 interface LeadColFilterPopupProps {
@@ -87,7 +36,7 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popupRef.current && !popupRef.current.contains(e.target as Node) &&
-          anchorRef.current && !anchorRef.current.contains(e.target as Node)) {
+        anchorRef.current && !anchorRef.current.contains(e.target as Node)) {
         onClose();
       }
     }
@@ -95,55 +44,56 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [anchorRef, onClose]);
 
-  const opts = COL_FILTER_OPTS[col] ?? [];
+
+  const { loanTypesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+
+  const opts = col === 'STATUS'
+    ? leadStatusesOptions.filter(o => o !== 'All')
+    : col === 'LOAN TYPE'
+      ? loanTypesOptions
+      : [];
   const toggle = (v: string) => setSelected(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
 
   return createPortal(
     <div
       ref={popupRef}
       style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-      className="w-56 rounded-xl border border-gray-200 bg-white shadow-xl"
+      className="flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900"
     >
-      <div className="border-b border-gray-100 px-3 py-2.5">
-        <div className="flex items-center gap-1.5">
-          <Filter size={13} className="text-green-600" strokeWidth={2.5} />
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            {col === 'CALL START TIME' ? 'Filter by Date' : `Filter by ${col}`}
-          </p>
-        </div>
+      <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
+        <Filter size={16} className="text-emerald-600" />
+        {col === 'CALL START TIME' ? 'FILTER BY DATE' : `FILTER BY ${col}`}
       </div>
-      <ul className="max-h-52 overflow-y-auto py-1">
-        {opts.map(o => {
+      <div className="flex flex-col max-h-[300px] overflow-y-auto font-medium [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {opts.map((o, idx) => {
           const sel = selected.includes(o);
           return (
-            <li
+            <button
               key={o}
+              type="button"
               onMouseDown={e => { e.preventDefault(); toggle(o); }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-gray-50"
+              className={`flex items-center gap-4 px-5 py-3 text-[15px] font-medium transition-colors hover:bg-gray-50 text-[#4B5563] text-left ${idx !== opts.length - 1 ? 'border-b border-[#F3F3F3]' : ''}`}
             >
-              <input
-                type="checkbox"
-                readOnly
-                checked={sel}
-                className="h-4 w-4 rounded border-gray-300 accent-green-600 pointer-events-none"
-              />
-              <span className={sel ? 'font-medium text-[#16A34A]' : 'text-gray-700'}>{o}</span>
-            </li>
+              <span className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[2px] border transition-all duration-200 ease-in-out rounded-sm ${sel ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-[#9CA3AF] bg-white'}`}>
+                <Check size={12} strokeWidth={3} className={`transition-all duration-200 ease-in-out rounded-sm  ${sel ? 'scale-100 opacity-100' : 'scale-50 opacity-0 rounded-sm'}`} />
+              </span>
+              {o}
+            </button>
           );
         })}
-      </ul>
-      <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2">
+      </div>
+      <div className="flex items-center justify-between border-t border-gray-100 p-3 bg-gray-50/50 rounded-b-xl font-bold">
         <button
           type="button"
           onClick={() => { setSelected([]); onApply([]); onClose(); }}
-          className="text-xs font-medium text-gray-400 transition hover:text-red-500"
+          className="text-base font-medium text-gray-500 hover:text-gray-600"
         >
           Clear
         </button>
         <button
           type="button"
           onClick={() => { onApply(selected); onClose(); }}
-          className="rounded-lg bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#10883c]"
+          className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]"
         >
           Apply
         </button>

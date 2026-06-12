@@ -33,22 +33,43 @@ graph TD
 ```
 
 ## Technology Stack
-- Core: Next.js 14, React 18
-- Language: TypeScript (Strict Mode)
+- Core: Next.js 16, React 19
+- Language: TypeScript 6 (Strict Mode)
 - State Management: Redux Toolkit, TanStack Query
 - Styling: Tailwind CSS, class-variance-authority, clsx
 - Mocking: Mock Service Worker (MSW)
 
+## Folder Structure
+The codebase follows a feature-based architecture within the `src/` directory to maximize modularity and maintainability:
+
+- **`app/`**: Next.js App Router routing infrastructure (pages, nested layouts, `loading.tsx`, error boundaries, and API route proxies).
+- **`components/`**: Reusable, generic, and unstyled UI primitive components (buttons, inputs, modals, layout wrappers) used across the application.
+- **`features/`**: The core of the application domain logic. Each feature (e.g., `leads`, `loans`, `new-lead`, `auth`) contains its own:
+  - `components/`: Domain-specific components.
+  - `api/`: API service functions and data fetchers.
+  - `store/`: Redux slices for client state.
+  - `hooks/`: Feature-specific custom React hooks.
+  - `types/`: Domain-specific TypeScript interfaces.
+- **`lib/`**: Shared utilities, pure helper functions, constant definitions, and global configurations (e.g., global API clients, date formatters).
+- **`mocks/`**: Mock Service Worker (MSW) handlers and configurations for local development and testing without a live backend.
+- **`store/`**: Global Redux store configuration, root reducer composition, and middleware setup.
+- **`styles/`**: Global stylesheets, SCSS files, and customized Tailwind CSS configurations (like `main-layout.scss`).
+
 ## Setup and Development
 
-Requires Node.js and a package manager (pnpm recommended).
+Requires Node.js and a package manager (npm or pnpm recommended).
 
-Install dependencies:
+1. Environment Configuration:
+```bash
+cp .env.example .env.local
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-Start the development environment:
+3. Start the development environment:
 ```bash
 npm run dev
 ```

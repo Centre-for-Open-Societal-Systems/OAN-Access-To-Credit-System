@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 
 interface SelectFieldProps {
@@ -18,20 +18,20 @@ export function SelectField({ id, label, placeholder, options, value, onChange, 
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function h(e: MouseEvent) { 
-      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false); 
+    function h(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
     }
     if (isOpen) document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [isOpen]);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 w-full">
       {label && <label htmlFor={id} className="text-sm font-medium text-gray-700">{label} {required && <span className="text-red-500">*</span>}</label>}
       <div ref={ref} className="relative">
-        <input type="text" className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0" value={value} onChange={() => {}} required={required} tabIndex={-1} aria-hidden="true" />
+        <input type="text" className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0" value={value || ''} onChange={() => { }} required={required} tabIndex={-1} aria-hidden="true" />
         <button id={id} type="button" onClick={() => { if (disabled) return; setIsOpen(o => !o); }}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-3 text-sm shadow-sm transition-all focus:outline-none ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default' : error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
+          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-sm transition-all focus:outline-none ${disabled ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default' : error ? 'border-red-400 bg-red-50/40' : isOpen ? 'border-[#4a7c59] bg-white ring-2 ring-[#4a7c59]/15' : 'border-gray-300 bg-white hover:border-[#4a7c59]/50'}`}>
           <span className={disabled ? 'text-gray-500' : value ? 'text-gray-900' : 'text-gray-400'}>{value || placeholder}</span>
           <ChevronDown size={15} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#4a7c59]' : 'text-gray-400'}`} />
         </button>

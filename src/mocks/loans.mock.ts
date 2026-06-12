@@ -61,3 +61,19 @@ export const activityRows = [
   { id: 'APP-8845', applicant: 'Emebet Girma',         type: 'Seed Advance',         status: 'Pending Review',   statusTone: 'info',    updated: 'January 20, 2026 · 01:00 PM',  action: 'View'     },
   { id: 'APP-8840', applicant: 'Tesfaye Gebre',        type: 'Irrigation Pump',      status: 'Action Required',  statusTone: 'danger',  updated: 'January 10, 2026 · 09:30 AM',  action: 'Review'   },
 ];
+
+export const baseFallbackRows = [
+  { id: '#AGL-9823', applicant: 'Adama', phone: '+251 (555) 222-3333', status: 'Approved', type: 'Input loan (seeds, agrochemicals)', loanAmount: 'ETB 1,50,000', updated: 'May 28, 2026 · 09:15 AM' },
+  { id: '#AGL-9822', applicant: 'Bishoftu', phone: '+251 (555) 343-11111', status: 'Processing', type: 'Agricultural term loan', loanAmount: 'ETB 1,45,000', updated: 'May 27, 2026 · 16:30 PM' },
+  { id: '#AGL-9821', applicant: 'Mekelle', phone: '+251 (555) 231-3221', status: 'Processing', type: 'Land loan', loanAmount: 'ETB 1,80,000', updated: 'May 27, 2026 · 14:20 PM' },
+  { id: '#AGL-9820', applicant: 'Dire Dawa', phone: '+251 (555) 231-0198', status: 'Rejected', type: 'Farm equipment loan', loanAmount: 'ETB 1,75,000', updated: 'May 27, 2026 · 11:05 AM' },
+  { id: '#AGL-9819', applicant: 'Harar', phone: '+251 (555) 231-7890', status: 'Approved', type: 'Smallholder farmer direct loan', loanAmount: 'ETB 1,70,000', updated: 'May 27, 2026 · 09:30 AM' },
+];
+
+export const getFallbackMockRows = () => {
+  let fallbackMockRows: any[] = [];
+  for (let i = 0; i < 20; i++) {
+    fallbackMockRows = [...fallbackMockRows, ...baseFallbackRows.map(r => ({ ...r, id: r.id + `-${i}` }))];
+  }
+  return fallbackMockRows;
+};

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { ListChecks, Users, type LucideIcon } from 'lucide-react';
+import { ListChecks, Users, LayoutDashboard, type LucideIcon } from 'lucide-react';
 import Sidebar, { NavSection } from '@/components/Sidebar';
 import TopHeader from '@/components/TopHeader';
 import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
@@ -14,15 +14,25 @@ const navigationSections: NavSection[] = [
   {
     title: 'DASHBOARDS',
     items: [
-      { path: '/leads-dashboard', label: 'Leads Dashboard', icon: Users },
+      { 
+        path: '/leads',
+        activePaths: ['/leads', '/leads/new'],
+        label: 'Leads Dashboard', 
+        icon: Users 
+      },
+      { 
+        path: '/loan-application-dashboard',
+        activePaths: ['/loan-application-dashboard'],
+        label: 'Loans Dashboard', 
+        icon: LayoutDashboard 
+      },
     ],
   },
   {
     title: 'WORKFLOW',
     items: [
       {
-        path: '/loans/new-loan-application',
-        activePaths: ['/loans/new-loan-application'],
+        path: '#', // Dynamically overridden in component
         label: 'New Loan Application',
         icon: ListChecks,
       },
@@ -31,8 +41,9 @@ const navigationSections: NavSection[] = [
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  '/leads-dashboard': 'Leads Dashboard',
+  '/leads': 'Leads Pipeline',
   '/loans/new-loan-application': 'New Loan Application',
+  '/leads/new': 'Create New Lead',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -46,9 +57,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const activeItem = navigationSections
     .flatMap((section) => section.items)
-    .find((item) => item.path === pathname || item.activePaths?.includes(pathname));
+    .find((item) => 
+      item.path === pathname || 
+      item.activePaths?.includes(pathname) || 
+      (item.label === 'New Loan Application' && pathname.endsWith('/new-loan-application'))
+    );
 
-  const pageTitle = activeItem?.label ?? 'Dashboard';
+  const pageTitle = activeItem?.label ?? PAGE_TITLES[pathname] ?? 'Dashboard';
 
 
 
@@ -69,6 +84,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }
 
+  const filteredNavigationSections = navigationSections.map(section => {
+    if (section.title === 'WORKFLOW') {
+      return {
+        ...section,
+        items: section.items.map(item => ({
+          ...item,
+          path: pathname.endsWith('/new-loan-application') ? pathname : item.path
+        }))
+      };
+    }
+    return section;
+  }).filter(section => {
+    if (section.title === 'WORKFLOW') {
+      return pathname.endsWith('/new-loan-application');
+    }
+    return true;
+  });
+
   return (
     <div
       id="dashboard-shell"
@@ -81,7 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onClick={() => setIsMobileOpen(false)}
         />
       )}
-      <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileOpen} sections={navigationSections} />
+      <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileOpen} sections={filteredNavigationSections} />
       <main id="dashboard-main" className="dashboard-main">
         <TopHeader
           isSidebarCollapsed={isSidebarCollapsed}

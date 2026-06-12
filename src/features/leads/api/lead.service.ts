@@ -11,12 +11,23 @@ export const leadService = {
       start_date: params?.start_date || '',
       end_date: params?.end_date || '',
     });
+    if (params?.min_amount !== undefined) {
+      searchParams.set('min_amount', params.min_amount.toString());
+    }
+    if (params?.max_amount !== undefined) {
+      searchParams.set('max_amount', params.max_amount.toString());
+    }
+    if (params?.loan_type !== undefined) {
+      searchParams.set('loan_type', params.loan_type);
+    }
 
 
 
-    const response = await fetch(
-      `/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`
-    );
+    const [response, schedulesRes] = await Promise.all([
+      fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`),
+      fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules?start=0&page_length=2000`)
+    ]);
+
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
         throw new Error('UNAUTHORIZED');
@@ -24,24 +35,61 @@ export const leadService = {
       throw new Error('Failed to fetch leads');
     }
     const data = await response.json();
-    
+
+    let schedulesData: any = null;
+    try {
+      if (schedulesRes.ok) {
+        schedulesData = await schedulesRes.json();
+      }
+    } catch (e) {
+      console.error('Failed to parse visit schedules', e);
+    }
+
+    const rawSchedules = schedulesData?.message?.results || schedulesData?.results || [];
+    const sortedSchedules = [...rawSchedules].sort((a: any, b: any) => {
+      const dateA = a.creation || '';
+      const dateB = b.creation || '';
+      return dateB.localeCompare(dateA);
+    });
+
+    const scheduleMap = new Map<string, any>();
+    for (const s of sortedSchedules) {
+      if (s.lead) {
+        const key = s.lead.replace('#', '');
+        if (!scheduleMap.has(key)) {
+          scheduleMap.set(key, s);
+        }
+      }
+    }
+
     const rawLeads = data.message?.results || [];
     const totalCount = data.message?.total_count || 0;
 
-    const results = rawLeads.map((item: any): Lead => ({
-      id: item.name,
-      name: item.name,
-      phone: item.phone_number || '',
-      status: item.status || 'New',
-      location: item.location || 'Unknown',
-      cropFocus: item.crop_focus || 'Unknown',
-      farmSize: item.farm_size || 'Unknown',
-      source: item.lead_source || 'Unknown',
-      assignedTo: item.assigned_to,
-      owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
-      callStartTime: item.creation,
-      external_id: item.external_id,
-    }));
+    const results = rawLeads.map((item: any): Lead => {
+      const leadId = item.name;
+      const cleanId = leadId ? leadId.replace('#', '') : '';
+      const latestSchedule = scheduleMap.get(cleanId);
+
+      return {
+        id: item.name,
+        name: item.farmer_name || '',
+        phone: item.phone_number || '',
+        status: latestSchedule && latestSchedule.status === 'Missed' ? 'Active' : (item.status || ''),
+        location: item.location || '',
+        loanType: item.loan_type || '',
+        loanAmount: item.loan_amount || '',
+        source: item.lead_source || '',
+        assignedTo: item.assigned_to,
+        owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
+        creation: item.creation || '',
+        external_id: item.external_id,
+        visitDate: latestSchedule ? `${latestSchedule.visit_date} ${latestSchedule.visit_time || ''}`.trim() : (item.visitDate || null),
+        scheduleStatus: latestSchedule ? latestSchedule.status : null,
+        farmerId: item.farmer_id || null,
+        consentDate: item.consent_date || null,
+        consentRequestId: item.consentRequestId || null,
+      };
+    });
 
     return { results, totalCount };
   },
@@ -64,5 +112,34 @@ export const leadService = {
       throw new Error('Failed to fetch lead');
     }
     return response.json();
+  },
+
+  async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<any> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id, status, reason }),
+    });
+    if (!response.ok) throw new Error('Failed to update lead status');
+    const data = await response.json();
+    return data.message;
+  },
+
+  async getAssignableUsers(search_query: string = ''): Promise<any> {
+    const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(search_query)}`);
+    if (!response.ok) throw new Error('Failed to fetch assignable users');
+    const data = await response.json();
+    return data.message;
+  },
+
+  async assignLead(lead_id: string, assigned_to: string): Promise<any> {
+    const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.assign_lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id, assigned_to }),
+    });
+    if (!response.ok) throw new Error('Failed to assign lead');
+    const data = await response.json();
+    return data.message;
   },
 };
