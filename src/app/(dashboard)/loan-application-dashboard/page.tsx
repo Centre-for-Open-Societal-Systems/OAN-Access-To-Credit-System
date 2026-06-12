@@ -9,7 +9,7 @@ import LoanDashboardHeader from '@/features/loans/components/LoanDashboardHeader
 import LoanToolbar from '@/features/loans/components/LoanToolbar';
 import LoanTable, { LoanTableRow } from '@/features/loans/components/LoanTable';
 import LoanPagination from '@/features/loans/components/LoanPagination';
-import LoanApplicationModal from '@/features/loans/components/LoanApplicationModal';
+import LoanApplicationModal from '@/features/loans/components/modals/LoanApplicationModal';
 import { Users, FileText, Award, XCircle } from 'lucide-react';
 
 const METRIC_CONFIG = [

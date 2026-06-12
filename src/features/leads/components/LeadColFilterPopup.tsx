@@ -20,17 +20,7 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
-    if (anchorRef?.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      const th = anchorRef.current.closest('th');
-      const thRect = th ? th.getBoundingClientRect() : rect;
-      const popupWidth = 224;
-      const preferredLeft = thRect.left + 20;
-      const left = preferredLeft + popupWidth > window.innerWidth
-        ? Math.max(4, window.innerWidth - popupWidth - 8)
-        : preferredLeft;
-      setPos({ top: rect.bottom + 6, left });
-    }
+    // Positioning is now handled by absolute positioning relative to the column header.
   }, [anchorRef]);
 
   useEffect(() => {
@@ -45,20 +35,28 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
   }, [anchorRef, onClose]);
 
 
-  const { loanTypesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+  const STATUS_OPTIONS = ['Active', 'Verified', 'Processed', 'Rejected', 'Dormant'];
+  const LOAN_TYPE_OPTIONS = [
+    'Input loan (seeds, agrochemicals)',
+    'Agricultural term loan',
+    'Smallholder short-term loan',
+    'Land loan',
+    'Farm equipment loan',
+    'Smallholder farmer direct loan',
+  ];
 
   const opts = col === 'STATUS'
-    ? leadStatusesOptions.filter(o => o !== 'All')
+    ? STATUS_OPTIONS
     : col === 'LOAN TYPE'
-      ? loanTypesOptions
+      ? LOAN_TYPE_OPTIONS
       : [];
   const toggle = (v: string) => setSelected(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
 
-  return createPortal(
+  return (
     <div
       ref={popupRef}
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-      className="flex w-[240px] flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900"
+      className="loan-filter-popup absolute top-full left-0 mt-2 z-[99] flex min-w-[240px] w-max flex-col rounded-xl border border-gray-200 bg-white shadow-xl normal-case tracking-normal text-gray-900"
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 text-sm font-bold text-gray-500 uppercase tracking-wide">
         <Filter size={16} className="text-emerald-600" />
@@ -71,13 +69,13 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
             <button
               key={o}
               type="button"
-              onMouseDown={e => { e.preventDefault(); toggle(o); }}
+              onClick={e => { e.stopPropagation(); toggle(o); }}
               className={`flex items-center gap-4 px-5 py-3 text-[15px] font-medium transition-colors hover:bg-gray-50 text-[#4B5563] text-left ${idx !== opts.length - 1 ? 'border-b border-[#F3F3F3]' : ''}`}
             >
               <span className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[2px] border transition-all duration-200 ease-in-out rounded-sm ${sel ? 'border-[#16A34A] bg-[#16A34A] text-white' : 'border-[#9CA3AF] bg-white'}`}>
                 <Check size={12} strokeWidth={3} className={`transition-all duration-200 ease-in-out rounded-sm  ${sel ? 'scale-100 opacity-100' : 'scale-50 opacity-0 rounded-sm'}`} />
               </span>
-              {o}
+              <span className="flex-1 text-[15px] whitespace-normal">{o}</span>
             </button>
           );
         })}
@@ -86,19 +84,18 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
         <button
           type="button"
           onClick={() => { setSelected([]); onApply([]); onClose(); }}
-          className="text-base font-medium text-gray-500 hover:text-gray-600"
+          className="text-[17px] font-bold text-gray-500 hover:text-gray-600"
         >
           Clear
         </button>
         <button
           type="button"
           onClick={() => { onApply(selected); onClose(); }}
-          className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#10883c]"
+          className="rounded-lg bg-[#16A34A] px-5 py-2.5 text-[17px] font-bold text-white shadow-sm transition hover:bg-[#10883c]"
         >
           Apply
         </button>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
