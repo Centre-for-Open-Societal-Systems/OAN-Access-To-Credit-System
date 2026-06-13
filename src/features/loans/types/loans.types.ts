@@ -1,4 +1,6 @@
 export interface LoanFormData {
+  // NOTE: Index signature [key: string]: any was removed to enforce strict type safety.
+  // All fields used across the codebase must be explicitly declared here.
   fullName?: string;
   region?: string;
   mobilePhone?: string;
@@ -35,7 +37,6 @@ export interface LoanFormData {
   purposeOfLoan?: string;
   loanPurpose?: string;
   detailedUseOfFunds?: string;
-  [key: string]: any;
 }
 
 export interface Loan {

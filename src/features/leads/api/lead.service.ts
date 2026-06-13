@@ -23,6 +23,9 @@ export const leadService = {
 
 
 
+    // TODO: Temporary client-side join. We are fetching up to 2000 visit schedules because 
+    // the backend get_leads API doesn't currently include the latest visit schedule details.
+    // This should be removed once the backend includes latest_visit_schedule in the lead response.
     const [response, schedulesRes] = await Promise.all([
       fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`),
       fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules?start=0&page_length=2000`)
@@ -52,6 +55,9 @@ export const leadService = {
       return dateB.localeCompare(dateA);
     });
 
+    // TODO: This scheduleMap lookup and join is temporary. Once the backend
+    // get_leads API returns latest_visit_schedule details directly, we will
+    // remove this map, the schedules sorting logic, and the schedulesRes fetch call.
     const scheduleMap = new Map<string, any>();
     for (const s of sortedSchedules) {
       if (s.lead) {
@@ -106,13 +112,7 @@ export const leadService = {
     return data.message;
   },
 
-  async getLead(id: string): Promise<Lead> {
-    const response = await fetch(`/api/leads/${id}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch lead');
-    }
-    return response.json();
-  },
+
 
   async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<any> {
     const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', {

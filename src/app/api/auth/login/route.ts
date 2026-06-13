@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     // Use the base URL from .env
     const baseUrl = process.env.API_BASE_URL;
-    
+
     if (!baseUrl) {
       return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
     }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     const nextResponse = NextResponse.json({
       success: true,
       message: 'Logged in successfully',
-      user: data, // Return the user data to the frontend, excluding the token
+      user: messageObj?.user || {},
     });
 
     if (token) {

@@ -4,31 +4,40 @@ import leadReducer from '../features/leads/store/leadSlice';
 import loanFormReducer from '../features/new-loan/store/newLoanFormSlice';
 import loanDashboardReducer from '../features/loans/store/loanDashboardSlice';
 import newLeadReducer from '../features/new-lead/store/newLeadSlice';
+import farmerReducer from '../features/new-lead/store/farmerSlice';
+import consentReducer from '../features/new-lead/store/consentSlice';
+import visitReducer from '../features/new-lead/store/visitSlice';
+import assignmentReducer from '../features/new-lead/store/assignmentSlice';
 
 const AUTH_ACTIONS = ['auth/login/fulfilled', 'auth/logout', 'auth/hydrate'];
 
 const storageMiddleware: Middleware = (store) => (next) => (action: any) => {
   const result = next(action);
   if (typeof window !== 'undefined') {
-    // Handle Auth Persistence
+    // Handle Auth Persistence (stored in sessionStorage to avoid localStorage PII)
     if (AUTH_ACTIONS.includes(action.type)) {
       const user = store.getState().auth.user;
       if (user) {
-        localStorage.setItem('auth_user', JSON.stringify(user));
+        sessionStorage.setItem('auth_user', JSON.stringify(user));
       } else {
-        localStorage.removeItem('auth_user');
+        sessionStorage.removeItem('auth_user');
       }
     }
     
-    // Handle Loan Form Persistence
-    if (action.type.startsWith('loanForm/')) {
+    // Handle Loan Form Persistence (stored in sessionStorage to avoid localStorage PII)
+    if (action.type === 'loanForm/resetForm') {
+      sessionStorage.removeItem('loan_form_state');
+    } else if (action.type.startsWith('loanForm/')) {
       const loanState = store.getState().loanForm;
-      localStorage.setItem('loan_form_state', JSON.stringify(loanState));
+      sessionStorage.setItem('loan_form_state', JSON.stringify(loanState));
     }
   }
   return result;
 };
 
+// Centralized session expiration middleware.
+// Intercepts only UNAUTHORIZED (401) errors to trigger a global logout redirect,
+// avoiding accidental logouts during transient network issues or generic server errors.
 const unauthenticatedMiddleware: Middleware = (api) => (next) => (action: any) => {
   if (isRejectedWithValue(action) || action.type.endsWith('/rejected')) {
     if (
@@ -38,9 +47,11 @@ const unauthenticatedMiddleware: Middleware = (api) => (next) => (action: any) =
     ) {
       api.dispatch(logout());
       if (typeof window !== 'undefined') {
-        // Clear HttpOnly cookie on the server before redirecting
+        // Clear HttpOnly cookie on the server before redirecting.
+        // We use a fire-and-forget .catch(() => {}) block to guarantee the client-side session
+        // is cleared and redirect occurs even if the server is offline or unreachable.
         fetch('/api/auth/logout', { method: 'POST' })
-          .catch(() => {}) // Ignore errors if server is unreachable
+          .catch(() => {}) 
           .finally(() => {
             window.location.href = '/login';
           });
@@ -55,6 +66,10 @@ export const store = configureStore({
     auth: authReducer,
     leads: leadReducer,
     newLead: newLeadReducer,
+    farmer: farmerReducer,
+    consent: consentReducer,
+    visit: visitReducer,
+    assignment: assignmentReducer,
     loanForm: loanFormReducer,
     loanDashboard: loanDashboardReducer,
   },

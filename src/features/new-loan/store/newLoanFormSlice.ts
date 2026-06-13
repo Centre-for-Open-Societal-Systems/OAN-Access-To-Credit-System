@@ -1,11 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loanService } from '@/features/loans/api/loan.service';
 import { newLeadService } from '@/features/new-lead/api/newLead.service';
+import { updateLeadStatusThunk } from '../../new-lead/store/newLeadSlice';
 import type { RootState } from '../../../store';
 
 interface LoanFormState {
   currentStep: number;
   applicationId: string | null;
+  // NOTE: consentRequestData, uploadedDocuments, formData, and supportingDocs are typed as any/Record<string, any>
+  // because the loan application fields and document lists are dynamic and determined at runtime.
   consentRequestData: any | null;
   otpVerified: boolean;
   uploadedDocuments: Record<string, any>;
@@ -27,7 +30,7 @@ interface LoanFormState {
 
 const loadInitialState = (): LoanFormState => {
   if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('loan_form_state');
+    const saved = sessionStorage.getItem('loan_form_state');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -77,6 +80,40 @@ export const createLoanApplicationAPI = createAsyncThunk(
         });
       }
       return rejectWithValue(err.message || 'Failed to create application');
+    }
+  }
+);
+
+export const createAndVerifyLoanApplicationThunk = createAsyncThunk<
+  string,
+  string,
+  { state: RootState }
+>(
+  'loanForm/createAndVerifyLoanApplication',
+  async (leadId: string, { dispatch, rejectWithValue }) => {
+    try {
+      const appId = await dispatch(createLoanApplicationAPI(leadId)).unwrap();
+      await dispatch(updateLeadStatusThunk({
+        leadId,
+        status: 'Verified',
+        reason: 'Loan application created.'
+      })).unwrap();
+      
+      const cleanLeadId = leadId.replace(/^#/, '');
+      const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
+      const results = loansResponse?.data || [];
+      let foundId = appId;
+      if (results.length > 0) {
+        const potentialId = results[0].application_id;
+        if (potentialId) {
+          foundId = potentialId;
+        }
+      }
+      
+      dispatch(setApplicationId(foundId));
+      return foundId;
+    } catch (err: any) {
+      return rejectWithValue(err);
     }
   }
 );
@@ -210,38 +247,30 @@ export const newLoanFormSlice = createSlice({
   reducers: {
     setFormData: (state, action: PayloadAction<Record<string, any>>) => {
       state.formData = { ...state.formData, ...action.payload };
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     },
     setApplicationId: (state, action: PayloadAction<string>) => {
       state.applicationId = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     },
     setStep: (state, action: PayloadAction<number>) => {
       state.currentStep = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     },
     nextStep: (state) => {
       if (state.currentStep < 3) {
         state.currentStep += 1;
-        if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
       }
     },
     prevStep: (state) => {
       if (state.currentStep > 1) {
         state.currentStep -= 1;
-        if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
       }
     },
     markStepLoaded: (state, action: PayloadAction<number>) => {
       state.loadedSteps[action.payload] = true;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     },
     setSupportingDocs: (state, action: PayloadAction<any[]>) => {
       state.supportingDocs = action.payload;
-      if (typeof window !== 'undefined') localStorage.setItem('loan_form_state', JSON.stringify(state));
     },
     resetForm: () => {
-      if (typeof window !== 'undefined') localStorage.removeItem('loan_form_state');
       return { 
         currentStep: 1,
         applicationId: null,

@@ -18,7 +18,7 @@ export interface GetLoansParams {
 import { fetchApi } from '@/lib/api/fetchApi';
 
 export const loanService = {
-  async getLoans(params?: GetLoansParams): Promise<any> {
+  async getLoans(params?: GetLoansParams, options?: RequestInit): Promise<any> {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -29,7 +29,7 @@ export const loanService = {
     }
 
     const path = `oan_a2c.api.v1.loan_applications.get_all_loans?${searchParams.toString()}`;
-    return fetchApi(path);
+    return fetchApi(path, options);
   },
 
   async getLoanSummary(): Promise<any> {
@@ -40,6 +40,8 @@ export const loanService = {
     return fetchApi(`oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${file_id}&view=${view}`);
   },
 
+  // NOTE: Retaining Promise<any> return type because the backend profile output schema
+  // is dynamic and subject to future changes.
   async getFullProfile(application_id: string): Promise<any> {
     return fetchApi(`oan_a2c.api.v1.loan_applications.get_full_profile?application_id=${application_id}`);
   },

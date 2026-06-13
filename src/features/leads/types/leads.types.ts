@@ -20,21 +20,31 @@ export interface GetLeadsResponse {
   totalCount: number;
 }
 
+export type LeadStatus = 'Active' | 'Verified' | 'Processed' | 'Granted' | 'Rejected' | 'Dormant';
+
 // the lead object in the output of Get Leads API 
 export interface Lead {
+  // NOTE: Index signature [key: string]: any was removed to enforce strict type checking.
+  // All dynamically accessed properties are explicitly declared below.
   id: string;
   name: string;
   phone: string;
-  status: 'New' | 'Attempted' | 'Connected' | 'Follow Up' | 'Application Started' | 'Application Submitted' | 'Not Interested' | 'Invalid' | string;
+  status: LeadStatus;
   location: string;
   loanType: string;
   loanAmount: string;
   source: string;
   assignedTo?: string;
-  owner?: 'me' | 'unassigned' | 'other' | string;
+  owner?: string;
   creation: string;
   farmerPhone?: string;
-  [key: string]: any;
+  visitDate?: string | null;
+  scheduleStatus?: string;
+  farmerId?: string;
+  consentDate?: string;
+  consentRequestId?: string | null;
+  external_id?: string | null;
+  actionType?: string;
 }
 // small trend under summary in Leads
 export interface KpiStat {

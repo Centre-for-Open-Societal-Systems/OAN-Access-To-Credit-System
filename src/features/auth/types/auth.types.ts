@@ -1,10 +1,15 @@
+// NOTE: Optional fields (?:) are avoided here to eliminate type-level ambiguity
+// between unloaded/partial profiles and genuinely empty values.
+// Nullable fields are explicitly typed as T | null.
 export interface User {
-  username?: string;
+  username: string;
   officerName: string;
-  mobileNo?: string;
-  userType?: string;
-  roles?: string[];
+  roles: string[];
+
+  mobileNo: string | null;
+  userType: string | null;
 }
+
 
 export type AuthStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 

@@ -324,7 +324,20 @@ export function Step1ConsentDocs() {
               </div>
               <div className="flex-1 bg-gray-100 p-6 overflow-auto flex items-center justify-center min-h-[500px]">
                 {supportPreviewUrl && isImage ? (
-                  <img src={supportPreviewUrl} alt="Document Preview" className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]" />
+                  <>
+                    {/* 
+                      Using native <img> instead of next/image here because the source is a local 
+                      object URL (blob:) created from file upload. Next.js image optimization is 
+                      impossible/irrelevant for temporary client-side blobs, and native <img> 
+                      prevents CLS risk without forcing arbitrary fixed width/height ratios.
+                    */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={supportPreviewUrl}
+                      alt="Document Preview"
+                      className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]"
+                    />
+                  </>
                 ) : supportPreviewUrl && isPdf ? (
                   <iframe src={supportPreviewUrl} className="w-full h-[70vh] border border-gray-200 rounded shadow-sm bg-white" title="Document Preview" />
                 ) : (
@@ -368,7 +381,20 @@ export function Step1ConsentDocs() {
             </div>
             <div className="flex-1 bg-gray-100 p-6 overflow-auto flex items-center justify-center min-h-[500px]">
               {previewUrl && consentFile.type.startsWith('image/') ? (
-                <img src={previewUrl} alt="Document Preview" className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]" />
+                <>
+                  {/* 
+                    Using native <img> instead of next/image here because the source is a local 
+                    object URL (blob:) created from file upload. Next.js image optimization is 
+                    impossible/irrelevant for temporary client-side blobs, and native <img> 
+                    prevents CLS risk without forcing arbitrary fixed width/height ratios.
+                  */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewUrl}
+                    alt="Document Preview"
+                    className="max-w-full rounded shadow-sm border border-gray-200 object-contain max-h-[70vh]"
+                  />
+                </>
               ) : previewUrl && consentFile.type === 'application/pdf' ? (
                 <iframe src={previewUrl} className="w-full h-[70vh] border border-gray-200 rounded shadow-sm bg-white" title="Document Preview" />
               ) : (
