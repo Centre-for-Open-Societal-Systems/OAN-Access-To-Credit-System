@@ -1,0 +1,141 @@
+
+> a2c-react-project@0.0.0 typecheck /Users/arnav/Code/OAN-Access-To-Credit-System
+> tsc --noEmit
+
+src/features/leads/components/LeadAdvancedFilters.tsx(127,12): error TS2532: Object is possibly 'undefined'.
+src/features/leads/components/LeadAdvancedFilters.tsx(249,28): error TS2532: Object is possibly 'undefined'.
+src/features/leads/components/LeadAdvancedFilters.tsx(470,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/features/leads/components/LeadAdvancedFilters.tsx(471,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/features/leads/components/LeadAdvancedFilters.tsx(515,28): error TS18048: 'activeRange' is possibly 'undefined'.
+src/features/leads/components/LeadAdvancedFilters.tsx(516,28): error TS18048: 'activeRange' is possibly 'undefined'.
+src/features/leads/components/LeadDashboard.tsx(46,10): error TS2375: Type '{ leadId: string; actionType: string; farmerName: string | undefined; location: string | undefined; phoneNumber: string | undefined; status: string; actions: Element; }' is not assignable to type 'LeadContextBannerProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'farmerName' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/components/LeadDashboard.tsx(70,14): error TS2375: Type '{ isScheduled: boolean; visitDate: string | undefined; location: string | undefined; }' is not assignable to type 'ScheduleVisitCardProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'visitDate' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/components/LeadTable.tsx(76,19): error TS2532: Object is possibly 'undefined'.
+src/features/leads/components/LeadTable.tsx(76,38): error TS2532: Object is possibly 'undefined'.
+src/features/leads/components/LeadTable.tsx(77,22): error TS2532: Object is possibly 'undefined'.
+src/features/leads/components/LeadTable.tsx(77,44): error TS2532: Object is possibly 'undefined'.
+src/features/leads/constants/leads.constants.ts(77,20): error TS2375: Type '{ start: string | undefined; end: string | undefined; }' is not assignable to type '{ start?: string; end?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'start' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/constants/leads.constants.ts(78,26): error TS2375: Type '{ start: string | undefined; }' is not assignable to type '{ start?: string; end?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'start' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/constants/leads.constants.ts(79,27): error TS2375: Type '{ start: string | undefined; }' is not assignable to type '{ start?: string; end?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'start' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/constants/leads.constants.ts(80,25): error TS2375: Type '{ start: string | undefined; }' is not assignable to type '{ start?: string; end?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'start' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/leads/store/leadSlice.ts(173,15): error TS2412: Type 'undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+src/features/loans/components/LoanAdvancedFilters.tsx(113,12): error TS2532: Object is possibly 'undefined'.
+src/features/loans/components/LoanAdvancedFilters.tsx(123,16): error TS2532: Object is possibly 'undefined'.
+src/features/loans/components/LoanAdvancedFilters.tsx(124,16): error TS2532: Object is possibly 'undefined'.
+src/features/loans/components/LoanAdvancedFilters.tsx(255,28): error TS2532: Object is possibly 'undefined'.
+src/features/loans/components/LoanAdvancedFilters.tsx(378,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/features/loans/components/LoanAdvancedFilters.tsx(379,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/features/new-lead/components/modals/CreditInformationModal.tsx(30,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/features/new-lead/store/assignmentSlice.ts(66,11): error TS2375: Type '{ agentId: any; assigneeName: any; region: any; date: undefined; }' is not assignable to type 'WritableNonArrayDraft<Assignment>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'date' are incompatible.
+    Type 'undefined' is not assignable to type 'string'.
+src/features/new-lead/store/consentSlice.ts(28,69): error TS2379: Argument of type '{ farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName: string | undefined; leadId: string | undefined; }' is not assignable to parameter of type '{ farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName?: string; leadId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'partnerName' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/new-lead/store/newLeadSlice.ts(208,56): error TS2379: Argument of type '{ phone_number: string; first_name: string; last_name: string; email: string; lead_source: string; external_id: string | undefined; }' is not assignable to parameter of type 'CreateLeadPayload' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'external_id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/new-lead/store/visitSlice.ts(39,39): error TS18048: 'timePart' is possibly 'undefined'.
+src/features/new-lead/store/visitSlice.ts(40,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-lead/store/visitSlice.ts(43,15): error TS18048: 'modifier' is possibly 'undefined'.
+src/features/new-lead/store/visitSlice.ts(62,59): error TS2379: Argument of type '{ lead_id: string; visit_date: string; visit_time: string; region: string | undefined; zone: string | undefined; woreda: string | undefined; kebele: string | undefined; meeting_location: string | undefined; notes: string | undefined; }' is not assignable to parameter of type '{ lead_id: string; visit_date: string; visit_time: string; region?: string; zone?: string; woreda?: string; kebele?: string; meeting_location?: string; notes?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'region' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/NewLoanOrchestrator.tsx(103,66): error TS18048: 'meta' is possibly 'undefined'.
+src/features/new-loan/components/NewLoanOrchestrator.tsx(109,64): error TS18048: 'meta' is possibly 'undefined'.
+src/features/new-loan/components/NewLoanOrchestrator.tsx(111,51): error TS18048: 'meta' is possibly 'undefined'.
+src/features/new-loan/components/NewLoanOrchestrator.tsx(113,64): error TS18048: 'meta' is possibly 'undefined'.
+src/features/new-loan/components/Step1ConsentDocs.tsx(269,105): error TS2345: Argument of type 'File | undefined' is not assignable to parameter of type 'SetStateAction<File | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<File | null>'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(119,41): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(120,40): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(121,43): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(123,44): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(124,39): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(125,37): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(127,37): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(128,38): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(129,40): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(131,39): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(139,48): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(140,38): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(141,43): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(143,43): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(144,47): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(152,45): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(153,45): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(154,49): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(156,54): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(157,52): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(158,70): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(160,47): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(161,46): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(169,63): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(170,66): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(171,60): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(173,47): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(174,50): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(182,55): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(185,13): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(189,56): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/new-loan/components/Step2FarmerDetails.tsx(190,46): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+ ELIFECYCLE  Command failed with exit code 1.

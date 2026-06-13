@@ -13,7 +13,7 @@ const STEP_META = [
   { title: 'Consent & Supporting Documents', subtitle: "Obtain farmer's consent and upload required documents" },
   { title: 'Farmer Details', subtitle: "Capture information about the requested loan and farming activities." },
   { title: 'Review Application', subtitle: "Please review all information before final submission. Resolve any warnings or missing info." },
-];
+] as const;
 
 export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
   const [isMounted, setIsMounted] = useState(false);
@@ -21,7 +21,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
   const { applicationId, loadingStates } = useSelector(selectLoanFormState);
   const dispatch = useAppDispatch();
   // For step 4, we keep the Step 3 metadata
-  const meta = STEP_META[currentStep > 3 ? 2 : currentStep - 1] || STEP_META[0];
+  const meta = STEP_META[currentStep > 3 ? 2 : currentStep - 1] || { title: '', subtitle: '' };
 
   const [isSaving, setIsSaving] = useState(false);
 

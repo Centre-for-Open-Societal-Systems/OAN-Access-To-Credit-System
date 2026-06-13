@@ -26,7 +26,7 @@ const TABLE_COLS: ColumnDef[] = [
   { id: 'ACTIONS', label: 'ACTIONS', align: 'center' }
 ];
 
-const CELL_CLASS = "w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle";
+const CELL_CLASS = "w-table-cell min-w-table-cell max-w-table-cell px-5 py-3 align-middle";
 
 interface LeadTableProps {
   visible: Lead[];
@@ -73,8 +73,9 @@ const formatCurrency = (amt?: number | string): string => {
   if (isNaN(num)) return amt.toString();
 
   const parts = num.toString().split('.');
-  let lastThree = parts[0].substring(parts[0].length - 3);
-  const otherParts = parts[0].substring(0, parts[0].length - 3);
+  const firstPart = parts[0] ?? '';
+  let lastThree = firstPart.substring(firstPart.length - 3);
+  const otherParts = firstPart.substring(0, firstPart.length - 3);
   if (otherParts !== '') {
     lastThree = ',' + lastThree;
   }
@@ -114,7 +115,7 @@ function LeadTable({
 
   const renderCellContent = (colId: string, l: Lead) => {
     switch (colId) {
-      case 'LEAD ID':
+      case 'LEAD ID': {
         const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
         return (
           <div className="flex flex-col items-start justify-start h-full">
@@ -128,6 +129,7 @@ function LeadTable({
             )}
           </div>
         );
+      }
       case 'PHONE NUMBER':
         return (
           <div className="flex items-center justify-center gap-2">

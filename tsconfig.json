@@ -5,8 +5,8 @@
       "dom.iterable",
       "esnext"
     ],
-    // "noUncheckedIndexedAccess": true, // TODO: This will be later taken care of
-    //"exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true, // TODO: This will be later taken care of
+    "exactOptionalPropertyTypes": true,
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,

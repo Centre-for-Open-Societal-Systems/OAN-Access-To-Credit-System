@@ -21,7 +21,6 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
   const targetUrl = `${baseUrl}/${targetPath}${search}`;
 
   const authToken = request.cookies.get('auth_token')?.value;
-  console.log(`[PROXY] targetUrl: ${targetUrl}, method: ${request.method}, hasToken: ${!!authToken}`);
 
   // Prepare headers 
   const headers = new Headers();
@@ -42,10 +41,14 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
     const fetchOptions: RequestInit = {
       method: request.method,
       headers,
-      // For Next.js 13+ route handlers, we can stream the request body directly if it's not a GET/HEAD
-      body: ['GET', 'HEAD'].includes(request.method) ? undefined : await request.blob(),
       redirect: 'manual',
     };
+
+    // Only add body if it's not a GET/HEAD request
+    if (!['GET', 'HEAD'].includes(request.method)) {
+      fetchOptions.body = await request.blob();
+    }
+
 
     // Forward the request to the external backend
     const response = await fetch(targetUrl, fetchOptions);

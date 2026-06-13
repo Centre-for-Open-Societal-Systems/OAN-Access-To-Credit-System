@@ -167,11 +167,9 @@ const leadSlice = createSlice({
         (action) => action.type === 'newLead/updateVisitScheduleStatus/fulfilled',
         (state, action: any) => {
           const { leadId, status } = action.payload.payload;
-          if (status === 'Completed') {
-            const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
-            if (lead) {
-              lead.visitDate = undefined;
-            }
+          const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+          if (lead) {
+            lead.status = status;
           }
         }
       )

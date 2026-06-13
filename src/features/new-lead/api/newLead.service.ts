@@ -1,5 +1,20 @@
 import { fetchApi } from '@/lib/api/fetchApi';
 
+export interface CreateLeadPayload {
+  phone_number: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  lead_source: string;
+  external_id?: string;
+}
+
+export interface CreateLeadResponse {
+  status: string;
+  lead_id: string;
+  message: string;
+}
+
 export const newLeadService = {
   async simulateWebhook(lead_id: string): Promise<any> {
     return fetchApi('oan_a2c.api.dev.simulate_webhook', {
@@ -102,12 +117,12 @@ export const newLeadService = {
     lead_id: string;
     visit_date: string;
     visit_time: string;
-    region?: string;
-    zone?: string;
-    woreda?: string;
-    kebele?: string;
-    meeting_location?: string;
-    notes?: string;
+    region: string;
+    zone: string;
+    woreda: string;
+    kebele: string;
+    meeting_location: string;
+    notes: string;
   }): Promise<any> {
     return fetchApi('oan_a2c.api.v1.leads.schedule_visit', {
       method: 'POST',
@@ -157,17 +172,12 @@ export const newLeadService = {
   },
 
   // API to create a new lead
-  async createLead(data: {
-    phone_number: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    lead_source: string;
-    external_id?: string;
-  }): Promise<any> {
-    return new Promise((resolve) => setTimeout(() => resolve({
-      message: { lead_id: `#LD-${Math.floor(Math.random() * 10000)}` }
-    }), 1000));
+  async createLead(data: CreateLeadPayload): Promise<CreateLeadResponse> {
+    const response = await fetchApi('oan_a2c.api.v1.leads.create_lead', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response as unknown as CreateLeadResponse;
   },
 
   // Fetch lead metadata (statuses, sources)

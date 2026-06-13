@@ -7,9 +7,9 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useParams, useRouter } from 'next/navigation';
 
 interface ScheduleVisitCardProps {
-  isScheduled?: boolean;
-  visitDate?: string;
-  location?: string;
+  isScheduled?: boolean | undefined;
+  visitDate?: string | undefined;
+  location?: string | undefined;
 }
 
 export function ScheduleVisitCard({

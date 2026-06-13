@@ -7,7 +7,29 @@ export const leadStatusOptions = [
   { value: 'Rejected', label: 'Rejected' },
 ];
 
-export const leadRows = [
+export interface LeadRow {
+  id: string;
+  consentRequestId: string | null;
+  farmerName: string;
+  farmerId: string;
+  consentDate: string;
+  location: string;
+  phone: string;
+  calledPhone: string;
+  source: string;
+  status: string;
+  loanType?: string;
+  loanAmount?: string;
+  callStartTime: string;
+  callDuration: string;
+  applicationSubmitted: boolean;
+  actionType: string;
+  actionNote: string | null;
+  visitDate: string | null;
+  owner: string;
+}
+
+export const leadRows: LeadRow[] = [
   { id: '#LD-9823', consentRequestId: null, farmerName: 'John Doe', farmerId: 'FID-6766782', consentDate: 'May 18, 2026', location: 'Adama', phone: '+251 (555) 222-3333', calledPhone: '', source: '', status: 'Verified', loanType: 'Tractor Loan', loanAmount: '150000', callStartTime: 'May 28, 2026, 09:15 AM', callDuration: '', applicationSubmitted: false, actionType: 'visit-scheduled', actionNote: '', visitDate: '', owner: 'other' },
   { id: '#LD-9825', consentRequestId: 'CRQ-9825', farmerName: 'Abebe Kebede', farmerId: 'FID-1163956', consentDate: 'May 14, 2026', location: 'Jimma Zone, Kebele Office', phone: '+251 (555) 123-4567', calledPhone: '', source: '', status: 'Verified', loanType: 'Crop Loan', loanAmount: '200000', callStartTime: 'May 28, 2026, 10:42 AM', callDuration: '3m 15s', applicationSubmitted: false, actionType: 'view', actionNote: 'Initial assessment scheduled.', visitDate: 'May 26, 2026, 10:00 AM', owner: 'me' },
   { id: '#LD-9822', consentRequestId: 'CRQ-9822', farmerName: 'Jane Smith', farmerId: 'FID-9740434', consentDate: 'May 23, 2026', location: 'Bishoftu', phone: '+251 (555) 343-11111', calledPhone: '', source: '', status: 'Processed', loanType: 'Crop Loan', loanAmount: '145000', callStartTime: 'May 27, 2026, 16:30 PM', callDuration: '', applicationSubmitted: false, actionType: 'view', actionNote: '', visitDate: null, owner: 'me' },

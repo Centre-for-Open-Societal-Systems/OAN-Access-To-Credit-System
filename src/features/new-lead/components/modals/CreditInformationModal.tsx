@@ -14,7 +14,7 @@ interface CreditInformationModalProps {
 export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInformationModalProps) {
   const { loanTypesOptions } = useAppSelector(selectNewLeadState);
 
-  const [loanType, setLoanType] = useState(loanTypesOptions[0] || '');
+  const [loanType, setLoanType] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
   const [purposeMessage, setPurposeMessage] = useState('');
 
@@ -23,13 +23,6 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Update default value if options change
-  useEffect(() => {
-    if (loanTypesOptions.length > 0 && (!loanType || loanType === '')) {
-      setLoanType(loanTypesOptions[0]);
-    }
-  }, [loanTypesOptions]);
 
   if (!isOpen || !mounted) return null;
 

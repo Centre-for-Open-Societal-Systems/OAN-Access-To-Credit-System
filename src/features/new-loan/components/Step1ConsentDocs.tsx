@@ -194,7 +194,7 @@ export function Step1ConsentDocs() {
       } else if (doc.id) {
         url = `/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${doc.id}&view=0`;
       }
-      
+
       if (url) {
         const link = document.createElement('a');
         link.href = url;
@@ -266,7 +266,7 @@ export function Step1ConsentDocs() {
                 </div>
                 <div>
                   <label className="mb-2 block text-[15px] font-medium text-gray-900">Document <span className="text-red-500">*</span></label>
-                  <input type="file" ref={addDocFileRef} onChange={e => e.target.files && setNewDocFile(e.target.files[0])} className="hidden" required />
+                  <input type="file" ref={addDocFileRef} onChange={e => e.target.files && setNewDocFile(e.target.files?.[0] ?? null)} className="hidden" required />
                   <div
                     onClick={() => addDocFileRef.current?.click()}
                     className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2.5 transition-colors hover:bg-gray-50"
@@ -294,7 +294,7 @@ export function Step1ConsentDocs() {
         const fileName = selectedSupportingDoc.name.toLowerCase();
         const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i.test(fileName);
         const isPdf = fileType === 'application/pdf' || fileName.endsWith('.pdf');
-        
+
         return (
           <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -479,91 +479,91 @@ export function Step1ConsentDocs() {
             </div>
 
 
-              </div>
+          </div>
+        </div>
+
+        {/* Supporting Documents Section */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">
+            Supporting Documents <span className="text-red-500">*</span>
+          </h2>
+
+          {/* Drag & Drop Area */}
+          <div className="mb-6 mx-auto max-w-lg flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
+            <div className="mb-3">
+              <FolderOpen className="h-8 w-8 text-gray-500 fill-gray-500" />
             </div>
+            <p className="mb-1 text-sm font-medium text-gray-900">Drag and drop files here</p>
+            <p className="mb-1 text-sm text-gray-500">Or</p>
+            <p className="mb-4 text-sm font-medium text-gray-900">Click Browse files to select a file</p>
+            <button type="button" onClick={() => setShowAddDocPopup(true)} className="flex items-center gap-1.5 rounded text-sm font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-4 py-1">
+              <span className="text-lg">+</span> Browse Files
+            </button>
+          </div>
 
-            {/* Supporting Documents Section */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-6 text-lg font-bold text-gray-900 pb-4 border-b border-gray-200">
-                Supporting Documents <span className="text-red-500">*</span>
-              </h2>
-
-              {/* Drag & Drop Area */}
-              <div className="mb-6 mx-auto max-w-lg flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
-                <div className="mb-3">
-                  <FolderOpen className="h-8 w-8 text-gray-500 fill-gray-500" />
-                </div>
-                <p className="mb-1 text-sm font-medium text-gray-900">Drag and drop files here</p>
-                <p className="mb-1 text-sm text-gray-500">Or</p>
-                <p className="mb-4 text-sm font-medium text-gray-900">Click Browse files to select a file</p>
-                <button type="button" onClick={() => setShowAddDocPopup(true)} className="flex items-center gap-1.5 rounded text-sm font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-4 py-1">
-                  <span className="text-lg">+</span> Browse Files
-                </button>
-              </div>
-
-              {/* Documents Table */}
-              {supportingDocs.length > 0 && (
-                <div className="overflow-x-auto rounded-lg border border-gray-100 bg-gray-50/50">
-                  <table className="min-w-[600px] w-full divide-y divide-gray-100">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Description</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                      {supportingDocs.map((doc) => (
-                        <tr key={doc.id}>
-                          <td className="px-4 py-4 w-1/3">
-                            <div className="flex items-center gap-3">
-                              <div className="text-gray-400 rounded border border-gray-200 p-1 bg-gray-50"><FileText className="h-5 w-5" /></div>
-                              <div>
-                                <p className="text-sm font-bold text-gray-900">{doc.type}</p>
-                                <p className="text-xs text-gray-500">{doc.name}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-500 w-1/3 break-words max-w-[200px]">{doc.description}</td>
-                          <td className="px-4 py-4 text-right w-1/3">
-                            <div className="flex items-center justify-end gap-3">
-                              <button type="button" onClick={() => handleViewDoc(doc)} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
-                                <Eye className="h-4 w-4" /> View
-                              </button>
-                              <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+          {/* Documents Table */}
+          {supportingDocs.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-gray-100 bg-gray-50/50">
+              <table className="min-w-[600px] w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Description</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {supportingDocs.map((doc) => (
+                    <tr key={doc.id}>
+                      <td className="px-4 py-4 w-1/3">
+                        <div className="flex items-center gap-3">
+                          <div className="text-gray-400 rounded border border-gray-200 p-1 bg-gray-50"><FileText className="h-5 w-5" /></div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{doc.type}</p>
+                            <p className="text-xs text-gray-500">{doc.name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-500 w-1/3 break-words max-w-[200px]">{doc.description}</td>
+                      <td className="px-4 py-4 text-right w-1/3">
+                        <div className="flex items-center justify-end gap-3">
+                          <button type="button" onClick={() => handleViewDoc(doc)} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
+                            <Eye className="h-4 w-4" /> View
+                          </button>
+                          <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          )}
+        </div>
 
-            {/* Bottom Actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
-                <button
-                  type="button"
-                  onClick={handleSaveDraft}
-                  disabled={isSavingDraft}
-                  className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
-                >
-                  {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
-                  {isSavingDraft ? 'Saving...' : 'Save Draft'}
-                </button>
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
-                  <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
-                </div>
-              </div>
-              <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
-                Confirm & Next <ArrowRight className="h-4 w-4" />
-              </button>
+        {/* Bottom Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft}
+              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+              {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
+              {isSavingDraft ? 'Saving...' : 'Save Draft'}
+            </button>
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
+              <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
             </div>
-          </form>
-        </>
-        );
+          </div>
+          <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
+            Confirm & Next <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </form>
+    </>
+  );
 }

@@ -61,24 +61,34 @@ export const LEAD_STATUS_MAP: Record<string, string[]> = {
   dormant: ['Dormant'],
 };
 
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const resolveDateFilter = (filterKey: string): { start?: string; end?: string } => {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const getPastDate = (days: number) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - days);
-    return d.toISOString().split('T')[0];
-  };
-
-  const todayStr = today.toISOString().split('T')[0];
-
-  const resolvers: Record<string, () => { start?: string; end?: string }> = {
-    'Today': () => ({ start: todayStr, end: todayStr }),
-    'Last 7 Days': () => ({ start: getPastDate(6) }),
-    'Last 30 Days': () => ({ start: getPastDate(29) }),
-    'This Month': () => ({ start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0] }),
-  };
-
-  return resolvers[filterKey]?.() || {};
+  
+  switch (filterKey) {
+    case 'Today': {
+      const todayStr = formatLocalDate(now);
+      return { start: todayStr, end: todayStr };
+    }
+    case 'Last 7 Days': {
+      const past = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+      return { start: formatLocalDate(past) };
+    }
+    case 'Last 30 Days': {
+      const past = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+      return { start: formatLocalDate(past) };
+    }
+    case 'This Month': {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start: formatLocalDate(firstDay) };
+    }
+    default:
+      return {};
+  }
 };

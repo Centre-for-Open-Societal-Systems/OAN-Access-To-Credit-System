@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { DUMMY_LOANS, getFallbackMockRows } from './loans.mock';
-import { leadRows } from './leads.mock';
+import { leadRows, LeadRow } from './leads.mock';
+import { CreateLeadPayload } from '@/features/new-lead/api/newLead.service';
 
 export const handlers = [
   http.get('/api/loans', () => {
@@ -57,7 +58,7 @@ export const handlers = [
 
     // Apply Search Filter
     if (searchQuery) {
-      filteredRows = filteredRows.filter(row => 
+      filteredRows = filteredRows.filter(row =>
         row.id.toLowerCase().includes(searchQuery) ||
         row.phone.includes(searchQuery) ||
         (row.location && row.location.toLowerCase().includes(searchQuery))
@@ -72,7 +73,7 @@ export const handlers = [
       farmer_id: row.farmerId,
       consent_date: row.consentDate,
       phone_number: row.phone,
-      loan_type: row.loanType || '', 
+      loan_type: row.loanType || '',
       loan_amount: row.loanAmount || '',
       lead_source: row.source,
       assigned_to: row.owner === 'me' ? 'me' : row.owner === 'other' ? 'someone' : null,
@@ -102,11 +103,36 @@ export const handlers = [
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.create_lead', async () => {
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.create_lead', async ({ request }) => {
+    const body = (await request.json()) as CreateLeadPayload;
+    const newLeadId = `LD-${Math.floor(10000 + Math.random() * 90000)}`;
+    const newLead: LeadRow = {
+      id: `#${newLeadId}`,
+      consentRequestId: null,
+      farmerName: `${body.first_name || ''} ${body.last_name || ''}`.trim() || 'New Farmer',
+      farmerId: body.external_id || `FID-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      consentDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      location: 'Default Location',
+      phone: body.phone_number || '',
+      calledPhone: '',
+      source: body.lead_source || 'Agent Entry',
+      status: 'Initiated',
+      loanType: '',
+      loanAmount: '',
+      callStartTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + `, ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+      callDuration: '',
+      applicationSubmitted: false,
+      actionType: 'view',
+      actionNote: '',
+      visitDate: null,
+      owner: 'me'
+    };
+    leadRows.unshift(newLead);
+
     return HttpResponse.json({
       message: {
         status: 'success',
-        lead_id: 'LEAD-2026-00022',
+        lead_id: `#${newLeadId}`,
         message: 'Lead created successfully.'
       }
     });
@@ -162,16 +188,16 @@ export const handlers = [
     const fromDate = url.searchParams.get('from_date');
     const toDate = url.searchParams.get('to_date');
     const tab = url.searchParams.get('tab') || 'all';
-    
+
     // Pagination params
     const page = parseInt(url.searchParams.get('page') || '1', 10);
 
     let filteredRows = getFallbackMockRows();
 
     if (searchQuery) {
-      filteredRows = filteredRows.filter((r: any) => 
-        (r.id && r.id.toLowerCase().includes(searchQuery)) || 
-        (r.phone && r.phone.toLowerCase().includes(searchQuery)) || 
+      filteredRows = filteredRows.filter((r: any) =>
+        (r.id && r.id.toLowerCase().includes(searchQuery)) ||
+        (r.phone && r.phone.toLowerCase().includes(searchQuery)) ||
         (r.applicant && r.applicant.toLowerCase().includes(searchQuery))
       );
     }
@@ -186,7 +212,7 @@ export const handlers = [
         filteredRows = filteredRows.filter((r: any) => r.status === statusQuery);
       }
     } else if (statusQuery === '["__NONE__"]') {
-       filteredRows = [];
+      filteredRows = [];
     }
 
     if (loanTypeQuery) {
@@ -195,11 +221,11 @@ export const handlers = [
         if (types.length > 0) {
           filteredRows = filteredRows.filter((r: any) => types.includes(r.type));
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (locationQuery) {
-      filteredRows = filteredRows.filter((r: any) => 
+      filteredRows = filteredRows.filter((r: any) =>
         (r.applicant && r.applicant.toLowerCase().includes(locationQuery)) ||
         (r.region && r.region.toLowerCase().includes(locationQuery))
       );
@@ -270,12 +296,12 @@ export const handlers = [
     const allRows = getFallbackMockRows();
     const summary = allRows.reduce((acc: any, row: any) => {
       acc.total = (acc.total || 0) + 1;
-      
+
       const s = row.status.toLowerCase();
       if (s === 'approved') acc.approved = (acc.approved || 0) + 1;
       else if (s === 'rejected') acc.rejected = (acc.rejected || 0) + 1;
       else acc.processing = (acc.processing || 0) + 1; // Draft, Pending Review, Processing, etc.
-      
+
       return acc;
     }, { total: 0, approved: 0, processing: 0, rejected: 0 });
 

@@ -2,16 +2,16 @@
 
 // input for Get Leads API 
 export interface GetLeadsParams {
-  start?: number;
-  page_length?: number;
-  search_query?: string;
-  status?: string;
-  lead_source?: string;
-  start_date?: string;
-  end_date?: string;
-  min_amount?: number;
-  max_amount?: number;
-  loan_type?: string;
+  start?: number | undefined;
+  page_length?: number | undefined;
+  search_query?: string | undefined;
+  status?: string | undefined;
+  lead_source?: string | undefined;
+  start_date?: string | undefined;
+  end_date?: string | undefined;
+  min_amount?: number | undefined;
+  max_amount?: number | undefined;
+  loan_type?: string | undefined;
 }
 
 // output for Get Leads API 
@@ -24,8 +24,6 @@ export type LeadStatus = 'Active' | 'Verified' | 'Processed' | 'Granted' | 'Reje
 
 // the lead object in the output of Get Leads API 
 export interface Lead {
-  // NOTE: Index signature [key: string]: any was removed to enforce strict type checking.
-  // All dynamically accessed properties are explicitly declared below.
   id: string;
   name: string;
   phone: string;

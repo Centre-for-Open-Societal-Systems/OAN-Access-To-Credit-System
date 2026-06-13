@@ -1,5 +1,16 @@
 const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
+export class ApiError extends Error {
+  responseData: unknown;
+
+  constructor(message: string, responseData?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.responseData = responseData;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 export async function fetchApi(path: string, options: RequestInit = {}) {
   const url = new URL(`/api/proxy/api/method/${path}`, BASE_URL);
   
@@ -43,16 +54,12 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     } else if (responseData?.message) {
       errorMsg = typeof responseData.message === 'string' ? responseData.message : JSON.stringify(responseData.message);
     }
-    const err = new Error(errorMsg);
-    (err as any).responseData = responseData;
-    throw err;
+    throw new ApiError(errorMsg, responseData);
   }
 
   // Handle Frappe's "200 OK" application-level errors
   if (responseData?.message?.status === 'error') {
-    const err = new Error(responseData.message.message || 'Application Error');
-    (err as any).responseData = responseData;
-    throw err;
+    throw new ApiError(responseData.message.message || 'Application Error', responseData);
   }
 
   return responseData?.message ?? responseData;

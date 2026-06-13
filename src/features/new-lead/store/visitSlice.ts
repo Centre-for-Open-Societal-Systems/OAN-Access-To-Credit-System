@@ -33,32 +33,22 @@ export const fetchVisitSchedulesThunk = createAsyncThunk(
  * Handles both 12-hour AM/PM and 24-hour formats.
  * Defaults to '09:00:00'.
  */
-export function formatTimeString(time?: string): string {
-  if (!time) return '';
+export function formatTimeString(time: string): string {
 
-  const parts = time.trim().split(' ');
-  const timePart = parts[0];
-  if (!timePart) return '';
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
+  if (!match) return '';
 
-  const modifier = parts[1];
-  const timeSplit = timePart.split(':');
-  const hoursStr = timeSplit[0];
-  const minutes = timeSplit[1];
-
-  if (!hoursStr || !minutes) {
-    return timePart.includes(':') ? timePart : `${timePart}:00:00`;
-  }
+  let [, hours = '00', minutes = '00', seconds = '00', modifier] = match;
+  let h = parseInt(hours, 10);
 
   if (modifier) {
-    let hours = parseInt(hoursStr, 10);
-    if (isNaN(hours)) hours = 0;
-    if (hours === 12) hours = 0;
-    if (modifier.toUpperCase() === 'PM') hours += 12;
-    return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+    if (modifier.toUpperCase() === 'AM' && h === 12) h = 0;
+    if (modifier.toUpperCase() === 'PM' && h !== 12) h += 12;
   }
 
-  return timePart.length === 5 ? `${timePart}:00` : timePart;
+  return `${h.toString().padStart(2, '0')}:${minutes}:${seconds}`;
 }
+
 
 export const scheduleVisitThunk = createAsyncThunk(
   'visit/scheduleVisit',

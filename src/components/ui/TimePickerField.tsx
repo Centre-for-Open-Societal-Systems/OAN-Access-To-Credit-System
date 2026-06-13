@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
+import styles from './TimePickerField.module.css';
 
 interface TimePickerFieldProps {
   id?: string;
@@ -66,15 +67,7 @@ export function TimePickerField({ id, label, value, onChange, required, error, d
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1.5 w-[240px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden transform-origin-top transition-all duration-200"
-             style={{ animation: 'slideDown 0.2s ease-out forwards' }}>
-          <style dangerouslySetInnerHTML={{__html: `
-            @keyframes slideDown {
-              from { opacity: 0; transform: scaleY(0.95); }
-              to { opacity: 1; transform: scaleY(1); }
-            }
-          `}} />
-          
+        <div className={`absolute top-full left-0 z-50 mt-1.5 w-[240px] rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden transform-origin-top transition-all duration-200 ${styles.dropdown}`}>
           <div className="flex flex-row h-64 p-2 gap-1 bg-white">
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {HOURS.map(h => (

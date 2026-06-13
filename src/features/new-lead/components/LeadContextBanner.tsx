@@ -4,12 +4,12 @@ import { MapPin, Phone } from 'lucide-react';
 
 interface LeadContextBannerProps {
   leadId: string;
-  farmerName?: string;
-  location?: string;
-  phoneNumber?: string;
-  status?: string;
-  createdAt?: string;
-  actionType?: string | null;
+  farmerName?: string | undefined;
+  location?: string | undefined;
+  phoneNumber?: string | undefined;
+  status?: string | undefined;
+  createdAt?: string | undefined;
+  actionType?: string | null | undefined;
   actions?: React.ReactNode;
 }
 

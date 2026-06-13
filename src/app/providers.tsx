@@ -13,12 +13,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const cachedUser = localStorage.getItem('auth_user');
+      const cachedUser = sessionStorage.getItem('auth_user');
       if (cachedUser) {
         store.dispatch(hydrate(JSON.parse(cachedUser)));
       }
     } catch (e) {
-      localStorage.removeItem('auth_user');
+      sessionStorage.removeItem('auth_user');
     }
 
     if (process.env.NEXT_PUBLIC_API_MOCKING === 'true') {

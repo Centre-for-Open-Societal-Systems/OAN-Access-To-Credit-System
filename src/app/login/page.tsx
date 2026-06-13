@@ -38,7 +38,7 @@ export default function Login() {
   const authError = useAppSelector(selectAuthError);
   const isLoading = authStatus === 'loading';
 
-  const [activeLanguage, setActiveLanguage] = useState(languages[0]);
+  const [activeLanguage, setActiveLanguage] = useState(languages[0]!);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isTroubleModalOpen, setIsTroubleModalOpen] = useState(false);
@@ -77,9 +77,11 @@ export default function Login() {
       <header className="sticky top-0 w-full z-50">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white px-4 sm:px-6 py-4 sm:py-0 h-auto sm:h-[80px] border-b border-[#D4D4D4] shadow-[0px_4px_20px_rgba(0,0,0,0.05)] gap-4 sm:gap-0">
           <div className="flex items-center gap-0 sm:gap-0">
-            <img
+            <Image
               src="/logo.png"
               alt="Ethiopia OpenAgriNet Logo"
+              width={220}
+              height={56}
               className="h-[48px] sm:h-[56px] w-auto shrink-0"
             />
             <div className="flex flex-col">
@@ -114,9 +116,11 @@ export default function Login() {
             <div className="flex flex-col justify-between isolate relative w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 min-h-auto bg-[linear-gradient(180deg,var(--panel-bg)_0%,var(--panel-bg-deep)_100%)]">
               <div className="relative z-10">
                 <div className="flex items-center gap-0 mb-8 sm:mb-10">
-                  <img
+                  <Image
                     src="/logo.png"
                     alt="Ethiopia OpenAgriNet Logo"
+                    width={220}
+                    height={72}
                     className="h-[56px] sm:h-[72px] w-auto object-left shrink-0"
                   />
                   <div className="flex flex-col">

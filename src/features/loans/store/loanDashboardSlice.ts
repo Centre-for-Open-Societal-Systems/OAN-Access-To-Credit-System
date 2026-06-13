@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { loanService, GetLoansParams } from '@/features/loans/api/loan.service';
-import { PAGE_SIZE } from '@/features/loans/constants/loans.constants';
-import { getFallbackMockRows } from '@/mocks/loans.mock';
 
 export const fetchLoans = createAsyncThunk(
   'loanDashboard/fetchLoans',
@@ -215,12 +213,12 @@ const loanDashboardSlice = createSlice({
   },
 });
 
-export const { 
-  setDateRange, 
-  toggleStatus, 
-  toggleAllStatuses, 
-  setActivityPage, 
-  setActiveTab, 
+export const {
+  setDateRange,
+  toggleStatus,
+  toggleAllStatuses,
+  setActivityPage,
+  setActiveTab,
   setSearchQuery,
   toggleTableStatusFilter,
   toggleTableTypeFilter,
@@ -250,7 +248,7 @@ export const selectPagedRowsData = createSelector(
   (rawActivityData, pageSize) => {
     // fetchApi automatically unwraps the "message" envelope, so the data is directly on rawActivityData
     let rows = rawActivityData?.data || [];
-    
+
     let totalCount = rawActivityData?.pagination?.total ?? 0;
 
     const mapped = rows.map((row: any) => {
@@ -319,40 +317,6 @@ export const selectTabCounts = createSelector(
   }
 );
 
-export const selectVisibleNotifications = createSelector(
-  [selectDateRange],
-  (dateRange) => {
-    // Mock notifications data (currently empty)
-    const allNotifications: any[] = [];
-
-    const getCutoffTimestamp = (range: string) => {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      const resolvers: Record<string, () => number> = {
-        'today': () => today,
-        'yesterday': () => today - 86400000,
-        'last7': () => today - 6 * 86400000,
-        'last30': () => today - 29 * 86400000,
-        'last3m': () => new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).getTime(),
-        'last6m': () => new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()).getTime(),
-        'last1y': () => new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).getTime(),
-      };
-      return resolvers[range]?.() ?? 0;
-    };
-
-    const cutoffTimestamp = getCutoffTimestamp(dateRange);
-
-    const parseNotificationTime = (timeStr: string) => {
-      const cleanTime = timeStr.replace(' · ', ' ');
-      return new Date(cleanTime).getTime() || 0;
-    };
-
-    return allNotifications.filter(
-      (n) => parseNotificationTime(n.time) >= cutoffTimestamp
-    );
-  }
-);
 
 export const selectQueryParams = createSelector(
   [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses, selectSearchQuery, selectActiveTab, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters],
@@ -392,7 +356,7 @@ export const selectQueryParams = createSelector(
 
     const allChecked = selectedStatuses.length === ALL_STATUS_VALUES.length;
     let statusesToPass: string[] = [];
-    
+
     if (!allChecked && selectedStatuses.length > 0) {
       if (selectedStatuses.includes('danger')) statusesToPass.push('Rejected', 'Action Required');
       if (selectedStatuses.includes('neutral')) statusesToPass.push('Draft');
@@ -404,7 +368,7 @@ export const selectQueryParams = createSelector(
     if (tableStatusFilters.length > 0) {
       statusesToPass = [...new Set([...statusesToPass, ...tableStatusFilters])];
     }
-    
+
     // Combine with advanced status filters
     if (advancedFilters.status.length > 0) {
       statusesToPass = [...new Set([...statusesToPass, ...advancedFilters.status])];

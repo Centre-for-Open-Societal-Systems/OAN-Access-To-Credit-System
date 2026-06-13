@@ -14,9 +14,12 @@ export const loginThunk = createAsyncThunk<
       const loginData = await loginUser({ usr, pwd });
 
       return {
+        username: loginData.email,
         officerName: loginData.full_name || usr,
         roles: Array.isArray(loginData.roles) ? loginData.roles : [],
-      } as User;
+        mobileNo: null,
+        userType: null,
+      };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown Cause. Please Try Again Later';
       return rejectWithValue(message);
@@ -59,7 +62,7 @@ const authSlice = createSlice({
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload ?? 'Something went wrong.';
+        state.error = (action.payload as string) ?? 'Something went wrong.';
       });
   },
 });
