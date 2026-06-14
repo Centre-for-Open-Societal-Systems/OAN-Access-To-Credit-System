@@ -116,7 +116,7 @@ export const handlers = [
       phone: body.phone_number || '',
       calledPhone: '',
       source: body.lead_source || 'Agent Entry',
-      status: 'Initiated',
+      status: 'Active',
       loanType: '',
       loanAmount: '',
       callStartTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + `, ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
@@ -392,19 +392,7 @@ export const handlers = [
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_credit_info', ({ request }) => {
-    return HttpResponse.json({
-      message: {
-        status: "success",
-        data: {
-          loan_amount: 50000.0,
-          loan_type: "Input Loan",
-          loan_reason: null,
-          status: "Under Review"
-        }
-      }
-    });
-  }),
+
 
   http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.edit_credit_info', () => {
     return HttpResponse.json({
@@ -548,7 +536,25 @@ export const handlers = [
         status: "Missed",
         scheduled_by: "test_agent@coopbank.com",
         creation: new Date().toISOString()
-      }
+      },
+      ...[
+        "LD-9816", "LD-9813", "LD-9827", "LD-9831", "LD-9834", "LD-9838",
+        "LD-9841", "LD-9845", "LD-9848", "LD-9852", "LD-9856", "LD-9859",
+        "LD-9863", "LD-9865"
+      ].map((leadId, idx) => ({
+        name: `VSCH-2026-0100${idx}`,
+        lead: leadId,
+        visit_date: "2026-06-12",
+        visit_time: "10:00:00",
+        meeting_location: "Main Office",
+        region: "Oromia",
+        zone: "East Hararge",
+        woreda: "Harar",
+        kebele: "01",
+        status: "Scheduled",
+        scheduled_by: "agent@bank.com",
+        creation: new Date(Date.now() - (idx + 1) * 3600000).toISOString()
+      }))
     ];
 
     if (leadId) {

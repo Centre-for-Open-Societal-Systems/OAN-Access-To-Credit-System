@@ -6,7 +6,7 @@ import { ScheduleNewVisitForm } from '@/features/new-lead/components/modals/Sche
 import { VisitHistoryCard } from '@/features/new-lead/components/VisitHistoryCard';
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchLeadDetailsThunk, fetchVisitSchedulesThunk, selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
+import { fetchLeadDetailsThunk, fetchVisitSchedulesThunk } from '@/features/new-lead';
 import { ScheduleVisitBanner } from '@/features/new-lead/components/ScheduleVisitBanner';
 
 interface PageProps {
@@ -25,7 +25,7 @@ export default function ScheduleVisitPage({ params }: PageProps) {
     }
   }, [dispatch, leadId]);
 
-  const { farmerDetails, leadStatus } = useAppSelector(selectNewLeadState);
+
 
 
   const sidebar = (

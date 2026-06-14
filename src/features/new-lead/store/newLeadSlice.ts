@@ -1,40 +1,23 @@
 import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '@/store';
-import { newLeadService } from '../api/newLead.service';
-import { formatTiming, extractList, extractData } from './helpers';
+import {
+  newLeadService,
+  SpecificLeadAPI,
+  GetLeadMetadataResponse,
+  GetCallDetailsResponse,
+  GetActivitiesResponse,
+  AddActivityNoteResponse,
+  CreditInfoAPI,
+  AddCreditInfoResponse,
+  CreateLeadResponse,
+  UpdateLeadStatusResponse
+} from '../api/newLead.service';
+import { formatTiming } from './helpers';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
+import { initializeLead, clearForm, InitializeLeadPayload } from './actions';
+import { normalizeLeadId } from '@/lib/utils';
 
-// Re-export thunks & actions from farmerSlice
-export {
-  searchFarmerThunk,
-  fetchLeadDetailsThunk,
-  setFarmerId,
-  updateFarmerDetails,
-  clearFarmerState
-} from './farmerSlice';
 
-// Re-export thunks & actions from consentSlice
-export {
-  searchFarmerConsent,
-  verifyOtpThunk,
-  clearConsentState
-} from './consentSlice';
-
-// Re-export thunks & actions from visitSlice
-export {
-  fetchVisitSchedulesThunk,
-  scheduleVisitThunk,
-  updateVisitScheduleStatusThunk,
-  setVisitSchedule,
-  clearVisitState
-} from './visitSlice';
-
-// Re-export thunks & actions from assignmentSlice
-export {
-  fetchAssignmentInfoThunk,
-  assignLeadThunk,
-  clearAssignmentState
-} from './assignmentSlice';
 
 export interface CreditInfo {
   id: string;
@@ -86,7 +69,10 @@ const getInitialState = (): NewLeadState => ({
 
 const initialState: NewLeadState = getInitialState();
 
-export const fetchLeadMetadataThunk = createAsyncThunk(
+export const fetchLeadMetadataThunk = createAsyncThunk<
+  GetLeadMetadataResponse | null,
+  void
+>(
   'newLead/fetchMetadata',
   async (_, { getState, rejectWithValue }) => {
     const state = getState() as RootState;
@@ -97,104 +83,118 @@ export const fetchLeadMetadataThunk = createAsyncThunk(
       return null;
     }
     try {
-      const response = await newLeadService.getLeadMetadata();
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch lead metadata');
+      return await newLeadService.getLeadMetadata();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch lead metadata');
     }
   }
 );
 
-export const fetchCallDetailsThunk = createAsyncThunk(
+export const fetchCallDetailsThunk = createAsyncThunk<
+  GetCallDetailsResponse,
+  string
+>(
   'newLead/fetchCallDetails',
-  async (leadId: string, { rejectWithValue }) => {
+  async (leadId, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.getCallDetails(leadId);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch call details');
+      return await newLeadService.getCallDetails(leadId);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch call details');
     }
   }
 );
 
-export const fetchActivitiesThunk = createAsyncThunk(
+export const fetchActivitiesThunk = createAsyncThunk<
+  GetActivitiesResponse,
+  string
+>(
   'newLead/fetchActivities',
-  async (leadId: string, { rejectWithValue }) => {
+  async (leadId, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.getActivities(leadId);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch activities');
+      return await newLeadService.getActivities(leadId);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch activities');
     }
   }
 );
 
-export const addActivityNoteThunk = createAsyncThunk(
+export const addActivityNoteThunk = createAsyncThunk<
+  { response: AddActivityNoteResponse; content: string; officerName: string },
+  { leadId: string; content: string }
+>(
   'newLead/addActivityNote',
-  async (payload: { leadId: string; content: string }, { getState, rejectWithValue }) => {
+  async (payload, { getState, rejectWithValue }) => {
     try {
       const response = await newLeadService.addActivityNote(payload);
       const state = getState() as RootState;
       const officerName = state.auth?.user?.officerName || 'Current User';
       return { response, content: payload.content, officerName };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to add note');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to add note');
     }
   }
 );
 
-export const fetchSpecificLeadThunk = createAsyncThunk(
+export const fetchSpecificLeadThunk = createAsyncThunk<SpecificLeadAPI[], string>(
   'newLead/fetchSpecificLead',
   async (leadId: string, { dispatch, rejectWithValue }) => {
     try {
-      const response = await newLeadService.getSpecificLead(leadId);
-      const leads = extractList(response, 'results');
-      if (leads && leads.length > 0) {
+      const leads = await newLeadService.getSpecificLead(leadId);
+      if (leads.length > 0) {
         const lead = leads[0];
-        if (lead.assigned_to) {
+        if (lead && lead.assigned_to) {
           dispatch(fetchAssignmentInfoThunk(lead.assigned_to));
         }
       }
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch specific lead');
+      return leads;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch specific lead');
     }
   }
 );
 
-export const fetchCreditInfoThunk = createAsyncThunk(
+export const fetchCreditInfoThunk = createAsyncThunk<
+  CreditInfoAPI[],
+  string
+>(
   'newLead/fetchCreditInfo',
-  async (leadId: string, { rejectWithValue }) => {
+  async (leadId, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.getCreditInfo(leadId);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch credit info');
+      return await newLeadService.getCreditInfo(leadId);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch credit info');
     }
   }
 );
 
-export const addCreditInfoThunk = createAsyncThunk(
+export const addCreditInfoThunk = createAsyncThunk<
+  { response: AddCreditInfoResponse; payload: { leadId: string; loan_type: string; loan_amount: number | string; purpose_message?: string } },
+  { leadId: string; loan_type: string; loan_amount: number | string; purpose_message?: string }
+>(
   'newLead/addCreditInfo',
-  async (payload: { leadId: string; loan_type: string; loan_amount: number | string; purpose_message?: string }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       const response = await newLeadService.addCreditInfo({
-        lead_id: decodeURIComponent(payload.leadId).replace(/^#/, ''),
-        ...payload
+        lead_id: normalizeLeadId(payload.leadId),
+        loan_type: payload.loan_type,
+        loan_amount: Number(payload.loan_amount),
+        ...(payload.purpose_message !== undefined ? { purpose_message: payload.purpose_message } : {})
       });
       return { response, payload };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to add credit info');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to add credit info');
     }
   }
 );
 
-export const submitNewLeadThunk = createAsyncThunk(
+export const submitNewLeadThunk = createAsyncThunk<
+  CreateLeadResponse,
+  void
+>(
   'newLead/submitLead',
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = (getState() as RootState).farmer;
-      const newLeadState = (getState() as RootState).newLead;
 
       const payload = {
         phone_number: state.farmerDetails.phoneNumber,
@@ -205,17 +205,19 @@ export const submitNewLeadThunk = createAsyncThunk(
         external_id: '',
       };
 
-      const response = await newLeadService.createLead(payload);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to create lead');
+      return await newLeadService.createLead(payload);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to create lead');
     }
   }
 );
 
-export const updateLeadStatusThunk = createAsyncThunk(
+export const updateLeadStatusThunk = createAsyncThunk<
+  { response: UpdateLeadStatusResponse; payload: { leadId: string; status: string; reason: string } },
+  { leadId: string; status: string; reason: string }
+>(
   'newLead/updateLeadStatus',
-  async (payload: { leadId: string; status: string; reason: string }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       const response = await newLeadService.updateLeadStatus({
         lead_id: payload.leadId,
@@ -223,8 +225,8 @@ export const updateLeadStatusThunk = createAsyncThunk(
         reason: payload.reason
       });
       return { response, payload };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to update lead status');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to update lead status');
     }
   }
 );
@@ -233,19 +235,6 @@ const newLeadSlice = createSlice({
   name: 'newLead',
   initialState,
   reducers: {
-    initializeLead(state, action: PayloadAction<{ id?: string; source?: string; status?: string; farmerDetails?: any; farmerId?: string; consentDate?: string; consentRequestId?: string | null }>) {
-      const isSameLead = action.payload.id === state.activeLeadId;
-      state.activeLeadId = action.payload.id || null;
-      state.leadStatus = action.payload.status || '';
-      state.leadSource = action.payload.source || '';
-
-      if (!isSameLead) {
-        state.creditInfo = [];
-        state.callDetails = [];
-        state.activities = [];
-      }
-      state.isSubmitting = false;
-    },
     setLeadSource(state, action: PayloadAction<string>) {
       state.leadSource = action.payload;
     },
@@ -258,56 +247,69 @@ const newLeadSlice = createSlice({
         ...action.payload
       };
       state.creditInfo.push(newCreditInfo);
-    },
-    clearForm(state) {
-      return initialState;
     }
   },
   extraReducers: (builder) => {
     builder
+      .addCase(initializeLead, (state, action) => {
+        const isSameLead = action.payload.id === state.activeLeadId;
+        state.activeLeadId = action.payload.id || null;
+        state.leadStatus = action.payload.status || '';
+        state.leadSource = action.payload.source || '';
+
+        if (!isSameLead) {
+          state.creditInfo = [];
+          state.callDetails = [];
+          state.activities = [];
+        }
+        state.isSubmitting = false;
+      })
+      .addCase(clearForm, () => {
+        return getInitialState();
+      })
       .addCase(fetchLeadMetadataThunk.fulfilled, (state, action) => {
         if (!action.payload) return;
-        const payload = extractData(action.payload);
-        if (payload.status === 'success' || payload.loan_types) {
-          state.leadSourcesOptions = payload.sources || [];
-          state.leadStatusesOptions = payload.statuses || [];
-          state.loanTypesOptions = payload.loan_types || [];
-        }
+        const payload = action.payload;
+        state.leadSourcesOptions = payload.sources || [];
+        state.leadStatusesOptions = payload.statuses || [];
+        state.loanTypesOptions = payload.loan_types || [];
       })
       .addCase(fetchCallDetailsThunk.fulfilled, (state, action) => {
-        const logsArray = extractList(action.payload, 'call_logs');
-        state.callDetails = logsArray.map((log: any, index: number) => ({
-          id: log.ref_id ? `${log.ref_id}-${index}` : log.name || log.id || `call-${index}`,
-          status: log.source || log.comment_type || log.status || 'Unknown',
+        const logsArray = action.payload.call_logs || [];
+        state.callDetails = logsArray.map((log, index: number) => ({
+          id: log.ref_id ? `${log.ref_id}-${index}` : `call-${index}`,
+          status: log.source || 'Unknown',
           timing: formatTiming(log.timestamp || '', ' • ', true)
         }));
       })
       .addCase(fetchActivitiesThunk.fulfilled, (state, action) => {
-        const timeline = extractList(action.payload, 'timeline');
-        state.activities = timeline.map((item: any, index: number) => ({
+        const timeline = action.payload.timeline || [];
+        state.activities = timeline.map((item, index: number) => ({
           id: item.name || `unknown_activity-${index}`,
           author: item.owner || 'unknown',
           type: item.event_type || 'unknown',
           title: item.event_title || 'unknown',
           content: item.event_description || 'unknown',
-          timestamp: formatTiming(item.creation || item.timestamp || '', ' - ', false)
+          timestamp: formatTiming(item.creation || '', ' - ', false)
         }));
       })
       .addCase(fetchCreditInfoThunk.fulfilled, (state, action) => {
-        const info = extractList(action.payload, 'credit_info');
-        state.creditInfo = info.map((item: any, index: number) => ({
+        const info = action.payload || [];
+        state.creditInfo = info.map((item, index: number) => ({
           id: item.name || `cr-${index}`,
           type: item.loan_type || 'Unknown',
-          amount: item.loan_amount || '0',
+          amount: String(item.loan_amount || '0'),
           purpose: item.purpose_message || ''
         }));
       })
       .addCase(fetchSpecificLeadThunk.fulfilled, (state, action) => {
-        const leads = extractList(action.payload, 'results');
-        if (leads && leads.length > 0) {
+        const leads = action.payload;
+        if (leads.length > 0) {
           const lead = leads[0];
-          if (lead.status) state.leadStatus = lead.status;
-          if (lead.lead_source) state.leadSource = lead.lead_source;
+          if (lead) {
+            if (lead.status) state.leadStatus = lead.status;
+            if (lead.lead_source) state.leadSource = lead.lead_source;
+          }
         }
       })
       .addCase(addCreditInfoThunk.fulfilled, (state, action) => {
@@ -320,12 +322,13 @@ const newLeadSlice = createSlice({
         });
       })
       .addCase(addActivityNoteThunk.fulfilled, (state, action) => {
-        const { response = {}, content } = action.payload || {};
+        const payload = action.payload as { response?: { comment_id?: string; message?: { name?: string } }; content: string } | null;
+        const { response = {}, content } = payload || {};
         state.activities.unshift({
           id: response.comment_id || response.message?.name || `new-${Date.now()}`,
           author: 'Current User',
           type: 'Commented',
-          content: content,
+          content: content || '',
           timestamp: formatTiming(new Date().toISOString(), ' - ', false)
         });
       })
@@ -345,29 +348,25 @@ const newLeadSlice = createSlice({
 });
 
 export const {
-  initializeLead,
   setLeadSource,
   setLeadStatus,
-  addCreditInfo,
-  clearForm
+  addCreditInfo
 } = newLeadSlice.actions;
 
-export const selectNewLeadState = createSelector(
-  [
-    (state: RootState) => state.newLead,
-    (state: RootState) => state.farmer,
-    (state: RootState) => state.consent,
-    (state: RootState) => state.visit,
-    (state: RootState) => state.assignment,
-  ],
-  (newLead, farmer, consent, visit, assignment) => ({
-    ...newLead,
-    ...farmer,
-    ...consent,
-    ...visit,
-    ...assignment,
-  })
-);
+export { initializeLead, clearForm };
+
+export const selectNewLeadState = (state: RootState) => state.newLead;
+
+export const selectActiveLeadId = (state: RootState) => state.newLead.activeLeadId;
+export const selectLeadSource = (state: RootState) => state.newLead.leadSource;
+export const selectLeadStatus = (state: RootState) => state.newLead.leadStatus;
+export const selectLeadSourcesOptions = (state: RootState) => state.newLead.leadSourcesOptions;
+export const selectLeadStatusesOptions = (state: RootState) => state.newLead.leadStatusesOptions;
+export const selectLoanTypesOptions = (state: RootState) => state.newLead.loanTypesOptions;
+export const selectCreditInfo = (state: RootState) => state.newLead.creditInfo;
+export const selectCallDetails = (state: RootState) => state.newLead.callDetails;
+export const selectActivities = (state: RootState) => state.newLead.activities;
+export const selectIsSubmitting = (state: RootState) => state.newLead.isSubmitting;
 
 export const selectIsLeadFinalized = (state: RootState) => {
   const status = state.newLead.leadStatus?.toLowerCase() || '';

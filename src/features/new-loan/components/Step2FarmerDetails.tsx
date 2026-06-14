@@ -192,7 +192,7 @@ export function Step2FarmerDetails() {
       try {
         setIsLoadingProfile(true);
         const response = await loanService.getFullProfile(applicationId);
-        const data = response?.message?.data || response?.data || {};
+        const data = response?.data || {};
         
         setFormData(mapApiToFarmerDetails(data));
       } catch (err) {

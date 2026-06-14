@@ -8,8 +8,9 @@ import { SelectField } from '@/components/ui/SelectField';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { TimePickerField } from '@/components/ui/TimePickerField';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { scheduleVisitThunk, selectNewLeadState } from '../../store/newLeadSlice';
+import { scheduleVisitThunk, selectVisitState } from '../..';
 import { useParams, useRouter } from 'next/navigation';
+import { normalizeLeadId } from '@/lib/utils';
 
 interface ScheduleNewVisitFormProps {
   asModal?: boolean;
@@ -24,7 +25,7 @@ export const ScheduleNewVisitForm = ({
   onClose,
   onSave
 }: ScheduleNewVisitFormProps) => {
-  const { visitSchedule, farmerDetails } = useAppSelector(selectNewLeadState);
+  const { visitSchedule } = useAppSelector(selectVisitState);
 
   const [date, setDate] = useState(visitSchedule?.date || '');
   const [time, setTime] = useState('');
@@ -81,7 +82,7 @@ export const ScheduleNewVisitForm = ({
           ...payload
         })).unwrap();
         // Redirect back to lead details page
-        router.push(`/leads/${activeLeadId.replace(/^#/, '')}`);
+        router.push(`/leads/${normalizeLeadId(activeLeadId)}`);
       }
     } catch (err: any) {
       console.error("Failed to save schedule:", err);

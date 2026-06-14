@@ -27,9 +27,7 @@ export function getLeadRoute(lead: Lead): string {
   }
   
   if (
-    (status === 'verified' && lead.visitDate) ||
-    status === 'visit scheduled' ||
-    status === 'missed' ||
+    lead.visitDate ||
     scheduleStatus === 'missed' ||
     scheduleStatus === 'scheduled'
   ) {
@@ -43,7 +41,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
 
-  if (status === 'missed' || scheduleStatus === 'missed') {
+  if (scheduleStatus === 'missed') {
     return (
       <div className="flex flex-col items-center gap-1">
         <button
@@ -63,7 +61,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
     );
   }
 
-  if (status === 'verified' && lead.visitDate) {
+  if (lead.visitDate || scheduleStatus === 'scheduled') {
     return (
       <div className="flex flex-col items-end gap-1">
         <button
@@ -73,33 +71,17 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           <CalendarCheck {...ICON_PROPS} />
           <span>Visit Scheduled</span>
         </button>
-        <span className="inline-flex items-center gap-1 text-[12px] text-text-muted mt-0.5">
-          <Calendar size={10} className="text-text-muted" />
-          <span className="text-[12px] font-normal text-text-muted text-right">{lead.visitDate}</span>
-        </span>
+        {lead.visitDate && (
+          <span className="inline-flex items-center gap-1 text-[12px] text-text-muted mt-0.5">
+            <Calendar size={10} className="text-text-muted" />
+            <span className="text-[12px] font-normal text-text-muted text-right">{lead.visitDate}</span>
+          </span>
+        )}
       </div>
     );
   }
 
   switch (status) {
-    case 'visit scheduled':
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => navigate(getLeadRoute(lead))}
-            className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
-          >
-            <CalendarCheck {...ICON_PROPS} />
-            <span className='text-[14px]'>Visit Scheduled</span>
-          </button>
-          {lead.visitDate && (
-            <span className="inline-flex items-center justify-center gap-1 text-[10px] text-text-muted mt-0.5 w-full">
-              <Calendar size={12} className="text-text-muted" />
-              <span className="text-[12px] font-normal text-text-muted text-center">{lead.visitDate}</span>
-            </span>
-          )}
-        </div>
-      );
 
     case 'rejected':
       return (

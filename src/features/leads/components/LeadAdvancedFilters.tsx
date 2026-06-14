@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { SlidersHorizontal, X, Check, Phone, Calendar, ChevronDown } from 'lucide-react';
 import { KPI_CARDS_LAYOUT, STATUS_STYLE_MAP } from '../constants/leads.constants';
 import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
-import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
+import { selectLeadSourcesOptions, selectLoanTypesOptions } from '@/features/new-lead/store/newLeadSlice';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
@@ -34,7 +34,8 @@ interface LeadAdvancedFiltersProps {
 function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const dispatch = useAppDispatch();
   const activeFilters = useAppSelector(selectAdvFilters);
-  const { leadSourcesOptions, loanTypesOptions } = useAppSelector(selectNewLeadState);
+  const leadSourcesOptions = useAppSelector(selectLeadSourcesOptions);
+  const loanTypesOptions = useAppSelector(selectLoanTypesOptions);
 
   const [mounted, setMounted] = useState(false);
 

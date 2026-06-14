@@ -1,6 +1,6 @@
 import { History, UserPlus, Phone, UserCheck, Calendar, FileText, CheckCircle } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../store/newLeadSlice';
+import { selectActivities } from '../store/newLeadSlice';
 
 function getIconForEventType(eventType: string) {
   const et = eventType.toLowerCase();
@@ -23,7 +23,7 @@ function getIconForEventType(eventType: string) {
 }
 
 export function InteractionTimelineCard() {
-  const { activities } = useAppSelector(selectNewLeadState);
+  const activities = useAppSelector(selectActivities);
   const auditActivities = activities.filter((activity) => activity.type !== 'Commented');
 
   if (auditActivities.length === 0) {

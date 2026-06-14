@@ -1,10 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { newLeadService } from '../api/newLead.service';
+import { newLeadService, AssignableUserAPI, AssignLeadResponse } from '../api/newLead.service';
+import { initializeLead, clearForm } from './actions';
+import type { RootState } from '@/store';
 
 interface Assignment {
-  agentId?: string;
+  agentId: string;
   assigneeName: string;
-  region?: string;
+  region: string;
 }
 
 interface AssignmentState {
@@ -15,26 +17,29 @@ const initialState: AssignmentState = {
   assignment: null,
 };
 
-export const fetchAssignmentInfoThunk = createAsyncThunk(
+export const fetchAssignmentInfoThunk = createAsyncThunk<AssignableUserAPI[], string>(
   'assignment/fetchAssignmentInfo',
   async (assigneeEmail: string, { rejectWithValue }) => {
     try {
       const response = await newLeadService.getAssignableUsers(assigneeEmail);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch assignment info');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch assignment info');
     }
   }
 );
 
-export const assignLeadThunk = createAsyncThunk(
+export const assignLeadThunk = createAsyncThunk<
+  AssignLeadResponse,
+  { leadId: string; assigneeName: string; assigneeId?: string; gender?: string; region?: string; date?: string; email?: string }
+>(
   'assignment/assignLead',
-  async (payload: { leadId: string; assigneeName: string; assigneeId?: string; gender?: string; region?: string; date?: string; email?: string }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       const response = await newLeadService.assignLead(payload);
-      return { ...response, payload };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to assign lead');
+      return response;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to assign lead');
     }
   }
 );
@@ -52,30 +57,34 @@ const assignmentSlice = createSlice({
       .addCase(assignLeadThunk.fulfilled, (state, action) => {
         const p = action.payload.payload;
         state.assignment = {
-          agentId: p.assigneeId,
+          agentId: p.assigneeId || '',
           assigneeName: p.assigneeName,
-          region: p.region
+          region: p.region || ''
         };
       })
       .addCase(fetchAssignmentInfoThunk.fulfilled, (state, action) => {
-        const results = action.payload.message?.results || action.payload.results || [];
+        const results = action.payload;
         if (results && results.length > 0) {
           const user = results[0];
-          state.assignment = {
-            agentId: user.agent_id,
-            assigneeName: user.full_name,
-            region: user.region
-          };
+          if (user) {
+            state.assignment = {
+              agentId: user.agent_id || '',
+              assigneeName: user.full_name || '',
+              region: user.region || ''
+            };
+          }
         } else {
           state.assignment = {
-            assigneeName: action.meta.arg
+            agentId: '',
+            assigneeName: action.meta.arg,
+            region: ''
           };
         }
       })
-      .addCase('newLead/initializeLead', (state) => {
+      .addCase(initializeLead, (state) => {
         state.assignment = null;
       })
-      .addCase('newLead/clearForm', () => {
+      .addCase(clearForm, () => {
         return initialState;
       });
   }
@@ -83,3 +92,6 @@ const assignmentSlice = createSlice({
 
 export const { clearAssignmentState } = assignmentSlice.actions;
 export default assignmentSlice.reducer;
+
+export const selectAssignmentState = (state: RootState) => state.assignment;
+

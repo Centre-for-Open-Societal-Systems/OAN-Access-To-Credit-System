@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { newLeadService } from '../api/newLead.service';
-import { extractData } from './helpers';
+import { newLeadService, VisitScheduleAPI, ScheduleVisitResponse, UpdateVisitScheduleStatusResponse } from '../api/newLead.service';
+import { initializeLead, clearForm } from './actions';
+import type { RootState } from '@/store';
+import { normalizeLeadId } from '@/lib/utils';
 
 interface VisitSchedule {
   id?: string;
@@ -16,14 +18,16 @@ const initialState: VisitState = {
   visitSchedule: null,
 };
 
-export const fetchVisitSchedulesThunk = createAsyncThunk(
+export const fetchVisitSchedulesThunk = createAsyncThunk<
+  VisitScheduleAPI[],
+  string
+>(
   'visit/fetchVisitSchedules',
-  async (leadId: string, { rejectWithValue }) => {
+  async (leadId, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.getVisitSchedules(leadId);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch visit schedules');
+      return await newLeadService.getVisitSchedules(leadId);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch visit schedules');
     }
   }
 );
@@ -50,14 +54,17 @@ export function formatTimeString(time: string): string {
 }
 
 
-export const scheduleVisitThunk = createAsyncThunk(
+export const scheduleVisitThunk = createAsyncThunk<{
+  response: ScheduleVisitResponse;
+  payload: { leadId: string; date: string; time: string; location: string; agenda: string; region: string; zone: string; woreda: string; kebele: string; address?: string; };
+}, { leadId: string; date: string; time: string; location: string; agenda: string; region: string; zone: string; woreda: string; kebele: string; address?: string; }>(
   'visit/scheduleVisit',
-  async (payload: { leadId: string; date: string; time: string; location: string; agenda: string; region: string; zone: string; woreda: string; kebele: string; address?: string; }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       const formattedTime = formatTimeString(payload.time);
 
       const apiPayload = {
-        lead_id: decodeURIComponent(payload.leadId).replace(/^#/, ''),
+        lead_id: normalizeLeadId(payload.leadId),
         visit_date: payload.date,
         visit_time: formattedTime,
         region: payload.region,
@@ -68,24 +75,27 @@ export const scheduleVisitThunk = createAsyncThunk(
         notes: payload.agenda,
       };
       const response = await newLeadService.scheduleVisit(apiPayload);
-      return { ...response, payload };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to schedule visit');
+      return { response, payload };
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to schedule visit');
     }
   }
 );
 
-export const updateVisitScheduleStatusThunk = createAsyncThunk(
+export const updateVisitScheduleStatusThunk = createAsyncThunk<{
+  response: UpdateVisitScheduleStatusResponse;
+  payload: { leadId: string; scheduleId: string; status: string };
+}, { leadId: string; scheduleId: string; status: string }>(
   'visit/updateVisitScheduleStatus',
-  async (payload: { leadId: string; scheduleId: string; status: string }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       const response = await newLeadService.updateVisitScheduleStatus({
         schedule_id: payload.scheduleId,
         status: payload.status,
       });
       return { response, payload };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to update visit schedule status');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to update visit schedule status');
     }
   }
 );
@@ -104,11 +114,7 @@ const visitSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchVisitSchedulesThunk.fulfilled, (state, action) => {
-        let schedules = extractData(action.payload);
-
-        if (!Array.isArray(schedules) && schedules && Object.keys(schedules).length > 0) {
-          schedules = [schedules];
-        }
+        const schedules = action.payload;
 
         if (Array.isArray(schedules) && schedules.length > 0) {
           const sortedSchedules = [...schedules].sort((a, b) => {
@@ -117,15 +123,19 @@ const visitSlice = createSlice({
             return dateB.localeCompare(dateA);
           });
 
-          const activeSchedules = sortedSchedules.filter((s: any) => s.status !== 'Completed');
+          const activeSchedules = sortedSchedules.filter((s) => s.status !== 'Completed');
 
           if (activeSchedules.length > 0) {
             const latest = activeSchedules[0];
-            state.visitSchedule = {
-              id: latest.name,
-              date: latest.visit_date,
-              location: latest.meeting_location || (latest.region ? `${latest.region}, ${latest.zone}` : '')
-            };
+            if (latest) {
+              state.visitSchedule = {
+                id: latest.name,
+                date: latest.visit_date,
+                location: latest.meeting_location || (latest.region ? `${latest.region}, ${latest.zone}` : '')
+              };
+            } else {
+              state.visitSchedule = null;
+            }
           } else {
             state.visitSchedule = null;
           }
@@ -146,14 +156,17 @@ const visitSlice = createSlice({
           location: p.location || (p.region ? `${p.region}, ${p.zone}` : '')
         };
       })
-      .addCase('newLead/initializeLead', (state) => {
+      .addCase(initializeLead, (state) => {
         state.visitSchedule = null;
       })
-      .addCase('newLead/clearForm', () => {
+      .addCase(clearForm, () => {
         return initialState;
       });
   }
 });
 
 export const { setVisitSchedule, clearVisitState } = visitSlice.actions;
+
+export const selectVisitState = (state: RootState) => state.visit;
+
 export default visitSlice.reducer;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronDown } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../../store/newLeadSlice';
+import { selectLoanTypesOptions } from '../../store/newLeadSlice';
 import { SelectField } from '@/components/ui/SelectField';
 
 interface CreditInformationModalProps {
@@ -12,7 +12,7 @@ interface CreditInformationModalProps {
 }
 
 export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInformationModalProps) {
-  const { loanTypesOptions } = useAppSelector(selectNewLeadState);
+  const loanTypesOptions = useAppSelector(selectLoanTypesOptions);
 
   const [loanType, setLoanType] = useState('');
   const [loanAmount, setLoanAmount] = useState('');

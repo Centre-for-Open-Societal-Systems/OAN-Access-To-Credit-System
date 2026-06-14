@@ -1,15 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { newLeadService } from '../api/newLead.service';
-import { extractData } from './helpers';
-
-export interface FarmerDetails {
-  firstName: string;
-  lastName: string;
-  location: string;
-  phoneNumber: string;
-  email: string;
-  gender?: string;
-}
+import { newLeadService, FarmerDetails } from '../api/newLead.service';
+import type { RootState } from '@/store';
+import { initializeLead, clearForm } from './actions';
+export type { FarmerDetails };
 
 interface FarmerState {
   farmerId: string;
@@ -18,43 +11,46 @@ interface FarmerState {
   searchedFarmer: FarmerDetails | null;
 }
 
+export const createDefaultFarmerDetails = (partial?: Partial<FarmerDetails>): FarmerDetails => ({
+  firstName: partial?.firstName ?? '',
+  lastName: partial?.lastName ?? '',
+  location: partial?.location ?? '',
+  phoneNumber: partial?.phoneNumber ?? '',
+  email: partial?.email ?? '',
+  gender: partial?.gender ?? '',
+});
+
 const initialState: FarmerState = {
   farmerId: '',
-  farmerDetails: {
-    firstName: '',
-    lastName: '',
-    location: '',
-    phoneNumber: '',
-    email: '',
-  },
+  farmerDetails: createDefaultFarmerDetails(),
   isSearchingFarmer: false,
   searchedFarmer: null,
 };
 
-export const searchFarmerThunk = createAsyncThunk(
+
+export const searchFarmerThunk = createAsyncThunk<FarmerDetails, string>(
   'farmer/searchFarmer',
   async (faydaId: string, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.searchFarmer(faydaId);
-      return response;
+      return await newLeadService.searchFarmer(faydaId);
     } catch (error) {
       const err = error as Error & { responseData?: { exc_type?: string } };
       if (err.responseData?.exc_type === 'DoesNotExistError') {
         return rejectWithValue(`Farmer with Fayda ID '${faydaId}' not found.`);
       }
-      return rejectWithValue(err.message || 'Unknown Cause: Farmer search failed.');
+      return rejectWithValue(err.message ?? 'Unknown Cause: Farmer search failed.');
     }
   }
 );
 
-export const fetchLeadDetailsThunk = createAsyncThunk(
+export const fetchLeadDetailsThunk = createAsyncThunk<FarmerDetails, string>(
   'farmer/fetchLeadDetails',
   async (leadId: string, { rejectWithValue }) => {
     try {
       const response = await newLeadService.getLeadDetails(leadId);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to fetch lead details');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch lead details');
     }
   }
 );
@@ -82,67 +78,31 @@ const farmerSlice = createSlice({
       })
       .addCase(searchFarmerThunk.fulfilled, (state, action) => {
         state.isSearchingFarmer = false;
-        const payload = action.payload;
-        if (payload && (payload.status === 'success' || payload.farmer)) {
-          const farmerObj = payload.farmer || payload;
-          const nameParts = farmerObj.name?.split(' ') || [];
-          state.searchedFarmer = {
-            firstName: nameParts[0] || '',
-            lastName: nameParts.slice(1).join(' ') || '',
-            phoneNumber: farmerObj.phone || farmerObj.mobile || '',
-            email: farmerObj.email || '',
-            location: farmerObj.location || '',
-          };
-        } else {
-          state.searchedFarmer = null;
-        }
+        state.searchedFarmer = action.payload;
       })
       .addCase(searchFarmerThunk.rejected, (state) => {
         state.isSearchingFarmer = false;
         state.searchedFarmer = null;
       })
       .addCase(fetchLeadDetailsThunk.fulfilled, (state, action) => {
-        const lead = extractData(action.payload);
-        if (lead && Object.keys(lead).length > 0 && !Array.isArray(lead)) {
-          state.farmerDetails = {
-            firstName: lead.first_name || '',
-            lastName: lead.last_name || '',
-            phoneNumber: lead.phone_number || '',
-            location: lead.location || '',
-            email: lead.email || '',
-            gender: lead.gender || ''
-          };
-          state.farmerId = lead.farmer_id || '';
-        }
+        state.farmerDetails = action.payload;
       })
-      .addCase('consent/searchConsent/fulfilled', (state, action: any) => {
-        const payload = extractData(action.payload);
-        if (payload.farmer) {
-          state.farmerDetails = {
-            ...state.farmerDetails,
-            ...payload.farmer
-          };
-        }
-      })
-      .addCase('newLead/initializeLead', (state, action: any) => {
-        const payload = action.payload;
-        state.farmerId = payload.farmerId || '';
-        state.farmerDetails = {
-          firstName: '',
-          lastName: '',
-          location: '',
-          phoneNumber: '',
-          email: '',
-          ...(payload.farmerDetails || {})
-        };
+
+      .addCase(initializeLead, (state, action) => {
+        const payload = action.payload ?? {};
+        state.farmerId = payload.farmerId ?? '';
+        state.farmerDetails = createDefaultFarmerDetails(payload.farmerDetails);
         state.searchedFarmer = null;
         state.isSearchingFarmer = false;
       })
-      .addCase('newLead/clearForm', () => {
+      .addCase(clearForm, () => {
         return initialState;
       });
   }
 });
 
 export const { setFarmerId, updateFarmerDetails, clearFarmerState } = farmerSlice.actions;
+
+export const selectFarmerState = (state: RootState) => state.farmer;
+
 export default farmerSlice.reducer;

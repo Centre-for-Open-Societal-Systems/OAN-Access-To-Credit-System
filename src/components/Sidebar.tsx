@@ -94,7 +94,7 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
             className={`object-contain transition-all duration-300 ${isCollapsed ? 'w-[80%] h-auto max-h-12' : 'h-20 w-auto max-w-[220px] -mt-1.5'}`}
             id="primary-logo-img"
             onError={(e) => {
-              (e.target as HTMLElement).classList.add('hidden');
+              e.currentTarget.classList.add('hidden');
               const fallback = document.getElementById('fallback-logo-graphic');
               if (fallback) fallback.classList.remove('hidden');
             }}

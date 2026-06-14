@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, fetchActivitiesThunk, addActivityNoteThunk } from '../store/newLeadSlice';
+import { selectActivities, fetchActivitiesThunk, addActivityNoteThunk } from '../store/newLeadSlice';
 import { useParams } from 'next/navigation';
 import { Edit, Paperclip, Image as ImageIcon } from 'lucide-react';
 
 export function ActivitySection() {
-  const { activities } = useAppSelector(selectNewLeadState);
+  const activities = useAppSelector(selectActivities);
   const dispatch = useAppDispatch();
   const params = useParams();
   const leadId = params?.id as string;

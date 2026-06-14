@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, selectIsLeadFinalized, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
+import { selectCreditInfo, selectIsLeadFinalized, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
 import { CreditInformationModal } from './modals/CreditInformationModal';
 import { CreditCard } from 'lucide-react';
 
 export function CreditInformationSection() {
   const dispatch = useAppDispatch();
-  const { creditInfo } = useAppSelector(selectNewLeadState);
+  const creditInfo = useAppSelector(selectCreditInfo);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const leadId = params?.id as string;

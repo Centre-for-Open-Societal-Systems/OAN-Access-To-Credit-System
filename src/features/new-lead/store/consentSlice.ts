@@ -1,7 +1,8 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { newLeadService } from '../api/newLead.service';
-import { extractData } from './helpers';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { newLeadService, SendOtpAndCreateConsentResponse } from '../api/newLead.service';
 import { fetchLeadDetailsThunk } from './farmerSlice';
+import { initializeLead, clearForm, InitializeLeadPayload } from './actions';
+import type { RootState } from '@/store';
 
 interface ConsentState {
   isLoadingConsent: boolean;
@@ -21,14 +22,16 @@ const initialState: ConsentState = {
   consentDate: null,
 };
 
-export const searchFarmerConsent = createAsyncThunk(
+export const searchFarmerConsent = createAsyncThunk<
+  SendOtpAndCreateConsentResponse,
+  { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName: string; leadId: string }
+>(
   'consent/searchConsent',
-  async ({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId }: { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName: string; leadId: string }, { rejectWithValue }) => {
+  async ({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId }, { rejectWithValue }) => {
     try {
-      const response = await newLeadService.sendOtpAndCreateConsent({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId });
-      return response as { success: boolean; consent_request: string; masked_phone: string };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Failed to request consent');
+      return await newLeadService.sendOtpAndCreateConsent({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId });
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to request consent');
     }
   }
 );
@@ -43,8 +46,8 @@ export const verifyOtpThunk = createAsyncThunk(
       });
       await dispatch(fetchLeadDetailsThunk(payload.leadId));
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Unknown Cause: Verification failed');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Verification failed');
     }
   }
 );
@@ -65,10 +68,7 @@ const consentSlice = createSlice({
       })
       .addCase(searchFarmerConsent.fulfilled, (state, action) => {
         state.isLoadingConsent = false;
-        const payload = extractData(action.payload);
-        if (payload.consent_request) {
-          state.consentRequestId = payload.consent_request;
-        }
+        state.consentRequestId = action.payload.consent_request;
       })
       .addCase(searchFarmerConsent.rejected, (state, action) => {
         state.isLoadingConsent = false;
@@ -84,20 +84,23 @@ const consentSlice = createSlice({
       .addCase(verifyOtpThunk.rejected, (state) => {
         state.isVerifyingOtp = false;
       })
-      .addCase('newLead/initializeLead', (state, action: any) => {
-        const payload = action.payload;
+      .addCase(initializeLead, (state, action) => {
+        const payload = action.payload ?? {};
         state.consentDate = payload.consentDate || null;
-        state.consentRequestId = payload.consentRequestId !== undefined ? payload.consentRequestId : null;
+        state.consentRequestId = payload.consentRequestId ?? null;
         state.isLoadingConsent = false;
         state.consentError = null;
         state.isVerifyingOtp = false;
         state.isOtpVerified = false;
       })
-      .addCase('newLead/clearForm', () => {
+      .addCase(clearForm, () => {
         return initialState;
       });
   }
 });
 
 export const { clearConsentState } = consentSlice.actions;
+
+export const selectConsentState = (state: RootState) => state.consent;
+
 export default consentSlice.reducer;

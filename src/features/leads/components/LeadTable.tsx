@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Phone, Filter } from 'lucide-react';
-import LeadStatusBadge from './LeadStatusBadge';
+import { LeadStatusBadge } from './LeadStatusBadge';
 import LeadActionCell, { getLeadRoute } from './LeadActionCell';
 import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
@@ -254,7 +254,7 @@ function LeadTable({
               const key = l.id + l.phone;
 
               const isSelected = selectedRows.includes(key);
-              const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
+              const isVisitScheduled = l.scheduleStatus?.toLowerCase() === 'scheduled' || l.actionType === 'visit-scheduled';
               const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
               
               const rowBgClass = isBlocked

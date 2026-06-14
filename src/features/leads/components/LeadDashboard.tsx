@@ -3,7 +3,16 @@
 import { LeadLayoutGrid } from '@/features/leads/components/LeadLayoutGrid';
 import { useLeadInitialization } from '@/features/leads/hooks/useLeadInitialization';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, fetchLeadMetadataThunk, fetchLeadDetailsThunk, fetchVisitSchedulesThunk, fetchActivitiesThunk, fetchSpecificLeadThunk } from '@/features/new-lead/store/newLeadSlice';
+import {
+  selectLeadStatus,
+  selectFarmerState,
+  selectVisitState,
+  fetchLeadMetadataThunk,
+  fetchLeadDetailsThunk,
+  fetchVisitSchedulesThunk,
+  fetchActivitiesThunk,
+  fetchSpecificLeadThunk
+} from '@/features/new-lead';
 import { selectLeads } from '@/features/leads/store/leadSlice';
 import { useEffect } from 'react';
 import { LeadInfoSection } from '@/features/new-lead/components/LeadInfoSection';
@@ -37,7 +46,9 @@ export function LeadDashboard({ id }: LeadDashboardProps) {
     }, [dispatch, id]);
 
     const leads = useAppSelector(selectLeads);
-    const { farmerDetails, visitSchedule, leadStatus } = useAppSelector(selectNewLeadState);
+    const leadStatus = useAppSelector(selectLeadStatus);
+    const { farmerDetails } = useAppSelector(selectFarmerState);
+    const { visitSchedule } = useAppSelector(selectVisitState);
 
     const currentLead = id ? leads.find(l => l.id.replace('#', '') === id.replace('#', '')) : null;
     const hasScheduledVisit = Boolean(currentLead?.visitDate) || Boolean(visitSchedule?.id);

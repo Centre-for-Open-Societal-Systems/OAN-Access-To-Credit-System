@@ -2,7 +2,9 @@ import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-type LeadStatus = 'Active' | 'Verified' | 'Processed' | 'Granted' | 'Rejected' | 'Dormant' | 'Unknown';
+import { LeadStatus } from '@/features/leads/types/leads.types';
+
+type BadgeStatus = LeadStatus | 'Unknown';
 
 interface LeadStatusBadgeProps {
   readonly status: string;
@@ -48,25 +50,30 @@ const dotVariants = cva(
   }
 );
 
-const normalizeStatus = (status: string): LeadStatus => {
-  if (!status) return 'Active';
+const VALID_STATUSES = ['Active', 'Verified', 'Processed', 'Granted', 'Rejected', 'Dormant'] as const;
+
+function isLeadStatus(status: string): status is LeadStatus {
+  return (VALID_STATUSES as readonly string[]).includes(status);
+}
+
+const normalizeStatus = (status: string): BadgeStatus => {
+  if (!status) return 'Unknown';
   const lower = status.toLowerCase();
   const normalized = lower.charAt(0).toUpperCase() + lower.slice(1);
   
-  const validStatuses: Omit<LeadStatus, 'Unknown'>[] = ['Active', 'Verified', 'Processed', 'Granted', 'Rejected', 'Dormant'];
-  if ((validStatuses as string[]).includes(normalized)) {
-    return normalized as LeadStatus;
+  if (isLeadStatus(normalized)) {
+    return normalized;
   }
   return 'Unknown';
 };
 
-export default function LeadStatusBadge({ status }: LeadStatusBadgeProps): React.JSX.Element {
+export function LeadStatusBadge({ status }: LeadStatusBadgeProps): React.JSX.Element {
   const kpiLabel = normalizeStatus(status);
   
-  // Keep the original status casing for display purposes (fallback defaults to 'Active')
+  // Keep the original status casing for display purposes (fallback defaults to 'Unknown')
   const displayLabel = status 
     ? (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()) 
-    : 'Active';
+    : 'Unknown';
 
   return (
     <span className={cn(badgeVariants({ status: kpiLabel }))}>

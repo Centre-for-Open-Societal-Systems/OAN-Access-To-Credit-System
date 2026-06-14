@@ -142,7 +142,7 @@ export function Step1ConsentDocs() {
       if (typeof id === 'string') {
         const res = await loanService.deleteSupportingDocument(applicationId, id);
         // Frappe might return status === 'success' or message === 'File deleted successfully' or message.status === 'success'
-        const isSuccess = res?.status === 'success' || res?.message?.status === 'success' || res?.message === 'File deleted successfully' || res?.message?.message === 'File deleted successfully';
+        const isSuccess = res?.status === 'success' || res?.message === 'File deleted successfully';
         if (isSuccess) {
           setSupportingDocs(docs => docs.filter(doc => doc.id !== id));
         } else {

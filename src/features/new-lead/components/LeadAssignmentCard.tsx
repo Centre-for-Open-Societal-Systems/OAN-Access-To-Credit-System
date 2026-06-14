@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, selectIsLeadFinalized, assignLeadThunk } from '../store/newLeadSlice';
+import { selectAssignmentState, selectIsLeadFinalized, assignLeadThunk } from '..';
 import AssignOwnerModal from './modals/AssignOwnerModal';
 import { Edit } from 'lucide-react';
 import { useParams } from 'next/navigation';
 export function LeadAssignmentCard() {
-  const { assignment } = useAppSelector(selectNewLeadState);
+  const { assignment } = useAppSelector(selectAssignmentState);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const dispatch = useAppDispatch();
   const params = useParams();

@@ -310,8 +310,8 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
                   height={36}
                   className="h-full w-full object-cover hidden"
                   onLoad={(e) => {
-                    (e.target as HTMLElement).classList.remove('hidden');
-                    const fallback = (e.target as HTMLElement).nextElementSibling;
+                    e.currentTarget.classList.remove('hidden');
+                    const fallback = e.currentTarget.nextElementSibling;
                     if (fallback) fallback.classList.add('hidden');
                   }}
                 />

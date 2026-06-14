@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Filter } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
+import { selectLoanTypesOptions, selectLeadStatusesOptions } from '@/features/new-lead/store/newLeadSlice';
 
 
 /* ─── LeadColFilterPopup ────────────────────────────────────────────── */
@@ -45,7 +45,8 @@ export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApp
   }, [anchorRef, onClose]);
 
 
-  const { loanTypesOptions, leadStatusesOptions } = useAppSelector(selectNewLeadState);
+  const loanTypesOptions = useAppSelector(selectLoanTypesOptions);
+  const leadStatusesOptions = useAppSelector(selectLeadStatusesOptions);
 
   const opts = col === 'STATUS'
     ? leadStatusesOptions.filter(o => o !== 'All')

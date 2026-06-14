@@ -1,4 +1,15 @@
-import type { Lead, GetLeadsParams, GetLeadsResponse, LeadSummaryResponse } from '@/features/leads/types/leads.types';
+import type {
+  Lead,
+  GetLeadsParams,
+  GetLeadsResponse,
+  LeadSummaryResponse,
+  VisitSchedule,
+  RawLead,
+  AssignableUser,
+  AssignLeadBackendData,
+  UpdateLeadStatusResponseData,
+  LeadStatus,
+} from '@/features/leads/types/leads.types';
 
 export const leadService = {
   async getLeads(params?: GetLeadsParams): Promise<GetLeadsResponse> {
@@ -21,9 +32,7 @@ export const leadService = {
       searchParams.set('loan_type', params.loan_type);
     }
 
-
-
-    // TODO: Temporary client-side join. We are fetching up to 2000 visit schedules because 
+    // TODO: [OAN-452] Temporary client-side join. We are fetching up to 2000 visit schedules because 
     // the backend get_leads API doesn't currently include the latest visit schedule details.
     // This should be removed once the backend includes latest_visit_schedule in the lead response.
     const [response, schedulesRes] = await Promise.all([
@@ -37,28 +46,43 @@ export const leadService = {
       }
       throw new Error('Failed to fetch leads');
     }
-    const data = await response.json();
+    const data = await response.json() as {
+      message?: {
+        results?: RawLead[];
+        total_count?: number;
+      };
+    };
 
-    let schedulesData: any = null;
+    let schedulesData: {
+      message?: {
+        results?: VisitSchedule[];
+      };
+      results?: VisitSchedule[];
+    } | null = null;
     try {
       if (schedulesRes.ok) {
-        schedulesData = await schedulesRes.json();
+        schedulesData = await schedulesRes.json() as {
+          message?: {
+            results?: VisitSchedule[];
+          };
+          results?: VisitSchedule[];
+        };
       }
     } catch (e) {
       console.error('Failed to parse visit schedules', e);
     }
 
-    const rawSchedules = schedulesData?.message?.results || schedulesData?.results || [];
-    const sortedSchedules = [...rawSchedules].sort((a: any, b: any) => {
+    const rawSchedules: VisitSchedule[] = schedulesData?.message?.results || schedulesData?.results || [];
+    const sortedSchedules = [...rawSchedules].sort((a: VisitSchedule, b: VisitSchedule) => {
       const dateA = a.creation || '';
       const dateB = b.creation || '';
       return dateB.localeCompare(dateA);
     });
 
-    // TODO: This scheduleMap lookup and join is temporary. Once the backend
+    // TODO: [OAN-452] This scheduleMap lookup and join is temporary. Once the backend
     // get_leads API returns latest_visit_schedule details directly, we will
     // remove this map, the schedules sorting logic, and the schedulesRes fetch call.
-    const scheduleMap = new Map<string, any>();
+    const scheduleMap = new Map<string, VisitSchedule>();
     for (const s of sortedSchedules) {
       if (s.lead) {
         const key = s.lead.replace('#', '');
@@ -68,10 +92,10 @@ export const leadService = {
       }
     }
 
-    const rawLeads = data.message?.results || [];
+    const rawLeads: RawLead[] = data.message?.results || [];
     const totalCount = data.message?.total_count || 0;
 
-    const results = rawLeads.map((item: any): Lead => {
+    const results = rawLeads.map((item: RawLead): Lead => {
       const leadId = item.name;
       const cleanId = leadId ? leadId.replace('#', '') : '';
       const latestSchedule = scheduleMap.get(cleanId);
@@ -80,7 +104,7 @@ export const leadService = {
         id: item.name,
         name: item.farmer_name || '',
         phone: item.phone_number || '',
-        status: latestSchedule && latestSchedule.status === 'Missed' ? 'Active' : (item.status || ''),
+        status: (latestSchedule && latestSchedule.status === 'Missed' ? 'Active' : (item.status || '')) as LeadStatus,
         location: item.location || '',
         loanType: item.loan_type || '',
         loanAmount: item.loan_amount || '',
@@ -90,7 +114,7 @@ export const leadService = {
         creation: item.creation || '',
         external_id: item.external_id,
         visitDate: latestSchedule ? `${latestSchedule.visit_date} ${latestSchedule.visit_time || ''}`.trim() : (item.visitDate || null),
-        scheduleStatus: latestSchedule ? latestSchedule.status : null,
+        scheduleStatus: latestSchedule ? (latestSchedule.status || null) : null,
         farmerId: item.farmer_id || null,
         consentDate: item.consent_date || null,
         consentRequestId: item.consentRequestId || null,
@@ -108,38 +132,37 @@ export const leadService = {
       }
       throw new Error('Failed to fetch lead summary');
     }
-    const data = await response.json();
+    const data = await response.json() as { message: LeadSummaryResponse };
     return data.message;
   },
 
-
-
-  async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<any> {
+  async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<UpdateLeadStatusResponseData> {
     const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lead_id, status, reason }),
     });
     if (!response.ok) throw new Error('Failed to update lead status');
-    const data = await response.json();
+    const data = await response.json() as { message: UpdateLeadStatusResponseData };
     return data.message;
   },
 
-  async getAssignableUsers(search_query: string = ''): Promise<any> {
+  async getAssignableUsers(search_query: string = ''): Promise<AssignableUser[]> {
     const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(search_query)}`);
     if (!response.ok) throw new Error('Failed to fetch assignable users');
-    const data = await response.json();
+    const data = await response.json() as { message: AssignableUser[] };
     return data.message;
   },
 
-  async assignLead(lead_id: string, assigned_to: string): Promise<any> {
+  async assignLead(lead_id: string, assigned_to: string): Promise<AssignLeadBackendData> {
     const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.assign_lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lead_id, assigned_to }),
     });
     if (!response.ok) throw new Error('Failed to assign lead');
-    const data = await response.json();
+    const data = await response.json() as { message: AssignLeadBackendData };
     return data.message;
   },
 };
+

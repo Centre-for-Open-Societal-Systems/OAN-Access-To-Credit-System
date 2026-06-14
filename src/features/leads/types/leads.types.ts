@@ -32,17 +32,17 @@ export interface Lead {
   loanType: string;
   loanAmount: string;
   source: string;
-  assignedTo?: string;
-  owner?: string;
+  assignedTo?: string | undefined;
+  owner?: string | undefined;
   creation: string;
-  farmerPhone?: string;
-  visitDate?: string | null;
-  scheduleStatus?: string;
-  farmerId?: string;
-  consentDate?: string;
-  consentRequestId?: string | null;
-  external_id?: string | null;
-  actionType?: string;
+  farmerPhone?: string | undefined;
+  visitDate?: string | null | undefined;
+  scheduleStatus?: string | null | undefined;
+  farmerId?: string | null | undefined;
+  consentDate?: string | null | undefined;
+  consentRequestId?: string | null | undefined;
+  external_id?: string | null | undefined;
+  actionType?: string | undefined;
 }
 // small trend under summary in Leads
 export interface KpiStat {
@@ -64,3 +64,49 @@ export interface LeadSummaryResponse {
     [key: string]: number | undefined;
   };
 }
+
+export interface VisitSchedule {
+  name: string;
+  lead?: string;
+  visit_date: string;
+  visit_time?: string;
+  status?: string;
+  creation?: string;
+}
+
+export interface RawLead {
+  name: string;
+  farmer_name?: string;
+  phone_number?: string;
+  status?: string;
+  location?: string;
+  loan_type?: string;
+  loan_amount?: string;
+  lead_source?: string;
+  assigned_to?: string;
+  creation?: string;
+  external_id?: string | null;
+  visitDate?: string | null;
+  farmer_id?: string | null;
+  consent_date?: string | null;
+  consentRequestId?: string | null;
+}
+
+export interface AssignableUser {
+  email: string;
+  full_name: string;
+  agent_id: string;
+  region: string;
+}
+
+export interface AssignLeadBackendData {
+  lead_id: string;
+  assigned_to: string;
+  assigned_date: string;
+}
+
+export interface UpdateLeadStatusResponseData {
+  lead_id: string;
+  new_status: string;
+}
+
