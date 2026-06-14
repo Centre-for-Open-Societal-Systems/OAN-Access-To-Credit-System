@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '@/store';
 import { newLeadService } from '../api/newLead.service';
 import { formatTiming, extractList, extractData } from './helpers';
@@ -352,13 +352,22 @@ export const {
   clearForm
 } = newLeadSlice.actions;
 
-export const selectNewLeadState = (state: RootState) => ({
-  ...state.newLead,
-  ...state.farmer,
-  ...state.consent,
-  ...state.visit,
-  ...state.assignment,
-});
+export const selectNewLeadState = createSelector(
+  [
+    (state: RootState) => state.newLead,
+    (state: RootState) => state.farmer,
+    (state: RootState) => state.consent,
+    (state: RootState) => state.visit,
+    (state: RootState) => state.assignment,
+  ],
+  (newLead, farmer, consent, visit, assignment) => ({
+    ...newLead,
+    ...farmer,
+    ...consent,
+    ...visit,
+    ...assignment,
+  })
+);
 
 export const selectIsLeadFinalized = (state: RootState) => {
   const status = state.newLead.leadStatus?.toLowerCase() || '';
