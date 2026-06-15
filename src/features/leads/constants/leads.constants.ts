@@ -33,6 +33,10 @@ export const STATUS_STYLE_MAP: Record<string, StatusStyle> = {
   Dormant: {
     badgeClass: "bg-orange-50 text-orange-500 border border-orange-200",
     dotClass: "bg-orange-500"
+  },
+  Unknown: {
+    badgeClass: "bg-gray-100 text-gray-600 border border-gray-200",
+    dotClass: "bg-gray-400"
   }
 };
 

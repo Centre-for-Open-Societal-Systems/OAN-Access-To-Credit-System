@@ -61,7 +61,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
     );
   }
 
-  if (lead.visitDate || scheduleStatus === 'scheduled') {
+  if ((lead.visitDate || scheduleStatus === 'scheduled') && status !== 'granted' && status !== 'rejected') {
     return (
       <div className="flex flex-col items-end gap-1">
         <button

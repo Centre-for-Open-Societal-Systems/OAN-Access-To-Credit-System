@@ -84,6 +84,7 @@ export interface CreateLoanApplicationResponse {
 export interface GetLoansParams {
   page?: number;
   page_size?: number;
+  search_query?: string; // free-text search by Application ID, Lead ID, or Phone Number
   status?: string; // stringified array or comma-separated statuses e.g. 'Draft,Approved'
   min_loan_amount?: string;
   max_loan_amount?: string;

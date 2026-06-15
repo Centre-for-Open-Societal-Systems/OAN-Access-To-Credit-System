@@ -26,7 +26,10 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
 
   if (!isOpen || !mounted) return null;
 
+  const isValid = Boolean(loanType && loanAmount && purposeMessage.trim());
+
   const handleSubmit = () => {
+    if (!isValid) return;
     onSubmit({
       loanType,
       loanAmount,
@@ -120,7 +123,8 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
 
             <button
               onClick={handleSubmit}
-              className="relative flex flex-row justify-center items-center p-[10px_24px] min-w-[93px] h-[40px] bg-[#16A34A] rounded-[8px] hover:bg-[#15803d] transition-colors overflow-hidden"
+              disabled={!isValid}
+              className="relative flex flex-row justify-center items-center p-[10px_24px] min-w-[93px] h-[40px] bg-[#16A34A] rounded-[8px] hover:bg-[#15803d] transition-colors overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#16A34A]"
             >
               <div className="absolute inset-0 bg-white/0 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] rounded-[8px]" />
               <span className="relative z-10 font-roboto font-semibold text-[14px] leading-[20px] text-center text-white">

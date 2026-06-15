@@ -182,7 +182,11 @@ const leadSlice = createSlice({
           const { leadId, status } = action.payload.payload;
           const lead = findLeadById(state.leads, leadId);
           if (lead) {
-            lead.status = status as LeadStatus;
+            // This is the visit-schedule status, not the lead's own status.
+            lead.scheduleStatus = status;
+            if (status === 'Completed' || status === 'Missed') {
+              lead.visitDate = undefined;
+            }
           }
         }
       )

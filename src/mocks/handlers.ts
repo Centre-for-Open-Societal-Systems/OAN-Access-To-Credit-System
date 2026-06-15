@@ -393,16 +393,6 @@ export const handlers = [
   }),
 
 
-
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.edit_credit_info', () => {
-    return HttpResponse.json({
-      message: {
-        status: "success",
-        message: "Credit info updated successfully"
-      }
-    });
-  }),
-
   http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_supporting_documents', () => {
     return HttpResponse.json({
       message: {

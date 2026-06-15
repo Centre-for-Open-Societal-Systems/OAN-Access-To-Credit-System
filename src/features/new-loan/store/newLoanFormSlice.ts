@@ -81,7 +81,7 @@ export const createLoanApplicationAPI = createAsyncThunk(
   async (leadId: string, { rejectWithValue }) => {
     try {
       const response = await loanService.createLoanApplication(leadId);
-      const appId = (response as { name?: string })?.name || (typeof response === 'string' ? response : null);
+      const appId = response?.data?.application_id;
       if (!appId) throw new Error('No Application ID returned');
       return appId;
     } catch (err) {

@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     const nextResponse = NextResponse.json({
       success: true,
       message: 'Logged in successfully',
-      user: messageObj?.user || {},
+      user: messageObj?.user ?? null,
     });
 
     if (token) {

@@ -33,14 +33,15 @@ export const fetchVisitSchedulesThunk = createAsyncThunk<
 );
 
 /**
- * Formats a time string into the standard 'HH:mm:00' format.
+ * Formats a time string into the standard 'HH:mm:ss' format.
  * Handles both 12-hour AM/PM and 24-hour formats.
- * Defaults to '09:00:00'.
+ * Throws if the input cannot be parsed — callers must surface this rather
+ * than sending an invalid visit_time to the backend.
  */
 export function formatTimeString(time: string): string {
 
   const match = time.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
-  if (!match) return '';
+  if (!match) throw new Error(`Invalid time format: "${time}"`);
 
   let [, hours = '00', minutes = '00', seconds = '00', modifier] = match;
   let h = parseInt(hours, 10);
