@@ -24,9 +24,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (process.env.NEXT_PUBLIC_API_MOCKING === 'true') {
       import('@/mocks/browser').then(({ worker }) => {
         worker.start({
-          onUnhandledRequest: 'bypass', // ignore requests to unmocked endpoints (like next.js internal)
+          onUnhandledRequest: 'bypass', // ignore requests to unmocked endpoints
         }).then(() => {
           setMswReady(true);
+        }).catch((err) => {
+          // Ignore 'already enabled' error in React Strict Mode double-invocation
+          if (err.message && err.message.includes('already enabled')) {
+            setMswReady(true);
+          } else {
+            console.error(err);
+          }
         });
       });
     }

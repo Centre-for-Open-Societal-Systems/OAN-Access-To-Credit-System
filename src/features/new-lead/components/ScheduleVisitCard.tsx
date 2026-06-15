@@ -139,8 +139,8 @@ export function ScheduleVisitCard({
                   <span className="text-white font-inter font-medium text-sm leading-5">Completing...</span>
                 ) : (
                   <>
-                    <CheckCircle size={14} className={isFinalized ? 'text-[#9CA3AF]' : 'text-white'} />
-                    <span className={`font-inter font-semibold text-md leading-5 text-center ${isFinalized ? 'text-[#9CA3AF]' : 'text-white'}`}>
+                    <CheckCircle size={14} className={isFinalized ? 'text-[#c1dfcc]' : 'text-white'} />
+                    <span className={`font-inter font-semibold text-md leading-5 text-center ${isFinalized ? 'text-[#c1dfcc]' : 'text-white'}`}>
                       Complete Visit
                     </span>
                   </>

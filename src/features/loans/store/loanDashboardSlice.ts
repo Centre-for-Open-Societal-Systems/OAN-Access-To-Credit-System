@@ -121,6 +121,14 @@ const loanDashboardSlice = createSlice({
       }
       state.activityPage = 1;
     },
+    setTableStatusFilters: (state, action: PayloadAction<string[]>) => {
+      state.tableStatusFilters = action.payload;
+      state.activityPage = 1;
+    },
+    setTableTypeFilters: (state, action: PayloadAction<string[]>) => {
+      state.tableTypeFilters = action.payload;
+      state.activityPage = 1;
+    },
     clearTableFilters: (state) => {
       state.tableStatusFilters = [];
       state.tableTypeFilters = [];
@@ -222,6 +230,8 @@ export const {
   setSearchQuery,
   toggleTableStatusFilter,
   toggleTableTypeFilter,
+  setTableStatusFilters,
+  setTableTypeFilters,
   clearTableFilters,
   setPageSize,
   setAdvancedFilters,

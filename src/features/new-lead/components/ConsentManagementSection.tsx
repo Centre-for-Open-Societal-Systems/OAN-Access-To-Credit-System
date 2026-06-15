@@ -5,6 +5,7 @@ import { selectConsentState, searchFarmerConsent } from '../store/consentSlice';
 import { selectOfficerName } from '@/features/auth/store/authSlice';
 import { newLeadService } from '../api/newLead.service';
 import { OTPVerificationModal } from './modals/OTPVerificationModal';
+import { ConsentDetailsModal } from './modals/ConsentDetailsModal';
 import { Eye, X, FileText, CheckCircle2, Folder, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
@@ -17,6 +18,7 @@ export function ConsentManagementSection() {
   const leadId = params?.id as string;
   const consent_id = consentRequestId;
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
   const [maskedPhone, setMaskedPhone] = useState<string>('');
 
   const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
@@ -107,7 +109,13 @@ export function ConsentManagementSection() {
               </div>
               <div className="flex flex-row items-center gap-1.5 mt-1">
                 <CheckCircle2 size={20} className="text-[#16A34A]" fill="#16A34A" color="white" />
-                <span className="text-[14px] font-bold text-[#16A34A] leading-[20px]">View Consent Details</span>
+                <button 
+                  type="button"
+                  onClick={() => setIsConsentModalOpen(true)}
+                  className="text-[14px] font-bold text-[#16A34A] leading-[20px] hover:underline cursor-pointer focus:outline-none"
+                >
+                  View Consent Details
+                </button>
                 <span className="text-[14px] font-medium text-[#6B7280] leading-[20px] ml-1">
                   {consentDate ? `provided on ${consentDate}` : 'verified via registry'}
                 </span>
@@ -253,6 +261,11 @@ export function ConsentManagementSection() {
         onClose={() => setIsOtpModalOpen(false)}
         farmerId={farmerId}
         maskedPhone={maskedPhone}
+      />
+
+      <ConsentDetailsModal
+        isOpen={isConsentModalOpen}
+        onClose={() => setIsConsentModalOpen(false)}
       />
     </section>
   );
