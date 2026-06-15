@@ -48,31 +48,31 @@ export const leadService = {
     }
     const data = await response.json() as {
       message?: {
-        results?: RawLead[];
-        total_count?: number;
+        data?: RawLead[];
+        pagination?: {
+          total?: number;
+        };
       };
     };
 
     let schedulesData: {
       message?: {
-        results?: VisitSchedule[];
+        data?: VisitSchedule[];
       };
-      results?: VisitSchedule[];
     } | null = null;
     try {
       if (schedulesRes.ok) {
         schedulesData = await schedulesRes.json() as {
           message?: {
-            results?: VisitSchedule[];
+            data?: VisitSchedule[];
           };
-          results?: VisitSchedule[];
         };
       }
     } catch (e) {
       console.error('Failed to parse visit schedules', e);
     }
 
-    const rawSchedules: VisitSchedule[] = schedulesData?.message?.results || schedulesData?.results || [];
+    const rawSchedules: VisitSchedule[] = schedulesData?.message?.data || [];
     const sortedSchedules = [...rawSchedules].sort((a: VisitSchedule, b: VisitSchedule) => {
       const dateA = a.creation || '';
       const dateB = b.creation || '';
@@ -92,8 +92,8 @@ export const leadService = {
       }
     }
 
-    const rawLeads: RawLead[] = data.message?.results || [];
-    const totalCount = data.message?.total_count || 0;
+    const rawLeads: RawLead[] = data.message?.data || [];
+    const totalCount = data.message?.pagination?.total || 0;
 
     const results = rawLeads.map((item: RawLead): Lead => {
       const leadId = item.name;
@@ -132,8 +132,8 @@ export const leadService = {
       }
       throw new Error('Failed to fetch lead summary');
     }
-    const data = await response.json() as { message: LeadSummaryResponse };
-    return data.message;
+    const data = await response.json() as { message: { data: LeadSummaryResponse } };
+    return data.message.data;
   },
 
   async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<UpdateLeadStatusResponseData> {
@@ -143,15 +143,15 @@ export const leadService = {
       body: JSON.stringify({ lead_id, status, reason }),
     });
     if (!response.ok) throw new Error('Failed to update lead status');
-    const data = await response.json() as { message: UpdateLeadStatusResponseData };
-    return data.message;
+    const data = await response.json() as { message: { data: UpdateLeadStatusResponseData } };
+    return data.message.data;
   },
 
   async getAssignableUsers(search_query: string = ''): Promise<AssignableUser[]> {
     const response = await fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(search_query)}`);
     if (!response.ok) throw new Error('Failed to fetch assignable users');
-    const data = await response.json() as { message: AssignableUser[] };
-    return data.message;
+    const data = await response.json() as { message: { data: AssignableUser[] } };
+    return data.message.data;
   },
 
   async assignLead(lead_id: string, assigned_to: string): Promise<AssignLeadBackendData> {
@@ -161,8 +161,8 @@ export const leadService = {
       body: JSON.stringify({ lead_id, assigned_to }),
     });
     if (!response.ok) throw new Error('Failed to assign lead');
-    const data = await response.json() as { message: AssignLeadBackendData };
-    return data.message;
+    const data = await response.json() as { message: { data: AssignLeadBackendData } };
+    return data.message.data;
   },
 };
 

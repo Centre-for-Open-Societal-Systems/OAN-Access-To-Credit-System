@@ -18,22 +18,22 @@ const ICON_PROPS = {
   className: "text-[#3A474E] shrink-0"
 } as const;
 
-export function getLeadRoute(lead: Lead): string {
+// Visit state is only routable for in-progress (active/verified) leads — keep this
+// in sync with the visit badge in LeadActionCell so the action text and the
+// navigation target never disagree.
+export function canShowVisit(lead: Lead): boolean {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
-  
-  if (status === 'granted' || status === 'rejected') {
-    return `/leads/${lead.id.replace('#', '')}`;
-  }
-  
-  if (
-    lead.visitDate ||
+  const hasVisit =
+    Boolean(lead.visitDate) ||
     scheduleStatus === 'missed' ||
-    scheduleStatus === 'scheduled'
-  ) {
-    return `/leads/${lead.id.replace('#', '')}/schedule`;
-  }
-  return `/leads/${lead.id.replace('#', '')}`;
+    scheduleStatus === 'scheduled';
+  return hasVisit && (status === 'active' || status === 'verified');
+}
+
+export function getLeadRoute(lead: Lead): string {
+  const detailRoute = `/leads/${lead.id.replace('#', '')}`;
+  return canShowVisit(lead) ? `${detailRoute}/schedule` : detailRoute;
 }
 
 // 2.  to prevent unnecessary parent-driven row re-renders
@@ -41,7 +41,12 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
 
-  if (scheduleStatus === 'missed') {
+  // Visit-scheduled state is only meaningful for in-progress (active/verified)
+  // leads — it must not override terminal/processed statuses, and the badge must
+  // agree with getLeadRoute (both go through canShowVisit).
+  const showVisit = canShowVisit(lead);
+
+  if (showVisit && scheduleStatus === 'missed') {
     return (
       <div className="flex flex-col items-center gap-1">
         <button
@@ -61,7 +66,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
     );
   }
 
-  if ((lead.visitDate || scheduleStatus === 'scheduled') && status !== 'granted' && status !== 'rejected') {
+  if (showVisit) {
     return (
       <div className="flex flex-col items-end gap-1">
         <button

@@ -11,8 +11,8 @@ interface ConsentDetailsModalProps {
   validityTo?: string;
 }
 
-export function ConsentDetailsModal({ 
-  isOpen, 
+export function ConsentDetailsModal({
+  isOpen,
   onClose,
   requestedDataFields,
 }: ConsentDetailsModalProps) {
@@ -27,7 +27,7 @@ export function ConsentDetailsModal({
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
       <div className="relative flex flex-col bg-white rounded-[10px] w-full max-w-[605px] overflow-hidden shadow-2xl">
-        
+
         {/* Header */}
         <div className="flex flex-row justify-between items-center px-6 h-[77px] border-b border-[#E5E7EB]">
           <h2 className="font-roboto font-bold text-[20px] leading-7 text-[#111827] m-0">
@@ -49,13 +49,13 @@ export function ConsentDetailsModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(requestedDataFields || []).map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="flex items-center p-4 gap-3 bg-[#F0FDFA] border border-[#A7F3D0] rounded-lg"
               >
                 <CheckCircle2 size={24} className="text-[#10B981] shrink-0" fill="#10B981" color="white" />
                 <span className="font-inter font-medium text-[15px] text-[#374151]">
-                  {item.field_value}
+                  {item.field_name}
                 </span>
               </div>
             ))}

@@ -53,7 +53,6 @@ export interface KpiStat {
   trendUp?: boolean;
 }
 export interface LeadSummaryResponse {
-  status: string;
   total: number;
   by_status: {
     Open?: number;

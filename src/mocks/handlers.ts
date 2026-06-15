@@ -82,8 +82,11 @@ export const handlers = [
 
     return HttpResponse.json({
       message: {
-        results: mappedResults,
-        total_count: mappedResults.length
+        status: 'success',
+        data: mappedResults,
+        pagination: {
+          total: mappedResults.length
+        }
       }
     });
   }),
@@ -97,8 +100,11 @@ export const handlers = [
 
     return HttpResponse.json({
       message: {
-        total: leadRows.length,
-        by_status
+        status: 'success',
+        data: {
+          total: leadRows.length,
+          by_status
+        }
       }
     });
   }),
@@ -446,7 +452,7 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        results: [
+        data: [
           {
             email: "arnavjagadeesh12@gmail.com",
             full_name: "arnav",
@@ -552,10 +558,7 @@ export const handlers = [
       return HttpResponse.json({
         message: {
           status: "success",
-          start: 0,
-          page_length: 20,
-          total_count: filtered.length,
-          results: filtered.length > 0 ? filtered : [
+          data: filtered.length > 0 ? filtered : [
             {
               name: "VSCH-2026-00267",
               lead: leadId,
@@ -570,7 +573,10 @@ export const handlers = [
               scheduled_by: "arnavjagadeesh12@gmail.com",
               creation: new Date().toISOString()
             }
-          ]
+          ],
+          pagination: {
+            total: filtered.length
+          }
         }
       });
     }
@@ -578,10 +584,10 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        start: 0,
-        page_length: 20,
-        total_count: mockSchedules.length,
-        results: mockSchedules
+        data: mockSchedules,
+        pagination: {
+          total: mockSchedules.length
+        }
       }
     });
   }),
