@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, selectIsLeadFinalized, assignLeadThunk } from '../store/newLeadSlice';
+import { selectAssignmentState, selectIsLeadFinalized, assignLeadThunk } from '..';
 import AssignOwnerModal from './modals/AssignOwnerModal';
 import { Edit } from 'lucide-react';
 import { useParams } from 'next/navigation';
 export function LeadAssignmentCard() {
-  const { assignment } = useAppSelector(selectNewLeadState);
+  const { assignment } = useAppSelector(selectAssignmentState);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const dispatch = useAppDispatch();
   const params = useParams();
@@ -66,16 +66,7 @@ export function LeadAssignmentCard() {
                 </span>
               </div>
             )}
-            {assignment.date && (
-              <div className="flex flex-row justify-between items-center w-full">
-                <span className="font-roboto font-normal text-base leading-6 text-[#4B5563]">
-                  Assigned Date
-                </span>
-                <span className="font-roboto font-bold text-base leading-6 text-[#16335A]">
-                  {new Date(assignment.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </span>
-              </div>
-            )}
+
           </div>
         )}
 

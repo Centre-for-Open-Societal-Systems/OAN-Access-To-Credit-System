@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Phone, Filter } from 'lucide-react';
-import LeadStatusBadge from './LeadStatusBadge';
+import { LeadStatusBadge } from './LeadStatusBadge';
 import LeadActionCell, { getLeadRoute } from './LeadActionCell';
 import LeadEmptyState from './LeadEmptyState';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
@@ -26,7 +26,7 @@ const TABLE_COLS: ColumnDef[] = [
   { id: 'ACTIONS', label: 'ACTIONS', align: 'center' }
 ];
 
-const CELL_CLASS = "w-[151.71px] min-w-[151.71px] max-w-[151.71px] px-5 py-3 align-middle";
+const CELL_CLASS = "w-table-cell min-w-table-cell max-w-table-cell px-5 py-3 align-middle";
 
 interface LeadTableProps {
   visible: Lead[];
@@ -73,8 +73,9 @@ const formatCurrency = (amt?: number | string): string => {
   if (isNaN(num)) return amt.toString();
 
   const parts = num.toString().split('.');
-  let lastThree = parts[0].substring(parts[0].length - 3);
-  const otherParts = parts[0].substring(0, parts[0].length - 3);
+  const firstPart = parts[0] ?? '';
+  let lastThree = firstPart.substring(firstPart.length - 3);
+  const otherParts = firstPart.substring(0, firstPart.length - 3);
   if (otherParts !== '') {
     lastThree = ',' + lastThree;
   }
@@ -114,11 +115,11 @@ function LeadTable({
 
   const renderCellContent = (colId: string, l: Lead) => {
     switch (colId) {
-      case 'LEAD ID':
+      case 'LEAD ID': {
         const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
         return (
           <div className="flex flex-col items-start justify-start h-full">
-            <span className={`text-base font-semibold ${isBlocked ? 'text-gray-500' : 'text-[#1E6865] hover:underline'}`}>
+            <span className={`text-base font-semibold ${isBlocked ? 'text-gray-500' : 'text-[#16A34A] hover:underline'}`}>
               {l.id}
             </span>
             {l.location && (
@@ -128,6 +129,7 @@ function LeadTable({
             )}
           </div>
         );
+      }
       case 'PHONE NUMBER':
         return (
           <div className="flex items-center justify-center gap-2">
@@ -190,7 +192,7 @@ function LeadTable({
 
               return (
                 <th key={col.id} className={getCellClassName(col.align, true)}>
-                  <div className={`flex items-start gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`relative flex items-center gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
                     <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-[#6B7280]">
                       {col.label}
                     </span>
@@ -210,18 +212,17 @@ function LeadTable({
                           <Filter size={16} strokeWidth={2.5} />
                         </button>
                         {isActive && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1E6865]" />}
-                        {openColFilter === col.id && (
-                          <LeadColFilterPopup
-                            col={col.id}
-                            anchorRef={{ current: anchorRefs.current[col.id]?.current ?? null }}
-                            initialSelected={colFilterCfg[col.id]?.value ?? []}
-                            onApply={colFilterCfg[col.id]?.onApply ?? (() => { })}
-                            onClose={() => onSetOpenColFilter(null)}
-                          />
-                        )}
                       </div>
                     )}
-
+                    {col.isFilterable && openColFilter === col.id && (
+                      <LeadColFilterPopup
+                        col={col.id}
+                        anchorRef={{ current: anchorRefs.current[col.id]?.current ?? null }}
+                        initialSelected={colFilterCfg[col.id]?.value ?? []}
+                        onApply={colFilterCfg[col.id]?.onApply ?? (() => { })}
+                        onClose={() => onSetOpenColFilter(null)}
+                      />
+                    )}
                     {col.isSortable && (
                       <span className="inline-flex cursor-pointer text-[#AEB4BA] hover:text-[#3A474E] text-[12px] select-none">
 
@@ -252,9 +253,9 @@ function LeadTable({
               const key = l.id + l.phone;
 
               const isSelected = selectedRows.includes(key);
-              const isVisitScheduled = l.status?.toLowerCase() === 'visit scheduled' || l.actionType === 'visit-scheduled';
+              const isVisitScheduled = l.scheduleStatus?.toLowerCase() === 'scheduled' || l.actionType === 'visit-scheduled';
               const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
-              
+
               const rowBgClass = isBlocked
                 ? "bg-white border-t border-[#F1F3F4] h-[64px]"
                 : isSelected

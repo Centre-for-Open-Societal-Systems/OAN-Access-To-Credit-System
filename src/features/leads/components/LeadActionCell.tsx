@@ -18,24 +18,22 @@ const ICON_PROPS = {
   className: "text-[#3A474E] shrink-0"
 } as const;
 
-export function getLeadRoute(lead: Lead): string {
+// Visit state is only routable for in-progress (active/verified) leads — keep this
+// in sync with the visit badge in LeadActionCell so the action text and the
+// navigation target never disagree.
+export function canShowVisit(lead: Lead): boolean {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
-  
-  if (status === 'granted' || status === 'rejected') {
-    return `/leads/${lead.id.replace('#', '')}`;
-  }
-  
-  if (
-    (status === 'verified' && lead.visitDate) ||
-    status === 'visit scheduled' ||
-    status === 'missed' ||
+  const hasVisit =
+    Boolean(lead.visitDate) ||
     scheduleStatus === 'missed' ||
-    scheduleStatus === 'scheduled'
-  ) {
-    return `/leads/${lead.id.replace('#', '')}/schedule`;
-  }
-  return `/leads/${lead.id.replace('#', '')}`;
+    scheduleStatus === 'scheduled';
+  return hasVisit && (status === 'active' || status === 'verified');
+}
+
+export function getLeadRoute(lead: Lead): string {
+  const detailRoute = `/leads/${lead.id.replace('#', '')}`;
+  return canShowVisit(lead) ? `${detailRoute}/schedule` : detailRoute;
 }
 
 // 2.  to prevent unnecessary parent-driven row re-renders
@@ -43,7 +41,12 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
 
-  if (status === 'missed' || scheduleStatus === 'missed') {
+  // Visit-scheduled state is only meaningful for in-progress (active/verified)
+  // leads — it must not override terminal/processed statuses, and the badge must
+  // agree with getLeadRoute (both go through canShowVisit).
+  const showVisit = canShowVisit(lead);
+
+  if (showVisit && scheduleStatus === 'missed') {
     return (
       <div className="flex flex-col items-center gap-1">
         <button
@@ -63,7 +66,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
     );
   }
 
-  if (status === 'verified' && lead.visitDate) {
+  if (showVisit) {
     return (
       <div className="flex flex-col items-end gap-1">
         <button
@@ -73,33 +76,17 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           <CalendarCheck {...ICON_PROPS} />
           <span>Visit Scheduled</span>
         </button>
-        <span className="inline-flex items-center gap-1 text-[12px] text-text-muted mt-0.5">
-          <Calendar size={10} className="text-text-muted" />
-          <span className="text-[12px] font-normal text-text-muted text-right">{lead.visitDate}</span>
-        </span>
+        {lead.visitDate && (
+          <span className="inline-flex items-center gap-1 text-[12px] text-text-muted mt-0.5">
+            <Calendar size={10} className="text-text-muted" />
+            <span className="text-[12px] font-normal text-text-muted text-right">{lead.visitDate}</span>
+          </span>
+        )}
       </div>
     );
   }
 
   switch (status) {
-    case 'visit scheduled':
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => navigate(getLeadRoute(lead))}
-            className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
-          >
-            <CalendarCheck {...ICON_PROPS} />
-            <span className='text-[14px]'>Visit Scheduled</span>
-          </button>
-          {lead.visitDate && (
-            <span className="inline-flex items-center justify-center gap-1 text-[10px] text-text-muted mt-0.5 w-full">
-              <Calendar size={12} className="text-text-muted" />
-              <span className="text-[12px] font-normal text-text-muted text-center">{lead.visitDate}</span>
-            </span>
-          )}
-        </div>
-      );
 
     case 'rejected':
       return (

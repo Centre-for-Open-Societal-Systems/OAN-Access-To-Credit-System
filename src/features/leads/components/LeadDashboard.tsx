@@ -3,16 +3,18 @@
 import { LeadLayoutGrid } from '@/features/leads/components/LeadLayoutGrid';
 import { useLeadInitialization } from '@/features/leads/hooks/useLeadInitialization';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, fetchLeadMetadataThunk, fetchLeadDetailsThunk, fetchVisitSchedulesThunk, fetchActivitiesThunk } from '@/features/new-lead/store/newLeadSlice';
+import {
+  selectLeadStatus,
+  selectFarmerState,
+  selectVisitState,
+  fetchLeadMetadataThunk,
+  fetchLeadDetailsThunk,
+  fetchVisitSchedulesThunk,
+  fetchActivitiesThunk,
+  fetchSpecificLeadThunk
+} from '@/features/new-lead';
 import { selectLeads } from '@/features/leads/store/leadSlice';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import LeadStatusModal, { LeadStatusOutcome } from '@/features/new-lead/components/modals/LeadStatusModal';
-import { updateLeadStatusThunk, fetchSpecificLeadThunk } from '@/features/new-lead/store/newLeadSlice';
-import { createLoanApplicationAPI, setApplicationId } from '@/features/new-loan/store/newLoanFormSlice';
-import { loanService } from '@/features/loans/api/loan.service';
-import { FeedbackModal } from '@/components/ui/FeedbackModal';
+import { useEffect } from 'react';
 import { LeadInfoSection } from '@/features/new-lead/components/LeadInfoSection';
 import { ConsentManagementSection } from '@/features/new-lead/components/ConsentManagementSection';
 import { FarmerDetailsSection } from '@/features/new-lead/components/FarmerDetailsSection';
@@ -23,213 +25,10 @@ import { ScheduleVisitCard } from '@/features/new-lead/components/ScheduleVisitC
 import { LeadAssignmentCard } from '@/features/new-lead/components/LeadAssignmentCard';
 import { InteractionTimelineCard } from '@/features/new-lead/components/InteractionTimelineCard';
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
+import { LeadDashboardActions } from '@/features/new-lead/components/LeadDashboardActions';
 
 interface LeadDashboardProps {
     id?: string;
-}
-
-function LeadDashboardActions({ leadId, status }: { leadId: string, status: string }) {
-    const [modalAction, setModalAction] = useState<'verify' | 'reject' | null>(null);
-    const [isCreatingApp, setIsCreatingApp] = useState(false);
-    const [createAppError, setCreateAppError] = useState<string | null>(null);
-    const [existingAppId, setExistingAppId] = useState<string | null>(null);
-    const [checkingExisting, setCheckingExisting] = useState(false);
-    const dispatch = useAppDispatch();
-    const router = useRouter();
-
-    useEffect(() => {
-        const checkExistingApp = async () => {
-            const cleanLeadId = leadId.replace(/^#/, '');
-            if (!cleanLeadId) return;
-            setCheckingExisting(true);
-            try {
-                const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
-                const results = loansResponse?.data || [];
-                if (results.length > 0) {
-                    setExistingAppId(results[0].application_id || null);
-                }
-            } catch (err) {
-                console.error('Failed to check existing application:', err);
-            } finally {
-                setCheckingExisting(false);
-            }
-        };
-        checkExistingApp();
-    }, [leadId]);
-
-    const handleNewLoanApplication = async () => {
-        setIsCreatingApp(true);
-        setCreateAppError(null);
-        try {
-            await dispatch(createLoanApplicationAPI(leadId)).unwrap();
-            await dispatch(updateLeadStatusThunk({
-                leadId,
-                status: 'Verified',
-                reason: 'Loan application created.'
-            })).unwrap();
-            // Refetch existing application
-            const cleanLeadId = leadId.replace(/^#/, '');
-            const loansResponse = await loanService.getLoans({ lead_id: cleanLeadId });
-            const results = loansResponse?.data || [];
-            if (results.length > 0) {
-                const foundId = results[0].application_id;
-                if (foundId) {
-                    dispatch(setApplicationId(foundId));
-                }
-            }
-            router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
-        } catch (e: any) {
-            console.warn('Failed to create loan application:', e);
-            const errorMessage = typeof e === 'string' ? e : e.message || 'Failed to create loan application';
-            const existingAppIdFromErr = e.name;
-
-            if (errorMessage.includes('Loan application already exists') || e.message?.includes('already exists') || existingAppIdFromErr) {
-                try {
-                    // Try to fetch the existing application ID if we don't have it
-                    let foundAppId = existingAppIdFromErr;
-                    if (!foundAppId) {
-                        const loansResponse = await loanService.getLoans({ lead_id: leadId.replace(/^#/, '') });
-                        const results = loansResponse?.data || [];
-                        if (results.length > 0) {
-                            foundAppId = results[0].application_id;
-                        }
-                    }
-
-                    if (foundAppId) {
-                        dispatch(setApplicationId(foundAppId));
-                        router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
-                        return;
-                    }
-                } catch (fetchErr) {
-                    console.error('Failed to fetch existing application:', fetchErr);
-                }
-            }
-
-            setCreateAppError(errorMessage);
-        } finally {
-            setIsCreatingApp(false);
-        }
-    };
-
-    const handleModalConfirm = async (outcome: LeadStatusOutcome, notes: string) => {
-        try {
-            await dispatch(updateLeadStatusThunk({
-                leadId,
-                status: outcome as string,
-                reason: notes || 'No reason provided.'
-            })).unwrap();
-            if (outcome === 'Rejected') {
-                router.push('/leads');
-            }
-        } catch (e) {
-            console.error('Failed to update lead status:', e);
-        }
-        setModalAction(null);
-    };
-
-    const isFinalized = ['rejected', 'processed', 'granted'].includes(status?.toLowerCase() || '');
-    const canHaveApplication = ['verified', 'processed', 'granted'].includes(status?.toLowerCase() || '');
-
-    return (
-        <>
-            {isFinalized ? (
-                <>
-                    <button
-                        disabled
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#D1D5DB] cursor-not-allowed"
-                    >
-                        ✕ Reject
-                    </button>
-                    <button
-                        disabled
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-semibold text-[#6B7280] cursor-not-allowed"
-                    >
-                        ✓ Verify Lead
-                    </button>
-                    {canHaveApplication && (
-                        <button
-                            onClick={() => {
-                                if (existingAppId) {
-                                    dispatch(setApplicationId(existingAppId));
-                                }
-                                router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
-                            }}
-                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
-                        >
-                            Open Application
-                        </button>
-                    )}
-                </>
-            ) : status?.toLowerCase() === 'verified' ? (
-                <>
-                    <button
-                        onClick={() => setModalAction('reject')}
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-colors"
-                    >
-                        ✕ Reject
-                    </button>
-                    <button
-                        disabled
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#E5E7EB] border border-[#D1D5DB] rounded-lg text-sm font-semibold text-[#6B7280] cursor-not-allowed"
-                    >
-                        ✓ Verify Lead
-                    </button>
-                    {existingAppId ? (
-                        <button
-                            onClick={() => {
-                                dispatch(setApplicationId(existingAppId));
-                                router.push(`/leads/${leadId.replace(/^#/, '')}/new-loan-application`);
-                            }}
-                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
-                        >
-                            Open Application
-                        </button>
-                    ) : (
-                        <button
-                            onClick={handleNewLoanApplication}
-                            disabled={isCreatingApp || checkingExisting}
-                            className="w-full md:w-auto px-4 py-2.5 bg-[#16A34A] rounded-lg text-sm font-semibold text-white hover:bg-[#15803D] transition-colors flex items-center justify-center min-w-[170px]"
-                        >
-                            {isCreatingApp ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '+ New Loan Application'}
-                        </button>
-                    )}
-                </>
-            ) : (
-                <>
-                    <button
-                        onClick={() => setModalAction('reject')}
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-[#D4D4D4] rounded-lg text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-colors"
-                    >
-                        ✕ Reject
-                    </button>
-                    <button
-                        onClick={() => setModalAction('verify')}
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-[#087F50] rounded-lg text-sm font-semibold text-white hover:bg-[#05774A] transition-colors"
-                    >
-                        ✓ Verify Lead
-                    </button>
-                </>
-            )}
-
-            <FeedbackModal
-                isOpen={!!createAppError}
-                onClose={() => setCreateAppError(null)}
-                type="error"
-                title="Application Failed"
-                message={createAppError || ''}
-            />
-
-            <LeadStatusModal
-                isOpen={modalAction !== null}
-                onClose={() => setModalAction(null)}
-                onConfirm={handleModalConfirm}
-                variant="finalize"
-                currentStatus={status}
-                leadId={leadId}
-                initialOutcome={modalAction === 'reject' ? 'Rejected' : null}
-            />
-        </>
-    );
 }
 
 export function LeadDashboard({ id }: LeadDashboardProps) {
@@ -247,7 +46,9 @@ export function LeadDashboard({ id }: LeadDashboardProps) {
     }, [dispatch, id]);
 
     const leads = useAppSelector(selectLeads);
-    const { farmerDetails, visitSchedule, leadStatus } = useAppSelector(selectNewLeadState);
+    const leadStatus = useAppSelector(selectLeadStatus);
+    const { farmerDetails } = useAppSelector(selectFarmerState);
+    const { visitSchedule } = useAppSelector(selectVisitState);
 
     const currentLead = id ? leads.find(l => l.id.replace('#', '') === id.replace('#', '')) : null;
     const hasScheduledVisit = Boolean(currentLead?.visitDate) || Boolean(visitSchedule?.id);
@@ -263,7 +64,7 @@ export function LeadDashboard({ id }: LeadDashboardProps) {
             actions={<LeadDashboardActions leadId={`#${id}`} status={leadStatus} />}
         />
     ) : (
-        <div className="flex flex-row justify-between items-center p-6 w-full bg-white border border-[#F1F3F4] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
+        <div className="flex flex-row justify-between items-center p-6 w-full bg-white border border-[#F1F3F4] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
             <div className="flex flex-col items-start gap-1">
                 <h1 className="font-roboto font-bold text-2xl leading-8 text-[#111827]">
                     Create New Lead

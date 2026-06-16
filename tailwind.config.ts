@@ -24,6 +24,9 @@ const config: Config = {
         button: 'var(--button-bg)',
         'button-hover': 'var(--button-bg-hover)',
       },
+      spacing: {
+        'table-cell': '151.71px',
+      },
       fontFamily: {
         body: ['var(--font-body)', 'sans-serif'],
         display: ['var(--font-display)', 'sans-serif'],

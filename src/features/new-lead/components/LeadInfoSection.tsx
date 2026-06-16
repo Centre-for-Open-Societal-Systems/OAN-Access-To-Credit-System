@@ -1,12 +1,12 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, selectIsLeadFinalized, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
-import { TextField } from '@/components/ui/TextField';
+import { selectLeadSource, selectLeadSourcesOptions, selectIsLeadFinalized, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
 import { useParams } from 'next/navigation';
 import { FileText } from 'lucide-react';
 
 export function LeadInfoSection() {
   const dispatch = useAppDispatch();
-  const { leadSource, leadSourcesOptions } = useAppSelector(selectNewLeadState);
+  const leadSource = useAppSelector(selectLeadSource);
+  const leadSourcesOptions = useAppSelector(selectLeadSourcesOptions);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const leadId = params?.id as string;

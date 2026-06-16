@@ -266,19 +266,21 @@ export default function LeadsDashboard() {
           onClearFilters={clearAllFilters}
           isLoading={isLoading}
         />
-        <LeadPagination
-          visibleCount={visible.length}
-          filteredCount={currentTabTotalCount}
-          safePage={safePage}
-          totalPages={totalPages}
-          pageNums={pageNums}
-          onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          onPageSizeChange={(newSize) => {
-            setPageSize(newSize);
-            setCurrentPage(1);
-          }}
-        />
+        {(visible.length > 0 || isLoading) && (
+          <LeadPagination
+            visibleCount={visible.length}
+            filteredCount={currentTabTotalCount}
+            safePage={safePage}
+            totalPages={totalPages}
+            pageNums={pageNums}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
+          />
+        )}
       </div>
 
       {showAdvFilters && <LeadAdvancedFilters onClose={() => setShowAdvFilters(false)} />}

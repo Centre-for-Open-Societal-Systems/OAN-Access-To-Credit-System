@@ -2,10 +2,10 @@
 
 import { MapPin, Phone } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { selectNewLeadState } from '../store/newLeadSlice';
+import { selectFarmerState } from '..';
 
 export function ScheduleVisitBanner() {
-  const { farmerDetails } = useAppSelector(selectNewLeadState);
+  const { farmerDetails } = useAppSelector(selectFarmerState);
 
   return (
     <div className="flex flex-row items-center p-4 w-full gap-4 bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">

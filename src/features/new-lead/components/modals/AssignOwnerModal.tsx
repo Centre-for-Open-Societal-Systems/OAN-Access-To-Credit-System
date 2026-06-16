@@ -7,7 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  region?: string;
+  region: string;
 }
 
 interface AssignOwnerModalProps {
@@ -44,17 +44,19 @@ export default function AssignOwnerModal({
     };
   }, [isOpen]);
 
+  // Fetching, loading state, and error handling are managed locally here (outside of Redux)
+  // because the assignable users list is transient UI state specific to this modal.
   useEffect(() => {
     if (!isOpen || !mounted) return;
 
     let active = true;
+
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const response = await newLeadService.getAssignableUsers(searchQuery);
-        const results = response.message?.results || response.results || [];
+        const results = await newLeadService.getAssignableUsers(searchQuery);
         if (active) {
-          setUsers(results.map((u: any) => ({
+          setUsers(results.map((u) => ({
             id: u.agent_id,
             name: u.full_name,
             email: u.email,
@@ -68,6 +70,7 @@ export default function AssignOwnerModal({
       }
     };
 
+    // Prevent excessive API calls for every keystroke by adding a debounce delay
     const delay = setTimeout(() => {
       fetchUsers();
     }, 300);

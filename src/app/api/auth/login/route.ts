@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     // Use the base URL from .env
     const baseUrl = process.env.API_BASE_URL;
-    
+
     if (!baseUrl) {
       return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
     }
@@ -45,28 +45,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Extract the JWT token
-    const loginDataMessage = data.message;
-    const messageObj =
-      typeof loginDataMessage === 'object' && loginDataMessage !== null
-        ? (loginDataMessage as Record<string, unknown>)
-        : undefined;
-
-    const token =
-      (data.token as string | undefined) ||
-      (data.jwt as string | undefined) ||
-      (data.jwt_token as string | undefined) ||
-      (data.access_token as string | undefined) ||
-      (messageObj && (
-        (messageObj.token as string | undefined) ||
-        (messageObj.jwt as string | undefined) ||
-        (messageObj.api_key as string | undefined)
-      ));
+    // Extract the JWT token and user strictly based on the provided API response structure
+    const token = data.message?.data?.token as string | undefined;
+    const user = data.message?.data?.user ?? null;
 
     const nextResponse = NextResponse.json({
       success: true,
       message: 'Logged in successfully',
-      user: data, // Return the user data to the frontend, excluding the token
+      user,
     });
 
     if (token) {
@@ -84,5 +70,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Login Proxy Error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+
   }
 }

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
 import { X, ShieldCheck, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { verifyOtpThunk, selectNewLeadState } from '../../store/newLeadSlice';
+import { verifyOtpThunk, selectConsentState, selectFarmerState } from '../..';
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
@@ -14,7 +14,8 @@ interface OTPVerificationModalProps {
 
 export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }: OTPVerificationModalProps) {
   const dispatch = useAppDispatch();
-  const { isVerifyingOtp, consentRequestId, farmerDetails } = useAppSelector(selectNewLeadState);
+  const { isVerifyingOtp, consentRequestId } = useAppSelector(selectConsentState);
+  const { farmerDetails } = useAppSelector(selectFarmerState);
   const params = useParams();
   const leadId = params?.id as string || '';
 

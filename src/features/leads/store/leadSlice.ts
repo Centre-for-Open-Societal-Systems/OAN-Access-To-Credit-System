@@ -1,7 +1,20 @@
 import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { leadService } from '@/features/leads/api/lead.service';
-import type { GetLeadsParams, Lead, LeadSummaryResponse } from '@/features/leads/types/leads.types';
+import type { GetLeadsParams, Lead, LeadSummaryResponse, LeadStatus } from '@/features/leads/types/leads.types';
+import {
+  updateLeadStatusThunk,
+  updateVisitScheduleStatusThunk,
+  fetchLeadDetailsThunk,
+} from '@/features/new-lead';
+
+import { normalizeLeadId } from '@/lib/utils';
+
+function findLeadById(leads: Lead[], id: string): Lead | undefined {
+  const cleanId = normalizeLeadId(id);
+  return leads.find(l => normalizeLeadId(l.id) === cleanId);
+}
+
 
 export const fetchLeads = createAsyncThunk(
   'leads/fetchLeads',
@@ -9,8 +22,8 @@ export const fetchLeads = createAsyncThunk(
     try {
       const response = await leadService.getLeads(params);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch leads');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch leads');
     }
   }
 );
@@ -21,8 +34,8 @@ export const fetchLeadSummary = createAsyncThunk(
     try {
       const response = await leadService.getLeadSummary();
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch lead summary');
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch lead summary');
     }
   }
 );
@@ -154,38 +167,39 @@ const leadSlice = createSlice({
       })
       // Sync status with details view to avoid stale state / UI flashes
       .addMatcher(
-        (action) => action.type === 'newLead/updateLeadStatus/fulfilled',
-        (state, action: any) => {
+        updateLeadStatusThunk.fulfilled.match,
+        (state, action) => {
           const { leadId, status } = action.payload.payload;
-          const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+          const lead = findLeadById(state.leads, leadId);
           if (lead) {
-            lead.status = status;
+            lead.status = status as LeadStatus;
           }
         }
       )
       .addMatcher(
-        (action) => action.type === 'newLead/updateVisitScheduleStatus/fulfilled',
-        (state, action: any) => {
+        updateVisitScheduleStatusThunk.fulfilled.match,
+        (state, action) => {
           const { leadId, status } = action.payload.payload;
-          if (status === 'Completed') {
-            const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
-            if (lead) {
+          const lead = findLeadById(state.leads, leadId);
+          if (lead) {
+            // This is the visit-schedule status, not the lead's own status.
+            lead.scheduleStatus = status;
+            if (status === 'Completed' || status === 'Missed') {
               lead.visitDate = undefined;
             }
           }
         }
       )
       .addMatcher(
-        (action) => action.type === 'newLead/fetchLeadDetails/fulfilled',
-        (state, action: any) => {
+        fetchLeadDetailsThunk.fulfilled.match,
+        (state, action) => {
           const leadId = action.meta.arg;
-          const leadData = action.payload?.data;
+          const leadData = action.payload;
           if (leadData) {
-            const lead = state.leads.find(l => l.id.replace('#', '') === leadId.replace('#', ''));
+            const lead = findLeadById(state.leads, leadId);
             if (lead) {
-              lead.status = leadData.status;
-              lead.name = `${leadData.first_name} ${leadData.last_name}`;
-              lead.farmerPhone = leadData.phone_number;
+              lead.name = `${leadData.firstName} ${leadData.lastName}`.trim();
+              lead.farmerPhone = leadData.phoneNumber;
               lead.location = leadData.location;
             }
           }

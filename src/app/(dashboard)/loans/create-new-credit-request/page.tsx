@@ -8,6 +8,7 @@ import {
   User, Hash, Key, Smartphone, Banknote,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import NextImage from 'next/image';
 import { newLeadService } from '@/features/new-lead/api/newLead.service';
 
 import { ReactNode } from 'react';
@@ -1279,7 +1280,7 @@ function ViewFileModal({ entry, label, onClose }: { entry: any, label: string, o
               <p className="text-xs text-gray-500">Loading preview…</p>
             </div>
           ) : isImage ? (
-            <img src={url} alt={entry.file.name} className="max-h-[65vh] max-w-full rounded-xl object-contain shadow" />
+            <NextImage src={url} alt={entry.file.name} width={800} height={600} unoptimized className="max-h-[65vh] max-w-full rounded-xl object-contain shadow" />
           ) : isPdf ? (
             <iframe src={url} title={entry.file.name} className="h-[65vh] w-full rounded-xl border border-gray-200" />
           ) : (
@@ -2153,8 +2154,8 @@ export default function NewLoanApplication() {
       hour: '2-digit', minute: '2-digit', hour12: true,
     });
     try {
-      const existing = JSON.parse(localStorage.getItem('a2c_submitted_loans') || '[]');
-      localStorage.setItem('a2c_submitted_loans', JSON.stringify([{
+      const existing = JSON.parse(sessionStorage.getItem('a2c_submitted_loans') || '[]');
+      sessionStorage.setItem('a2c_submitted_loans', JSON.stringify([{
         id,
         applicant: form.fullName || 'Unknown Applicant',
         type: loanTypeLabel,

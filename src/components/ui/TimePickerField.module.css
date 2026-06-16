@@ -1,0 +1,14 @@
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.dropdown {
+  animation: slideDown 0.2s ease-out forwards;
+}

@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { DUMMY_LOANS, getFallbackMockRows } from './loans.mock';
-import { leadRows } from './leads.mock';
+import { leadRows, LeadRow } from './leads.mock';
+import { CreateLeadPayload } from '@/features/new-lead/api/newLead.service';
 
 export const handlers = [
   http.get('/api/loans', () => {
@@ -57,7 +58,7 @@ export const handlers = [
 
     // Apply Search Filter
     if (searchQuery) {
-      filteredRows = filteredRows.filter(row => 
+      filteredRows = filteredRows.filter(row =>
         row.id.toLowerCase().includes(searchQuery) ||
         row.phone.includes(searchQuery) ||
         (row.location && row.location.toLowerCase().includes(searchQuery))
@@ -72,7 +73,7 @@ export const handlers = [
       farmer_id: row.farmerId,
       consent_date: row.consentDate,
       phone_number: row.phone,
-      loan_type: row.loanType || '', 
+      loan_type: row.loanType || '',
       loan_amount: row.loanAmount || '',
       lead_source: row.source,
       assigned_to: row.owner === 'me' ? 'me' : row.owner === 'other' ? 'someone' : null,
@@ -81,8 +82,11 @@ export const handlers = [
 
     return HttpResponse.json({
       message: {
-        results: mappedResults,
-        total_count: mappedResults.length
+        status: 'success',
+        data: mappedResults,
+        pagination: {
+          total: mappedResults.length
+        }
       }
     });
   }),
@@ -96,17 +100,45 @@ export const handlers = [
 
     return HttpResponse.json({
       message: {
-        total: leadRows.length,
-        by_status
+        status: 'success',
+        data: {
+          total: leadRows.length,
+          by_status
+        }
       }
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.create_lead', async () => {
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.create_lead', async ({ request }) => {
+    const body = (await request.json()) as CreateLeadPayload;
+    const newLeadId = `LD-${Math.floor(10000 + Math.random() * 90000)}`;
+    const newLead: LeadRow = {
+      id: `#${newLeadId}`,
+      consentRequestId: null,
+      farmerName: `${body.first_name || ''} ${body.last_name || ''}`.trim() || 'New Farmer',
+      farmerId: body.external_id || `FID-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      consentDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      location: 'Default Location',
+      phone: body.phone_number || '',
+      calledPhone: '',
+      source: body.lead_source || 'Agent Entry',
+      status: 'Active',
+      loanType: '',
+      loanAmount: '',
+      callStartTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + `, ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+      callDuration: '',
+      applicationSubmitted: false,
+      actionType: 'view',
+      actionNote: '',
+      visitDate: null,
+      owner: 'me'
+    };
+    leadRows.unshift(newLead);
+
     return HttpResponse.json({
       message: {
         status: 'success',
-        lead_id: 'LEAD-2026-00022',
+        lead_id: `#${newLeadId}`,
         message: 'Lead created successfully.'
       }
     });
@@ -162,16 +194,16 @@ export const handlers = [
     const fromDate = url.searchParams.get('from_date');
     const toDate = url.searchParams.get('to_date');
     const tab = url.searchParams.get('tab') || 'all';
-    
+
     // Pagination params
     const page = parseInt(url.searchParams.get('page') || '1', 10);
 
     let filteredRows = getFallbackMockRows();
 
     if (searchQuery) {
-      filteredRows = filteredRows.filter((r: any) => 
-        (r.id && r.id.toLowerCase().includes(searchQuery)) || 
-        (r.phone && r.phone.toLowerCase().includes(searchQuery)) || 
+      filteredRows = filteredRows.filter((r: any) =>
+        (r.id && r.id.toLowerCase().includes(searchQuery)) ||
+        (r.phone && r.phone.toLowerCase().includes(searchQuery)) ||
         (r.applicant && r.applicant.toLowerCase().includes(searchQuery))
       );
     }
@@ -186,7 +218,7 @@ export const handlers = [
         filteredRows = filteredRows.filter((r: any) => r.status === statusQuery);
       }
     } else if (statusQuery === '["__NONE__"]') {
-       filteredRows = [];
+      filteredRows = [];
     }
 
     if (loanTypeQuery) {
@@ -195,11 +227,11 @@ export const handlers = [
         if (types.length > 0) {
           filteredRows = filteredRows.filter((r: any) => types.includes(r.type));
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (locationQuery) {
-      filteredRows = filteredRows.filter((r: any) => 
+      filteredRows = filteredRows.filter((r: any) =>
         (r.applicant && r.applicant.toLowerCase().includes(locationQuery)) ||
         (r.region && r.region.toLowerCase().includes(locationQuery))
       );
@@ -270,12 +302,12 @@ export const handlers = [
     const allRows = getFallbackMockRows();
     const summary = allRows.reduce((acc: any, row: any) => {
       acc.total = (acc.total || 0) + 1;
-      
+
       const s = row.status.toLowerCase();
       if (s === 'approved') acc.approved = (acc.approved || 0) + 1;
       else if (s === 'rejected') acc.rejected = (acc.rejected || 0) + 1;
       else acc.processing = (acc.processing || 0) + 1; // Draft, Pending Review, Processing, etc.
-      
+
       return acc;
     }, { total: 0, approved: 0, processing: 0, rejected: 0 });
 
@@ -366,28 +398,6 @@ export const handlers = [
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_credit_info', ({ request }) => {
-    return HttpResponse.json({
-      message: {
-        status: "success",
-        data: {
-          loan_amount: 50000.0,
-          loan_type: "Input Loan",
-          loan_reason: null,
-          status: "Under Review"
-        }
-      }
-    });
-  }),
-
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.edit_credit_info', () => {
-    return HttpResponse.json({
-      message: {
-        status: "success",
-        message: "Credit info updated successfully"
-      }
-    });
-  }),
 
   http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_supporting_documents', () => {
     return HttpResponse.json({
@@ -442,7 +452,7 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        results: [
+        data: [
           {
             email: "arnavjagadeesh12@gmail.com",
             full_name: "arnav",
@@ -522,7 +532,25 @@ export const handlers = [
         status: "Missed",
         scheduled_by: "test_agent@coopbank.com",
         creation: new Date().toISOString()
-      }
+      },
+      ...[
+        "LD-9816", "LD-9813", "LD-9827", "LD-9831", "LD-9834", "LD-9838",
+        "LD-9841", "LD-9845", "LD-9848", "LD-9852", "LD-9856", "LD-9859",
+        "LD-9863", "LD-9865"
+      ].map((leadId, idx) => ({
+        name: `VSCH-2026-0100${idx}`,
+        lead: leadId,
+        visit_date: "2026-06-12",
+        visit_time: "10:00:00",
+        meeting_location: "Main Office",
+        region: "Oromia",
+        zone: "East Hararge",
+        woreda: "Harar",
+        kebele: "01",
+        status: "Scheduled",
+        scheduled_by: "agent@bank.com",
+        creation: new Date(Date.now() - (idx + 1) * 3600000).toISOString()
+      }))
     ];
 
     if (leadId) {
@@ -530,10 +558,7 @@ export const handlers = [
       return HttpResponse.json({
         message: {
           status: "success",
-          start: 0,
-          page_length: 20,
-          total_count: filtered.length,
-          results: filtered.length > 0 ? filtered : [
+          data: filtered.length > 0 ? filtered : [
             {
               name: "VSCH-2026-00267",
               lead: leadId,
@@ -548,7 +573,10 @@ export const handlers = [
               scheduled_by: "arnavjagadeesh12@gmail.com",
               creation: new Date().toISOString()
             }
-          ]
+          ],
+          pagination: {
+            total: filtered.length
+          }
         }
       });
     }
@@ -556,10 +584,10 @@ export const handlers = [
     return HttpResponse.json({
       message: {
         status: "success",
-        start: 0,
-        page_length: 20,
-        total_count: mockSchedules.length,
-        results: mockSchedules
+        data: mockSchedules,
+        pagination: {
+          total: mockSchedules.length
+        }
       }
     });
   }),

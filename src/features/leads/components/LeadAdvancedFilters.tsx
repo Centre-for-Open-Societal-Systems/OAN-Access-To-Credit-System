@@ -4,8 +4,28 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { SlidersHorizontal, X, Check, Phone, Calendar, ChevronDown } from 'lucide-react';
 import { KPI_CARDS_LAYOUT, STATUS_STYLE_MAP } from '../constants/leads.constants';
 import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
-import { selectNewLeadState } from '@/features/new-lead/store/newLeadSlice';
+import { selectLeadSourcesOptions, selectLoanTypesOptions } from '@/features/new-lead/store/newLeadSlice';
 import { DatePickerField } from '@/components/ui/DatePickerField';
+import { useClickOutside } from '@/hooks/useClickOutside';
+
+const QUICK_DATE_OPTS = [
+  { label: 'Today', days: 0 },
+  { label: 'Yesterday', days: 1 },
+  { label: 'Last 7 Days', days: 7 },
+  { label: 'Last 30 Days', days: 30 },
+] as const;
+
+const RANGE_STEPS = [
+  { label: '0-25,000', value: '0-25000', min: 0, max: 25000, display: 'ETB 0 - 25,000' },
+  { label: '25,001 - 50,000', value: '25001-50000', min: 25001, max: 50000, display: 'ETB 25,001 - 50,000' },
+  { label: '50,001 - 1,00,000', value: '50001-100000', min: 50001, max: 100000, display: 'ETB 50,001 - 1,00,000' },
+  { label: '1,00,000 and above', value: '100000+', min: 100001, max: 10000000, display: 'ETB 1,00,000 and above' },
+  { label: 'All Amounts', value: 'all', min: null, max: null, display: 'All Amounts' },
+] as const;
+
+const getRangeStep = (index: number) => RANGE_STEPS[index] ?? RANGE_STEPS[4];
+
+const LOCATION_OPTS = ['Region', 'Woreda', 'Kebele'] as const;
 
 interface LeadAdvancedFiltersProps {
   onClose: () => void;
@@ -14,34 +34,14 @@ interface LeadAdvancedFiltersProps {
 function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const dispatch = useAppDispatch();
   const activeFilters = useAppSelector(selectAdvFilters);
-  const { leadSourcesOptions, loanTypesOptions } = useAppSelector(selectNewLeadState);
+  const leadSourcesOptions = useAppSelector(selectLeadSourcesOptions);
+  const loanTypesOptions = useAppSelector(selectLoanTypesOptions);
 
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const QUICK_DATE_OPTS = [
-    { label: 'Today', days: 0 },
-    { label: 'Yesterday', days: 1 },
-    { label: 'Last 7 Days', days: 7 },
-    { label: 'Last 30 Days', days: 30 },
-  ];
-
-
-
-  const RANGE_STEPS = [
-    { label: '0-25,000', value: '0-25000', min: 0, max: 25000, display: 'ETB 0 - 25,000' },
-    { label: '25,001 - 50,000', value: '25001-50000', min: 25001, max: 50000, display: 'ETB 25,001 - 50,000' },
-    { label: '50,001 - 1,00,000', value: '50001-100000', min: 50001, max: 100000, display: 'ETB 50,001 - 1,00,000' },
-    { label: '1,00,000 and above', value: '100000+', min: 100001, max: 10000000, display: 'ETB 1,00,000 and above' },
-    { label: 'All Amounts', value: 'all', min: null, max: null, display: 'All Amounts' },
-  ] as const;
-
-
-
-  const LOCATION_OPTS = ['Region', 'Woreda', 'Kebele'] as const;
 
   const [selStatuses, setSelStatuses] = useState<string[]>(() =>
     activeFilters.statuses.map(s => {
@@ -109,45 +109,10 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
     setTempSources(activeFilters.leadSources || []);
   }, [activeFilters]);
 
-  useEffect(() => {
-    function clickOutside(e: MouseEvent) {
-      if (amountRef.current && !amountRef.current.contains(e.target as Node)) {
-        setIsAmountOpen(false);
-      }
-    }
-    if (isAmountOpen) document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
-  }, [isAmountOpen]);
-
-  useEffect(() => {
-    function clickOutside(e: MouseEvent) {
-      if (loanTypeRef.current && !loanTypeRef.current.contains(e.target as Node)) {
-        setIsLoanTypeOpen(false);
-      }
-    }
-    if (isLoanTypeOpen) document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
-  }, [isLoanTypeOpen]);
-
-  useEffect(() => {
-    function clickOutside(e: MouseEvent) {
-      if (sourcesRef.current && !sourcesRef.current.contains(e.target as Node)) {
-        setIsSourcesOpen(false);
-      }
-    }
-    if (isSourcesOpen) document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
-  }, [isSourcesOpen]);
-
-  useEffect(() => {
-    function clickOutside(e: MouseEvent) {
-      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
-        setIsLocationOpen(false);
-      }
-    }
-    if (isLocationOpen) document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
-  }, [isLocationOpen]);
+  useClickOutside(amountRef, () => setIsAmountOpen(false), isAmountOpen);
+  useClickOutside(loanTypeRef, () => setIsLoanTypeOpen(false), isLoanTypeOpen);
+  useClickOutside(sourcesRef, () => setIsSourcesOpen(false), isSourcesOpen);
+  useClickOutside(locationRef, () => setIsLocationOpen(false), isLocationOpen);
 
   const toggleStatus = (s: string) => {
     const layoutItem = KPI_CARDS_LAYOUT.find(item => item.id === s);
@@ -158,7 +123,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
 
   const selectedAmountSummary = useMemo(() => {
     if (tempIndex === 4) return '';
-    return RANGE_STEPS[tempIndex].display;
+    return getRangeStep(tempIndex).display;
   }, [tempIndex]);
 
   const activeCount =
@@ -280,7 +245,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
 
                       <div className="absolute left-1/2 -translate-x-1/2 bg-[#D1FAE5] border border-[#A7F3D0] px-3 py-1.5 rounded-lg flex items-center justify-center min-w-[120px]">
                         <span className="text-[13px] font-bold text-[#059669]">
-                          {RANGE_STEPS[tempIndex].display}
+                          {getRangeStep(tempIndex).display}
                         </span>
                       </div>
 
@@ -501,8 +466,8 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
                     } else {
                       from.setDate(from.getDate() - o.days);
                     }
-                    setDateFrom(from.toISOString().split('T')[0]);
-                    setDateTo(to.toISOString().split('T')[0]);
+                    setDateFrom(from.toISOString().split('T')[0] ?? '');
+                    setDateTo(to.toISOString().split('T')[0] ?? '');
                   }}
                   className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${quickDate === o.label ? 'border-green-600 bg-green-50 text-green-700 font-semibold' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700 font-semibold'}`}
                 >
@@ -539,7 +504,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
           <button
             type="button"
             onClick={() => {
-              const activeRange = RANGE_STEPS[tempIndex];
+              const activeRange = getRangeStep(tempIndex);
               dispatch(setAdvFilters({
                 statuses: selStatuses,
                 quickDate,

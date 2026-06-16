@@ -8,15 +8,178 @@ import { GENDER_OPTIONS } from '@/features/loans/constants/loans.constants';
 import { loanService } from '@/features/loans/api/loan.service';
 import type { AppDispatch, RootState } from '@/store';
 
+const DEFAULT_FARMER_DETAILS = {
+  firstName: '',
+  lastName: '',
+  mobilePhone: '',
+  dateOfBirth: '',
+  gender: '',
+  woreda: '',
+  kebele: '',
+  idType: '',
+  idNumber: '',
+  language: '',
+  landSize: '',
+  farmId: '',
+  farmPolygon: '',
+  landAcreage: '',
+  farmLandNumber: '',
+  maritalStatus: '',
+  sizeOfFamily: '',
+  numberOfChildren: '',
+  noOfFemales: '',
+  noOfMales: '',
+  familyMemberOwnsLand: '',
+  sourceOfIncome: '',
+  educationLevel: '',
+  totalFarmlandLandowner: '',
+  totalFarmlandCropSharing: '',
+  totalFarmlandRented: '',
+  certificationId: '',
+  certificationPhoto: '',
+  farmlandSizeHectares: '',
+  landOwnershipStatus: '',
+  soilFertility: '',
+  moistureLevels: '',
+};
+
+type FarmerDetails = typeof DEFAULT_FARMER_DETAILS;
+
+const API_FIELD_MAP: Record<keyof FarmerDetails, string> = {
+  firstName: 'first_name',
+  lastName: 'last_name',
+  mobilePhone: 'phone_number',
+  dateOfBirth: 'date_of_birth',
+  gender: 'gender',
+  woreda: 'woreda',
+  kebele: 'kebele',
+  idType: 'id_type',
+  idNumber: 'id_number',
+  language: 'language',
+  landSize: 'land_size',
+  farmId: 'farm_id',
+  farmPolygon: 'farm_polygon',
+  landAcreage: 'land_acreage',
+  farmLandNumber: 'farm_land_number',
+  maritalStatus: 'marital_status',
+  sizeOfFamily: 'size_of_family',
+  numberOfChildren: 'number_of_children',
+  noOfFemales: 'no_of_females_family',
+  noOfMales: 'no_of_males_family',
+  familyMemberOwnsLand: 'family_member_owns_land_independently',
+  sourceOfIncome: 'source_of_income',
+  educationLevel: 'education_level',
+  totalFarmlandLandowner: 'total_farmland_size_as_landowner',
+  totalFarmlandCropSharing: 'total_farmland_size_as_crop_sharing',
+  totalFarmlandRented: 'total_farmland_size_as_rented',
+  certificationId: 'certification_id',
+  certificationPhoto: 'certification_photo_url',
+  farmlandSizeHectares: 'farmland_size_hectares',
+  landOwnershipStatus: 'land_ownership_status',
+  soilFertility: 'soil_fertility_minerals',
+  moistureLevels: 'moisture_levels',
+};
+
+interface FieldConfig {
+  key: keyof FarmerDetails;
+  label: string;
+  type?: 'text' | 'select';
+  options?: typeof GENDER_OPTIONS;
+}
+
+interface SectionConfig {
+  title: string;
+  fields: FieldConfig[];
+  gridCols?: string;
+}
+
+const FORM_SECTIONS: SectionConfig[] = [
+  {
+    title: 'Basic Information',
+    gridCols: 'lg:grid-cols-3',
+    fields: [
+      { key: 'firstName', label: 'First Name' },
+      { key: 'lastName', label: 'Last Name' },
+      { key: 'mobilePhone', label: 'Mobile Phone' },
+      { key: 'dateOfBirth', label: 'Date of Birth' },
+      { key: 'gender', label: 'Gender', type: 'select', options: GENDER_OPTIONS },
+      { key: 'woreda', label: 'Woreda' },
+      { key: 'kebele', label: 'Kebele' },
+      { key: 'idType', label: 'ID Type' },
+      { key: 'idNumber', label: 'ID Number' },
+      { key: 'language', label: 'Language' },
+    ],
+  },
+  {
+    title: 'Land and Crop Information',
+    gridCols: 'lg:grid-cols-3',
+    fields: [
+      { key: 'landSize', label: 'Land Size (Acres)' },
+      { key: 'farmId', label: 'Farm ID' },
+      { key: 'farmPolygon', label: 'Farm Polygon' },
+      { key: 'landAcreage', label: 'Land Acreage' },
+      { key: 'farmLandNumber', label: 'Farm Land Number' },
+    ],
+  },
+  {
+    title: 'Socio Economic Information',
+    gridCols: 'lg:grid-cols-3',
+    fields: [
+      { key: 'maritalStatus', label: 'Marital Status' },
+      { key: 'sizeOfFamily', label: 'Size of Family' },
+      { key: 'numberOfChildren', label: 'Number of Children' },
+      { key: 'noOfFemales', label: 'No. of Females (Family)' },
+      { key: 'noOfMales', label: 'No. of Males (Family)' },
+      { key: 'familyMemberOwnsLand', label: 'A Family Member Owns Land Independently' },
+      { key: 'sourceOfIncome', label: 'Source of Income' },
+      { key: 'educationLevel', label: 'Education Level' },
+    ],
+  },
+  {
+    title: 'Land, Crop and Livestock Information',
+    gridCols: 'lg:grid-cols-3',
+    fields: [
+      { key: 'totalFarmlandLandowner', label: 'Total Farmland Size as Landowner' },
+      { key: 'totalFarmlandCropSharing', label: 'Total Farmland Size as Crop Sharing' },
+      { key: 'totalFarmlandRented', label: 'Total Farmland Size as Rented' },
+      { key: 'certificationId', label: 'Certification ID' },
+      { key: 'certificationPhoto', label: 'Certification Photo' },
+    ],
+  },
+  {
+    title: 'Agronomic Data',
+    gridCols: 'lg:grid-cols-4',
+    fields: [
+      { key: 'farmlandSizeHectares', label: 'Farmland Size (Hectares)' },
+      { key: 'landOwnershipStatus', label: 'Land Ownership Status' },
+      { key: 'soilFertility', label: 'Soil Fertility / Minerals' },
+      { key: 'moistureLevels', label: 'Moisture Levels' },
+    ],
+  },
+];
+
+function mapApiToFarmerDetails(data: Record<string, any>): FarmerDetails {
+  const result = {} as FarmerDetails;
+  (Object.keys(API_FIELD_MAP) as Array<keyof FarmerDetails>).forEach((key) => {
+    const apiKey = API_FIELD_MAP[key];
+    const val = data[apiKey];
+    result[key] = (val !== undefined && val !== null) ? val.toString() : '';
+  });
+  return result;
+}
+
 export function Step2FarmerDetails() {
   const dispatch = useDispatch<AppDispatch>();
   const savedFormData = useSelector((state: RootState) => state.loanForm.formData);
   const applicationId = useSelector((state: RootState) => state.loanForm.applicationId);
 
-  // Initialize with saved Redux state or an empty object
-  const [formData, setFormData] = useState<Record<string, string>>(savedFormData || {});
+  // Initialize with saved Redux state or defaults
+  const [formData, setFormData] = useState<FarmerDetails>(() => ({
+    ...DEFAULT_FARMER_DETAILS,
+    ...(savedFormData || {}),
+  }));
 
-  const handleChange = (field: string) => (value: string | number) => {
+  const handleChange = (field: keyof FarmerDetails) => (value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value.toString() }));
   };
 
@@ -29,43 +192,9 @@ export function Step2FarmerDetails() {
       try {
         setIsLoadingProfile(true);
         const response = await loanService.getFullProfile(applicationId);
-        const data = response?.message?.data || response?.data || {};
+        const data = response?.data || {};
         
-        setFormData(prev => ({
-          ...prev,
-          firstName: data.first_name || prev.firstName || '',
-          lastName: data.last_name || prev.lastName || '',
-          mobilePhone: data.phone_number || prev.mobilePhone || '',
-          dateOfBirth: data.date_of_birth || prev.dateOfBirth || '',
-          gender: data.gender || prev.gender || '',
-          woreda: data.woreda || prev.woreda || '',
-          kebele: data.kebele || prev.kebele || '',
-          idType: data.id_type || prev.idType || '',
-          idNumber: data.id_number || prev.idNumber || '',
-          language: data.language || prev.language || '',
-          landSize: data.land_size || prev.landSize || '',
-          farmId: data.farm_id || prev.farmId || '',
-          farmPolygon: data.farm_polygon || prev.farmPolygon || '',
-          landAcreage: data.land_acreage || prev.landAcreage || '',
-          farmLandNumber: data.farm_land_number || prev.farmLandNumber || '',
-          maritalStatus: data.marital_status || prev.maritalStatus || '',
-          sizeOfFamily: data.size_of_family?.toString() || prev.sizeOfFamily || '',
-          numberOfChildren: data.number_of_children?.toString() || prev.numberOfChildren || '',
-          noOfFemales: data.no_of_females_family?.toString() || prev.noOfFemales || '',
-          noOfMales: data.no_of_males_family?.toString() || prev.noOfMales || '',
-          familyMemberOwnsLand: data.family_member_owns_land_independently?.toString() || prev.familyMemberOwnsLand || '',
-          sourceOfIncome: data.source_of_income || prev.sourceOfIncome || '',
-          educationLevel: data.education_level || prev.educationLevel || '',
-          totalFarmlandLandowner: data.total_farmland_size_as_landowner?.toString() || prev.totalFarmlandLandowner || '',
-          totalFarmlandCropSharing: data.total_farmland_size_as_crop_sharing?.toString() || prev.totalFarmlandCropSharing || '',
-          totalFarmlandRented: data.total_farmland_size_as_rented?.toString() || prev.totalFarmlandRented || '',
-          certificationId: data.certification_id || prev.certificationId || '',
-          certificationPhoto: data.certification_photo_url || prev.certificationPhoto || '',
-          farmlandSizeHectares: data.farmland_size_hectares?.toString() || prev.farmlandSizeHectares || '',
-          landOwnershipStatus: data.land_ownership_status || prev.landOwnershipStatus || '',
-          soilFertility: data.soil_fertility_minerals || prev.soilFertility || '',
-          moistureLevels: data.moisture_levels || prev.moistureLevels || '',
-        }));
+        setFormData(mapApiToFarmerDetails(data));
       } catch (err) {
         console.error("Failed to load full profile:", err);
       } finally {
@@ -73,8 +202,6 @@ export function Step2FarmerDetails() {
       }
     }
 
-    // Only load if we haven't already populated these basic fields from Redux to avoid overwriting edits unnecessarily.
-    // Given the form fields are mostly readOnly, this is safe to run on mount.
     loadProfile();
   }, [applicationId]);
 
@@ -106,90 +233,41 @@ export function Step2FarmerDetails() {
 
   return (
     <form onSubmit={handleSubmit} className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
-
-      {/* 1. Basic Information */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm relative">
-        {isLoadingProfile && (
-          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-xl">
-            <Loader2 className="h-6 w-6 animate-spin text-[#16335A]" />
+      {FORM_SECTIONS.map((section, sectionIdx) => (
+        <div key={section.title} className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm relative">
+          {sectionIdx === 0 && isLoadingProfile && (
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-xl">
+              <Loader2 className="h-6 w-6 animate-spin text-[#16335A]" />
+            </div>
+          )}
+          <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">{section.title}</h2>
+          <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${section.gridCols || 'lg:grid-cols-3'}`}>
+            {section.fields.map((field) => {
+              if (field.type === 'select') {
+                return (
+                  <SelectField
+                    key={field.key}
+                    label={field.label}
+                    value={formData[field.key]}
+                    options={field.options || []}
+                    onChange={handleChange(field.key)}
+                    disabled
+                  />
+                );
+              }
+              return (
+                <TextField
+                  key={field.key}
+                  label={field.label}
+                  value={formData[field.key]}
+                  onChange={handleChange(field.key)}
+                  readOnly
+                />
+              );
+            })}
           </div>
-        )}
-        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Basic Information</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField label="First Name" value={formData.firstName} onChange={handleChange('firstName')} readOnly />
-          <TextField label="Last Name" value={formData.lastName} onChange={handleChange('lastName')} readOnly />
-          <TextField label="Mobile Phone" value={formData.mobilePhone} onChange={handleChange('mobilePhone')} readOnly />
-
-          <TextField label="Date of Birth" value={formData.dateOfBirth} onChange={handleChange('dateOfBirth')} readOnly />
-          <SelectField label="Gender" value={formData.gender} options={GENDER_OPTIONS} onChange={handleChange('gender')} disabled />
-          <TextField label="Woreda" value={formData.woreda} onChange={handleChange('woreda')} readOnly />
-
-          <TextField label="Kebele" value={formData.kebele} onChange={handleChange('kebele')} readOnly />
-          <TextField label="ID Type" value={formData.idType} onChange={handleChange('idType')} readOnly />
-          <TextField label="ID Number" value={formData.idNumber} onChange={handleChange('idNumber')} readOnly />
-
-          <TextField label="Language" value={formData.language} onChange={handleChange('language')} readOnly />
         </div>
-      </div>
-
-      {/* 2. Land and Crop Information */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Land and Crop Information</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField label="Land Size (Acres)" value={formData.landSize} onChange={handleChange('landSize')} readOnly />
-          <TextField label="Farm ID" value={formData.farmId} onChange={handleChange('farmId')} readOnly />
-          <TextField label="Farm Polygon" value={formData.farmPolygon} onChange={handleChange('farmPolygon')} readOnly />
-
-          <TextField label="Land Acreage" value={formData.landAcreage} onChange={handleChange('landAcreage')} readOnly />
-          <TextField label="Farm Land Number" value={formData.farmLandNumber} onChange={handleChange('farmLandNumber')} readOnly />
-        </div>
-      </div>
-
-      {/* 3. Socio Economic Information */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Socio Economic Information</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField label="Marital Status" value={formData.maritalStatus} onChange={handleChange('maritalStatus')} readOnly />
-          <TextField label="Size of Family" value={formData.sizeOfFamily} onChange={handleChange('sizeOfFamily')} readOnly />
-          <TextField label="Number of Children" value={formData.numberOfChildren} onChange={handleChange('numberOfChildren')} readOnly />
-
-          <TextField label="No. of Females (Family)" value={formData.noOfFemales} onChange={handleChange('noOfFemales')} readOnly />
-          <TextField label="No. of Males (Family)" value={formData.noOfMales} onChange={handleChange('noOfMales')} readOnly />
-          <TextField label="A Family Member Owns Land Independently" value={formData.familyMemberOwnsLand} onChange={handleChange('familyMemberOwnsLand')} readOnly />
-
-          <TextField label="Source of Income" value={formData.sourceOfIncome} onChange={handleChange('sourceOfIncome')} readOnly />
-          <TextField label="Education Level" value={formData.educationLevel} onChange={handleChange('educationLevel')} readOnly />
-        </div>
-      </div>
-
-      {/* 4. Land, Crop and Livestock Information */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Land, Crop and Livestock Information</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <TextField label="Total Farmland Size as Landowner" value={formData.totalFarmlandLandowner} onChange={handleChange('totalFarmlandLandowner')} readOnly />
-          <TextField label="Total Farmland Size as Crop Sharing" value={formData.totalFarmlandCropSharing} onChange={handleChange('totalFarmlandCropSharing')} readOnly />
-          <TextField label="Total Farmland Size as Rented" value={formData.totalFarmlandRented} onChange={handleChange('totalFarmlandRented')} readOnly />
-
-          <TextField label="Certification ID" value={formData.certificationId} onChange={handleChange('certificationId')} readOnly />
-          <TextField label="Certification Photo" value={formData.certificationPhoto} onChange={handleChange('certificationPhoto')} readOnly />
-        </div>
-      </div>
-
-      {/* 5. Agronomic Data */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-        <h2 className="mb-6 text-sm font-bold text-gray-900 border-b border-gray-200 pb-4">Agronomic Data</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <TextField label="Farmland Size (Hectares)" value={formData.farmlandSizeHectares} onChange={handleChange('farmlandSizeHectares')} readOnly />
-          <TextField
-            label="Land Ownership Status"
-            value={formData.landOwnershipStatus}
-            onChange={handleChange('landOwnershipStatus')}
-            readOnly
-          />
-          <TextField label="Soil Fertility / Minerals" value={formData.soilFertility} onChange={handleChange('soilFertility')} readOnly />
-          <TextField label="Moisture Levels" value={formData.moistureLevels} onChange={handleChange('moistureLevels')} readOnly />
-        </div>
-      </div>
+      ))}
 
       {/* Bottom Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm mt-8 relative z-0 gap-6 sm:gap-0">

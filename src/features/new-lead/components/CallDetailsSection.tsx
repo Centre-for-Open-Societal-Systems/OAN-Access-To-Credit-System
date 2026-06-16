@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { selectNewLeadState, fetchCallDetailsThunk } from '../store/newLeadSlice';
+import { selectCallDetails, fetchCallDetailsThunk } from '../store/newLeadSlice';
 import { useParams } from 'next/navigation';
 import { PhoneCall } from 'lucide-react';
 
 export function CallDetailsSection() {
-  const { callDetails } = useAppSelector(selectNewLeadState);
+  const callDetails = useAppSelector(selectCallDetails);
   const dispatch = useAppDispatch();
   const params = useParams();
   const leadId = params?.id as string;

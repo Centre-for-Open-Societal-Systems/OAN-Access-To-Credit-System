@@ -5,12 +5,13 @@ import { updateLeadStatusThunk } from '@/features/new-lead/store/newLeadSlice';
 import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 import { useRouter, useParams } from 'next/navigation';
+import { normalizeLeadId } from '@/lib/utils';
 
 export function Step3ReviewSubmit() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const params = useParams();
-  const leadId = decodeURIComponent((params?.id as string) || '').replace(/^#/, '');
+  const leadId = normalizeLeadId(params?.id as string);
   const { applicationId, loadingStates } = useSelector(selectLoanFormState);
 
   const [acknowledged, setAcknowledged] = useState(false);

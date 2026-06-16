@@ -31,6 +31,8 @@ const RANGE_STEPS = [
   { label: 'All Amounts', value: '', min: null, max: null, display: 'All Amounts' },
 ] as const;
 
+const getRangeStep = (index: number) => RANGE_STEPS[index] ?? RANGE_STEPS[4];
+
 const LOAN_TYPE_OPTS = [
   'Input loan (seeds, agrochemicals)',
   'Agricultural term loan',
@@ -110,7 +112,7 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
 
   const selectedAmountSummary = useMemo(() => {
     if (tempIndex === 4) return '';
-    return RANGE_STEPS[tempIndex].display;
+    return getRangeStep(tempIndex).display;
   }, [tempIndex]);
 
   if (!mounted || !isOpen) return null;
@@ -120,8 +122,8 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
   const handleApply = () => {
     dispatch(setAdvancedFilters({
       status: selStatuses,
-      minLoan: RANGE_STEPS[tempIndex].min,
-      maxLoan: RANGE_STEPS[tempIndex].max,
+      minLoan: getRangeStep(tempIndex).min,
+      maxLoan: getRangeStep(tempIndex).max,
       type: tempLoanTypes,
       location,
       dateFrom,
@@ -252,7 +254,7 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
 
                       <div className="absolute left-1/2 -translate-x-1/2 bg-[#D1FAE5] border border-[#A7F3D0] px-3 py-1.5 rounded-lg flex items-center justify-center min-w-[120px]">
                         <span className="text-[13px] font-bold text-[#059669]">
-                          {RANGE_STEPS[tempIndex].display}
+                          {getRangeStep(tempIndex).display}
                         </span>
                       </div>
 
@@ -375,8 +377,8 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
                     } else {
                       from.setDate(from.getDate() - o.days);
                     }
-                    setDateFrom(from.toISOString().split('T')[0]);
-                    setDateTo(to.toISOString().split('T')[0]);
+                    setDateFrom(from.toISOString().split('T')[0] ?? '');
+                    setDateTo(to.toISOString().split('T')[0] ?? '');
                   }}
                   className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${quickDate === o.label ? 'border-green-600 bg-green-50 text-green-700 font-semibold' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700  font-semibold'}`}
                 >

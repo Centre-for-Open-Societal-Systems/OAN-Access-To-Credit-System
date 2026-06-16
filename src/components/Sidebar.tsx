@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
+import Image from 'next/image';
 
 export interface NavItem {
   path: string;
   activePaths?: string[];
   label: string;
-  icon: any;
+  icon: LucideIcon;
 }
 
 export interface NavSection {
@@ -85,9 +86,11 @@ function Sidebar({ isCollapsed, isMobileOpen = false, sections = [] }: SidebarPr
       >
         {/* Left Side: Logo Graphic */}
         <div className={`flex shrink-0 items-center justify-center ${isCollapsed ? 'w-full py-2' : ''}`}>
-          <img
+          <Image
             src="/logo.png"
             alt="OARI Logo"
+            width={220}
+            height={80}
             className={`object-contain transition-all duration-300 ${isCollapsed ? 'w-[80%] h-auto max-h-12' : 'h-20 w-auto max-w-[220px] -mt-1.5'}`}
             id="primary-logo-img"
             onError={(e) => {

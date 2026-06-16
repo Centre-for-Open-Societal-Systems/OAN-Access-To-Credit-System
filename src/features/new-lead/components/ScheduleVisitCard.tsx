@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, selectIsLeadFinalized, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '../store/newLeadSlice';
+import { selectVisitState, selectIsLeadFinalized, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '..';
 import { Calendar, CalendarCheck, Clock, MapPin, Pencil, CheckCircle } from 'lucide-react';
 import { ScheduleNewVisitForm } from './modals/ScheduleNewVisitForm';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useParams, useRouter } from 'next/navigation';
+import { normalizeLeadId } from '@/lib/utils';
 
 interface ScheduleVisitCardProps {
-  isScheduled?: boolean;
-  visitDate?: string;
-  location?: string;
+  isScheduled?: boolean | undefined;
+  visitDate?: string | undefined;
+  location?: string | undefined;
 }
 
 export function ScheduleVisitCard({
@@ -18,13 +19,13 @@ export function ScheduleVisitCard({
   location = 'Location Not Set'
 }: ScheduleVisitCardProps) {
   const dispatch = useAppDispatch();
-  const { visitSchedule } = useAppSelector(selectNewLeadState);
+  const { visitSchedule } = useAppSelector(selectVisitState);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const activeLeadId = decodeURIComponent((params?.id as string) || '').replace(/^#/, '');
+  const activeLeadId = normalizeLeadId(params?.id as string);
 
   const isPassed = isScheduled && visitDate ? new Date(visitDate) < new Date() : false;
 
@@ -138,8 +139,8 @@ export function ScheduleVisitCard({
                   <span className="text-white font-inter font-medium text-sm leading-5">Completing...</span>
                 ) : (
                   <>
-                    <CheckCircle size={14} className={isFinalized ? 'text-[#9CA3AF]' : 'text-white'} />
-                    <span className={`font-inter font-semibold text-md leading-5 text-center ${isFinalized ? 'text-[#9CA3AF]' : 'text-white'}`}>
+                    <CheckCircle size={14} className={isFinalized ? 'text-[#c1dfcc]' : 'text-white'} />
+                    <span className={`font-inter font-semibold text-md leading-5 text-center ${isFinalized ? 'text-[#c1dfcc]' : 'text-white'}`}>
                       Complete Visit
                     </span>
                   </>

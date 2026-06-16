@@ -1,12 +1,14 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectNewLeadState, updateFarmerDetails } from '../store/newLeadSlice';
+import { selectFarmerState, updateFarmerDetails } from '../store/farmerSlice';
+import { selectConsentState } from '../store/consentSlice';
 import { TextField } from '@/components/ui/TextField';
 import { useParams } from 'next/navigation';
 import { User } from 'lucide-react';
 
 export function FarmerDetailsSection() {
   const dispatch = useAppDispatch();
-  const { farmerDetails, isOtpVerified } = useAppSelector(selectNewLeadState);
+  const { farmerDetails } = useAppSelector(selectFarmerState);
+  const { isOtpVerified } = useAppSelector(selectConsentState);
 
   const handleChange = (field: keyof typeof farmerDetails) => (value: string) => {
     dispatch(updateFarmerDetails({ [field]: value }));

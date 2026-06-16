@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import {
   Bell,
   ChevronDown,
@@ -135,9 +136,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
           className="inline-grid h-[2.2rem] w-[2.2rem] place-items-center overflow-hidden text-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,background-color,border-color] duration-150 hover:-translate-y-px active:scale-[0.96]"
         >
           <span className="relative block h-[1.4rem] w-[1.4rem]" aria-hidden="true">
-            <img
-              src={menuToggleBars.src || menuToggleBars}
+            <Image
+              src={menuToggleBars}
               alt=""
+              width={22}
+              height={22}
               aria-hidden="true"
               className={[
                 'absolute inset-0 h-full w-full object-contain',
@@ -147,9 +150,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
                   : 'opacity-100 scale-100 translate-x-0 rotate-0',
               ].join(' ')}
             />
-            <img
-              src={menuToggleArrow.src || menuToggleArrow}
+            <Image
+              src={menuToggleArrow}
               alt=""
+              width={22}
+              height={22}
               aria-hidden="true"
               className={[
                 'absolute inset-0 h-full w-full object-contain',
@@ -298,9 +303,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
               {/* Animated pulse ring */}
               <div className="absolute inset-0 rounded-full border-[2px] border-[#10b981] animate-ping opacity-25" style={{ animationDuration: '2s' }} />
               <div className="relative h-full w-full rounded-full border-[2px] border-[#10b981] overflow-hidden flex items-center justify-center bg-gray-100 z-10 transition-transform duration-300 group-hover:scale-[1.05]">
-                <img
+                <Image
                   src="/avatar.png"
                   alt="User Avatar"
+                  width={36}
+                  height={36}
                   className="h-full w-full object-cover hidden"
                   onLoad={(e) => {
                     e.currentTarget.classList.remove('hidden');
