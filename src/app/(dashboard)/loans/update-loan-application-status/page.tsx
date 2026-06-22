@@ -8,7 +8,7 @@ import {
 
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchLoans, updateLoanStatus, selectPagedRowsData, selectIsLoansLoading } from '@/features/loans/store/loanDashboardSlice';
+import { fetchLoans, updateLoanStatus, selectPagedRowsData, selectIsLoansLoading, MappedLoanRow } from '@/features/loans/store/loanDashboardSlice';
 import {
   STATUS_CFG,
   LOAN_STATUSES,
@@ -27,17 +27,39 @@ const KPI_CFG = [
 ];
 
 // ─── Update Panel ─────────────────────────────────────────────────────────────
-function UpdatePanel({ loan, onClose, onConfirm }: any) {
+interface UpdatePanelProps {
+  loan: MappedLoanRow;
+  onClose: () => void;
+  onConfirm: (data: { loanId: string; newStatus: string; reason?: string; notes?: string }) => Promise<void>;
+}
+
+function UpdatePanel({ loan, onClose, onConfirm }: UpdatePanelProps) {
   const [newStatus, setNewStatus] = useState('');
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [done, setDone] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  function handleConfirm() {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  async function handleConfirm() {
     if (!newStatus) return;
-    onConfirm({ loanId: loan.id, newStatus, reason, notes });
-    setDone(true);
-    setTimeout(onClose, 1800);
+    setIsUpdating(true);
+    try {
+      await onConfirm({ loanId: loan.id, newStatus, reason, notes });
+      setDone(true);
+      setTimeout(onClose, 1800);
+    } catch (e) {
+      console.error('Failed to update status', e);
+    } finally {
+      setIsUpdating(false);
+    }
   }
 
   return (
@@ -50,12 +72,17 @@ function UpdatePanel({ loan, onClose, onConfirm }: any) {
       />
 
       {/* slide-over panel */}
-      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[500px] flex-col bg-white shadow-2xl">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="update-panel-title"
+        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[500px] flex-col bg-white shadow-2xl"
+      >
         {/* header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <RefreshCcw size={20} className="text-text-primary" strokeWidth={2} />
-            <h3 className="text-lg font-semibold text-text-primary">Update Loan Status</h3>
+            <h3 id="update-panel-title" className="text-lg font-semibold text-text-primary">Update Loan Status</h3>
           </div>
           <button
             type="button"
@@ -96,7 +123,7 @@ function UpdatePanel({ loan, onClose, onConfirm }: any) {
                     { label: 'Application ID', value: loan.id },
                     { label: 'Applicant', value: loan.applicant },
                     { label: 'Loan Type', value: loan.type },
-                    { label: 'Loan Term', value: loan.loanTerm },
+                    { label: 'Location', value: loan.location },
                   ].map(({ label, value }) => (
                     <div key={label}>
                       <p className="text-xs text-text-muted">{label}</p>
@@ -108,12 +135,12 @@ function UpdatePanel({ loan, onClose, onConfirm }: any) {
                 <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-gray-200 pt-3 text-sm text-text-muted">
                   <span className="flex items-center gap-1.5">
                     <MapPin size={13} strokeWidth={2} />
-                    {loan.region}
+                    {loan.location || 'Unknown Region'}
                   </span>
-                  {loan.amount && (
+                  {loan.loanAmount !== '—' && (
                     <span className="flex items-center gap-1.5">
                       <Banknote size={13} strokeWidth={2} />
-                      {loan.amount} ETB
+                      {loan.loanAmount}
                     </span>
                   )}
                   <span className="flex items-center gap-1.5">
@@ -210,10 +237,10 @@ function UpdatePanel({ loan, onClose, onConfirm }: any) {
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={!newStatus}
+                disabled={!newStatus || isUpdating}
                 className="flex-1 rounded-xl bg-[#16A34A] py-3 text-sm font-semibold text-white transition hover:bg-[#15803d] active:scale-95 disabled:pointer-events-none disabled:opacity-40"
               >
-                Confirm Update
+                {isUpdating ? 'Updating...' : 'Confirm Update'}
               </button>
             </div>
           </>
@@ -235,12 +262,12 @@ function UpdateLoanStatus() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [page, setPage] = useState(1);
-  const [panelLoan, setPanelLoan] = useState<any>(null);
+  const [panelLoan, setPanelLoan] = useState<MappedLoanRow | null>(null);
 
   // KPI counts
   const counts = useMemo(() => {
-    const c = { total: loans.length };
-    loans.forEach((l: any) => { (c as any)[l.status] = ((c as any)[l.status] || 0) + 1; });
+    const c: Record<string, number> = { total: loans.length };
+    loans.forEach((l: MappedLoanRow) => { c[l.status] = (c[l.status] || 0) + 1; });
     return c;
   }, [loans]);
 
@@ -248,9 +275,9 @@ function UpdateLoanStatus() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return loans.filter(
-      (l: any) =>
+      (l: MappedLoanRow) =>
         (activeTab === 'All' || l.status === activeTab) &&
-        (!q || `${l.id} ${l.applicant} ${l.region} ${l.type}`.toLowerCase().includes(q)),
+        (!q || `${l.id} ${l.applicant} ${l.location} ${l.type}`.toLowerCase().includes(q)),
     );
   }, [loans, search, activeTab]);
 
@@ -264,8 +291,11 @@ function UpdateLoanStatus() {
     Math.min(totalPages, safePage + 2),
   );
 
-  function handleStatusUpdate({ loanId, newStatus }: any) {
-    dispatch(updateLoanStatus({ id: loanId, status: newStatus }));
+  async function handleStatusUpdate({ loanId, newStatus, reason, notes }: { loanId: string; newStatus: string; reason?: string; notes?: string }) {
+    const payload: { id: string; status: string; reason?: string; notes?: string } = { id: loanId, status: newStatus };
+    if (reason) payload.reason = reason;
+    if (notes) payload.notes = notes;
+    await dispatch(updateLoanStatus(payload)).unwrap();
   }
 
   return (
@@ -411,9 +441,9 @@ function UpdateLoanStatus() {
                       <p className="text-xs text-text-muted">{loan.phone}</p>
                     </td>
                     <td className="px-5 py-4 text-text-primary">{loan.type}</td>
-                    <td className="px-5 py-4 text-text-primary">{loan.region}</td>
+                    <td className="px-5 py-4 text-text-primary">{loan.location}</td>
                     <td className="px-5 py-4 font-medium text-text-primary">
-                      {loan.amount ? `${loan.amount} ETB` : '—'}
+                      {loan.loanAmount}
                     </td>
                     <td className="px-5 py-4">
                       <LoanStatusBadge status={loan.status} />

@@ -10,24 +10,22 @@ The Access to Credit System is a production frontend application built to handle
 The application is built on Next.js using the App Router. It implements a repository pattern for data fetching, centralizing API interactions through an abstraction layer.
 
 State is divided into two distinct domains:
-1. **Server State**: Managed by TanStack Query for caching, data synchronization, and optimistic UI updates.
-2. **Client State**: Managed by Redux Toolkit for complex UI interactions, wizard state progression, and global connectivity monitoring.
+1. **Global State**: Managed by Redux Toolkit for complex UI interactions, wizard state progression, server data synchronization, and global connectivity monitoring.
 
 ```mermaid
 graph TD
     Client[Browser Client]
     Next[Next.js React Application]
-    Redux[Redux Toolkit\nClient State]
-    Query[TanStack Query\nServer State]
+    Redux[Redux Toolkit\nGlobal State]
     API[API Service Layer]
     Auth[JWT Middleware]
     Backend[Frappe Python Backend]
     DB[(Database)]
 
     Client -->|User Interactions| Next
-    Next -->|Dispatches UI State| Redux
-    Next -->|Queries / Mutations| Query
-    Query -->|Network Requests| API
+    Next -->|Dispatches Actions| Redux
+    Next -->|Network Requests| API
+    Redux -->|Network Requests| API
     API -->|Validates Session| Auth
     Auth -->|Authenticated Requests| Backend
     Backend -->|Data Persistence| DB
@@ -130,11 +128,18 @@ The system segregates business domains and functionalities into dedicated direct
     *   **Step 3: Submit (`Step3ReviewSubmit.tsx`)**: Double check details and execute API payload.
     *   **State Control (`newLoanFormSlice.ts`)**: Validates stages and maps form models.
 
+### 5. Loan Management (`src/features/loans`)
+*   **Purpose**: Renders the central loan dashboard tracking submitted credit applications, with KPI summaries, robust filtering, and table views for loan status tracking.
+*   **Key Files**:
+    *   `src/features/loans/components/LoanTable.tsx`: Main data grid displaying loan application status.
+    *   `src/features/loans/components/LoanAdvancedFilters.tsx`: Advanced filter panel for searching loans by status, amount, type, and date range.
+    *   `src/features/loans/store/loanDashboardSlice.ts`: Client-side state handling for filters, search parameters, and view configurations.
+
 ---
 
 ## Technical Context & Guidelines
 
 1.  **Strict TypeScript Rules**: Strict mode is enabled. No `any` is allowed; rely on interfaces and explicit type mappings.
-2.  **State Separation**: Custom component state remains localized, wizard progression uses Redux Slices, and server caches are governed by React Query.
+2.  **State Separation**: Custom component state remains localized, while wizard progression, API caching, and complex interaction states use Redux Slices.
 3.  **Authentication Enforcement**: Route guarding is handled in `src/proxy.ts` middleware checking cookie presence before granting access to dashboard components.
 4.  **Local Mocking**: To enable disconnected development, set `NEXT_PUBLIC_API_MOCKING=true` in `.env.local` to trigger Mock Service Worker intercepting API calls via `src/mocks/browser`.

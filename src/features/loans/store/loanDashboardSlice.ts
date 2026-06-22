@@ -36,9 +36,9 @@ export const fetchLoanSummary = createAsyncThunk(
 
 export const updateLoanStatus = createAsyncThunk(
   'loanDashboard/updateLoanStatus',
-  async ({ id, status }: { id: string; status: string }, { rejectWithValue, dispatch }) => {
+  async ({ id, status, reason, notes }: { id: string; status: string; reason?: string; notes?: string }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await loanService.updateLoanStatus(id, status);
+      const response = await loanService.updateLoanStatus(id, status, reason, notes);
       // Re-fetch loans after a successful update to refresh the list
       dispatch(fetchLoans());
       return response;
@@ -50,6 +50,19 @@ export const updateLoanStatus = createAsyncThunk(
 );
 
 const ALL_STATUS_VALUES = ['danger', 'info', 'neutral'];
+
+export interface MappedLoanRow extends Omit<LoanApplicationSummary, 'status'> {
+  id: string;
+  applicant: string;
+  phone: string;
+  loanAmount: string;
+  type: string;
+  status: string;
+  statusTone: string;
+  updated: string;
+  timestamp: number;
+  action: string;
+}
 
 export interface AdvancedFilters {
   status: string[];
@@ -270,7 +283,7 @@ export const selectPagedRowsData = createSelector(
 
     let totalCount = rawActivityData?.pagination?.total ?? 0;
 
-    const mapped = rows.map((row: LoanApplicationSummary) => {
+    const mapped = rows.map((row: LoanApplicationSummary): MappedLoanRow => {
       const rawDate = row.creation ? new Date(row.creation) : new Date();
       const dateStr = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeStr = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });

@@ -210,10 +210,10 @@ export const loanService = {
     }) as Promise<ApiResponse<CreateLoanApplicationResponse>>;
   },
 
-  async updateLoanStatus(application_id: string, status: string): Promise<ApiResponse<null>> {
+  async updateLoanStatus(application_id: string, status: string, reason?: string, notes?: string): Promise<ApiResponse<null>> {
     return fetchApi('oan_a2c.api.v1.loan_applications.update_loan_status', {
       method: 'POST',
-      body: JSON.stringify({ application_id, status }),
+      body: JSON.stringify({ application_id, status, reason, notes }),
     }) as Promise<ApiResponse<null>>;
   },
 
