@@ -29,6 +29,12 @@ const storageMiddleware: Middleware = (store) => (next) => (action) => {
 // avoiding accidental logouts during transient network issues or generic server errors.
 const unauthenticatedMiddleware: Middleware = (api) => (next) => (action) => {
   const unknownAction = action as UnknownAction;
+  
+  // Ignore getMe failure on initial mount to prevent infinite loops
+  if (unknownAction.type === 'auth/getMe/rejected') {
+    return next(action);
+  }
+
   if (isRejectedWithValue(unknownAction) || unknownAction.type.endsWith('/rejected')) {
     const payload = unknownAction.payload;
     const error = unknownAction.error;
@@ -38,7 +44,7 @@ const unauthenticatedMiddleware: Middleware = (api) => (next) => (action) => {
       (error as { message?: string })?.message === 'UNAUTHORIZED'
     ) {
       api.dispatch(logout());
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         // Clear HttpOnly cookie on the server before redirecting.
         // We use a fire-and-forget .catch(() => {}) block to guarantee the client-side session
         // is cleared and redirect occurs even if the server is offline or unreachable.

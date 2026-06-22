@@ -50,33 +50,56 @@ export const searchFarmerThunk = createAsyncThunk<FarmerDetails, string>(
 
 export const fetchLeadDetailsThunk = createAsyncThunk<
   FarmerDetails,
-  string,
+  string | { leadId: string; shouldPoll?: boolean },
   { state: RootState }
 >(
   'farmer/fetchLeadDetails',
-  async (leadId: string, { dispatch, rejectWithValue }) => {
+  async (arg, { dispatch, rejectWithValue }) => {
+    const leadId = typeof arg === 'string' ? arg : arg.leadId;
+    let shouldPoll = typeof arg === 'string' ? false : (arg.shouldPoll ?? false);
+
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const maxRetries = 24; // Poll for up to 2 minutes
+    let maxRetries = shouldPoll ? 24 : 1; 
     let retries = 0;
 
-    const timeoutId = setTimeout(() => {
-      dispatch(setIsPollingLong(true));
-    }, 2000);
+    let timeoutId: NodeJS.Timeout | undefined;
+    if (shouldPoll) {
+      timeoutId = setTimeout(() => {
+        dispatch(setIsPollingLong(true));
+      }, 2000);
+    }
 
     try {
       while (retries < maxRetries) {
         try {
           const response = await newLeadService.getLeadDetails(leadId);
           
+          // The backend specifically indicates a background demographic sync is in progress
+          // when the status is 'Pending OTP' but 'otp_verified' is true.
+          const isSyncInProgress = response.consent_request_status === 'Pending OTP' && response.consent_request_otp_verified === true;
+          
+          if (isSyncInProgress && !shouldPoll) {
+            shouldPoll = true;
+            maxRetries = 24; // dynamically enable polling
+            if (!timeoutId) {
+              timeoutId = setTimeout(() => {
+                dispatch(setIsPollingLong(true));
+              }, 2000);
+            }
+          }
+
           // Data has arrived if farmer_profile_created is true
           const dataArrived = response && response.farmer_profile_created === true;
           
-          if (dataArrived) {
+          if (dataArrived || !shouldPoll) {
             return response;
           }
           
           logger.log(`Lead details not yet ready for leadId: ${leadId}. Retrying in 5 seconds... (Attempt ${retries + 1}/${maxRetries})`);
         } catch (error) {
+          if (!shouldPoll) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch lead details');
+          }
           logger.warn(`Failed to fetch lead details for leadId: ${leadId}. Error: ${error instanceof Error ? error.message : String(error)}. Retrying in 5 seconds... (Attempt ${retries + 1}/${maxRetries})`);
         }
         
@@ -93,7 +116,7 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
         return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch lead details after retries');
       }
     } finally {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       dispatch(setIsPollingLong(false));
     }
   }

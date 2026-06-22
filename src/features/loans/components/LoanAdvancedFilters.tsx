@@ -88,15 +88,8 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
       }
       setTempIndex(amtIdx);
 
-      if (!currentFilters.dateFrom && !currentFilters.dateTo) {
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        setDateFrom(todayStr);
-        setDateTo(todayStr);
-        setQuickDate('Today');
-      } else {
-        setQuickDate('');
-      }
+      // Removed automatic date setting to 'Today'
+      setQuickDate(currentFilters.dateFrom || currentFilters.dateTo ? '' : quickDate);
     }
   }, [isOpen, currentFilters]);
 

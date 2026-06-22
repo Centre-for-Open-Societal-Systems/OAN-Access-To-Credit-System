@@ -39,7 +39,7 @@ export const leadService = {
     const fetchInit = signal ? { signal } : {};
     const [response, schedulesRes] = await Promise.all([
       fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads?${searchParams.toString()}`, fetchInit),
-      fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules?start=0&page_length=2000`, fetchInit)
+      fetch(`/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules?start=0&page_length=100`, fetchInit)
     ]);
 
     if (!response.ok) {

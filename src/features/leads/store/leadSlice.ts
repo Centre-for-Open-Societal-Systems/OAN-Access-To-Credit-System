@@ -199,7 +199,8 @@ const leadSlice = createSlice({
       .addMatcher(
         fetchLeadDetailsThunk.fulfilled.match,
         (state, action) => {
-          const leadId = action.meta.arg;
+          const arg = action.meta.arg;
+          const leadId = typeof arg === 'string' ? arg : arg.leadId;
           const leadData = action.payload;
           if (leadData) {
             const lead = findLeadById(state.leads, leadId);

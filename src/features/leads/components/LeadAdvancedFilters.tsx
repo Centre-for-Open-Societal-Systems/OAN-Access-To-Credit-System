@@ -54,15 +54,7 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
   const [dateTo, setDateTo] = useState(activeFilters.dateTo);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  useEffect(() => {
-    if (!activeFilters.dateFrom && !activeFilters.dateTo) {
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      setDateFrom(todayStr);
-      setDateTo(todayStr);
-      setQuickDate('Today');
-    }
-  }, [activeFilters.dateFrom, activeFilters.dateTo]);
+  // Removed automatic "Today" date setting so filters are empty by default
 
   // Location states
   const [location, setLocation] = useState(activeFilters.location || '');
@@ -486,11 +478,9 @@ function LeadAdvancedFilters({ onClose }: LeadAdvancedFiltersProps) {
               dispatch(resetFilters());
               setSelStatuses([]);
 
-              const now = new Date();
-              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-              setDateFrom(todayStr);
-              setDateTo(todayStr);
-              setQuickDate('Today');
+              setDateFrom('');
+              setDateTo('');
+              setQuickDate('');
 
               setLocation('');
               setTempIndex(4);

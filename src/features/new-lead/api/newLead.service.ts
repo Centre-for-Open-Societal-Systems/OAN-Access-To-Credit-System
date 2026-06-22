@@ -17,6 +17,7 @@ export interface FarmerDetails {
   requested_data_fields?: { field_name: string; field_value: string }[] | undefined;
   farmer_profile_created?: boolean | undefined;
   consent_request_status?: string | undefined;
+  consent_request_otp_verified?: boolean | undefined;
 }
 
 export interface ConsentReason {
@@ -200,6 +201,7 @@ export interface BasicProfileBackendData {
   consent_request?: {
     name?: string;
     status?: string;
+    otp_verified?: boolean;
   };
 }
 
@@ -352,7 +354,8 @@ export const newLeadService = {
       validity_to: lead.validity_to ?? '',
       requested_data_fields: lead.requested_data_fields ?? [],
       farmer_profile_created: lead.farmer_profile_created,
-      consent_request_status: lead.consent_request?.status
+      consent_request_status: lead.consent_request?.status,
+      consent_request_otp_verified: lead.consent_request?.otp_verified
     };
   },
 

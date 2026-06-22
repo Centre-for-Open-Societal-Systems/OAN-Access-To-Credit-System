@@ -95,9 +95,9 @@ const authSlice = createSlice({
         state.status = 'succeeded';
         state.user = action.payload;
       })
-      .addCase(getMeThunk.rejected, (state, action) => {
+      .addCase(getMeThunk.rejected, (state) => {
         state.status = 'failed';
-        state.error = (action.payload as string) ?? 'Session verification failed.';
+        state.error = null; // Do not show an error for a failed session check
         state.user = null;
       });
   },

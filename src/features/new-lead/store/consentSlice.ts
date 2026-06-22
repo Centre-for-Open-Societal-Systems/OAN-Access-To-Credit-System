@@ -100,7 +100,7 @@ export const submitConsentThunk = createAsyncThunk<
         allowed_data_field_ids: payload.allowed_data_field_ids,
       });
       
-      await dispatch(fetchLeadDetailsThunk(payload.leadId));
+      await dispatch(fetchLeadDetailsThunk({ leadId: payload.leadId, shouldPoll: true }));
       return response;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to submit consent details');
