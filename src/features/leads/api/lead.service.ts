@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { httpStatusToErrorCode } from '@/lib/api/apiErrors';
 import type {
   Lead,
   GetLeadsParams,
@@ -23,14 +24,22 @@ export const leadService = {
       start_date: params?.start_date || '',
       end_date: params?.end_date || '',
     });
+    // Backend reads min_loan_amount / max_loan_amount (see api-flow-backend.md
+    // §4.2 get_leads). Sending min_amount/max_amount is silently ignored — the
+    // amount filter is dropped rather than erroring.
     if (params?.min_amount !== undefined) {
-      searchParams.set('min_amount', params.min_amount.toString());
+      searchParams.set('min_loan_amount', params.min_amount.toString());
     }
     if (params?.max_amount !== undefined) {
-      searchParams.set('max_amount', params.max_amount.toString());
+      searchParams.set('max_loan_amount', params.max_amount.toString());
     }
     if (params?.loan_type !== undefined) {
       searchParams.set('loan_type', params.loan_type);
+    }
+    // Server-side queue scoping: agent email, or the literal 'unassigned'
+    // (api-flow-backend.md §4.2 get_leads `assigned_to`).
+    if (params?.assigned_to) {
+      searchParams.set('assigned_to', params.assigned_to);
     }
 
     // TODO: [OAN-452] Temporary client-side join. We are fetching up to 2000 visit schedules because 
@@ -43,10 +52,8 @@ export const leadService = {
     ]);
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('UNAUTHORIZED');
-      }
-      throw new Error('Failed to fetch leads');
+      // 401 logs out, 403 → Access Denied, 5xx → retryable connection error.
+      throw new Error(httpStatusToErrorCode(response.status) ?? 'Failed to fetch leads');
     }
     const data = await response.json() as {
       message?: {
@@ -129,10 +136,8 @@ export const leadService = {
   async getLeadSummary(): Promise<LeadSummaryResponse> {
     const response = await fetch('/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_summary');
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('UNAUTHORIZED');
-      }
-      throw new Error('Failed to fetch lead summary');
+      // 401 logs out, 403 → Access Denied, 5xx → retryable connection error.
+      throw new Error(httpStatusToErrorCode(response.status) ?? 'Failed to fetch lead summary');
     }
     const data = await response.json() as { message: { data: LeadSummaryResponse } };
     return data.message.data;

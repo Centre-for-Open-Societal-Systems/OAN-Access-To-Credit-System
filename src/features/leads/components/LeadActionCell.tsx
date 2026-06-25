@@ -10,7 +10,6 @@ interface LeadActionCellProps {
 // 1.  to prevent re-allocation on every render
 const BASE_CLASS = "inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#EDEFF1] bg-white px-4 py-2 text-sm font-semibold text-[#3A474E] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] min-w-[120px] w-auto h-[40px] whitespace-nowrap select-none outline-none";
 
-const BTN_CLASS = `${BASE_CLASS} cursor-pointer transition-all hover:bg-slate-50 active:scale-95`;
 const BADGE_CLASS = `${BASE_CLASS} cursor-default`;
 
 const ICON_PROPS = {
@@ -90,18 +89,26 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
 
     case 'rejected':
       return (
-        <span className={BADGE_CLASS}>
+        <button
+          type="button"
+          onClick={() => navigate(getLeadRoute(lead))}
+          className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
+        >
           <XCircle {...ICON_PROPS} />
           <span className='text-[14px]'>Rejected</span>
-        </span>
+        </button>
       );
 
     case 'granted':
       return (
-        <span className={BADGE_CLASS}>
+        <button
+          type="button"
+          onClick={() => navigate(getLeadRoute(lead))}
+          className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
+        >
           <CheckCircle {...ICON_PROPS} className="text-[#10B981] shrink-0" />
           <span className='text-[14px]'>Granted</span>
-        </span>
+        </button>
       );
 
     case 'view':

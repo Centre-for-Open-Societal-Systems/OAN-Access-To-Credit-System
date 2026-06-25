@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, SearchX, Users } from 'lucide-react';
 
 interface LeadEmptyStateProps {
@@ -22,7 +21,7 @@ function LeadEmptyState({ hasFilters, onClearFilters }: LeadEmptyStateProps) {
               <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`}</style>
               {hasFilters
                 ? <SearchX size={36} className="text-slate-400" strokeWidth={1.5} />
-                : <Users   size={36} className="text-slate-400" strokeWidth={1.5} />
+                : <Users size={36} className="text-slate-400" strokeWidth={1.5} />
               }
             </div>
           </div>
@@ -41,9 +40,8 @@ function LeadEmptyState({ hasFilters, onClearFilters }: LeadEmptyStateProps) {
             {[0, 150, 300].map(delay => (
               <span
                 key={delay}
-                className={`h-2 w-2 rounded-full animate-bounce ${
-                  hasFilters ? 'bg-orange-300' : 'bg-slate-300'
-                }`}
+                className={`h-2 w-2 rounded-full animate-bounce ${hasFilters ? 'bg-orange-300' : 'bg-slate-300'
+                  }`}
                 style={{ animationDelay: `${delay}ms`, animationDuration: '1.2s' }}
               />
             ))}

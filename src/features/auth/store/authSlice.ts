@@ -88,16 +88,12 @@ const authSlice = createSlice({
         state.error = (action.payload as string) ?? 'Something went wrong.';
       })
       .addCase(getMeThunk.pending, (state) => {
-        state.status = 'loading';
         state.error = null;
       })
       .addCase(getMeThunk.fulfilled, (state, action: PayloadAction<User>) => {
-        state.status = 'succeeded';
         state.user = action.payload;
       })
       .addCase(getMeThunk.rejected, (state) => {
-        state.status = 'failed';
-        state.error = null; // Do not show an error for a failed session check
         state.user = null;
       });
   },
@@ -106,6 +102,8 @@ const authSlice = createSlice({
 export const { logout, clearAuthError, hydrate } = authSlice.actions;
 
 export const selectOfficerName = (state: RootState) => state.auth.user?.officerName ?? null;
+// Logged-in user's email — used to filter "My" queues server-side (assigned_to / loan_officer).
+export const selectUserEmail = (state: RootState) => state.auth.user?.username ?? null;
 export const selectOfficerRole = (state: RootState) => state.auth.user?.roles?.[0] ?? null;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;

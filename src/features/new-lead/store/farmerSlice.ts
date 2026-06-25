@@ -11,6 +11,8 @@ interface FarmerState {
   isSearchingFarmer: boolean;
   searchedFarmer: FarmerDetails | null;
   searchError: string | null;
+  // Error from fetching a specific lead's details (e.g. 'FORBIDDEN' on a 403).
+  detailsError: string | null;
   isPollingLong: boolean;
 }
 
@@ -29,6 +31,7 @@ const initialState: FarmerState = {
   isSearchingFarmer: false,
   searchedFarmer: null,
   searchError: null,
+  detailsError: null,
   isPollingLong: false,
 };
 
@@ -97,6 +100,12 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
           
           logger.log(`Lead details not yet ready for leadId: ${leadId}. Retrying in 5 seconds... (Attempt ${retries + 1}/${maxRetries})`);
         } catch (error) {
+          const message = error instanceof Error ? error.message : '';
+          // Permission/session errors won't resolve by retrying — bail out
+          // immediately so a 403 surfaces as not-found and a 401 logs out.
+          if (message === 'FORBIDDEN' || message === 'UNAUTHORIZED') {
+            return rejectWithValue(message);
+          }
           if (!shouldPoll) {
             return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to fetch lead details');
           }
@@ -137,7 +146,7 @@ const farmerSlice = createSlice({
     setIsPollingLong(state, action: PayloadAction<boolean>) {
       state.isPollingLong = action.payload;
     },
-    clearFarmerState(state) {
+    clearFarmerState() {
       return initialState;
     }
   },
@@ -158,8 +167,15 @@ const farmerSlice = createSlice({
         state.searchedFarmer = null;
         state.searchError = (action.payload as string) ?? action.error.message ?? ' Unkown Reason: Farmer search failed.';
       })
+      .addCase(fetchLeadDetailsThunk.pending, (state) => {
+        state.detailsError = null;
+      })
       .addCase(fetchLeadDetailsThunk.fulfilled, (state, action) => {
         state.farmerDetails = action.payload;
+        state.detailsError = null;
+      })
+      .addCase(fetchLeadDetailsThunk.rejected, (state, action) => {
+        state.detailsError = (action.payload as string) ?? action.error.message ?? null;
       })
 
       .addCase(initializeLead, (state, action) => {
@@ -180,6 +196,7 @@ export const { setFarmerId, updateFarmerDetails, clearFarmerState, setIsPollingL
 
 export const selectFarmerState = (state: RootState) => state.farmer;
 export const selectSearchError = (state: RootState) => state.farmer.searchError;
+export const selectDetailsError = (state: RootState) => state.farmer.detailsError;
 export const selectIsPollingLong = (state: RootState) => state.farmer.isPollingLong;
 
 export const farmerReducer = farmerSlice.reducer;

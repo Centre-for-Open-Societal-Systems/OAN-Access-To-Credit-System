@@ -1,4 +1,3 @@
-import React from 'react';
 import { STATUS_CFG } from '../constants/loans.constants';
 
 interface LoanStatusBadgeProps {

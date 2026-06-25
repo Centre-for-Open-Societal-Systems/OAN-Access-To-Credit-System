@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { selectLoanTypesOptions } from '../../store/newLeadSlice';
 import { SelectField } from '@/components/ui/SelectField';
+import { creditInfoSchema, type CreditInfoFormData } from '../../schemas/credit.schema';
 
 interface CreditInformationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { loanType: string; loanAmount: string; purposeMessage: string }) => void;
+  onSubmit: (data: CreditInfoFormData) => void;
 }
 
 export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInformationModalProps) {
@@ -26,15 +27,13 @@ export function CreditInformationModal({ isOpen, onClose, onSubmit }: CreditInfo
 
   if (!isOpen || !mounted) return null;
 
-  const isValid = Boolean(loanType && loanAmount && purposeMessage.trim());
+  const validationResult = creditInfoSchema.safeParse({ loanType, loanAmount, purposeMessage });
+  const isValid = validationResult.success;
 
   const handleSubmit = () => {
-    if (!isValid) return;
-    onSubmit({
-      loanType,
-      loanAmount,
-      purposeMessage,
-    });
+    if (!validationResult.success) return;
+
+    onSubmit(validationResult.data);
   };
 
   const modalContent = (

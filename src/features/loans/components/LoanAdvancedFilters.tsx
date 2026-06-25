@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, SlidersHorizontal, ChevronDown, Calendar, Check } from 'lucide-react';
+import { X, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { AdvancedFilters, selectAdvancedFilters, setAdvancedFilters, clearAdvancedFilters } from '../store/loanDashboardSlice';
+import { selectAdvancedFilters, setAdvancedFilters } from '../store/loanDashboardSlice';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 
 interface LoanAdvancedFiltersProps {

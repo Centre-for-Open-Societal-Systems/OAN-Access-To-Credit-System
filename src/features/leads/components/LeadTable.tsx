@@ -116,10 +116,9 @@ function LeadTable({
   const renderCellContent = (colId: string, l: Lead) => {
     switch (colId) {
       case 'LEAD ID': {
-        const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
         return (
           <div className="flex flex-col items-start justify-start h-full">
-            <span className={`text-base font-semibold ${isBlocked ? 'text-gray-500' : 'text-[#16A34A] hover:underline'}`}>
+            <span className="text-base font-semibold text-[#16A34A] hover:underline">
               {l.id}
             </span>
             {l.location && (
@@ -254,26 +253,18 @@ function LeadTable({
 
               const isSelected = selectedRows.includes(key);
               const isVisitScheduled = l.scheduleStatus?.toLowerCase() === 'scheduled' || l.actionType === 'visit-scheduled';
-              const isBlocked = l.status?.toLowerCase() === 'granted' || l.status?.toLowerCase() === 'rejected';
 
-              const rowBgClass = isBlocked
-                ? "bg-white border-t border-[#F1F3F4] h-[64px]"
-                : isSelected
-                  ? "bg-[#F1F5F9] border-t border-[#F1F3F4] h-[64px] hover:bg-[#E2E8F0] transition-colors cursor-pointer"
-                  : isVisitScheduled
-                    ? "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
-                    : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
+              const rowBgClass = isSelected
+                ? "bg-[#F1F5F9] border-t border-[#F1F3F4] h-[64px] hover:bg-[#E2E8F0] transition-colors cursor-pointer"
+                : isVisitScheduled
+                  ? "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
+                  : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
 
               return (
                 <tr
                   key={key}
                   className={rowBgClass}
-                  onClick={() => {
-                    const status = l.status?.toLowerCase();
-                    if (status !== 'granted' && status !== 'rejected') {
-                      navigate(getLeadRoute(l));
-                    }
-                  }}
+                  onClick={() => navigate(getLeadRoute(l))}
                 >
                   <td className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-center h-full">

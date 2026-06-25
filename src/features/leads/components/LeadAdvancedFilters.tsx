@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { SlidersHorizontal, X, Check, Phone, Calendar, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, X, Check, ChevronDown } from 'lucide-react';
 import { KPI_CARDS_LAYOUT, STATUS_STYLE_MAP } from '../constants/leads.constants';
 import { selectAdvFilters, setAdvFilters, resetFilters } from '../store/leadSlice';
 import { selectLeadSourcesOptions, selectLoanTypesOptions } from '@/features/new-lead/store/newLeadSlice';

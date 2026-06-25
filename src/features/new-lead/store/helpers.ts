@@ -28,3 +28,19 @@ export const formatTiming = (rawDateStr: string, separator: string = ' - ', appe
   const formattedString = `${formattedDate}${separator}${formattedTime}`;
   return appendTimezone ? `${formattedString} ${APP_TIME_ZONE_LABEL}` : formattedString;
 };
+
+// Formats a date-only value in Ethiopia's timezone (EAT) using ISO 8601
+// (YYYY-MM-DD) so the recorded consent date does not depend on the viewer's
+// browser clock or locale.
+export const formatConsentDate = (rawDateStr?: string): string => {
+  const date = rawDateStr ? new Date(rawDateStr.replace(' ', 'T')) : new Date();
+
+  if (isNaN(date.getTime())) return rawDateStr ?? '';
+
+  return date.toLocaleDateString('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: APP_TIME_ZONE,
+  });
+};

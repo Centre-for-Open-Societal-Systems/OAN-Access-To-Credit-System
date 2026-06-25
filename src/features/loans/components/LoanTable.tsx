@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, memo } from 'react';
-import { createPortal } from 'react-dom';
-import { Filter, Check, Phone, Eye, ArrowUpDown } from 'lucide-react';
+import { Filter, Check, Phone, Eye } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   selectPagedRows,
@@ -59,9 +58,6 @@ const LoanTable = memo(({ onView }: LoanTableProps) => {
 
   const statusRef = useRef<HTMLButtonElement>(null);
   const loanTypeRef = useRef<HTMLButtonElement>(null);
-
-  const [statusPos, setStatusPos] = useState({ top: 0, left: 0 });
-  const [loanTypePos, setLoanTypePos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

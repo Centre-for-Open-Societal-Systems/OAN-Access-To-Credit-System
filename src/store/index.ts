@@ -1,4 +1,5 @@
 import { configureStore, Middleware, isRejectedWithValue, UnknownAction } from '@reduxjs/toolkit';
+import { ApiErrorCode } from '../lib/api/apiErrors';
 import { authReducer, logout } from '../features/auth/store/authSlice';
 import { leadReducer } from '../features/leads/store/leadSlice';
 import { loanFormReducer } from '../features/new-loan/store/newLoanFormSlice';
@@ -27,6 +28,8 @@ const storageMiddleware: Middleware = (store) => (next) => (action) => {
 // Centralized session expiration middleware.
 // Intercepts only UNAUTHORIZED (401) errors to trigger a global logout redirect,
 // avoiding accidental logouts during transient network issues or generic server errors.
+// Note: 403 (permission denied) surfaces as 'FORBIDDEN' and is intentionally NOT
+// handled here, so a permission denial never logs out an otherwise-valid session.
 const unauthenticatedMiddleware: Middleware = (api) => (next) => (action) => {
   const unknownAction = action as UnknownAction;
   
@@ -39,9 +42,9 @@ const unauthenticatedMiddleware: Middleware = (api) => (next) => (action) => {
     const payload = unknownAction.payload;
     const error = unknownAction.error;
     if (
-      payload === 'UNAUTHORIZED' ||
-      (payload as { message?: string })?.message === 'UNAUTHORIZED' ||
-      (error as { message?: string })?.message === 'UNAUTHORIZED'
+      payload === ApiErrorCode.Auth ||
+      (payload as { message?: string })?.message === ApiErrorCode.Auth ||
+      (error as { message?: string })?.message === ApiErrorCode.Auth
     ) {
       api.dispatch(logout());
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {

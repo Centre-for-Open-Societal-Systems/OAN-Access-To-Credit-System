@@ -1,7 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectFarmerState, updateFarmerDetails } from '../store/farmerSlice';
 import { selectConsentState } from '../store/consentSlice';
-import { TextField } from '@/components/ui/TextField';
 import { useParams } from 'next/navigation';
 import { User } from 'lucide-react';
 

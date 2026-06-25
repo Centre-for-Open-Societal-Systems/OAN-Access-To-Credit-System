@@ -108,7 +108,7 @@ const visitSlice = createSlice({
     setVisitSchedule(state, action: PayloadAction<string>) {
       state.visitSchedule = { date: action.payload };
     },
-    clearVisitState(state) {
+    clearVisitState() {
       return initialState;
     }
   },
@@ -124,7 +124,7 @@ const visitSlice = createSlice({
             return dateB.localeCompare(dateA);
           });
 
-          const activeSchedules = sortedSchedules.filter((s) => s.status !== 'Completed');
+          const activeSchedules = sortedSchedules.filter((s) => s.status !== 'Completed' && s.status !== 'Missed');
 
           if (activeSchedules.length > 0) {
             const latest = activeSchedules[0];
@@ -146,7 +146,7 @@ const visitSlice = createSlice({
       })
       .addCase(updateVisitScheduleStatusThunk.fulfilled, (state, action) => {
         const { status } = action.payload.payload;
-        if (status === 'Completed') {
+        if (status === 'Completed' || status === 'Missed') {
           state.visitSchedule = null;
         }
       })

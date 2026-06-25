@@ -12,6 +12,9 @@ export interface GetLeadsParams {
   min_amount?: number | undefined;
   max_amount?: number | undefined;
   loan_type?: string | undefined;
+  // User email to scope the queue, or the literal 'unassigned' for leads with no
+  // agent (backend get_leads `assigned_to` filter). Omit for all leads.
+  assigned_to?: string | undefined;
 }
 
 // output for Get Leads API 
@@ -61,6 +64,13 @@ export interface LeadSummaryResponse {
     'Not Interested'?: number;
     Processed?: number;
     [key: string]: number | undefined;
+  };
+  // get_lead_summary §4.2: all = total, assigned = leads with an agent (RBAC-scoped
+  // to the caller, so effectively "my"), unassigned = all − assigned.
+  tab_counts?: {
+    all: number;
+    assigned: number;
+    unassigned: number;
   };
 }
 

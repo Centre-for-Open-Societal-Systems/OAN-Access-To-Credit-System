@@ -36,7 +36,7 @@ describe('fetchApi', () => {
     expect(result).toEqual(mockData);
   });
 
-  it('should throw UNAUTHORIZED when response status is 401 or 403', async () => {
+  it('should throw UNAUTHORIZED when response status is 401', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 401,
@@ -44,6 +44,16 @@ describe('fetchApi', () => {
     } as Response);
 
     await expect(fetchApi('test-path')).rejects.toThrow('UNAUTHORIZED');
+  });
+
+  it('should throw FORBIDDEN (not UNAUTHORIZED) when response status is 403', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({}),
+    } as Response);
+
+    await expect(fetchApi('test-path')).rejects.toThrow('FORBIDDEN');
   });
 
   it('should throw ApiError with responseData on HTTP error (non-ok response)', async () => {

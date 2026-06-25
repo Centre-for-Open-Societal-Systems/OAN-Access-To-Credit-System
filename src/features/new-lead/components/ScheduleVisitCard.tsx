@@ -2,9 +2,9 @@ import { logger } from '@/lib/logger';
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectVisitState, selectIsLeadFinalized, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '..';
-import { Calendar, CalendarCheck, Clock, MapPin, Pencil, CheckCircle } from 'lucide-react';
+import { Calendar, CalendarCheck, Clock, MapPin, Pencil, CheckCircle, XCircle } from 'lucide-react';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { normalizeLeadId } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -30,17 +30,15 @@ export function ScheduleVisitCard({
   const { visitSchedule } = useAppSelector(selectVisitState);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
-  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isMarkingMissed, setIsMarkingMissed] = useState(false);
   const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
   const activeLeadId = normalizeLeadId(params?.id as string);
 
   const isPassed = isScheduled && visitDate ? new Date(visitDate) < new Date() : false;
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setVisitSchedule(e.target.value));
-  };
+
 
   const handleSave = async (scheduleDetails: any) => {
     const activeLeadId = params?.id as string;
@@ -82,6 +80,31 @@ export function ScheduleVisitCard({
       setErrorFeedback(typeof err === 'string' ? err : err.message || 'Failed to complete visit');
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleMissedVisit = async () => {
+    const scheduleId = visitSchedule?.id;
+    if (!scheduleId) {
+      setErrorFeedback("Schedule ID not found. Try refreshing the page.");
+      return;
+    }
+
+    setIsMarkingMissed(true);
+    try {
+      await dispatch(updateVisitScheduleStatusThunk({
+        leadId: activeLeadId,
+        scheduleId,
+        status: 'Missed'
+      })).unwrap();
+
+      // Refresh schedules list to clear the scheduled state live
+      await dispatch(fetchVisitSchedulesThunk(activeLeadId)).unwrap();
+    } catch (err: any) {
+      logger.error("Failed to mark visit as missed:", err);
+      setErrorFeedback(typeof err === 'string' ? err : err.message || 'Failed to mark visit as missed');
+    } finally {
+      setIsMarkingMissed(false);
     }
   };
 
@@ -136,25 +159,46 @@ export function ScheduleVisitCard({
         <div className="flex flex-col items-start pt-1 gap-2 w-full font-semibold">
           {isScheduled ? (
             isPassed ? (
-              <button
-                onClick={handleCompleteVisit}
-                disabled={isCompleting || isFinalized}
-                className={`flex flex-row justify-center items-center px-4 py-3 gap-2 w-full h-[44px] border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md transition-colors ${isFinalized
-                  ? 'bg-[#16A34A] border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
-                  : 'bg-[#16A34A] border-[#15803D] hover:bg-[#10883c] text-white disabled:opacity-50'
-                  }`}
-              >
-                {isCompleting ? (
-                  <span className="text-white font-inter font-medium text-sm leading-5">Completing...</span>
-                ) : (
-                  <>
-                    <CheckCircle size={14} className={isFinalized ? 'text-[#c1dfcc]' : 'text-white'} />
-                    <span className={`font-inter font-semibold text-md leading-5 text-center ${isFinalized ? 'text-[#c1dfcc]' : 'text-white'}`}>
-                      Complete Visit
-                    </span>
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col gap-2 w-full">
+                <button
+                  onClick={handleCompleteVisit}
+                  disabled={isCompleting || isMarkingMissed || isFinalized}
+                  className={`flex flex-row justify-center items-center px-4 py-2.5 gap-2 w-full h-[40px] border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md transition-colors ${isFinalized
+                    ? 'bg-[#16A34A] border-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed'
+                    : 'bg-[#16A34A] border-[#15803D] hover:bg-[#10883c] text-white disabled:opacity-50'
+                    }`}
+                >
+                  {isCompleting ? (
+                    <span className="text-white font-inter font-medium text-sm leading-5">Completing...</span>
+                  ) : (
+                    <>
+                      <CheckCircle size={14} className={isFinalized ? 'text-[#c1dfcc]' : 'text-white'} />
+                      <span className={`font-inter font-semibold text-sm leading-5 text-center ${isFinalized ? 'text-[#c1dfcc]' : 'text-white'}`}>
+                        Complete Visit
+                      </span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleMissedVisit}
+                  disabled={isCompleting || isMarkingMissed || isFinalized}
+                  className={`flex flex-row justify-center items-center px-4 py-2.5 gap-2 w-full h-[40px] border shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md transition-colors ${isFinalized
+                    ? 'bg-[#EF4444] border-[#D1D5DB] text-[#fca5a5] cursor-not-allowed'
+                    : 'bg-[#EF4444] border-[#DC2626] hover:bg-[#dc2626] text-white disabled:opacity-50'
+                    }`}
+                >
+                  {isMarkingMissed ? (
+                    <span className="text-white font-inter font-medium text-sm leading-5">Updating...</span>
+                  ) : (
+                    <>
+                      <XCircle size={14} className={isFinalized ? 'text-[#fca5a5]' : 'text-white'} />
+                      <span className={`font-inter font-semibold text-sm leading-5 text-center ${isFinalized ? 'text-[#fca5a5]' : 'text-white'}`}>
+                        Mark as Missed
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => setIsModalOpen(true)}

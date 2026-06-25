@@ -1,13 +1,10 @@
 
 import { fetchApi } from '@/lib/api/fetchApi';
+import { rawUserResponseSchema, validateResponse, type RawUserResponse } from '@/lib/api/api.schemas';
 
-export interface RawUserResponse {
-  email: string;
-  full_name: string;
-  roles: string[];
-  bank: string | null;
-  [key: string]: unknown;
-}
+// `RawUserResponse` is the validated `get_me` shape; its single source of truth
+// is the Zod schema in `@/lib/api/api.schemas`.
+export type { RawUserResponse };
 
 export interface LoginApiResponse {
   success?: boolean;
@@ -49,9 +46,9 @@ export async function getMe(): Promise<RawUserResponse> {
     method: 'GET',
   });
 
-  if (data?.data) {
-    return data.data;
+  if (!data?.data) {
+    throw new Error('Malformed get_me API response');
   }
 
-  throw new Error('Malformed get_me API response');
+  return validateResponse(rawUserResponseSchema, data.data, 'auth.get_me');
 }

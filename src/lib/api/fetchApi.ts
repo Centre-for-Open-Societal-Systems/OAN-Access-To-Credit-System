@@ -6,13 +6,18 @@ const BASE_URL =
     ? window.location.origin
     : process.env.NEXT_PUBLIC_SITE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
 
+import { ApiErrorCode, httpStatusToErrorCode } from './apiErrors';
+
 export class ApiError extends Error {
   responseData: unknown;
+  /** HTTP status that produced this error, so callers can classify it (e.g. 5xx → Connection). */
+  status?: number;
 
-  constructor(message: string, responseData?: unknown) {
+  constructor(message: string, responseData?: unknown, status?: number) {
     super(message);
     this.name = 'ApiError';
     this.responseData = responseData;
+    if (status !== undefined) this.status = status;
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
@@ -39,9 +44,14 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error('UNAUTHORIZED');
+    // 401 = unauthenticated (expired/invalid session) → triggers global logout.
+    // 403 = authenticated but not permitted → surfaced as an error, NOT a logout.
+    const authCode = httpStatusToErrorCode(response.status);
+    if (authCode === ApiErrorCode.Auth || authCode === ApiErrorCode.Forbidden) {
+      throw new Error(authCode);
     }
+    // 5xx still throws an ApiError carrying the parsed server message (callers may
+    // surface it in a toast); classifyError(error) recognizes it via .status.
     let errorMsg = `API Request failed with status ${response.status}`;
     if (responseData?._server_messages) {
       try {
@@ -60,7 +70,7 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     } else if (responseData?.message) {
       errorMsg = typeof responseData.message === 'string' ? responseData.message : JSON.stringify(responseData.message);
     }
-    throw new ApiError(errorMsg, responseData);
+    throw new ApiError(errorMsg, responseData, response.status);
   }
 
   // Handle Frappe's "200 OK" application-level errors
