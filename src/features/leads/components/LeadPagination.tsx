@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface LeadPaginationProps {
@@ -12,7 +12,7 @@ interface LeadPaginationProps {
   onPageSizeChange: (size: number) => void;
 }
 
-function LeadPagination({ visibleCount, filteredCount, safePage, totalPages, pageNums, onPageChange, pageSize, onPageSizeChange }: LeadPaginationProps) {
+function LeadPagination({ filteredCount, safePage, totalPages, onPageChange, pageSize, onPageSizeChange }: LeadPaginationProps) {
   const pages = Array.from({ length: Math.min(3, totalPages) }, (_, i) => i + 1);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,7 @@ function LeadPagination({ visibleCount, filteredCount, safePage, totalPages, pag
               <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
             </svg>
           </button>
-          
+
           {isDropdownOpen && (
             <div className="absolute left-0 bottom-[calc(100%+4px)] z-50 w-full min-w-[80px] rounded-md border border-gray-200 bg-white shadow-lg origin-bottom animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
               {[10, 20, 50, 100].map((size) => (

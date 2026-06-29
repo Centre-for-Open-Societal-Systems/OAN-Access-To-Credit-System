@@ -325,7 +325,7 @@ export const handlers = [
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_basic_profile', ({ request }) => {
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_basic_profile', () => {
     return HttpResponse.json({
       message: {
         status: "success",
@@ -448,7 +448,7 @@ export const handlers = [
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users', ({ request }) => {
+  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users', () => {
     return HttpResponse.json({
       message: {
         status: "success",
@@ -477,8 +477,7 @@ export const handlers = [
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.schedule_visit', async ({ request }) => {
-    const data = await request.json() as any;
+  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.schedule_visit', () => {
     return HttpResponse.json({
       message: {
         status: "success",

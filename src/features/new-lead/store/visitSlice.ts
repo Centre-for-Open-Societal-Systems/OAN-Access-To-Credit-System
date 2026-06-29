@@ -12,10 +12,12 @@ interface VisitSchedule {
 
 interface VisitState {
   visitSchedule: VisitSchedule | null;
+  visitHistory: VisitScheduleAPI[];
 }
 
 const initialState: VisitState = {
   visitSchedule: null,
+  visitHistory: [],
 };
 
 export const fetchVisitSchedulesThunk = createAsyncThunk<
@@ -108,7 +110,7 @@ const visitSlice = createSlice({
     setVisitSchedule(state, action: PayloadAction<string>) {
       state.visitSchedule = { date: action.payload };
     },
-    clearVisitState(state) {
+    clearVisitState() {
       return initialState;
     }
   },
@@ -123,8 +125,10 @@ const visitSlice = createSlice({
             const dateB = b.creation || '';
             return dateB.localeCompare(dateA);
           });
+          
+          state.visitHistory = sortedSchedules;
 
-          const activeSchedules = sortedSchedules.filter((s) => s.status !== 'Completed');
+          const activeSchedules = sortedSchedules.filter((s) => s.status !== 'Completed' && s.status !== 'Missed');
 
           if (activeSchedules.length > 0) {
             const latest = activeSchedules[0];
@@ -141,24 +145,45 @@ const visitSlice = createSlice({
             state.visitSchedule = null;
           }
         } else {
+          state.visitHistory = [];
           state.visitSchedule = null;
         }
       })
       .addCase(updateVisitScheduleStatusThunk.fulfilled, (state, action) => {
-        const { status } = action.payload.payload;
-        if (status === 'Completed') {
+        const { status, scheduleId } = action.payload.payload;
+        if (status === 'Completed' || status === 'Missed') {
           state.visitSchedule = null;
+        }
+        const historyItem = state.visitHistory.find(h => h.name === scheduleId);
+        if (historyItem) {
+          historyItem.status = status;
         }
       })
       .addCase(scheduleVisitThunk.fulfilled, (state, action) => {
         const p = action.payload.payload;
+        const response = action.payload.response;
         state.visitSchedule = {
           date: p.date,
           location: p.location || (p.region ? `${p.region}, ${p.zone}` : '')
         };
+        const newVisit: VisitScheduleAPI = {
+          name: response.schedule_id,
+          lead: p.leadId,
+          visit_date: p.date,
+          visit_time: p.time,
+          meeting_location: p.location,
+          region: p.region,
+          zone: p.zone,
+          woreda: p.woreda,
+          kebele: p.kebele,
+          status: 'Scheduled',
+          creation: new Date().toISOString()
+        };
+        state.visitHistory = [newVisit, ...state.visitHistory];
       })
       .addCase(initializeLead, (state) => {
         state.visitSchedule = null;
+        state.visitHistory = [];
       })
       .addCase(clearForm, () => {
         return initialState;

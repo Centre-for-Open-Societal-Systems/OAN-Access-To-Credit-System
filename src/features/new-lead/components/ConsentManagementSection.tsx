@@ -28,8 +28,9 @@ export function ConsentManagementSection() {
 
   const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
 
-  const handleSendOtp = async () => {
-    if (!farmerId) return;
+  // Dispatches an OTP request and refreshes the masked phone. Returns true on success.
+  const requestOtp = async (): Promise<boolean> => {
+    if (!farmerId) return false;
     try {
       const resultAction = await dispatch(searchFarmerConsent({
         farmerId,
@@ -41,10 +42,18 @@ export function ConsentManagementSection() {
         if (payload?.masked_phone) {
           setMaskedPhone(payload.masked_phone);
         }
-        setIsOtpModalOpen(true);
+        return true;
       }
+      return false;
     } catch (e) {
       logger.error('Failed to request OTP', e);
+      return false;
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (await requestOtp()) {
+      setIsOtpModalOpen(true);
     }
   };
 
@@ -131,6 +140,7 @@ export function ConsentManagementSection() {
         onClose={() => setIsOtpModalOpen(false)}
         farmerId={farmerId}
         maskedPhone={maskedPhone}
+        onResend={requestOtp}
       />
 
       <ConsentDetailsModal

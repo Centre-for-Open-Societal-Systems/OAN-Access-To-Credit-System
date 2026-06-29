@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Clock, ChevronDown, MapPin, Phone } from 'lucide-react';
+import { X } from 'lucide-react';
 import { SelectField } from '@/components/ui/SelectField';
 
 import { DatePickerField } from '@/components/ui/DatePickerField';
@@ -31,7 +31,7 @@ export const ScheduleNewVisitForm = ({
 
   const [date, setDate] = useState(visitSchedule?.date || '');
   const [time, setTime] = useState('');
-  const [location, setLocation] = useState('');
+  const [location] = useState('');
   const [agenda, setAgenda] = useState('');
   const [region, setRegion] = useState('');
   const [zone, setZone] = useState('');

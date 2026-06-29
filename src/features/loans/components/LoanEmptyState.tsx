@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, SearchX, Users } from 'lucide-react';
 
 interface LoanEmptyStateProps {

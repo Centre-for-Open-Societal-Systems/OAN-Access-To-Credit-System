@@ -8,7 +8,7 @@ import {
 
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchLoans, updateLoanStatus, selectPagedRowsData, selectIsLoansLoading, MappedLoanRow } from '@/features/loans/store/loanDashboardSlice';
+import { fetchLoans, updateLoanStatus, selectPagedRowsData, MappedLoanRow } from '@/features/loans/store/loanDashboardSlice';
 import {
   STATUS_CFG,
   LOAN_STATUSES,
@@ -254,7 +254,7 @@ function UpdateLoanStatus() {
   const dispatch = useAppDispatch();
   const rawLoans = useAppSelector(selectPagedRowsData);
   const loans = rawLoans?.pagedRows || [];
-  const isLoading = useAppSelector(selectIsLoansLoading);
+
 
   useEffect(() => {
     dispatch(fetchLoans());

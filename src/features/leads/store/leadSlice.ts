@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { leadService } from '@/features/leads/api/lead.service';
 import type { GetLeadsParams, Lead, LeadSummaryResponse, LeadStatus } from '@/features/leads/types/leads.types';
@@ -6,6 +6,7 @@ import {
   updateLeadStatusThunk,
   updateVisitScheduleStatusThunk,
   fetchLeadDetailsThunk,
+  scheduleVisitThunk,
 } from '@/features/new-lead';
 
 import { normalizeLeadId } from '@/lib/utils';
@@ -193,6 +194,17 @@ const leadSlice = createSlice({
             if (status === 'Completed' || status === 'Missed') {
               lead.visitDate = undefined;
             }
+          }
+        }
+      )
+      .addMatcher(
+        scheduleVisitThunk.fulfilled.match,
+        (state, action) => {
+          const { leadId, date } = action.payload.payload;
+          const lead = findLeadById(state.leads, leadId);
+          if (lead) {
+            lead.scheduleStatus = 'Scheduled';
+            lead.visitDate = date;
           }
         }
       )

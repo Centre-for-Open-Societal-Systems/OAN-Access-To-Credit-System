@@ -48,7 +48,7 @@ const assignmentSlice = createSlice({
   name: 'assignment',
   initialState,
   reducers: {
-    clearAssignmentState(state) {
+    clearAssignmentState() {
       return initialState;
     }
   },

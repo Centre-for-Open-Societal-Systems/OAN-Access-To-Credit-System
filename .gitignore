@@ -156,3 +156,4 @@ next-env.d.ts
 
 .env
 .gemini
+.claude

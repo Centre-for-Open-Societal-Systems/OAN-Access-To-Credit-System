@@ -1,11 +1,13 @@
 'use client';
 
+import { notFound } from 'next/navigation';
 import { LeadLayoutGrid } from '@/features/leads/components/LeadLayoutGrid';
 import { useLeadInitialization } from '@/features/leads/hooks/useLeadInitialization';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import {
   selectLeadStatus,
   selectFarmerState,
+  selectDetailsError,
   selectVisitState,
   selectConsentState,
   fetchLeadMetadataThunk,
@@ -29,11 +31,11 @@ import { InteractionTimelineCard } from '@/features/new-lead/components/Interact
 import LeadContextBanner from '@/features/new-lead/components/LeadContextBanner';
 import { LeadDashboardActions } from '@/features/new-lead/components/LeadDashboardActions';
 
-interface LeadDashboardProps {
+interface NewLeadDashboardProps {
     id?: string;
 }
 
-export function LeadDashboard({ id }: LeadDashboardProps) {
+export function NewLeadDashboard({ id }: NewLeadDashboardProps) {
     const dispatch = useAppDispatch();
     useLeadInitialization(id);
 
@@ -47,11 +49,20 @@ export function LeadDashboard({ id }: LeadDashboardProps) {
         }
     }, [dispatch, id]);
 
+    const detailsError = useAppSelector(selectDetailsError);
     const leads = useAppSelector(selectLeads);
     const leadStatus = useAppSelector(selectLeadStatus);
     const { farmerDetails } = useAppSelector(selectFarmerState);
     const { visitSchedule } = useAppSelector(selectVisitState);
     const { isOtpVerified, consentDate } = useAppSelector(selectConsentState);
+
+    // A 403 on a specific lead is rendered as not-found so the existence of a
+    // record the user can't access isn't confirmed (vs. an Access Denied screen,
+    // which we reserve for feature/role-level denials). Placed after all hooks
+    // to keep hook order stable across renders.
+    if (id && detailsError === 'FORBIDDEN') {
+        notFound();
+    }
 
     const currentLead = id ? leads.find(l => l.id.replace('#', '') === id.replace('#', '')) : null;
     const hasScheduledVisit = Boolean(currentLead?.visitDate) || Boolean(visitSchedule?.id);

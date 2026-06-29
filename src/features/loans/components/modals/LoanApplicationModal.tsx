@@ -1,9 +1,10 @@
 import { logger } from '@/lib/logger';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle2, User, Lock, Building2, Loader2 } from 'lucide-react';
+import { X, CheckCircle2, User, Lock, Building2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { LoanTableRow } from '../LoanTable';
 import { loanService, LoanApplicationFull } from '../../api/loan.service';
+import { maskSensitiveId } from '@/lib/utils';
 
 interface LoanApplicationModalProps {
   isOpen: boolean;
@@ -11,14 +12,30 @@ interface LoanApplicationModalProps {
   data: LoanTableRow | null;
 }
 
-const Field = ({ label, value }: { label: string; value: string | null | undefined }) => (
-  <div className="flex flex-col">
-    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</span>
-    <span className="text-[15px] font-bold text-gray-800">
-      {value && value.trim() !== '' ? value : '—'}
-    </span>
-  </div>
-);
+const Field = ({ label, value, sensitive = false }: { label: string; value: string | null | undefined; sensitive?: boolean }) => {
+  const [revealed, setRevealed] = useState(false);
+  const hasValue = !!value && value.trim() !== '';
+  const display = sensitive && hasValue && !revealed ? maskSensitiveId(value) : value;
+
+  return (
+    <div className="flex flex-col">
+      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</span>
+      <span className="text-[15px] font-bold text-gray-800 flex items-center gap-2">
+        <span>{hasValue ? display : '—'}</span>
+        {sensitive && hasValue && (
+          <button
+            type="button"
+            onClick={() => setRevealed((r) => !r)}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label={revealed ? `Hide ${label}` : `Reveal ${label}`}
+          >
+            {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        )}
+      </span>
+    </div>
+  );
+};
 
 export default function LoanApplicationModal({ isOpen, onClose, data }: LoanApplicationModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -103,7 +120,7 @@ export default function LoanApplicationModal({ isOpen, onClose, data }: LoanAppl
                 <Field label="MARITAL STATUS" value={fullProfile?.marital_status || null} />
                 <Field label="MOBILE PHONE" value={fullProfile?.phone_number || data.phone || null} />
                 <Field label="EDUCATION LEVEL" value={fullProfile?.education_level || null} />
-                <Field label="NATIONAL ID" value={fullProfile?.national_id || null} />
+                <Field label="NATIONAL ID" value={fullProfile?.national_id || null} sensitive />
                 <Field label="REGION" value={fullProfile?.location || data.region || null} />
                 <Field label="WOREDA" value={fullProfile?.woreda || null} />
                 <Field label="KEBELE" value={fullProfile?.kebele || null} />

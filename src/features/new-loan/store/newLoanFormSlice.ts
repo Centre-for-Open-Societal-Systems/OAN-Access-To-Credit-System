@@ -195,9 +195,13 @@ export const setStepAPI = createAsyncThunk<number, number, { state: RootState }>
   }
 );
 
+// The request_otp endpoint only creates the consent request; the consent form
+// document is uploaded separately and persisted at submit time. Only farmerId /
+// leadId are sent here, so the payload type is scoped to what the service accepts
+// to avoid silently dropping any extra fields.
 export const sendOtpAPI = createAsyncThunk(
   'loanForm/sendOtp',
-  async (payload: { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName?: string; leadId?: string }, { rejectWithValue }) => {
+  async (payload: { farmerId: string; leadId?: string }, { rejectWithValue }) => {
     try {
       const response = await newLeadService.sendOtpAndCreateConsent(payload);
       return response;

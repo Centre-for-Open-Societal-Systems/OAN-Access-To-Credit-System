@@ -1,4 +1,21 @@
 # API Optimization Analysis – OAN Access-to-Credit System
+_Generated: 2026-06-13 · Backend resolutions applied: 2026-06-24_
+
+> ## Resolution status (backend)
+> | # | Priority action | Status |
+> |---|-----------------|--------|
+> | 1 | `get_leads` / `get_all_loans` server-side pagination | ✅ Done (already present) |
+> | 2 | DB indexes on `status`, `assigned_to` for the leads query | ✅ Done (`search_index`; apply on `bench migrate`) |
+> | 3 | Eliminate `get_visit_schedules` bulk prefetch (**critical**) | ✅ Done — latest visit folded into `get_leads` |
+> | 4 | `get_lead_metadata` server-side caching | ✅ Done (Redis, 1h TTL) |
+> | 5 | Atomic loan creation (drop `update_lead_status` + refetch) | ✅ Done — lead → `Processed` in `create_loan_application` |
+> | 6 | `create_lead` returns full lead object | ✅ Already resolved (no change needed) |
+> | — | `get_lead_detail` aggregate endpoint (collapse Group A's 5 calls) | ⬜ Open (not yet built) |
+> | — | Memoize/debounce frontend calls (`get_full_profile`, `get_assignable_users`, …) | ⬜ Frontend-only (out of backend scope) |
+>
+> All backend changes verified by `oan_a2c` test suites (`test_a2c_lead` 34/34, `test_loan_api` 11/11).
+> **Frontend follow-ups** are called out inline per item.
+
 ---
 
 ## 1. API Call Grouping (Co-Called APIs)
@@ -14,6 +31,8 @@ When a user opens a lead detail view, the frontend fires all of the following in
 | Call logs | `get_lead_call_logs?lead_id=` |
 | Timeline / activities | `get_lead_timeline?lead_id=` |
 | Visit schedules | `get_visit_schedules?lead_id=` |
+
+**Implementation Note:** The orchestrator component for this view is `NewLeadDashboard` (renamed from `LeadDashboard` and relocated from `src/features/leads/components/` to `src/features/new-lead/components/new-lead/NewLeadDashboard.tsx`), since it is composed entirely of `new-lead` selection and display sub-sections.
 
 ---
 
@@ -37,12 +56,18 @@ Every time the leads dashboard mounts or filters change:
 
 ---
 
-### Group D: New Loan Application Creation (3 sequential calls)
-`createAndVerifyLoanApplicationThunk` chains these in sequence:
+### Group D: New Loan Application Creation — ✅ collapsed to 1 call
+`createAndVerifyLoanApplicationThunk` previously chained 3 sequential calls:
 
 1. `create_loan_application` → returns `application_id`
-2. `update_lead_status` → status → `"Processed"`
-3. `get_all_loans?lead_id=` → refetches to confirm state
+2. ~~`update_lead_status` → status → `"Processed"`~~ — ✅ **now atomic.** `create_loan_application`
+   advances the lead to `Processed` itself (only from `Active`/`Verified`; never overrides a
+   terminal state) and returns `lead_status` + `lead_status_updated` in its response.
+3. ~~`get_all_loans?lead_id=` → refetch~~ — ✅ **unnecessary.** `create_loan_application` already
+   returns the full `application` object.
+
+**Frontend follow-up:** drop calls 2 and 3 from the thunk; use the single
+`create_loan_application` response for both the new loan and the updated lead status.
 
 
 ---
@@ -65,16 +90,26 @@ Every time the leads dashboard mounts or filters change:
 |----------|---------|-----------|
 | `get_leads` | Every filter change, tab switch, status update | Very High |
 | `get_lead_summary` | Same as above (paired with get_leads) | Very High |
-| `get_visit_schedules` (all 2000) | Every leads list render | Very High — **critical problem** |
+| `get_visit_schedules` (all 2000) | Every leads list render | ✅ **Resolved** (latest visit now folded into `get_leads`) |
 | `get_lead_detail` sub-calls | Every lead card click | High |
 | `get_all_loans` | Every loan filter change | High |
 | `get_loan_summary` | Paired with get_all_loans | High |
 | `update_loan_step` | Every wizard step navigation (prev/next) | High |
 
 **Priority actions:**
-- Add server-side pagination cache / stale-while-revalidate for `get_leads` and `get_all_loans`.
-- Add a DB index on `lead_id`, `status`, `creation`, and `assigned_to` for the leads query.
-- Eliminate or paginate the `get_visit_schedules` bulk prefetch immediately.
+- ✅ **Done** — `get_leads` and `get_all_loans` are server-side paginated (`start`/`page_length`,
+  default 20, with `total_count`). _(Stale-while-revalidate caching is a separate, optional frontend layer.)_
+- ✅ **Done** — Added DB indexes (`search_index`) on `status` and `assigned_to` (apply on next
+  `bench migrate`). `creation` is indexed by Frappe natively; `lead_id` filters resolve via the
+  linked-doctype subquery so no extra index needed on Lead itself.
+- ✅ **Done** — `get_visit_schedules` bulk prefetch eliminated. `get_leads` now folds each lead's
+  **latest** visit (`visit_date` + `schedule_status`) into the list response via a single query
+  scoped to the current page's leads (mirrors the existing credit-info batch pattern). No field is
+  stored on the Lead and no write-back hook fires on visit changes — so there is no sync cost or
+  staleness, and it stays robust if `get_visit_schedules` changes later.
+  - **Frontend follow-up:** stop calling the bulk `get_visit_schedules` on list render; read
+    `schedule_status` / `visit_date` from the `get_leads` response instead. _(`get_visit_schedules`
+    remains the right endpoint for the lead **detail** page's full visit history — Group A.)_
 
 ---
 
@@ -120,19 +155,19 @@ Every time the leads dashboard mounts or filters change:
 searchFarmer(fayda_id)
   └─► sendOtpAndCreateConsent(lead_id, fayda_id, ...)  [needs lead_id from prior step or existing lead]
         └─► verifyOtp(lead_id, otp_code)
-              └─► get_basic_profile(lead_id)           [fetches dynamic consent metadata & farmer profile]
+              └─► fetchLeadDetails(lead_id)             [confirms consent state]
 ```
-**Optimization:** `verifyOtp` response should ideally return the updated lead state and consent metadata so the explicit `get_basic_profile` call after verification could be skipped. Currently, `get_basic_profile` supplies dynamic consent fields (e.g., `requested_data_fields`, `purpose`) securely mapped using strict nullish coalescing (`??`) to provide explicit defaults (`''` or `[]`) rather than allowing `undefined` to propagate into prop interfaces.
+**Optimization:** `verifyOtp` response should return the updated lead state so `fetchLeadDetails` is unnecessary.
 
 ---
 
-### Chain 2: Loan Application Creation
+### Chain 2: Loan Application Creation — ✅ Resolved
 ```
-createLoanApplication(lead_id)           [returns application_id]
-  └─► updateLeadStatus(lead_id, 'Processed')
-        └─► getLoans({ lead_id })         [refetch to sync UI]
+createLoanApplication(lead_id)   [returns application object + lead_status='Processed', atomically]
 ```
-**Optimization:** Backend atomic endpoint (see Group D above). Return the new loan in `create_loan_application` response.
+**Status:** Done. The backend endpoint is now atomic — it advances the lead to `Processed` and
+returns the full new loan object, so `updateLeadStatus` and the `getLoans` refetch are no longer
+needed (see Group D above). Verified by `test_8_create_loan_application_copies_profile_details`.
 
 ---
 
@@ -235,11 +270,13 @@ Currently the response likely includes full Frappe document metadata (`owner`, `
 ---
 
 
-#### `get_lead_metadata` response
-This is static configuration data (`sources`, `statuses`, `loan_types`). It should:
-- Be cached with `Cache-Control: max-age=3600` on the backend.
-- Be stored in Redux with a `fetchedAt` timestamp and only re-fetched if older than 1 hour.
-- Consider embedding it in the HTML at build time via `getStaticProps` / `generateStaticParams` if it rarely changes.
+#### `get_lead_metadata` response — ✅ backend cached
+This is static configuration data (`sources`, `statuses`, `loan_types`) derived from doctype Select
+options, which only change on `bench migrate`.
+- ✅ **Done** — now cached server-side in Redis (`frappe.cache()`, key `a2c_lead_metadata`,
+  `expires_in_sec=3600`). RBAC is still enforced on every request; only the meta computation is cached.
+- _Optional frontend layer:_ store in Redux with a `fetchedAt` timestamp / embed at build time if it
+  rarely changes — no longer required for backend load, but reduces round trips further.
 
 ---
 
@@ -247,8 +284,11 @@ This is static configuration data (`sources`, `statuses`, `loan_types`). It shou
 
 ### Under-fetching Issues
 
-#### `create_lead` response
-Returns `{ status, lead_id, message }` but the frontend immediately re-fetches the lead via `get_leads?search_query={lead_id}` to get the full lead object for the UI. The `create_lead` response should return the full lead object directly (same projection as `get_leads` results).
+#### `create_lead` response — ✅ already resolved
+~~Returns `{ status, lead_id, message }`~~ — `create_lead` **already returns the full lead object**
+(`data.lead` with name, phone, names, email, source, external_id, status) alongside `lead_id`. The
+post-creation `get_leads?search_query={lead_id}` refetch is therefore unnecessary.
+**Frontend follow-up:** consume `data.lead` from the `create_lead` response instead of refetching.
 
 
 

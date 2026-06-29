@@ -36,18 +36,24 @@ import {
   resetFilters,
   selectTotalCount,
   selectAdvFilters,
+  selectLeadsError,
 } from '@/features/leads/store/leadSlice';
 import { fetchLeadMetadataThunk } from '@/features/new-lead/store/newLeadSlice';
-import { selectOfficerName } from '@/features/auth/store/authSlice';
+import { selectOfficerName, selectUserEmail } from '@/features/auth/store/authSlice';
+import { AccessDenied } from '@/components/AccessDenied';
+import { ConnectionError } from '@/components/ConnectionError';
+import { ApiErrorCode, classifyError } from '@/lib/api/apiErrors';
 
 export function LeadsDashboardClient() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const officerName = useAppSelector(selectOfficerName);
+  const userEmail = useAppSelector(selectUserEmail);
   const allLeads = useAppSelector(selectLeads) || [];
   const isLoading = useAppSelector(selectIsLeadsLoading);
   const leadSummary = useAppSelector(selectLeadSummary);
   const totalCount = useAppSelector(selectTotalCount);
+  const leadsError = useAppSelector(selectLeadsError);
 
   const search = useAppSelector(selectSearch);
   const activeTab = useAppSelector(selectActiveTab);
@@ -61,20 +67,20 @@ export function LeadsDashboardClient() {
   const [showAdvFilters, setShowAdvFilters] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
-  const [tabCounts, setTabCounts] = useState({ all: 0, my: 0, unassigned: 0 });
   const [sliderIndex, setSliderIndex] = useState(0);
 
-  useEffect(() => {
-    // Calculate counts dynamically from allLeads since the backend doesn't filter by assigned_to
-    const myCount = allLeads.filter(l => l.assignedTo === 'me' || l.owner === 'me').length;
-    const unassignedCount = allLeads.filter(l => !l.assignedTo || l.owner === 'unassigned').length;
-
-    setTabCounts({
-      all: totalCount,
-      my: myCount,
-      unassigned: unassignedCount
-    });
-  }, [allLeads, totalCount]);
+  // Tab badge counts come from get_lead_summary.tab_counts (RBAC-scoped). The
+  // backend's `assigned` count maps to the "My" tab. Until the summary loads,
+  // fall back to the active tab's backend total (others blank → '—').
+  const tabCounts = useMemo(() => {
+    const tc = leadSummary?.tab_counts;
+    if (tc) return { all: tc.all, my: tc.assigned, unassigned: tc.unassigned };
+    return {
+      all: activeTab === 'all' ? totalCount : 0,
+      my: activeTab === 'my' ? totalCount : 0,
+      unassigned: activeTab === 'unassigned' ? totalCount : 0,
+    };
+  }, [leadSummary, activeTab, totalCount]);
 
   // Initial Summary Fetch
   useEffect(() => {
@@ -106,6 +112,13 @@ export function LeadsDashboardClient() {
     const loan_type = advFilters.loanType?.length > 0 ? advFilters.loanType.join(',') : undefined;
     const lead_source = advFilters.leadSources?.length > 0 ? advFilters.leadSources.join(',') : undefined;
 
+    // Scope the queue server-side: "My" → my email, "Unassigned" → the literal
+    // 'unassigned', "All" → omit. (Falls back to no scope if email isn't loaded.)
+    const assigned_to =
+      activeTab === 'my' ? (userEmail ?? undefined)
+      : activeTab === 'unassigned' ? 'unassigned'
+      : undefined;
+
     return dispatch(fetchLeads({
       start: (page - 1) * pageSize,
       page_length: pageSize,
@@ -116,9 +129,10 @@ export function LeadsDashboardClient() {
       min_amount,
       max_amount,
       loan_type,
-      lead_source
+      lead_source,
+      assigned_to
     }));
-  }, [dispatch, colStatusFilter, colCallTimeFilter, search, advFilters, dateFilter]);
+  }, [dispatch, colStatusFilter, colCallTimeFilter, search, advFilters, dateFilter, activeTab, userEmail, pageSize]);
 
   // fetched only once during mount or when dependencies change
   useEffect(() => {
@@ -148,27 +162,13 @@ export function LeadsDashboardClient() {
     });
   }, [leadSummary]);
 
-  const currentTabTotalCount = activeTab === 'my' ? tabCounts.my : activeTab === 'unassigned' ? tabCounts.unassigned : tabCounts.all;
-  const totalPages = Math.max(1, Math.ceil(currentTabTotalCount / pageSize));
+  // `totalCount` reflects the active tab now that filtering is server-side.
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
-  // Filter leads locally for the active tab since backend does not apply assigned_to parameter
-  const visible = useMemo(() => {
-    const filtered = allLeads.filter((lead: Lead) => {
-      if (activeTab === 'my') return lead.assignedTo === 'me' || lead.owner === 'me';
-      if (activeTab === 'unassigned') return !lead.assignedTo || lead.owner === 'unassigned';
-      return true;
-    });
-
-    // If backend returns all leads ignoring pagination, paginate locally
-    if (allLeads.length > pageSize) {
-      const start = (currentPage - 1) * pageSize;
-      return filtered.slice(start, start + pageSize);
-    }
-
-    // Otherwise just ensure we never exceed pageSize
-    return filtered.slice(0, pageSize);
-  }, [allLeads, activeTab, currentPage, pageSize]);
+  // The backend already filters by tab (assigned_to) and paginates, so `allLeads`
+  // is exactly the current page for the active tab — render it as-is.
+  const visible = allLeads;
 
   const pageNums = useMemo(() => {
     if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -196,36 +196,75 @@ export function LeadsDashboardClient() {
   };
 
   const handleExportCSV = () => {
-    if (!allLeads || allLeads.length === 0) return;
+    // Export the user's selected rows; if none are selected, fall back to the
+    // current filtered view. Selection is client-side and only spans loaded
+    // rows, so this is intentionally a frontend export of what the user picked —
+    // not a full-dataset export (that would need a backend endpoint).
+    const source = selectedRows.length > 0
+      ? allLeads.filter((l: Lead) => selectedRows.includes(l.id + l.phone))
+      : visible;
+
+    if (source.length === 0) return;
+
     const headers = ['ID', 'Farmer Name', 'Phone', 'Status', 'Location', 'Loan Type', 'Loan Amount', 'Source', 'Assigned To', 'Visit Date'];
-    const rows = allLeads.map(lead => [
-      lead.id,
-      lead.name,
-      lead.phone,
-      lead.status,
-      lead.location,
-      lead.loanType,
-      lead.loanAmount,
-      lead.source,
-      lead.assignedTo || '',
-      lead.visitDate || ''
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    const escape = (val: unknown) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+      headers.join(','),
+      ...source.map((lead: Lead) => [
+        lead.id,
+        lead.name,
+        lead.phone,
+        lead.status,
+        lead.location,
+        lead.loanType,
+        lead.loanAmount,
+        lead.source,
+        lead.assignedTo || '',
+        lead.visitDate || ''
+      ].map(escape).join(','))
+    ].join('\n');
+
+    // Prepend a BOM so Excel opens UTF-8 (e.g. Amharic names) correctly, and use
+    // a Blob rather than a data: URI to avoid URL-length limits on large exports.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `leads_export_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
+
+  // Feature-level permission denial: the user is authenticated but not allowed
+  // to view the leads pipeline. Show Access Denied rather than an empty table.
+  const errorCode = classifyError(leadsError);
+
+  if (errorCode === ApiErrorCode.Forbidden) {
+    return <AccessDenied message="You don't have permission to view the leads dashboard." />;
+  }
+
+  // Connectivity / server failure (502, 5xx, network down, timeout). This is not
+  // the user's fault and is not "no leads", so we show a retryable error rather
+  // than the empty state. Only when there is no data already on screen — if a
+  // background refresh fails we keep the stale table instead of blanking it.
+  // (UNAUTHORIZED is handled globally by the store middleware, which logs out.)
+  if (leadsError && allLeads.length === 0 && !isLoading) {
+    return <ConnectionError onRetry={() => loadLeads(currentPage)} />;
+  }
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="space-y-4">
       <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Welcome back, {officerName || 'Agent'}</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Welcome back, {isMounted && officerName ? officerName : 'Agent'}</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 font-semibold w-full md:w-auto mt-2 md:mt-0">
@@ -235,7 +274,9 @@ export function LeadsDashboardClient() {
             className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-3 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
           >
             <Download size={18} />
-            Export CSV
+            {/* Only a partial selection differs from a page export: select-all (allChecked)
+                covers the whole current page, which is identical to exporting with no selection. */}
+            {selectedRows.length > 0 && !allChecked ? `Export Selected (${selectedRows.length})` : 'Export CSV'}
           </button>
           <button
             type="button"
@@ -306,7 +347,7 @@ export function LeadsDashboardClient() {
         {(visible.length > 0 || isLoading) && (
           <LeadPagination
             visibleCount={visible.length}
-            filteredCount={currentTabTotalCount}
+            filteredCount={totalCount}
             safePage={safePage}
             totalPages={totalPages}
             pageNums={pageNums}

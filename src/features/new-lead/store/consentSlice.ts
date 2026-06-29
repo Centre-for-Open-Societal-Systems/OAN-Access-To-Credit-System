@@ -1,7 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { newLeadService, SendOtpAndCreateConsentResponse, SubmitConsentResponse } from '../api/newLead.service';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { newLeadService } from '../api/newLead.service';
+import type { SendOtpAndCreateConsentResponse, SubmitConsentResponse, VerifyOtpResponse } from '@/lib/api/api.schemas';
 import { fetchLeadDetailsThunk } from './farmerSlice';
-import { initializeLead, clearForm, InitializeLeadPayload } from './actions';
+import { formatConsentDate } from './helpers';
+import { initializeLead, clearForm } from './actions';
 import type { RootState } from '@/store';
 
 interface ConsentState {
@@ -43,7 +45,7 @@ export const searchFarmerConsent = createAsyncThunk<
 );
 
 export const verifyOtpThunk = createAsyncThunk<
-  any,
+  VerifyOtpResponse,
   { otp_code: string; leadId: string },
   { state: RootState }
 >(
@@ -112,7 +114,7 @@ const consentSlice = createSlice({
   name: 'consent',
   initialState,
   reducers: {
-    clearConsentState(state) {
+    clearConsentState() {
       return initialState;
     }
   },
@@ -147,7 +149,7 @@ const consentSlice = createSlice({
       })
       .addCase(submitConsentThunk.fulfilled, (state) => {
         state.isSubmittingConsent = false;
-        state.consentDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        state.consentDate = formatConsentDate();
       })
       .addCase(submitConsentThunk.rejected, (state, action) => {
         state.isSubmittingConsent = false;

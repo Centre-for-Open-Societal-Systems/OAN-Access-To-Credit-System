@@ -36,6 +36,7 @@ export {
   updateFarmerDetails,
   clearFarmerState,
   selectFarmerState,
+  selectDetailsError,
   selectIsPollingLong,
 } from './store/farmerSlice';
 export type { FarmerDetails } from './store/farmerSlice';

@@ -6,7 +6,6 @@ import {
   selectTotalPages,
   setActivityPage,
   selectTotalCount,
-  selectPagedRows,
   selectPageSize,
   setPageSize
 } from '../store/loanDashboardSlice';
@@ -16,7 +15,6 @@ const LoanPagination = React.memo(() => {
   const currentPage = useAppSelector(selectActivityPage);
   const totalPages = useAppSelector(selectTotalPages);
   const totalCount = useAppSelector(selectTotalCount);
-  const pagedRows = useAppSelector(selectPagedRows);
   const pageSize = useAppSelector(selectPageSize);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

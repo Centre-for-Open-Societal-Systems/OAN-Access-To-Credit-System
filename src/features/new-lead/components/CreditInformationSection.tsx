@@ -4,6 +4,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectCreditInfo, selectIsLeadFinalized, addCreditInfoThunk, fetchCreditInfoThunk } from '../store/newLeadSlice';
 import { CreditInformationModal } from './modals/CreditInformationModal';
 import { CreditCard } from 'lucide-react';
+import { type CreditInfoFormData } from '../schemas/credit.schema';
 
 export function CreditInformationSection() {
   const dispatch = useAppDispatch();
@@ -19,14 +20,15 @@ export function CreditInformationSection() {
     }
   }, [dispatch, leadId]);
 
-  const handleSubmit = async (data: { loanType: string; loanAmount: string; purposeMessage: string }) => {
+  const handleSubmit = async (data: CreditInfoFormData) => {
     if (!leadId) return;
+
     await dispatch(addCreditInfoThunk({
       leadId,
       loan_type: data.loanType,
-      loan_amount: parseFloat(data.loanAmount.replace(/,/g, '')),
+      loan_amount: data.loanAmount.toString(), // The API seems to expect a string here based on previous payload or DTO, we should check `addCreditInfoThunk` type
       purpose_message: data.purposeMessage
-    }));
+    })).unwrap();
     setIsModalOpen(false);
   };
 

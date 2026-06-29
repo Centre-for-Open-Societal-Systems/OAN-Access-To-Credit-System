@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store';
 import {
   newLeadService,
@@ -7,15 +7,16 @@ import {
   GetCallDetailsResponse,
   GetActivitiesResponse,
   AddActivityNoteResponse,
-  CreditInfoAPI,
-  AddCreditInfoResponse,
   CreateLeadResponse,
   UpdateLeadStatusResponse
 } from '../api/newLead.service';
+import type { CreditInfoAPI, AddCreditInfoResponse } from '@/lib/api/api.schemas';
 import { formatTiming } from './helpers';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
-import { initializeLead, clearForm, InitializeLeadPayload } from './actions';
+import { initializeLead, clearForm } from './actions';
+import { ApiError } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
+
 
 
 
@@ -41,6 +42,14 @@ export interface Activity {
   timestamp: string;
 }
 
+export interface NewLeadDraft {
+  firstName: string;
+  lastName: string;
+  location: string;
+  phoneNumber: string;
+  email: string;
+}
+
 interface NewLeadState {
   activeLeadId: string | null;
   leadSource: string;
@@ -52,7 +61,16 @@ interface NewLeadState {
   callDetails: CallDetail[];
   activities: Activity[];
   isSubmitting: boolean;
+  draft: NewLeadDraft;
 }
+
+const getInitialDraft = (): NewLeadDraft => ({
+  firstName: '',
+  lastName: '',
+  location: '',
+  phoneNumber: '',
+  email: '',
+});
 
 const getInitialState = (): NewLeadState => ({
   activeLeadId: null,
@@ -65,6 +83,7 @@ const getInitialState = (): NewLeadState => ({
   callDetails: [],
   activities: [],
   isSubmitting: false,
+  draft: getInitialDraft(),
 });
 
 const initialState: NewLeadState = getInitialState();
@@ -191,6 +210,9 @@ export const addCreditInfoThunk = createAsyncThunk<
       });
       return { response, payload };
     } catch (error) {
+      if (error instanceof ApiError) {
+        return rejectWithValue(error.responseData);
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to add credit info');
     }
   }
@@ -203,13 +225,13 @@ export const submitNewLeadThunk = createAsyncThunk<
   'newLead/submitLead',
   async (_, { getState, rejectWithValue }) => {
     try {
-      const state = (getState() as RootState).farmer;
+      const { draft } = (getState() as RootState).newLead;
 
       const payload = {
-        phone_number: state.farmerDetails.phoneNumber,
-        first_name: state.farmerDetails.firstName,
-        last_name: state.farmerDetails.lastName,
-        email: state.farmerDetails.email,
+        phone_number: draft.phoneNumber,
+        first_name: draft.firstName,
+        last_name: draft.lastName,
+        email: draft.email,
         lead_source: 'Agent Entry',
         external_id: '',
       };
@@ -256,6 +278,12 @@ const newLeadSlice = createSlice({
         ...action.payload
       };
       state.creditInfo.push(newCreditInfo);
+    },
+    updateNewLeadDraft(state, action: PayloadAction<Partial<NewLeadDraft>>) {
+      state.draft = { ...state.draft, ...action.payload };
+    },
+    resetNewLeadDraft(state) {
+      state.draft = getInitialDraft();
     }
   },
   extraReducers: (builder) => {
@@ -322,9 +350,9 @@ const newLeadSlice = createSlice({
         }
       })
       .addCase(addCreditInfoThunk.fulfilled, (state, action) => {
-        const { payload } = action.payload;
+        const { payload, response } = action.payload;
         state.creditInfo.push({
-          id: `cr-${crypto.randomUUID()}`,
+          id: response.credit_info_id, // Fallback just in case
           type: payload.loan_type,
           amount: String(payload.loan_amount),
           purpose: payload.purpose_message || ''
@@ -347,6 +375,7 @@ const newLeadSlice = createSlice({
       })
       .addCase(submitNewLeadThunk.fulfilled, (state) => {
         state.isSubmitting = false;
+        state.draft = getInitialDraft();
       })
       .addCase(submitNewLeadThunk.rejected, (state) => {
         state.isSubmitting = false;
@@ -360,7 +389,9 @@ const newLeadSlice = createSlice({
 export const {
   setLeadSource,
   setLeadStatus,
-  addCreditInfo
+  addCreditInfo,
+  updateNewLeadDraft,
+  resetNewLeadDraft
 } = newLeadSlice.actions;
 
 export { initializeLead, clearForm };
@@ -377,6 +408,7 @@ export const selectCreditInfo = (state: RootState) => state.newLead.creditInfo;
 export const selectCallDetails = (state: RootState) => state.newLead.callDetails;
 export const selectActivities = (state: RootState) => state.newLead.activities;
 export const selectIsSubmitting = (state: RootState) => state.newLead.isSubmitting;
+export const selectNewLeadDraft = (state: RootState) => state.newLead.draft;
 
 export const selectIsLeadFinalized = (state: RootState) => {
   const status = state.newLead.leadStatus?.toLowerCase() || '';

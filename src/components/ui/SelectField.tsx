@@ -11,7 +11,7 @@ interface SelectFieldProps {
   value: string;
   onChange: (val: string) => void;
   required?: boolean;
-  error?: string;
+  error?: string | undefined;
   disabled?: boolean;
 }
 

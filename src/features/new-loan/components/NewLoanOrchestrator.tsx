@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, ArrowLeft, Check } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/hooks';
@@ -136,7 +136,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
       <NewLoanProgressBar currentStep={currentStep} />
 
       <div className="relative min-h-[400px]">
-        {currentStep === 1 && <Step1ConsentDocs />}
+        {currentStep === 1 && <Step1ConsentDocs leadId={leadId} />}
         {currentStep === 2 && <Step2FarmerDetails />}
         {currentStep === 3 && <Step3ReviewSubmit />}
         {currentStep === 4 && <Step4Success />}

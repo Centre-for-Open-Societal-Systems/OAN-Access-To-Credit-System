@@ -2,7 +2,17 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchLoans, fetchLoanSummary, selectQueryParams } from '@/features/loans/store/loanDashboardSlice';
+import {
+  fetchLoans,
+  fetchLoanSummary,
+  selectQueryParams,
+  selectLoansError,
+  selectIsLoansLoading,
+  selectTotalCount,
+} from '@/features/loans/store/loanDashboardSlice';
+import { AccessDenied } from '@/components/AccessDenied';
+import { ConnectionError } from '@/components/ConnectionError';
+import { ApiErrorCode, classifyError } from '@/lib/api/apiErrors';
 
 import LoanKpiCard, { MetricConfig } from '@/features/loans/components/LoanKpiCard';
 import LoanDashboardHeader from '@/features/loans/components/LoanDashboardHeader';
@@ -26,12 +36,19 @@ const METRIC_CONFIG: MetricConfig[] = [
 export function LoanApplicationDashboardClient() {
   const dispatch = useAppDispatch();
   const queryParams = useAppSelector(selectQueryParams);
+  const loansError = useAppSelector(selectLoansError);
+  const isLoading = useAppSelector(selectIsLoansLoading);
+  const totalCount = useAppSelector(selectTotalCount);
 
   const [selectedRow, setSelectedRow] = useState<LoanTableRow | null>(null);
 
-  useEffect(() => {
+  const loadLoans = useCallback(() => {
     dispatch(fetchLoans(queryParams));
   }, [dispatch, queryParams]);
+
+  useEffect(() => {
+    loadLoans();
+  }, [loadLoans]);
 
   useEffect(() => {
     dispatch(fetchLoanSummary());
@@ -40,6 +57,19 @@ export function LoanApplicationDashboardClient() {
   const handleView = useCallback((row: LoanTableRow) => {
     setSelectedRow(row);
   }, []);
+
+  // Same error taxonomy as the leads dashboard: 403 → Access Denied, 5xx /
+  // network unreachable (e.g. proxy 502) → retryable connection error. 401 is
+  // handled globally by the store middleware (logs out). The connection error
+  // only replaces the dashboard when there is nothing already on screen — a
+  // failed background refresh keeps the stale table rather than blanking it.
+  if (classifyError(loansError) === ApiErrorCode.Forbidden) {
+    return <AccessDenied message="You don't have permission to view the loan applications dashboard." />;
+  }
+
+  if (loansError && totalCount === 0 && !isLoading) {
+    return <ConnectionError onRetry={loadLoans} />;
+  }
 
   return (
     <div className="">

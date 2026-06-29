@@ -23,7 +23,9 @@ export function proxy(request: NextRequest) {
   // 1. Define routes that require authentication
   const isDashboardRoute =
     pathname.startsWith('/leads') ||
-    pathname.startsWith('/loans');
+    pathname.startsWith('/loans') ||
+    pathname.startsWith('/loan-application-dashboard') ||
+    pathname.startsWith('/update-loan-application-status');
   if (isDashboardRoute && !token) {
     const loginUrl = new URL('/login', request.url);
     return withCsp(NextResponse.redirect(loginUrl));

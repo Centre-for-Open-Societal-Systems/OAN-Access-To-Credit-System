@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { ListChecks, Users, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks'
+import { ListChecks, Users, LayoutDashboard } from 'lucide-react';
 import Sidebar, { NavSection } from '@/components/Sidebar';
 import TopHeader from '@/components/TopHeader';
-import { selectIsAuthenticated, logout as logoutAction } from '@/features/auth/store/authSlice';
+import { logout as logoutAction } from '@/features/auth/store/authSlice';
 
 import '@/styles/main-layout.scss';
 
@@ -52,8 +52,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const activeItem = navigationSections
     .flatMap((section) => section.items)

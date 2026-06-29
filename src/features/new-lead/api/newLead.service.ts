@@ -1,6 +1,20 @@
+import { z } from 'zod';
 import { fetchApi } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
 import type { ApiResponse } from '@/types/api';
+import {
+  sendOtpAndCreateConsentResponseSchema,
+  verifyOtpResponseSchema,
+  submitConsentResponseSchema,
+  creditInfoApiSchema,
+  addCreditInfoResponseSchema,
+  validateResponse,
+  type SendOtpAndCreateConsentResponse,
+  type VerifyOtpResponse,
+  type SubmitConsentResponse,
+  type CreditInfoAPI,
+  type AddCreditInfoResponse
+} from '@/lib/api/api.schemas';
 
 export interface FarmerDetails {
   firstName: string;
@@ -47,12 +61,6 @@ export interface CreateLeadResponse {
   message: string;
 }
 
-export interface SendOtpAndCreateConsentResponse {
-  consent_request: string;
-  transaction_id: string;
-  masked_phone: string;
-}
-
 export interface AssignableUserAPI {
   email: string;
   full_name: string;
@@ -81,26 +89,6 @@ export interface SpecificLeadAPI {
   status: string;
   lead_source: string;
   assigned_to?: string | undefined;
-}
-
-export interface VerifyOtpResponse {
-  consent_request: string;
-  openg2p_consent_id: string;
-  consent_receipt: string;
-  status: string;
-}
-
-export interface CreditInfoAPI {
-  name: string;
-  loan_type: string;
-  loan_amount: number;
-  purpose_message?: string;
-  created_by?: string;
-  creation?: string;
-}
-
-export interface AddCreditInfoResponse {
-  credit_info_id: string;
 }
 
 export interface CallLogAPI {
@@ -205,27 +193,6 @@ export interface BasicProfileBackendData {
   };
 }
 
-export interface SubmitConsentResponse {
-  lead_id: string;
-  consent_request: string;
-  status: string;
-  openg2p_consent_id: string;
-  consent_receipt: string;
-  farmer_preview: {
-    given_name: string;
-    family_name: string;
-    email: string;
-    phone_no: string[];
-  };
-}
-
-export interface VerifyOtpResponse {
-  lead_id: string;
-  consent_request: string;
-  transaction_id: string;
-  status: string;
-}
-
 const cleanId = (id: string): string => normalizeLeadId(id);
 
 export const newLeadService = {
@@ -267,7 +234,7 @@ export const newLeadService = {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as ApiResponse<SendOtpAndCreateConsentResponse>;
-    return response.data;
+    return validateResponse(sendOtpAndCreateConsentResponseSchema, response.data, 'consent.request_otp');
   },
 
   async verifyOtp(data: { leadId?: string; consent_request: string; otp_code: string }): Promise<VerifyOtpResponse> {
@@ -283,7 +250,7 @@ export const newLeadService = {
         otp_code: data.otp_code
       }),
     }) as ApiResponse<VerifyOtpResponse>;
-    return response.data;
+    return validateResponse(verifyOtpResponseSchema, response.data, 'consent.verify_otp');
   },
 
   async submitConsent(data: {
@@ -304,7 +271,7 @@ export const newLeadService = {
         lead_id: cleanLeadId,
       }),
     }) as ApiResponse<SubmitConsentResponse>;
-    return response.data;
+    return validateResponse(submitConsentResponseSchema, response.data, 'consent.submit_consent');
   },
 
   async get_consent_reasons(): Promise<ConsentReason[]> {
@@ -385,7 +352,7 @@ export const newLeadService = {
   async getCreditInfo(leadId: string): Promise<CreditInfoAPI[]> {
     const cleanLeadId = cleanId(leadId);
     const response = await fetchApi(`oan_a2c.api.v1.leads.get_lead_credit_infos?lead_id=${cleanLeadId}`) as ApiResponse<CreditInfoAPI[]>;
-    return response.data;
+    return validateResponse(z.array(creditInfoApiSchema), response.data, 'leads.get_lead_credit_infos');
   },
 
   // Add credit information for a lead
@@ -394,7 +361,7 @@ export const newLeadService = {
       method: 'POST',
       body: JSON.stringify(data),
     }) as ApiResponse<AddCreditInfoResponse>;
-    return response.data;
+    return validateResponse(addCreditInfoResponseSchema, response.data, 'leads.add_lead_credit_info');
   },
 
   // Fetch call details for a lead

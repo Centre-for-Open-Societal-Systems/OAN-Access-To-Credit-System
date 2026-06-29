@@ -1,7 +1,5 @@
 "use client";
 
-import { MapPin, Phone } from 'lucide-react';
-
 interface LeadContextBannerProps {
   leadId: string;
   farmerName?: string | undefined;
@@ -16,10 +14,6 @@ interface LeadContextBannerProps {
 export default function LeadContextBanner({
   leadId,
   farmerName = 'Unknown Farmer',
-  location = 'Unknown Location',
-  phoneNumber = 'No Phone',
-  status = 'Unknown Status',
-  createdAt = '',
   actionType = 'view',
   actions,
 }: LeadContextBannerProps) {

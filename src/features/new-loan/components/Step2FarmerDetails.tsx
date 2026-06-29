@@ -4,55 +4,27 @@ import { logger } from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { nextStepAPI, prevStepAPI, setFormData as setFormDataAction } from '@/features/new-loan/store/newLoanFormSlice';
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { TextField } from '@/components/ui/TextField';
+import { maskSensitiveId } from '@/lib/utils';
 import { SelectField } from '@/components/ui/SelectField';
 import { GENDER_OPTIONS } from '@/features/loans/constants/loans.constants';
 import { loanService, type LoanApplicationFull } from '@/features/loans/api/loan.service';
 import type { AppDispatch, RootState } from '@/store';
 
-export interface FarmerDetails {
-  [key: string]: string;
-  firstName: string;
-  lastName: string;
-  mobilePhone: string;
-  dateOfBirth: string;
-  gender: string;
-  woreda: string;
-  kebele: string;
-  idType: string;
-  idNumber: string;
-  language: string;
-  landSize: string;
-  farmId: string;
-  farmPolygon: string;
-  landAcreage: string;
-  farmLandNumber: string;
-  maritalStatus: string;
-  sizeOfFamily: string;
-  numberOfChildren: string;
-  noOfFemales: string;
-  noOfMales: string;
-  familyMemberOwnsLand: string;
-  sourceOfIncome: string;
-  educationLevel: string;
-  totalFarmlandLandowner: string;
-  totalFarmlandCropSharing: string;
-  totalFarmlandRented: string;
-  certificationId: string;
-  certificationPhoto: string;
-  farmlandSizeHectares: string;
-  landOwnershipStatus: string;
-  soilFertility: string;
-  moistureLevels: string;
-}
+// Every form field is a read-only string input. FORM_SECTIONS (below) is the
+// single source of truth for which fields exist; there's no separate interface
+// to keep in sync. Keys are the `key` values declared in the field config.
+export type FarmerDetails = Record<string, string>;
 
 interface FieldConfig {
-  key: keyof FarmerDetails;
+  key: string;
   label: string;
   apiKey: string;
   type?: 'text' | 'select';
   options?: typeof GENDER_OPTIONS;
+  // Masked by default in the UI (e.g. National/Fayda ID); revealed on demand.
+  sensitive?: boolean;
 }
 
 interface SectionConfig {
@@ -74,7 +46,7 @@ const FORM_SECTIONS: SectionConfig[] = [
       { key: 'woreda', label: 'Woreda', apiKey: 'woreda' },
       { key: 'kebele', label: 'Kebele', apiKey: 'kebele' },
       { key: 'idType', label: 'ID Type', apiKey: 'id_type' },
-      { key: 'idNumber', label: 'ID Number', apiKey: 'id_number' },
+      { key: 'idNumber', label: 'ID Number', apiKey: 'id_number', sensitive: true },
       { key: 'language', label: 'Language', apiKey: 'language' },
     ],
   },
@@ -126,43 +98,18 @@ const FORM_SECTIONS: SectionConfig[] = [
   },
 ];
 
-const DEFAULT_FARMER_DETAILS: FarmerDetails = {
-  firstName: '',
-  lastName: '',
-  mobilePhone: '',
-  dateOfBirth: '',
-  gender: '',
-  woreda: '',
-  kebele: '',
-  idType: '',
-  idNumber: '',
-  language: '',
-  landSize: '',
-  farmId: '',
-  farmPolygon: '',
-  landAcreage: '',
-  farmLandNumber: '',
-  maritalStatus: '',
-  sizeOfFamily: '',
-  numberOfChildren: '',
-  noOfFemales: '',
-  noOfMales: '',
-  familyMemberOwnsLand: '',
-  sourceOfIncome: '',
-  educationLevel: '',
-  totalFarmlandLandowner: '',
-  totalFarmlandCropSharing: '',
-  totalFarmlandRented: '',
-  certificationId: '',
-  certificationPhoto: '',
-  farmlandSizeHectares: '',
-  landOwnershipStatus: '',
-  soilFertility: '',
-  moistureLevels: '',
-};
+// Empty string for every configured field — derived from FORM_SECTIONS so the
+// default shape can never drift from the rendered fields.
+const DEFAULT_FARMER_DETAILS: FarmerDetails = FORM_SECTIONS.reduce<FarmerDetails>(
+  (acc, section) => {
+    section.fields.forEach((field) => { acc[field.key] = ''; });
+    return acc;
+  },
+  {},
+);
 
 function mapApiToFarmerDetails(data: LoanApplicationFull): FarmerDetails {
-  const result = {} as FarmerDetails;
+  const result: FarmerDetails = {};
   FORM_SECTIONS.forEach((section) => {
     section.fields.forEach((field) => {
       const val = data[field.apiKey as keyof LoanApplicationFull];
@@ -189,6 +136,11 @@ export function Step2FarmerDetails() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  // Tracks which sensitive fields (by key) the user has chosen to reveal.
+  const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>({});
+
+  const toggleReveal = (key: string) =>
+    setRevealedFields((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
     async function loadProfile() {
@@ -259,11 +211,35 @@ export function Step2FarmerDetails() {
                   />
                 );
               }
+              const rawValue = formData[field.key] ?? '';
+              if (field.sensitive) {
+                const isRevealed = !!revealedFields[field.key];
+                const displayValue = isRevealed || !rawValue ? rawValue : maskSensitiveId(rawValue);
+                return (
+                  <div key={field.key} className="relative">
+                    <TextField
+                      label={field.label}
+                      value={displayValue}
+                      readOnly
+                    />
+                    {rawValue && (
+                      <button
+                        type="button"
+                        onClick={() => toggleReveal(field.key)}
+                        className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label={isRevealed ? `Hide ${field.label}` : `Reveal ${field.label}`}
+                      >
+                        {isRevealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    )}
+                  </div>
+                );
+              }
               return (
                 <TextField
                   key={field.key}
                   label={field.label}
-                  value={formData[field.key] ?? ''}
+                  value={rawValue}
                   onChange={handleChange(field.key)}
                   readOnly
                 />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar, ChevronLeft, ChevronDown, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -187,7 +187,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
           ) : (
             <div className="px-4 pb-3 pt-2">
               <div className="mb-2 grid grid-cols-7">
-                {DAY_NAMES.map((d, i) => (
+                {DAY_NAMES.map((d) => (
                   <div key={d} className="py-1 text-center text-[12px] font-medium text-gray-900">{d[0]}</div>
                 ))}
               </div>
@@ -259,7 +259,7 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
           ) : (
             <div className="px-4 pb-3 pt-2">
               <div className="mb-2 grid grid-cols-7">
-                {DAY_NAMES.map((d, i) => (
+                {DAY_NAMES.map((d) => (
                   <div key={d} className="py-1 text-center text-[12px] font-medium text-gray-900">{d[0]}</div>
                 ))}
               </div>

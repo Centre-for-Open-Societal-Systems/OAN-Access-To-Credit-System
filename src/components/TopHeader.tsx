@@ -1,38 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import {
   Bell,
   ChevronDown,
-  CircleHelp,
-  ClipboardList,
   Database,
   Globe,
-  LockKeyhole,
   LogOut,
-  MessageSquare,
   Settings,
   UserRound,
   Languages,
-  Check,
 } from 'lucide-react';
 import { selectOfficerName, selectOfficerRole } from '@/features/auth/store/authSlice';
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useAppSelector } from '@/store/hooks'
 import menuToggleArrow from './menu-toggle-arrow.svg';
 import menuToggleBars from './menu-toggle-bars.svg';
 
 import './TopHeader.module.scss'; // keyframe animations only
-
-const profileQuickLinks = [
-  { label: 'Profile', icon: UserRound },
-  { label: 'Messages', icon: MessageSquare },
-  { label: 'Taskboard', icon: ClipboardList },
-  { label: 'Help', icon: CircleHelp },
-];
-
-const profileActions = [
-  { label: 'Settings', icon: Settings, badge: 'New' },
-  { label: 'Lock screen', icon: LockKeyhole },
-];
 
 const mockNotifications = [
   {
@@ -76,6 +60,8 @@ interface TopHeaderProps {
 }
 
 function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 'Dashboard' }: TopHeaderProps) {
+  const params = useParams();
+  const leadId = params?.id as string | undefined;
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('EN');
@@ -178,9 +164,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
         >
           {pageTitle}
         </button>
-        <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A] whitespace-nowrap shrink-0">
-          LD-9822
-        </span>
+        {leadId && (
+          <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A] whitespace-nowrap shrink-0">
+            {leadId}
+          </span>
+        )}
       </div>
 
       {/* Right: actions */}

@@ -1,16 +1,20 @@
 'use client';
 
 import { logger } from '@/lib/logger';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { nextStepAPI, uploadDocumentAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
+import { nextStepAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
 import { loanService, type SupportingDocument } from '@/features/loans/api/loan.service';
-import { ArrowRight, CheckCircle2, FileText, Loader2, FolderOpen, Eye, EyeOff, X, Check, ChevronDown, Info } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, FolderOpen, Eye, EyeOff, X, Check, Info, AlertTriangle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
+import { UndoToast } from '@/components/ui/UndoToast';
+import { AddSupportingDocModal } from './AddSupportingDocModal';
+import { newLeadService, type FarmerDetails } from '@/features/new-lead/api/newLead.service';
 
-export function Step1ConsentDocs() {
+export function Step1ConsentDocs({ leadId }: { leadId?: string | undefined }) {
   const dispatch = useDispatch<AppDispatch>();
   const { applicationId } = useSelector(selectLoanFormState);
+
   const [faydaId, setFaydaId] = useState('**********');
   const [showFaydaId, setShowFaydaId] = useState(false);
   const [showConsentPopup, setShowConsentPopup] = useState(false);
@@ -21,6 +25,24 @@ export function Step1ConsentDocs() {
   const [showSupportingDocPopup, setShowSupportingDocPopup] = useState(false);
   const [selectedSupportingDoc, setSelectedSupportingDoc] = useState<SupportingDoc | null>(null);
   const [supportPreviewUrl, setSupportPreviewUrl] = useState<string | null>(null);
+
+  const [farmerDetails, setFarmerDetails] = useState<FarmerDetails | null>(null);
+
+  useEffect(() => {
+    if (leadId) {
+      newLeadService.getLeadDetails(leadId)
+        .then(res => setFarmerDetails(res))
+        .catch(err => logger.error('Failed to get lead details', err));
+    }
+  }, [leadId]);
+
+  const consentFields = farmerDetails?.requested_data_fields?.length
+    ? farmerDetails.requested_data_fields.map(f => f.field_name)
+    : [];
+
+  const consentDate = farmerDetails?.validity_from
+    ? new Date(farmerDetails.validity_from).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   useEffect(() => {
     if (!selectedSupportingDoc) {
@@ -41,11 +63,6 @@ export function Step1ConsentDocs() {
   }, [selectedSupportingDoc]);
 
   const [showAddDocPopup, setShowAddDocPopup] = useState(false);
-  const [newDocType, setNewDocType] = useState('');
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-  const [newDocDesc, setNewDocDesc] = useState('');
-  const [newDocFile, setNewDocFile] = useState<File | null>(null);
-  const addDocFileRef = useRef<HTMLInputElement>(null);
 
 
   const [supportingDocs, setSupportingDocs] = useState<SupportingDoc[]>([]);
@@ -72,72 +89,57 @@ export function Step1ConsentDocs() {
     }
   }, [applicationId]);
 
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  // Document removal is confirm-gated, then optimistic with an undo window:
+  // `docPendingConfirm` holds the id awaiting the confirm dialog; once confirmed
+  // the row is removed from the list immediately and `docPendingRemoval` drives
+  // the undo toast. The real delete only fires when the undo window elapses.
+  const [docPendingConfirm, setDocPendingConfirm] = useState<SupportingDoc | null>(null);
+  const [docPendingRemoval, setDocPendingRemoval] = useState<SupportingDoc | null>(null);
 
-  const handleSaveDraft = () => {
-    setIsSavingDraft(true);
-    setTimeout(() => {
-      setIsSavingDraft(false);
-      const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setLastSaved(`Auto-saved at ${timeString}`);
-    }, 1000);
+  const [consentFile] = useState<File | null>(null);
+  const [previewUrl] = useState<string | null>(null);
+
+  // Step 1: user clicks remove → ask for confirmation.
+  const requestRemoveSupportingDoc = (doc: SupportingDoc) => setDocPendingConfirm(doc);
+
+  // Step 2: confirmed → optimistically drop the row and open the undo window.
+  const confirmRemoveSupportingDoc = () => {
+    if (!docPendingConfirm) return;
+    const doc = docPendingConfirm;
+    setSupportingDocs(docs => docs.filter(d => d.id !== doc.id));
+    setDocPendingConfirm(null);
+    setDocPendingRemoval(doc);
   };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      handleSaveDraft();
-    }, 60000); // Auto save every 60 seconds
-    return () => clearInterval(timer);
-  }, []);
-
-  const consentFileRef = useRef<HTMLInputElement>(null);
-  const [consentFile, setConsentFile] = useState<File | null>(null);
-  const [isConsentUploading, setIsConsentUploading] = useState(false);
-  const [consentProgress, setConsentProgress] = useState(0);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  const handleRemoveSupportingDoc = async (id: string | number) => {
-    if (!applicationId) return;
+  // Step 3a: undo window elapsed → actually delete on the server. A client-only
+  // doc (numeric id, never persisted) needs no API call.
+  const commitRemoveSupportingDoc = async () => {
+    const doc = docPendingRemoval;
+    setDocPendingRemoval(null);
+    if (!doc) return;
+    if (typeof doc.id !== 'string' || !applicationId) return;
     try {
-      if (typeof id === 'string') {
-        const res = await loanService.deleteSupportingDocument(applicationId, id);
-        // Frappe might return status === 'success' or message === 'File deleted successfully' or message.status === 'success'
-        const isSuccess = res?.status === 'success' || res?.message === 'File deleted successfully';
-        if (isSuccess) {
-          setSupportingDocs(docs => docs.filter(doc => doc.id !== id));
-        } else {
-          logger.error('Failed to delete document on server', res);
-        }
-      } else {
-        setSupportingDocs(docs => docs.filter(doc => doc.id !== id));
+      const res = await loanService.deleteSupportingDocument(applicationId, doc.id);
+      // Frappe may return status === 'success' or message === 'File deleted successfully'.
+      const isSuccess = res?.status === 'success' || res?.message === 'File deleted successfully';
+      if (!isSuccess) {
+        logger.error('Failed to delete document on server', res);
+        setSupportingDocs(docs => [...docs, doc]); // restore on failure
       }
     } catch (err) {
       logger.error('Failed to delete supporting document:', err);
+      setSupportingDocs(docs => [...docs, doc]); // restore on failure
     }
   };
 
-  const handleAddSupportingDoc = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDocType || !newDocDesc || !newDocFile || !applicationId) return;
-
-    try {
-      await dispatch(uploadDocumentAPI({
-        application_id: applicationId,
-        document_type: newDocType,
-        file: newDocFile
-      })).unwrap();
-
-      loadDocs(applicationId);
-
-      setShowAddDocPopup(false);
-      setNewDocType('');
-      setNewDocDesc('');
-      setNewDocFile(null);
-    } catch (err) {
-      logger.error('Failed to upload supporting document', err);
+  // Step 3b: user clicked Undo → restore the row, no server call.
+  const undoRemoveSupportingDoc = () => {
+    if (docPendingRemoval) {
+      setSupportingDocs(docs => [...docs, docPendingRemoval]);
     }
+    setDocPendingRemoval(null);
   };
+
 
   const handleViewDoc = (doc: SupportingDoc) => {
     const fileType = doc.file?.type || '';
@@ -180,75 +182,12 @@ export function Step1ConsentDocs() {
 
   return (
     <>
-      {showAddDocPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4 shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Supporting Documents</h3>
-              <button type="button" onClick={() => setShowAddDocPopup(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="px-4 sm:px-6 py-6 overflow-y-auto">
-              <form onSubmit={handleAddSupportingDoc} className="space-y-5">
-                <div className="relative">
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Type <span className="text-red-500">*</span></label>
-                  <div
-                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                  >
-                    <span>{newDocType || 'Select Document'}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                  {isTypeDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-                      {['ID Proof', 'Land Record'].map((type) => (
-                        <div
-                          key={type}
-                          onClick={() => { setNewDocType(type); setIsTypeDropdownOpen(false); }}
-                          className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700"
-                        >
-                          {type}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Description <span className="text-red-500">*</span></label>
-                  <textarea
-                    value={newDocDesc}
-                    onChange={e => setNewDocDesc(e.target.value)}
-                    placeholder="Enter Description"
-                    rows={4}
-                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Document <span className="text-red-500">*</span></label>
-                  <input type="file" ref={addDocFileRef} onChange={e => e.target.files && setNewDocFile(e.target.files?.[0] ?? null)} className="hidden" required />
-                  <div
-                    onClick={() => addDocFileRef.current?.click()}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2.5 transition-colors hover:bg-gray-50"
-                  >
-                    <FolderOpen className="h-5 w-5 text-gray-400 fill-gray-400" />
-                    <span className="text-[15px] text-gray-400">{newDocFile ? newDocFile.name : 'Browse Files'}</span>
-                  </div>
-                </div>
-                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
-                  <button type="button" onClick={() => setShowAddDocPopup(false)} className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50">
-                    Cancel
-                  </button>
-                  <button type="submit" className="rounded-md bg-[#16a34a] px-6 py-2.5 text-[15px] font-medium text-white hover:bg-green-700 transition-colors">
-                    Submit
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddSupportingDocModal
+        isOpen={showAddDocPopup}
+        onClose={() => setShowAddDocPopup(false)}
+        applicationId={applicationId || ''}
+        onSuccess={() => applicationId && loadDocs(applicationId)}
+      />
 
       {showSupportingDocPopup && selectedSupportingDoc && (() => {
         const fileType = selectedSupportingDoc.file?.type || '';
@@ -382,20 +321,20 @@ export function Step1ConsentDocs() {
             </div>
             <div className="px-6 py-6">
               <p className="mb-4 text-[15px] font-medium text-gray-900">Data shared as part of Agri Loan consent:</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {[
-                  'Basic Profile',
-                  'Land Information',
-                  'Crop and Livestock Information',
-                  'Socio Economic Information',
-                  'Agronomic Data'
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-3 rounded-lg border border-[#22c55e] bg-[#f0fdf4] px-4 py-4 shadow-sm">
-                    <CheckCircle2 className="h-5 w-5 text-white fill-[#22c55e]" />
-                    <span className="text-[15px] font-medium text-[#334155]">{item}</span>
-                  </div>
-                ))}
-              </div>
+              {consentFields.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {consentFields.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-[#22c55e] bg-[#f0fdf4] px-4 py-4 shadow-sm">
+                      <CheckCircle2 className="h-5 w-5 text-white fill-[#22c55e]" />
+                      <span className="text-[15px] font-medium text-[#334155]">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center shadow-sm">
+                  <p className="text-sm font-medium text-gray-500">No specific consent fields found.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -428,7 +367,7 @@ export function Step1ConsentDocs() {
                 <button type="button" onClick={() => setShowConsentPopup(true)} className="font-bold text-green-700">
                   View Consent Details
                 </button>
-                <span className='font-normal'>provided on May 25, 2026</span>
+                {consentDate && <span className="font-normal">provided on {consentDate}</span>}
               </div>
               <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-[#f4f8ff] p-4">
                 <Info className="mt-0.5 shrink-0 text-blue-500" size={18} />
@@ -491,7 +430,7 @@ export function Step1ConsentDocs() {
                           <button type="button" onClick={() => handleViewDoc(doc)} className="flex items-center gap-1.5 rounded-md border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50/50 hover:bg-green-100 transition-colors">
                             <Eye className="h-4 w-4" /> View
                           </button>
-                          <button type="button" onClick={() => handleRemoveSupportingDoc(doc.id)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
+                          <button type="button" onClick={() => requestRemoveSupportingDoc(doc)} className="flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-500 bg-red-50/50 hover:bg-red-100 transition-colors shrink-0">
                             <X className="h-4 w-4" />
                           </button>
                         </div>
@@ -507,17 +446,8 @@ export function Step1ConsentDocs() {
         {/* Bottom Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm font-semibold gap-6 sm:gap-0 mt-8">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 font-normal">
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={isSavingDraft}
-              className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
-            >
-              {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
-              {isSavingDraft ? 'Saving...' : 'Save Draft'}
-            </button>
             <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
-              <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+              <Check className="h-5 w-5 text-[#16335A]" /> Your progress is saved automatically
             </div>
           </div>
           <button type="submit" className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md bg-[#16A34A] px-6 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15803d] transition-colors">
@@ -525,6 +455,46 @@ export function Step1ConsentDocs() {
           </button>
         </div>
       </form>
+
+      {/* Confirm removal dialog */}
+      {docPendingConfirm && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden text-center p-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
+              <AlertTriangle className="h-8 w-8 text-red-600" strokeWidth={2} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Remove this document?</h3>
+            <p className="text-[15px] text-gray-600 mb-8">
+              &ldquo;{docPendingConfirm.name}&rdquo; will be removed. You&rsquo;ll have a few seconds to undo.
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDocPendingConfirm(null)}
+                className="rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveSupportingDoc}
+                className="rounded-md bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Undo window for an optimistically removed document */}
+      {docPendingRemoval && (
+        <UndoToast
+          message="Document removed"
+          onUndo={undoRemoveSupportingDoc}
+          onCommit={commitRemoveSupportingDoc}
+        />
+      )}
     </>
   );
 }

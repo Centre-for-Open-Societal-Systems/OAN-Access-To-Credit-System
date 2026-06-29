@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { loanService, GetLoansParams, LoanApplicationSummary, LoanSummaryMetrics } from '@/features/loans/api/loan.service';
+import { selectUserEmail } from '@/features/auth/store/authSlice';
 import type { ApiResponse } from '@/types/api';
 
 // Sentinel sent to the API when the user has explicitly cleared all status
@@ -263,6 +264,7 @@ export const {
 // --- Basic Selectors ---
 export const selectRawActivityData = (state: RootState) => state.loanDashboard.rawActivityData;
 export const selectIsLoansLoading = (state: RootState) => state.loanDashboard.isLoading;
+export const selectLoansError = (state: RootState) => state.loanDashboard.loansError;
 export const selectRawSummaryData = (state: RootState) => state.loanDashboard.rawSummaryData;
 export const selectDateRange = (state: RootState) => state.loanDashboard.dateRange;
 export const selectSelectedStatuses = (state: RootState) => state.loanDashboard.selectedStatuses;
@@ -277,7 +279,7 @@ export const selectAdvancedFilters = (state: RootState) => state.loanDashboard.a
 // --- Derived Memoized Selectors ---
 export const selectPagedRowsData = createSelector(
   [selectRawActivityData, selectPageSize],
-  (rawActivityData, pageSize) => {
+  (rawActivityData, _pageSize) => {
     // fetchApi automatically unwraps the "message" envelope, so the data is directly on rawActivityData
     let rows = rawActivityData?.data || [];
 
@@ -351,15 +353,18 @@ export const selectTabCounts = createSelector(
 
 
 export const selectQueryParams = createSelector(
-  [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses, selectSearchQuery, selectActiveTab, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters],
-  (activityPage, pageSize, dateRange, selectedStatuses, searchQuery, activeTab, tableStatusFilters, tableTypeFilters, advancedFilters) => {
+  [selectActivityPage, selectPageSize, selectDateRange, selectSelectedStatuses, selectSearchQuery, selectActiveTab, selectTableStatusFilters, selectTableTypeFilters, selectAdvancedFilters, selectUserEmail],
+  (activityPage, pageSize, dateRange, selectedStatuses, searchQuery, activeTab, tableStatusFilters, tableTypeFilters, advancedFilters, userEmail) => {
     const params: GetLoansParams = {
       page: activityPage,
       page_size: pageSize,
     };
 
     if (searchQuery) params.search_query = searchQuery;
-    if (activeTab && activeTab !== 'all') params.tab = activeTab;
+    // Scope the queue server-side via loan_officer (get_all_loans): "My" → my
+    // email, "Unassigned" → the literal 'unassigned', "All" → omit.
+    if (activeTab === 'my' && userEmail) params.loan_officer = userEmail;
+    else if (activeTab === 'unassigned') params.loan_officer = 'unassigned';
 
     const getCutoffTimestamp = (range: string) => {
       const now = new Date();
