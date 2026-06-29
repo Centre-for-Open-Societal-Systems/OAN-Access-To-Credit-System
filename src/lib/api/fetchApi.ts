@@ -22,6 +22,20 @@ export class ApiError extends Error {
   }
 }
 
+let activeRefresh: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function fetchApi(path: string, options: RequestInit = {}) {
   const url = new URL(`/api/proxy/api/method/${path}`, BASE_URL);
   
@@ -30,10 +44,32 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(url.toString(), {
+  let response = await fetch(url.toString(), {
     ...options,
     headers,
   });
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    if (!activeRefresh) {
+      activeRefresh = refreshSession().then(
+        (success) => {
+          activeRefresh = null;
+          return success;
+        },
+        () => {
+          activeRefresh = null;
+          return false;
+        }
+      );
+    }
+    const success = await activeRefresh;
+    if (success) {
+      response = await fetch(url.toString(), {
+        ...options,
+        headers,
+      });
+    }
+  }
 
   let responseData;
   try {

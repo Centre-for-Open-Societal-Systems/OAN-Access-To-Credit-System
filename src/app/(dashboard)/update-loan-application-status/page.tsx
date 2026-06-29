@@ -9,6 +9,7 @@ import {
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchLoans, updateLoanStatus, selectPagedRowsData, MappedLoanRow } from '@/features/loans/store/loanDashboardSlice';
+import { updateLeadStatusThunk } from '@/features/new-lead';
 import {
   STATUS_CFG,
   LOAN_STATUSES,
@@ -296,6 +297,16 @@ function UpdateLoanStatus() {
     if (reason) payload.reason = reason;
     if (notes) payload.notes = notes;
     await dispatch(updateLoanStatus(payload)).unwrap();
+
+    if (newStatus === 'Approved' && panelLoan?.lead_id) {
+      await dispatch(
+        updateLeadStatusThunk({
+          leadId: panelLoan.lead_id,
+          status: 'Granted',
+          reason: reason || 'Loan application approved.',
+        })
+      ).unwrap();
+    }
   }
 
   return (
