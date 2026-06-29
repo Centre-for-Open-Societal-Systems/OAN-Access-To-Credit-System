@@ -1,18 +1,20 @@
 'use client';
 
 import { logger } from '@/lib/logger';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { nextStepAPI, uploadDocumentAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
+import { nextStepAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
 import { loanService, type SupportingDocument } from '@/features/loans/api/loan.service';
-import { ArrowRight, CheckCircle2, FileText, Loader2, FolderOpen, Eye, EyeOff, X, Check, ChevronDown, Info, AlertTriangle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, FolderOpen, Eye, EyeOff, X, Check, Info, AlertTriangle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 import { UndoToast } from '@/components/ui/UndoToast';
+import { AddSupportingDocModal } from './AddSupportingDocModal';
+import { newLeadService, type FarmerDetails } from '@/features/new-lead/api/newLead.service';
 
-export function Step1ConsentDocs() {
+export function Step1ConsentDocs({ leadId }: { leadId?: string | undefined }) {
   const dispatch = useDispatch<AppDispatch>();
-  const { applicationId, loadingStates } = useSelector(selectLoanFormState);
-  const isUploading = loadingStates.uploadDoc;
+  const { applicationId } = useSelector(selectLoanFormState);
+
   const [faydaId, setFaydaId] = useState('**********');
   const [showFaydaId, setShowFaydaId] = useState(false);
   const [showConsentPopup, setShowConsentPopup] = useState(false);
@@ -23,6 +25,24 @@ export function Step1ConsentDocs() {
   const [showSupportingDocPopup, setShowSupportingDocPopup] = useState(false);
   const [selectedSupportingDoc, setSelectedSupportingDoc] = useState<SupportingDoc | null>(null);
   const [supportPreviewUrl, setSupportPreviewUrl] = useState<string | null>(null);
+
+  const [farmerDetails, setFarmerDetails] = useState<FarmerDetails | null>(null);
+
+  useEffect(() => {
+    if (leadId) {
+      newLeadService.getLeadDetails(leadId)
+        .then(res => setFarmerDetails(res))
+        .catch(err => logger.error('Failed to get lead details', err));
+    }
+  }, [leadId]);
+
+  const consentFields = farmerDetails?.requested_data_fields?.length
+    ? farmerDetails.requested_data_fields.map(f => f.field_name)
+    : [];
+
+  const consentDate = farmerDetails?.validity_from
+    ? new Date(farmerDetails.validity_from).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   useEffect(() => {
     if (!selectedSupportingDoc) {
@@ -43,11 +63,6 @@ export function Step1ConsentDocs() {
   }, [selectedSupportingDoc]);
 
   const [showAddDocPopup, setShowAddDocPopup] = useState(false);
-  const [newDocType, setNewDocType] = useState('');
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-  const [newDocDesc, setNewDocDesc] = useState('');
-  const [newDocFile, setNewDocFile] = useState<File | null>(null);
-  const addDocFileRef = useRef<HTMLInputElement>(null);
 
 
   const [supportingDocs, setSupportingDocs] = useState<SupportingDoc[]>([]);
@@ -125,29 +140,6 @@ export function Step1ConsentDocs() {
     setDocPendingRemoval(null);
   };
 
-  const handleAddSupportingDoc = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Guard against double-submits while an upload is already in flight.
-    if (isUploading) return;
-    if (!newDocType || !newDocDesc || !newDocFile || !applicationId) return;
-
-    try {
-      await dispatch(uploadDocumentAPI({
-        application_id: applicationId,
-        document_type: newDocType,
-        file: newDocFile
-      })).unwrap();
-
-      loadDocs(applicationId);
-
-      setShowAddDocPopup(false);
-      setNewDocType('');
-      setNewDocDesc('');
-      setNewDocFile(null);
-    } catch (err) {
-      logger.error('Failed to upload supporting document', err);
-    }
-  };
 
   const handleViewDoc = (doc: SupportingDoc) => {
     const fileType = doc.file?.type || '';
@@ -190,76 +182,12 @@ export function Step1ConsentDocs() {
 
   return (
     <>
-      {showAddDocPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4 shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Supporting Documents</h3>
-              <button type="button" onClick={() => setShowAddDocPopup(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="px-4 sm:px-6 py-6 overflow-y-auto">
-              <form onSubmit={handleAddSupportingDoc} className="space-y-5">
-                <div className="relative">
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Type <span className="text-red-500">*</span></label>
-                  <div
-                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                  >
-                    <span>{newDocType || 'Select Document'}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                  {isTypeDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-                      {['ID Proof', 'Land Record'].map((type) => (
-                        <div
-                          key={type}
-                          onClick={() => { setNewDocType(type); setIsTypeDropdownOpen(false); }}
-                          className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700"
-                        >
-                          {type}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Description <span className="text-red-500">*</span></label>
-                  <textarea
-                    value={newDocDesc}
-                    onChange={e => setNewDocDesc(e.target.value)}
-                    placeholder="Enter Description"
-                    rows={4}
-                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-[15px] font-medium text-gray-900">Document <span className="text-red-500">*</span></label>
-                  <input type="file" ref={addDocFileRef} onChange={e => e.target.files && setNewDocFile(e.target.files?.[0] ?? null)} className="hidden" required />
-                  <div
-                    onClick={() => addDocFileRef.current?.click()}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2.5 transition-colors hover:bg-gray-50"
-                  >
-                    <FolderOpen className="h-5 w-5 text-gray-400 fill-gray-400" />
-                    <span className="text-[15px] text-gray-400">{newDocFile ? newDocFile.name : 'Browse Files'}</span>
-                  </div>
-                </div>
-                <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
-                  <button type="button" disabled={isUploading} onClick={() => setShowAddDocPopup(false)} className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={isUploading} className="flex items-center justify-center gap-2 rounded-md bg-[#16a34a] px-6 py-2.5 text-[15px] font-medium text-white hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-                    {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {isUploading ? 'Uploading...' : 'Submit'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddSupportingDocModal
+        isOpen={showAddDocPopup}
+        onClose={() => setShowAddDocPopup(false)}
+        applicationId={applicationId || ''}
+        onSuccess={() => applicationId && loadDocs(applicationId)}
+      />
 
       {showSupportingDocPopup && selectedSupportingDoc && (() => {
         const fileType = selectedSupportingDoc.file?.type || '';
@@ -393,20 +321,20 @@ export function Step1ConsentDocs() {
             </div>
             <div className="px-6 py-6">
               <p className="mb-4 text-[15px] font-medium text-gray-900">Data shared as part of Agri Loan consent:</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {[
-                  'Basic Profile',
-                  'Land Information',
-                  'Crop and Livestock Information',
-                  'Socio Economic Information',
-                  'Agronomic Data'
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-3 rounded-lg border border-[#22c55e] bg-[#f0fdf4] px-4 py-4 shadow-sm">
-                    <CheckCircle2 className="h-5 w-5 text-white fill-[#22c55e]" />
-                    <span className="text-[15px] font-medium text-[#334155]">{item}</span>
-                  </div>
-                ))}
-              </div>
+              {consentFields.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {consentFields.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-[#22c55e] bg-[#f0fdf4] px-4 py-4 shadow-sm">
+                      <CheckCircle2 className="h-5 w-5 text-white fill-[#22c55e]" />
+                      <span className="text-[15px] font-medium text-[#334155]">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center shadow-sm">
+                  <p className="text-sm font-medium text-gray-500">No specific consent fields found.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -439,7 +367,7 @@ export function Step1ConsentDocs() {
                 <button type="button" onClick={() => setShowConsentPopup(true)} className="font-bold text-green-700">
                   View Consent Details
                 </button>
-                <span className='font-normal'>provided on May 25, 2026</span>
+                {consentDate && <span className="font-normal">provided on {consentDate}</span>}
               </div>
               <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-[#f4f8ff] p-4">
                 <Info className="mt-0.5 shrink-0 text-blue-500" size={18} />

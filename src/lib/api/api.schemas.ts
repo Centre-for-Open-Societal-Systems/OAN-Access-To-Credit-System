@@ -15,7 +15,7 @@ export const submitConsentResponseSchema = z.object({
   lead_id: z.string().optional(),
   consent_request: z.string().optional(),
   status: z.string().optional(),
-  openg2p_consent_id: z.string().optional(),
+  openg2p_consent_id: z.union([z.number(), z.string()]).optional(),
   consent_receipt: z.string().optional(),
   farmer_preview: z.object({
     given_name: z.string().default(''),

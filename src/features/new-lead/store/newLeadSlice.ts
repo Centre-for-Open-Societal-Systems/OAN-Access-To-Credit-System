@@ -14,7 +14,9 @@ import type { CreditInfoAPI, AddCreditInfoResponse } from '@/lib/api/api.schemas
 import { formatTiming } from './helpers';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
 import { initializeLead, clearForm } from './actions';
+import { ApiError } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
+
 
 
 
@@ -208,6 +210,9 @@ export const addCreditInfoThunk = createAsyncThunk<
       });
       return { response, payload };
     } catch (error) {
+      if (error instanceof ApiError) {
+        return rejectWithValue(error.responseData);
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to add credit info');
     }
   }

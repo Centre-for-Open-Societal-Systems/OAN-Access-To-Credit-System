@@ -28,7 +28,7 @@ export function CreditInformationSection() {
       loan_type: data.loanType,
       loan_amount: data.loanAmount.toString(), // The API seems to expect a string here based on previous payload or DTO, we should check `addCreditInfoThunk` type
       purpose_message: data.purposeMessage
-    }));
+    })).unwrap();
     setIsModalOpen(false);
   };
 

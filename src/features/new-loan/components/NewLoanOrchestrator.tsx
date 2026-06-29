@@ -136,7 +136,7 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
       <NewLoanProgressBar currentStep={currentStep} />
 
       <div className="relative min-h-[400px]">
-        {currentStep === 1 && <Step1ConsentDocs />}
+        {currentStep === 1 && <Step1ConsentDocs leadId={leadId} />}
         {currentStep === 2 && <Step2FarmerDetails />}
         {currentStep === 3 && <Step3ReviewSubmit />}
         {currentStep === 4 && <Step4Success />}

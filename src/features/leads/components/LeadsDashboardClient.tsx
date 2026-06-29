@@ -254,11 +254,17 @@ export function LeadsDashboardClient() {
     return <ConnectionError onRetry={() => loadLeads(currentPage)} />;
   }
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Welcome back, {officerName || 'Agent'}</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Welcome back, {isMounted && officerName ? officerName : 'Agent'}</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 font-semibold w-full md:w-auto mt-2 md:mt-0">
