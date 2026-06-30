@@ -25,8 +25,6 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
   // For step 4, we keep the Step 3 metadata
   const meta = STEP_META[currentStep > 3 ? 2 : currentStep - 1] || { title: '', subtitle: '' };
 
-  const [isSaving, setIsSaving] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -35,11 +33,6 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
     if (!isMounted || !leadId) return;
     dispatch(fetchLoanApplicationAPI(leadId));
   }, [isMounted, leadId, dispatch]);
-
-  const handleSaveDraft = () => {
-    setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1000);
-  };
 
   // Optional: Reset form on unmount to prevent stale data
   useEffect(() => {
@@ -114,23 +107,6 @@ export function NewLoanOrchestrator({ leadId }: { leadId?: string }) {
           </div>
           <p className="sm:hidden text-sm text-gray-500 mt-1">{meta.subtitle}</p>
         </div>
-
-        {/* Header Actions (hidden on success) */}
-        {currentStep < 4 && (
-          <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 mt-4 sm:mt-0">
-            <button className="flex-1 sm:flex-none rounded-md border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="flex-1 sm:flex-none justify-center flex items-center gap-2 rounded-md border border-[#16335A] px-5 py-2 text-sm font-semibold text-[#16335A] hover:bg-blue-50 transition-colors disabled:opacity-50"
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSaving ? 'Saving...' : 'Save Draft'}
-            </button>
-          </div>
-        )}
       </div>
 
       <NewLoanProgressBar currentStep={currentStep} />

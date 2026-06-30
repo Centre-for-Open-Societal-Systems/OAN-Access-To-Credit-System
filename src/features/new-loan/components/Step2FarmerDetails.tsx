@@ -138,7 +138,6 @@ export function Step2FarmerDetails() {
     setFormData(prev => ({ ...prev, [field]: value.toString() }));
   };
 
-  const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   // Tracks which sensitive fields (by key) the user has chosen to reveal.
   const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>({});
@@ -165,24 +164,12 @@ export function Step2FarmerDetails() {
     loadProfile();
   }, [applicationId]);
 
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
-
-  const handleSaveDraft = () => {
-    setIsSaving(true);
-    dispatch(setFormDataAction(formData));
-    setTimeout(() => {
-      setIsSaving(false);
-      const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setLastSaved(`Auto-saved at ${timeString}`);
-    }, 1000);
-  };
-
   useEffect(() => {
     const timer = setInterval(() => {
-      handleSaveDraft();
+      dispatch(setFormDataAction(formData));
     }, 60000); // Auto save every 60 seconds
     return () => clearInterval(timer);
-  }, [formData]);
+  }, [formData, dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -277,17 +264,8 @@ export function Step2FarmerDetails() {
       {/* Bottom Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm mt-8 relative z-0 gap-6 sm:gap-0">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSaving}
-            className="rounded-md border border-[#16335A] px-5 py-2.5 text-[15px] font-bold text-[#16335A] hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSaving ? 'Saving...' : 'Save Draft'}
-          </button>
           <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
-            <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+            <Check className="h-5 w-5 text-[#16335A]" /> Your progress is saved automatically
           </div>
         </div>
 
