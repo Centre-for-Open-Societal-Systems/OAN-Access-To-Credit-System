@@ -42,7 +42,7 @@
     ]
   },
   "overrides": {
-    "postcss": "$postcss"
+    "postcss": "^8.5.10"
   },
   "pnpm": {
     "overrides": {
