@@ -1,16 +1,19 @@
 # Stage 1: Build
 FROM node:20 AS builder
+
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
 ARG API_BASE_URL
 ENV API_BASE_URL=$API_BASE_URL
-RUN npm run build
+RUN pnpm build
 
 # Stage 2: Run
 FROM node:20-slim
 WORKDIR /app
+
 COPY --from=builder /app ./
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "start"]
