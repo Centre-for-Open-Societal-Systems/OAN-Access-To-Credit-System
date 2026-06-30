@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectVisitState, selectIsLeadFinalized, setVisitSchedule, scheduleVisitThunk, fetchVisitSchedulesThunk, updateVisitScheduleStatusThunk } from '..';
-import { Calendar, Clock, MapPin, Pencil, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, CalendarCheck, Clock, MapPin, Pencil, CheckCircle, XCircle } from 'lucide-react';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useParams } from 'next/navigation';
 import { normalizeLeadId } from '@/lib/utils';

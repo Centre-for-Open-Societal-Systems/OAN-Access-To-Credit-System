@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Eye, XCircle, Calendar, CheckCircle } from 'lucide-react';
+import { Eye, CalendarCheck, XCircle, Calendar, CheckCircle } from 'lucide-react';
 import { Lead } from '@/features/leads/types/leads.types';
 
 interface LeadActionCellProps {
