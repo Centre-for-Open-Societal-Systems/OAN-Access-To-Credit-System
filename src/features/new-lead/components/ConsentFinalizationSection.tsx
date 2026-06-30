@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { submitConsentThunk, selectConsentState } from '../store/consentSlice';
-import { selectIsPollingLong } from '../store/farmerSlice';
+import { selectIsPollingLong, selectFarmerState } from '../store/farmerSlice';
 import { ProfileSyncLoadingModal } from './modals/ProfileSyncLoadingModal';
-import { Calendar, FileText, CheckSquare, Square, ShieldCheck, Loader2, Sparkles, Folder, Eye, X, Upload, AlertCircle } from 'lucide-react';
+import { Calendar, FileText, CheckSquare, Square, Loader2, Sparkles, Folder, Eye, X, Upload, AlertCircle } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { newLeadService, ConsentReason, AllowedDataField } from '../api/newLead.service';
 
@@ -14,6 +14,7 @@ export function ConsentFinalizationSection() {
 
   const { isOtpVerified, consentDate, isSubmittingConsent, consentError } = useAppSelector(selectConsentState);
   const isPollingLong = useAppSelector(selectIsPollingLong);
+  const { farmerId, farmerDetails, searchedFarmer } = useAppSelector(selectFarmerState);
 
   // Dynamic Metadata State
   const [consentReasons, setConsentReasons] = useState<ConsentReason[]>([]);
@@ -184,19 +185,47 @@ export function ConsentFinalizationSection() {
     <>
       <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
         {/* Header */}
-        <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
-          <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
-            <ShieldCheck size={20} className="text-[#16A34A]" />
-            Finalize Consent Scope & Submission
+        <div className="flex flex-col p-5 w-full border-b border-[#dedede] gap-1">
+          <h2 className="font-inter font-bold text-[17px] text-[#232F34]">
+            Consent Details
           </h2>
+          <p className="text-[13.5px] text-[#4B5563]">
+            Verification has succeeded. You can now complete and submit the consent request.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-5 px-6 w-full mt-2">
-          {/* Helper Banner */}
-          <div className="p-3.5 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-[13px] text-green-800 leading-5 m-0 font-medium">
-              OTP verification successful. Please upload the signed physical consent form, configure the validity range, and allowed registry fields below to submit everything to the registry.
-            </p>
+        <div className="flex flex-col gap-5 px-6 w-full mt-4">
+          {/* Farmer Details Box */}
+          <div className="flex flex-row justify-between items-center p-4 border border-[#E5E7EB] rounded-xl bg-[#F9FAFB]">
+            <div className="flex flex-row gap-4 items-center">
+              {(farmerDetails?.profileImageUrl || searchedFarmer?.profileImageUrl) && (
+                <div className="flex-shrink-0">
+                  <img 
+                    src={farmerDetails?.profileImageUrl || searchedFarmer?.profileImageUrl} 
+                    alt="Farmer Profile" 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[#16A34A] shadow-sm bg-white"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2 items-start">
+                <span className="px-2 py-0.5 bg-[#E8F5E9] text-[#16A34A] text-[10px] font-bold tracking-wider rounded uppercase">
+                  SELECTED FARMER
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-bold text-[#1F2937] text-lg bg-[#E0E7FF] px-1.5 rounded-sm w-fit leading-tight uppercase">
+                    {farmerDetails?.firstName || searchedFarmer?.firstName || ''} {farmerDetails?.lastName || searchedFarmer?.lastName || ''}
+                  </span>
+                  <span className="text-sm text-[#6B7280]">
+                    Farmer ID: <span className="bg-[#E0E7FF] px-1 rounded-sm font-medium text-[#4B5563] ml-1">{farmerId || '—'}</span>
+                  </span>
+                  {(farmerDetails?.phoneNumber || searchedFarmer?.phoneNumber) && (
+                    <span className="text-sm text-[#6B7280]">
+                      Phone: <span className="font-medium text-[#4B5563] ml-1">{farmerDetails?.phoneNumber || searchedFarmer?.phoneNumber}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Dynamic File Upload & Consent reason in side-by-side or clean row layout */}

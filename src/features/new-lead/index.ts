@@ -26,6 +26,9 @@ export {
   fetchLeadProfileThunk,
   submitNewLeadThunk,
   updateLeadStatusThunk,
+  selectLeadPhoneNumber,
+  selectLeadFirstName,
+  selectLeadLastName,
 } from './store/newLeadSlice';
 
 // Selectors, actions, thunks, and types from farmerSlice

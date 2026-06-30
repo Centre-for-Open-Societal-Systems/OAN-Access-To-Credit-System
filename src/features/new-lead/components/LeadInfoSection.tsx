@@ -1,19 +1,20 @@
 import { useAppSelector } from '@/store/hooks';
-import { selectLeadSource } from '../store/newLeadSlice';
-import { useParams } from 'next/navigation';
+import { selectLeadSource, selectLeadPhoneNumber } from '../store/newLeadSlice';
 import { FileText } from 'lucide-react';
 
-export function LeadInfoSection() {
+interface LeadInfoSectionProps {
+  isEditable?: boolean;
+  phoneNumber?: string;
+  onPhoneNumberChange?: (value: string) => void;
+}
+
+export function LeadInfoSection({ isEditable = false, phoneNumber: propPhoneNumber, onPhoneNumberChange }: LeadInfoSectionProps) {
   const leadSource = useAppSelector(selectLeadSource);
-  const params = useParams();
-  const leadId = params?.id as string;
+  const leadPhoneNumber = useAppSelector(selectLeadPhoneNumber);
+  const displayPhone = isEditable ? (propPhoneNumber || '') : (leadPhoneNumber || '');
+  const displaySource = isEditable ? '' : (leadSource || '');
 
   return (
-
-
-
-
-
     <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all duration-300 rounded-xl">
       <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
         <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
@@ -22,32 +23,34 @@ export function LeadInfoSection() {
         </h2>
       </div>
 
-
       <div className="flex flex-col md:flex-row px-6 gap-4 md:gap-6 w-full">
-        <div className="flex flex-col gap-2 w-full md:w-1/2">
-          <label className="text-[15px] font-semibold text-[#232F34]">
-            LEAD ID
-          </label>
-          <input
-            type="text"
-            value={leadId || ''}
-            readOnly
-            className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
-          />
-        </div>
-
         <div className="flex flex-col gap-2 w-full md:w-1/2">
           <label className="text-[15px] font-semibold text-[#232F34]">
             Lead Source
           </label>
           <input
             type="text"
-            value={leadSource || 'Agent Entry'}
+            value={displaySource}
             readOnly
             className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-1/2">
+          <label className="text-[15px] font-semibold text-[#232F34]">
+            Phone Number {isEditable && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            type="text"
+            value={displayPhone}
+            onChange={(e) => isEditable && onPhoneNumberChange && onPhoneNumberChange(e.target.value)}
+            readOnly={!isEditable}
+            placeholder={isEditable ? "Enter Phone Number" : ""}
+            className={`w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none ${!isEditable ? 'bg-gray-50' : 'bg-white focus:ring-2 focus:ring-[#16335A]/20'}`}
           />
         </div>
       </div>
     </section>
   );
 }
+

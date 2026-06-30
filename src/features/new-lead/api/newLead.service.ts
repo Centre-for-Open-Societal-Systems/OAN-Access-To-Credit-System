@@ -23,6 +23,7 @@ export interface FarmerDetails {
   phoneNumber: string;
   email: string;
   gender?: string | undefined;
+  profileImageUrl?: string | undefined;
   websub_delivered_at?: string | undefined;
   consent_type?: string | undefined;
   purpose?: string | undefined;
@@ -88,7 +89,10 @@ export interface SpecificLeadAPI {
   lead_id: string;
   status: string;
   lead_source: string;
+  phone_number: string;
   assigned_to?: string | undefined;
+  first_name?: string | undefined;
+  last_name?: string | undefined;
 }
 
 export interface CallLogAPI {
@@ -164,12 +168,14 @@ export interface SearchFarmerBackendData {
     phone?: string;
     email?: string;
     location?: string;
+    profile_image_url?: string;
   };
   name?: string;
   phone?: string;
   mobile?: string;
   email?: string;
   location?: string;
+  profile_image_url?: string;
 }
 
 export interface BasicProfileBackendData {
@@ -218,7 +224,8 @@ export const newLeadService = {
         phoneNumber: farmerObj.phone ?? farmerObj.mobile ?? '',
         email: farmerObj.email ?? '',
         location: farmerObj.location ?? '',
-        gender: ''
+        gender: '',
+        profileImageUrl: farmerObj.profile_image_url ?? ''
       };
     }
     throw new Error(`Farmer with Fayda ID '${faydaId}' not found.`);
@@ -337,6 +344,9 @@ export const newLeadService = {
       lead_source?: string;
       source?: string;
       assigned_to?: string;
+      phone_number?: string;
+      first_name?: string;
+      last_name?: string;
     }>>;
     const rawResults = response.data || [];
 
@@ -344,7 +354,10 @@ export const newLeadService = {
       lead_id: lead.name || lead.lead_id || lead.id || '',
       status: lead.status || '',
       lead_source: lead.lead_source || lead.source || '',
-      assigned_to: lead.assigned_to
+      phone_number: lead.phone_number || '',
+      assigned_to: lead.assigned_to,
+      first_name: lead.first_name,
+      last_name: lead.last_name
     }));
   },
 

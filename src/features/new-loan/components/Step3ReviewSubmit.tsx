@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { prevStep, setStepAPI, submitApplicationAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
+import { setLeadStatus } from '@/features/new-lead/store/newLeadSlice';
 import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 
@@ -34,6 +35,7 @@ export function Step3ReviewSubmit() {
       }
 
       // Application submitted successfully
+      dispatch(setLeadStatus('Processed'));
       await dispatch(setStepAPI(4)).unwrap();
     } catch (error) {
       logger.error("Failed to submit application", error);

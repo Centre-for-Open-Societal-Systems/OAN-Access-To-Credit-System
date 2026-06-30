@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileText, User } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   selectNewLeadDraft,
@@ -13,6 +13,8 @@ import {
 } from '@/features/new-lead/store/newLeadSlice';
 import { FeedbackModal } from '@/components/ui/FeedbackModal';
 import { logger } from '@/lib/logger';
+import { LeadInfoSection } from '../LeadInfoSection';
+
 
 export function CreateLeadForm() {
   const router = useRouter();
@@ -20,7 +22,6 @@ export function CreateLeadForm() {
   const draft = useAppSelector(selectNewLeadDraft);
 
   const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Start from a clean slate every time the create form mounts, so data from a
@@ -40,8 +41,8 @@ export function CreateLeadForm() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await dispatch(submitNewLeadThunk()).unwrap();
-      setShowSuccessPopup(true);
+      const response = await dispatch(submitNewLeadThunk()).unwrap();
+      router.push(response?.lead_id ? `/leads/${response.lead_id}` : '/leads');
     } catch (error) {
       logger.error('Failed to create lead:', error);
       setShowErrorPopup(true);
@@ -49,10 +50,6 @@ export function CreateLeadForm() {
       setIsSubmitting(false);
     }
   };
-
-  const inputClass =
-    'w-full h-[42px] rounded-md border border-[#D1D5DB] px-4 text-[15px] text-[#232F34] bg-white focus:outline-none focus:ring-2 focus:ring-[#16335A]/20';
-
   return (
     <main className="flex flex-col items-start flex-1 w-full">
       <div className="flex flex-col items-start gap-6 w-full">
@@ -78,97 +75,11 @@ export function CreateLeadForm() {
         </div>
 
         {/* Lead Information */}
-        <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
-          <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
-            <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
-              <FileText size={20} className="text-[#6B7280]" />
-              Lead Information
-            </h2>
-          </div>
-          <div className="flex flex-col md:flex-row px-6 gap-4 md:gap-6 w-full">
-            <div className="flex flex-col gap-2 w-full md:w-1/2">
-              <label className="text-[15px] font-semibold text-[#232F34]">Lead Source</label>
-              <input
-                type="text"
-                value="Agent Entry"
-                readOnly
-                className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Farmer Details */}
-        <section className="flex flex-col items-center pb-6 gap-4 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl">
-          <div className="flex flex-row items-center p-5 w-full border-b border-[#dedede]">
-            <h2 className="font-inter font-semibold text-lg leading-7 flex items-center gap-2 text-[#232F34]">
-              <User size={20} className="text-[#6B7280]" />
-              Farmer Details
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 px-6 gap-4 md:gap-6 w-full">
-            <div className="flex flex-col gap-2">
-              <label className="text-[15px] font-semibold text-[#232F34]">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={draft.firstName}
-                onChange={(e) => handleChange('firstName')(e.target.value)}
-                placeholder="Enter First Name"
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[15px] font-semibold text-[#232F34]">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={draft.lastName}
-                onChange={(e) => handleChange('lastName')(e.target.value)}
-                placeholder="Enter Last Name"
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[15px] font-semibold text-[#232F34]">Location</label>
-              <input
-                type="text"
-                value={draft.location}
-                onChange={(e) => handleChange('location')(e.target.value)}
-                placeholder="Enter Location"
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[15px] font-semibold text-[#232F34]">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={draft.phoneNumber}
-                onChange={(e) => handleChange('phoneNumber')(e.target.value)}
-                placeholder="Enter Phone Number"
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[15px] font-semibold text-[#232F34]">Email ID</label>
-              <input
-                type="email"
-                value={draft.email}
-                onChange={(e) => handleChange('email')(e.target.value)}
-                placeholder="Enter Email ID"
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </section>
+        <LeadInfoSection
+          isEditable={true}
+          phoneNumber={draft.phoneNumber}
+          onPhoneNumberChange={handleChange('phoneNumber')}
+        />
 
         {/* Form Actions */}
         <div className="flex flex-col sm:flex-row justify-end items-center p-4 sm:p-6 w-full bg-white border border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] rounded-xl gap-4 font-semibold">
@@ -194,16 +105,6 @@ export function CreateLeadForm() {
           title="Error"
           message="Failed to submit the form. Please check your inputs."
           buttonText="Close"
-        />
-
-        <FeedbackModal
-          isOpen={showSuccessPopup}
-          onClose={() => { setShowSuccessPopup(false); router.push('/leads'); }}
-          type="success"
-          title="Lead Created Successfully"
-          message="The new lead has been saved to the system."
-          buttonText="Go to Lead Dashboard"
-          onAction={() => { setShowSuccessPopup(false); router.push('/leads'); }}
         />
       </div>
     </main>

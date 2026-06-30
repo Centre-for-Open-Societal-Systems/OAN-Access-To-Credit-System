@@ -23,6 +23,7 @@ export const createDefaultFarmerDetails = (partial?: Partial<FarmerDetails>): Fa
   phoneNumber: partial?.phoneNumber ?? '',
   email: partial?.email ?? '',
   gender: partial?.gender ?? '',
+  profileImageUrl: partial?.profileImageUrl ?? '',
 });
 
 const initialState: FarmerState = {
@@ -62,7 +63,7 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
     let shouldPoll = typeof arg === 'string' ? false : (arg.shouldPoll ?? false);
 
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    let maxRetries = shouldPoll ? 24 : 1; 
+    let maxRetries = shouldPoll ? 24 : 1;
     let retries = 0;
 
     let timeoutId: NodeJS.Timeout | undefined;
@@ -76,11 +77,14 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
       while (retries < maxRetries) {
         try {
           const response = await newLeadService.getLeadDetails(leadId);
-          
-          // The backend specifically indicates a background demographic sync is in progress
-          // when the status is 'Pending OTP' but 'otp_verified' is true.
-          const isSyncInProgress = response.consent_request_status === 'Pending OTP' && response.consent_request_otp_verified === true;
-          
+
+          // The backend indicates a background demographic sync is in progress
+          // when the consent is submitted (status is no longer 'Pending OTP')
+          // but the profile hasn't been created yet.
+          const isSyncInProgress = response.consent_request_status !== 'Pending OTP' && 
+                                   response.consent_request_otp_verified === true && 
+                                   response.farmer_profile_created === false;
+
           if (isSyncInProgress && !shouldPoll) {
             shouldPoll = true;
             maxRetries = 24; // dynamically enable polling
@@ -93,11 +97,11 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
 
           // Data has arrived if farmer_profile_created is true
           const dataArrived = response && response.farmer_profile_created === true;
-          
+
           if (dataArrived || !shouldPoll) {
             return response;
           }
-          
+
           logger.log(`Lead details not yet ready for leadId: ${leadId}. Retrying in 5 seconds... (Attempt ${retries + 1}/${maxRetries})`);
         } catch (error) {
           const message = error instanceof Error ? error.message : '';
@@ -111,13 +115,13 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
           }
           logger.warn(`Failed to fetch lead details for leadId: ${leadId}. Error: ${error instanceof Error ? error.message : String(error)}. Retrying in 5 seconds... (Attempt ${retries + 1}/${maxRetries})`);
         }
-        
+
         retries++;
         if (retries < maxRetries) {
           await delay(5000);
         }
       }
-      
+
       // Final attempt before rejecting
       try {
         return await newLeadService.getLeadDetails(leadId);

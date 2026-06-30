@@ -29,6 +29,8 @@ export type LeadStatus = 'Active' | 'Verified' | 'Processed' | 'Granted' | 'Reje
 export interface Lead {
   id: string;
   name: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
   phone: string;
   status: LeadStatus;
   location: string;
@@ -86,6 +88,8 @@ export interface VisitSchedule {
 export interface RawLead {
   name: string;
   farmer_name?: string;
+  first_name?: string | null;
+  last_name?: string | null;
   phone_number?: string;
   status?: string;
   location?: string;

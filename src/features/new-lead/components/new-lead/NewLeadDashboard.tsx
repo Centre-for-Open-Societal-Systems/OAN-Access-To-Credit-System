@@ -14,7 +14,10 @@ import {
   fetchLeadDetailsThunk,
   fetchVisitSchedulesThunk,
   fetchActivitiesThunk,
-  fetchLeadProfileThunk
+  fetchLeadProfileThunk,
+  selectLeadPhoneNumber,
+  selectLeadFirstName,
+  selectLeadLastName
 } from '@/features/new-lead';
 import { selectLeads } from '@/features/leads/store/leadSlice';
 import { useEffect } from 'react';
@@ -55,6 +58,9 @@ export function NewLeadDashboard({ id }: NewLeadDashboardProps) {
     const { farmerDetails } = useAppSelector(selectFarmerState);
     const { visitSchedule } = useAppSelector(selectVisitState);
     const { isOtpVerified, consentDate } = useAppSelector(selectConsentState);
+    const leadPhoneNumber = useAppSelector(selectLeadPhoneNumber);
+    const leadFirstName = useAppSelector(selectLeadFirstName);
+    const leadLastName = useAppSelector(selectLeadLastName);
 
     // A 403 on a specific lead is rendered as not-found so the existence of a
     // record the user can't access isn't confirmed (vs. an Access Denied screen,
@@ -71,9 +77,9 @@ export function NewLeadDashboard({ id }: NewLeadDashboardProps) {
         <LeadContextBanner
             leadId={`#${id}`}
             actionType="view"
-            farmerName={farmerDetails?.firstName ? `${farmerDetails.firstName} ${farmerDetails.lastName}` : undefined}
+            farmerName={leadFirstName ? `${leadFirstName} ${leadLastName}` : undefined}
             location={farmerDetails?.location || undefined}
-            phoneNumber={farmerDetails?.phoneNumber || undefined}
+            phoneNumber={leadPhoneNumber || undefined}
             status={leadStatus}
             actions={<LeadDashboardActions leadId={`#${id}`} status={leadStatus} />}
         />

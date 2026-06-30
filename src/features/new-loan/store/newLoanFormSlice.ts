@@ -2,7 +2,6 @@ import { logger } from '@/lib/logger';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loanService, type LoanApplicationSummary } from '@/features/loans/api/loan.service';
 import { newLeadService } from '@/features/new-lead/api/newLead.service';
-import { updateLeadStatusThunk } from '../../new-lead/store/newLeadSlice';
 import type { RootState } from '../../../store';
 import { normalizeLeadId } from '@/lib/utils';
 
@@ -110,12 +109,6 @@ export const createAndVerifyLoanApplicationThunk = createAsyncThunk<
   async (leadId: string, { dispatch, rejectWithValue }) => {
     try {
       const appId = await dispatch(createLoanApplicationAPI(leadId)).unwrap();
-      await dispatch(updateLeadStatusThunk({
-        leadId,
-        status: 'Verified',
-        reason: 'Loan application created.'
-      })).unwrap();
-
       dispatch(setApplicationId(appId));
       return appId;
     } catch (err) {

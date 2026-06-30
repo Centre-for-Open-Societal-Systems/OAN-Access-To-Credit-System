@@ -111,7 +111,9 @@ export const leadService = {
 
       return {
         id: item.name,
-        name: item.farmer_name || '',
+        name: item.first_name || item.last_name ? `${item.first_name || ''} ${item.last_name || ''}`.trim() : '',
+        firstName: item.first_name || null,
+        lastName: item.last_name || null,
         phone: item.phone_number || '',
         status: (latestSchedule && latestSchedule.status === 'Missed' ? 'Active' : (item.status || '')) as LeadStatus,
         location: item.location || '',
