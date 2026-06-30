@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { ChevronDown, Check, Filter } from 'lucide-react';
+import { Check, Filter } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { selectLoanTypesOptions, selectLeadStatusesOptions } from '@/features/new-lead/store/newLeadSlice';
 
@@ -17,7 +16,6 @@ interface LeadColFilterPopupProps {
 export function LeadColFilterPopup({ col, anchorRef, initialSelected = [], onApply, onClose }: LeadColFilterPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string[]>(initialSelected);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     // Positioning is now handled by absolute positioning relative to the column header.

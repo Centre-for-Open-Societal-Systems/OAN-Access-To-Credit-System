@@ -1,7 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { newLeadService, SendOtpAndCreateConsentResponse } from '../api/newLead.service';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { newLeadService } from '../api/newLead.service';
+import type { SendOtpAndCreateConsentResponse, SubmitConsentResponse, VerifyOtpResponse } from '@/lib/api/api.schemas';
 import { fetchLeadDetailsThunk } from './farmerSlice';
-import { initializeLead, clearForm, InitializeLeadPayload } from './actions';
+import { formatConsentDate } from './helpers';
+import { initializeLead, clearForm } from './actions';
 import type { RootState } from '@/store';
 
 interface ConsentState {
@@ -9,8 +11,11 @@ interface ConsentState {
   consentError: string | null;
   isVerifyingOtp: boolean;
   isOtpVerified: boolean;
+  isSubmittingConsent: boolean;
   consentRequestId: string | null;
   consentDate: string | null;
+  consentFormFilename: string | null;
+  consentFormBase64: string | null;
 }
 
 const initialState: ConsentState = {
@@ -18,36 +23,89 @@ const initialState: ConsentState = {
   consentError: null,
   isVerifyingOtp: false,
   isOtpVerified: false,
+  isSubmittingConsent: false,
   consentRequestId: null,
   consentDate: null,
+  consentFormFilename: null,
+  consentFormBase64: null,
 };
 
 export const searchFarmerConsent = createAsyncThunk<
   SendOtpAndCreateConsentResponse,
-  { farmerId: string; consentFormFilename: string; consentFormBase64: string; partnerName: string; leadId: string }
+  { farmerId: string; partnerName: string; leadId: string }
 >(
   'consent/searchConsent',
-  async ({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId }, { rejectWithValue }) => {
+  async ({ farmerId, leadId }, { rejectWithValue }) => {
     try {
-      return await newLeadService.sendOtpAndCreateConsent({ farmerId, consentFormFilename, consentFormBase64, partnerName, leadId });
+      return await newLeadService.sendOtpAndCreateConsent({ farmerId, leadId });
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to request consent');
     }
   }
 );
 
-export const verifyOtpThunk = createAsyncThunk(
+export const verifyOtpThunk = createAsyncThunk<
+  VerifyOtpResponse,
+  { otp_code: string; leadId: string },
+  { state: RootState }
+>(
   'consent/verifyOtp',
-  async (payload: { otp_code: string; leadId: string }, { dispatch, rejectWithValue }) => {
+  async (payload, { getState, rejectWithValue }) => {
     try {
-      const response = await newLeadService.verifyOtp({
+      const state = getState();
+      const consentRequestId = state.consent.consentRequestId;
+      if (!consentRequestId) {
+        throw new Error('No active consent request found. Please request OTP again.');
+      }
+      return await newLeadService.verifyOtp({
         leadId: payload.leadId,
+        consent_request: consentRequestId,
         otp_code: payload.otp_code
       });
-      await dispatch(fetchLeadDetailsThunk(payload.leadId));
-      return response;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Verification failed');
+    }
+  }
+);
+
+export const submitConsentThunk = createAsyncThunk<
+  SubmitConsentResponse,
+  {
+    leadId: string;
+    consent_type?: string;
+    consent_reason_id?: number;
+    validity_months?: number;
+    allowed_data_field_ids?: (number | string)[];
+    consentFormFilename: string;
+    consentFormBase64: string;
+  },
+  { state: RootState }
+>(
+  'consent/submitConsent',
+  async (payload, { getState, dispatch, rejectWithValue }) => {
+    try {
+      const state = getState();
+      const consentRequestId = state.consent.consentRequestId;
+      
+      if (!consentRequestId) {
+        throw new Error('Missing active consent request.');
+      }
+      
+      const response = await newLeadService.submitConsent({
+        lead_id: payload.leadId,
+        consent_request: consentRequestId,
+        consent_type: payload.consent_type,
+        consent_reason_id: payload.consent_reason_id,
+        validity_months: payload.validity_months,
+        consent_form_filename: payload.consentFormFilename,
+        consent_form_base64: payload.consentFormBase64,
+        allowed_data_field_ids: payload.allowed_data_field_ids,
+      });
+      
+      await dispatch(fetchLeadDetailsThunk({ leadId: payload.leadId, shouldPoll: true }));
+      return response;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to submit consent details');
     }
   }
 );
@@ -56,7 +114,7 @@ const consentSlice = createSlice({
   name: 'consent',
   initialState,
   reducers: {
-    clearConsentState(state) {
+    clearConsentState() {
       return initialState;
     }
   },
@@ -81,8 +139,21 @@ const consentSlice = createSlice({
         state.isVerifyingOtp = false;
         state.isOtpVerified = true;
       })
-      .addCase(verifyOtpThunk.rejected, (state) => {
+      .addCase(verifyOtpThunk.rejected, (state, action) => {
         state.isVerifyingOtp = false;
+        state.consentError = action.payload as string;
+      })
+      .addCase(submitConsentThunk.pending, (state) => {
+        state.isSubmittingConsent = true;
+        state.consentError = null;
+      })
+      .addCase(submitConsentThunk.fulfilled, (state) => {
+        state.isSubmittingConsent = false;
+        state.consentDate = formatConsentDate();
+      })
+      .addCase(submitConsentThunk.rejected, (state, action) => {
+        state.isSubmittingConsent = false;
+        state.consentError = action.payload as string;
       })
       .addCase(initializeLead, (state, action) => {
         const payload = action.payload ?? {};
@@ -92,6 +163,9 @@ const consentSlice = createSlice({
         state.consentError = null;
         state.isVerifyingOtp = false;
         state.isOtpVerified = false;
+        state.isSubmittingConsent = false;
+        state.consentFormFilename = null;
+        state.consentFormBase64 = null;
       })
       .addCase(clearForm, () => {
         return initialState;
@@ -103,4 +177,4 @@ export const { clearConsentState } = consentSlice.actions;
 
 export const selectConsentState = (state: RootState) => state.consent;
 
-export default consentSlice.reducer;
+export const consentReducer = consentSlice.reducer;

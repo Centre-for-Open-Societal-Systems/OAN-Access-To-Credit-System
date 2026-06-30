@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { ReactNode, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -34,7 +35,7 @@ export function LeadLayoutGrid({ children, sidebar, titleBanner, isViewMode = fa
             await dispatch(submitNewLeadThunk()).unwrap();
             setShowSuccessPopup(true);
         } catch (error) {
-            console.error("Failed to create lead:", error);
+            logger.error("Failed to create lead:", error);
             // Wait, previous code showed success popup even on error?
             // Yes, the original code had: catch(e) { setShowSuccessPopup(true); } 
             // We'll preserve that behavior or fix it? Let's fix it properly.

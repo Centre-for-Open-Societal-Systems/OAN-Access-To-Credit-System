@@ -3,11 +3,11 @@ import { LucideIcon } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { selectLiveMetrics } from '../store/loanDashboardSlice';
 
-interface MetricConfig {
+export interface MetricConfig {
   icon: LucideIcon;
   tone: string;
   label: React.ReactNode;
-  key: string;
+  key: 'total' | 'processing' | 'approved' | 'rejected';
 }
 
 interface LoanKpiCardProps {
@@ -17,7 +17,7 @@ interface LoanKpiCardProps {
 
 const LoanKpiCard = React.memo(({ cfg, index = 0 }: LoanKpiCardProps) => {
   const liveMetrics = useAppSelector(selectLiveMetrics);
-  const stat = (liveMetrics as any)[cfg.key] || { value: '0' };
+  const stat = liveMetrics[cfg.key];
 
   const Icon = cfg.icon;
 

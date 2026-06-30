@@ -20,7 +20,8 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-redux": "^9.3.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",
@@ -41,7 +42,10 @@
     ]
   },
   "overrides": {
-    "next": {
+    "postcss": "$postcss"
+  },
+  "pnpm": {
+    "overrides": {
       "postcss": "^8.5.10"
     }
   }

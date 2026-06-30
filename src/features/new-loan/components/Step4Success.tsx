@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { User, FileText, Calendar, Download, LayoutDashboard, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { resetForm } from '@/features/new-loan/store/newLoanFormSlice';
 import type { RootState } from '@/store';
-import LoanApplicationModal from '@/features/loans/components/LoanApplicationModal';
+import LoanApplicationModal from '@/features/loans/components/modals/LoanApplicationModal';
 import { LoanTableRow } from '@/features/loans/components/LoanTable';
 
 export function Step4Success() {

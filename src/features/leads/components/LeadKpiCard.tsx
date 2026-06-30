@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, FileText, CheckCircle2, XCircle, Users, CheckCircle, ClipboardList, FileCheck, Clock } from 'lucide-react';
+import { FileText, CheckCircle2, XCircle, Users, ClipboardList, FileCheck, Clock } from 'lucide-react';
 import { KpiStat } from '@/features/leads/types/leads.types';
 
 interface LeadKpiCardProps {
@@ -20,15 +20,6 @@ function getKpiIconCfg(id: string) {
 
 function LeadKpiCard({ stat, index }: LeadKpiCardProps) {
   const cfg = getKpiIconCfg(stat.id);
-  const TrendIcon = stat.trendUp === true ? TrendingUp : stat.trendUp === false ? TrendingDown : Minus;
-
-  const trendPill = stat.trendUp === true
-    ? 'bg-green-100 text-green-700'
-    : stat.trendUp === false
-      ? 'bg-red-100 text-red-600'
-      : 'bg-orange-100 text-orange-600';
-
-  const trendVal = stat.trend != null ? Number(stat.trend) : 0;
 
   return (
     <div

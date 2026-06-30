@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectActivities, fetchActivitiesThunk, addActivityNoteThunk } from '../store/newLeadSlice';
@@ -25,7 +26,7 @@ export function ActivitySection() {
         await dispatch(addActivityNoteThunk({ leadId, content: note })).unwrap();
         setNote('');
       } catch (error) {
-        console.error('Failed to add note', error);
+        logger.error('Failed to add note', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -41,7 +42,7 @@ export function ActivitySection() {
         await dispatch(addActivityNoteThunk({ leadId, content: message })).unwrap();
         e.target.value = '';
       } catch (error) {
-        console.error(`Failed to upload ${type}`, error);
+        logger.error(`Failed to upload ${type}`, error);
       } finally {
         setIsSubmitting(false);
       }
@@ -90,44 +91,42 @@ export function ActivitySection() {
       </div>
 
       <div className="flex flex-col w-full px-4 sm:px-6 pb-2 gap-3 mt-4">
-        {activities.map((activity) => (
-          <div key={activity.id} className="flex flex-col items-start p-4 sm:p-5 gap-3 w-full bg-white border border-[#F1F3F4] rounded-lg">
-            <div className="flex flex-row items-start w-full gap-3">
-              <div className="flex justify-center items-center shrink-0 w-10 h-10 bg-[#F1F3F4] rounded-full mt-0.5">
-                <span className="font-roboto font-bold text-[14px] text-[#111827]">
-                  {activity.author.substring(0, 2).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex flex-col items-start flex-1 min-w-0">
-                <div className="flex flex-row justify-between items-center w-full gap-2">
-                  <div className="flex flex-row flex-wrap items-center gap-2.5">
-                    <span className="font-roboto font-semibold text-[14px] text-[#111827] break-all">
-                      {activity.author}
-                    </span>
-                    <div className={`flex items-center shrink-0 px-2.5 py-1 border rounded font-roboto font-medium text-[12px] ${(() => {
-                      const tag = ((activity as any).title || activity.type || 'Field Visit').toLowerCase();
-                      if (tag.includes('agent note')) return 'bg-[#F3E8FF] border-[#E9D5FF] text-[#7E22CE]';
-                      if (tag.includes('status updated')) return 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]';
-                      if (tag.includes('credit info')) return 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]';
-                      if (tag.includes('assigned')) return 'bg-[#FFF7ED] border-[#FED7AA] text-[#C2410C]';
-                      if (tag.includes('visit')) return 'bg-[#ECFEFF] border-[#A5F3FC] text-[#0E7490]';
-                      return 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569]';
-                    })()
-                      }`}>
-                      {(activity as any).title || activity.type || 'Field Visit'}
-                    </div>
-                  </div>
-                  <span className="font-roboto font-normal text-[14px] text-[#6B7280] whitespace-nowrap shrink-0">
-                    {activity.timestamp}
+        {activities
+          .filter((activity) => (activity.title || '').toLowerCase().includes('agent note'))
+          .map((activity) => (
+            <div key={activity.id} className="flex flex-col items-start p-4 sm:p-5 gap-3 w-full bg-white border border-[#F1F3F4] rounded-lg">
+              <div className="flex flex-row items-start w-full gap-3">
+                <div className="flex justify-center items-center shrink-0 w-10 h-10 bg-[#F1F3F4] rounded-full mt-0.5">
+                  <span className="font-roboto font-bold text-[14px] text-[#111827]">
+                    {activity.author.substring(0, 2).toUpperCase()}
                   </span>
                 </div>
-                <p className="font-roboto font-normal text-[14px] leading-6 text-[#374151] w-full whitespace-pre-line mt-1.5">
-                  {activity.content}
-                </p>
+                <div className="flex flex-col items-start flex-1 min-w-0">
+                  <div className="flex flex-row justify-between items-center w-full gap-2">
+                    <div className="flex flex-row flex-wrap items-center gap-2.5">
+                      <span className="font-roboto font-semibold text-[14px] text-[#111827] break-all">
+                        {activity.author}
+                      </span>
+                      <div className={`flex items-center shrink-0 px-2.5 py-1 border rounded font-roboto font-medium text-[12px] ${(() => {
+                        const tag = (activity.title || '').toLowerCase();
+                        if (tag.includes('agent note')) return 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569]';
+                        return 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569]';
+                      })()
+                        }`}>
+                        {activity.title}
+                      </div>
+                    </div>
+                    <span className="font-roboto font-normal text-[14px] text-[#6B7280] whitespace-nowrap shrink-0">
+                      {activity.timestamp}
+                    </span>
+                  </div>
+                  <p className="font-roboto font-normal text-[14px] leading-6 text-[#374151] w-full whitespace-pre-line mt-1.5">
+                    {activity.content}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </section>
   );

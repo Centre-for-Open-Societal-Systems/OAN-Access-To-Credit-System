@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../../store';
 import { leadService } from '@/features/leads/api/lead.service';
 import type { GetLeadsParams, Lead, LeadSummaryResponse, LeadStatus } from '@/features/leads/types/leads.types';
@@ -6,6 +6,7 @@ import {
   updateLeadStatusThunk,
   updateVisitScheduleStatusThunk,
   fetchLeadDetailsThunk,
+  scheduleVisitThunk,
 } from '@/features/new-lead';
 
 import { normalizeLeadId } from '@/lib/utils';
@@ -18,11 +19,14 @@ function findLeadById(leads: Lead[], id: string): Lead | undefined {
 
 export const fetchLeads = createAsyncThunk(
   'leads/fetchLeads',
-  async (params: GetLeadsParams | undefined, { rejectWithValue }) => {
+  async (params: GetLeadsParams | undefined, { signal, rejectWithValue }) => {
     try {
-      const response = await leadService.getLeads(params);
+      const response = await leadService.getLeads(params, signal);
       return response;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw error;
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch leads');
     }
   }
@@ -149,6 +153,9 @@ const leadSlice = createSlice({
         state.totalCount = action.payload.totalCount;
       })
       .addCase(fetchLeads.rejected, (state, action) => {
+        // Ignore aborted requests (superseded by a newer query); the newer
+        // request's pending/fulfilled owns the loading and error state.
+        if (action.meta.aborted) return;
         state.isLeadsLoading = false;
         state.leadsError = action.payload as string;
       })
@@ -191,9 +198,21 @@ const leadSlice = createSlice({
         }
       )
       .addMatcher(
+        scheduleVisitThunk.fulfilled.match,
+        (state, action) => {
+          const { leadId, date } = action.payload.payload;
+          const lead = findLeadById(state.leads, leadId);
+          if (lead) {
+            lead.scheduleStatus = 'Scheduled';
+            lead.visitDate = date;
+          }
+        }
+      )
+      .addMatcher(
         fetchLeadDetailsThunk.fulfilled.match,
         (state, action) => {
-          const leadId = action.meta.arg;
+          const arg = action.meta.arg;
+          const leadId = typeof arg === 'string' ? arg : arg.leadId;
           const leadData = action.payload;
           if (leadData) {
             const lead = findLeadById(state.leads, leadId);
@@ -240,4 +259,4 @@ export const selectAdvFilters = (state: RootState) => state.leads.advFilters;
 export const selectFilteredLeads = (state: RootState) => state.leads.leads;
 
 
-export default leadSlice.reducer;
+export const leadReducer = leadSlice.reducer;

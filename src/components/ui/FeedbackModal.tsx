@@ -1,4 +1,4 @@
-import React from 'react';
+'use client';
 import { createPortal } from 'react-dom';
 
 export type FeedbackModalType = 'success' | 'error';

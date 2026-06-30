@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAssignmentState, selectIsLeadFinalized, assignLeadThunk } from '..';
-import AssignOwnerModal from './modals/AssignOwnerModal';
 import { Edit } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const AssignOwnerModal = dynamic(() => import('./modals/AssignOwnerModal'), {
+  ssr: false,
+});
+const FeedbackModal = dynamic(() => import('@/components/ui/FeedbackModal').then(mod => mod.FeedbackModal), {
+  ssr: false,
+});
 export function LeadAssignmentCard() {
   const { assignment } = useAppSelector(selectAssignmentState);
   const isFinalized = useAppSelector(selectIsLeadFinalized);
   const dispatch = useAppDispatch();
   const params = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
 
   const handleAssign = async (user: any) => {
     const activeLeadId = params?.id as string;
     if (!activeLeadId) {
-      alert("Error: Missing Lead ID");
+      setErrorFeedback("Missing Lead ID");
       return;
     }
     await dispatch(assignLeadThunk({
@@ -92,6 +100,13 @@ export function LeadAssignmentCard() {
         />
       )}
 
+      <FeedbackModal
+        isOpen={!!errorFeedback}
+        onClose={() => setErrorFeedback(null)}
+        type="error"
+        title="Error"
+        message={errorFeedback ?? ''}
+      />
     </section>
   );
 }

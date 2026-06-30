@@ -1,6 +1,21 @@
+import { z } from 'zod';
 import { fetchApi } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
 import type { ApiResponse } from '@/types/api';
+import type { LoanFormData } from '../types/loans.types';
+import {
+  loanApplicationFullSchema,
+  loanApplicationSummarySchema,
+  validateResponse,
+  type LoanApplicationFull,
+  type LoanApplicationSummary,
+} from '@/lib/api/api.schemas';
+
+// `LoanApplicationFull` / `LoanApplicationSummary` are the validated shapes for
+// `get_full_profile` / `get_all_loans`; their single source of truth is the Zod
+// schema in `@/lib/api/api.schemas`. Re-exported here so existing consumers keep
+// importing them from the service.
+export type { LoanApplicationFull, LoanApplicationSummary };
 
 export interface LoanApplication {
   id: string;
@@ -13,36 +28,7 @@ export interface LoanApplication {
   phone?: string;
   region?: string;
   loanTerm?: string;
-  formData?: any;
-}
-
-export interface LoanApplicationSummary {
-  application_id: string;
-  status: 'Draft' | 'Processing' | 'Approved' | 'Rejected';
-  step: number;
-  lead_id: string;
-  loan_amount: number;
-  loan_type: string;
-  location: string;
-  phone_number: string;
-  creation: string;
-}
-
-export interface LoanApplicationFull {
-  application_id: string;
-  lead_id: string;
-  status: 'Draft' | 'Processing' | 'Approved' | 'Rejected';
-  current_step: number | null;
-  farmer_profile: string;
-  phone_number: string;
-  location: string;
-  farmer_id: string;
-  consent_id: string;
-  loan_type: string;
-  loan_amount: number;
-  loan_reason: string;
-  loan_officer?: string;
-  [key: string]: unknown;
+  formData?: LoanFormData;
 }
 
 export interface LoanSummaryMetrics {
@@ -58,11 +44,13 @@ export interface LoanSummaryMetrics {
 }
 
 export interface SupportingDocument {
-  file_id: string;
+  name: string;
   file_name: string;
-  document_type: string;
+  file_url: string;
+  creation: string;
+  file_id?: string;
+  document_type?: string;
   is_verified?: boolean;
-  creation?: string;
   owner?: string;
 }
 
@@ -90,9 +78,9 @@ export interface GetLoansParams {
   max_loan_amount?: string;
   loan_type?: string;
   phone_number?: string;
+  loan_officer?: string; // user email, or the literal 'unassigned' (get_all_loans filter)
   from_date?: string;
   to_date?: string;
-  tab?: string;
   location?: string;
   lead_id?: string;
 }
@@ -109,7 +97,11 @@ export const loanService = {
     }
 
     const path = `oan_a2c.api.v1.loan_applications.get_all_loans?${searchParams.toString()}`;
-    return fetchApi(path, options) as Promise<ApiResponse<LoanApplicationSummary[]>>;
+    const response = await fetchApi(path, options) as ApiResponse<LoanApplicationSummary[]>;
+    return {
+      ...response,
+      data: validateResponse(z.array(loanApplicationSummarySchema), response?.data, 'get_all_loans'),
+    };
   },
 
   async getLoanSummary(): Promise<ApiResponse<LoanSummaryMetrics>> {
@@ -121,7 +113,13 @@ export const loanService = {
   },
 
   async getFullProfile(application_id: string): Promise<ApiResponse<LoanApplicationFull>> {
-    return fetchApi(`oan_a2c.api.v1.loan_applications.get_full_profile?application_id=${application_id}`) as Promise<ApiResponse<LoanApplicationFull>>;
+    const response = await fetchApi(
+      `oan_a2c.api.v1.loan_applications.get_full_profile?application_id=${application_id}`,
+    ) as ApiResponse<LoanApplicationFull>;
+    return {
+      ...response,
+      data: validateResponse(loanApplicationFullSchema, response?.data, 'get_full_profile'),
+    };
   },
 
   async getSupportingDocuments(application_id: string): Promise<ApiResponse<SupportingDocument[]>> {
@@ -164,10 +162,10 @@ export const loanService = {
     }) as Promise<ApiResponse<CreateLoanApplicationResponse>>;
   },
 
-  async updateLoanStatus(application_id: string, status: string): Promise<ApiResponse<null>> {
+  async updateLoanStatus(application_id: string, status: string, reason?: string, notes?: string): Promise<ApiResponse<null>> {
     return fetchApi('oan_a2c.api.v1.loan_applications.update_loan_status', {
       method: 'POST',
-      body: JSON.stringify({ application_id, status }),
+      body: JSON.stringify({ application_id, status, reason, notes }),
     }) as Promise<ApiResponse<null>>;
   },
 

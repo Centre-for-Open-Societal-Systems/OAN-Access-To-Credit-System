@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import { logger } from '@/lib/logger';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { prevStep, setStepAPI, submitApplicationAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
-import { updateLeadStatusThunk } from '@/features/new-lead/store/newLeadSlice';
 import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
-import { useRouter, useParams } from 'next/navigation';
-import { normalizeLeadId } from '@/lib/utils';
 
 export function Step3ReviewSubmit() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
-  const params = useParams();
-  const leadId = normalizeLeadId(params?.id as string);
   const { applicationId, loadingStates } = useSelector(selectLoanFormState);
 
   const [acknowledged, setAcknowledged] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [showValidationPopup, setShowValidationPopup] = useState(false);
 
-  // Background auto-save simulation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      handleSaveDraft();
-    }, 60000); // 60 seconds
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleSaveDraft = () => {
-    setIsSavingDraft(true);
-    setTimeout(() => {
-      setIsSavingDraft(false);
-      const now = new Date();
-      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setLastSaved(`Auto-saved at ${timeString}`);
-    }, 1000);
-  };
+  // Note: there is no draft save here. This is the review step and has no fields
+  // of its own — all loan data is entered in earlier steps and is already
+  // persisted (to sessionStorage via the store middleware and to the backend via
+  // the per-step thunks). A prior "auto-save" here was a label-only setTimeout
+  // that persisted nothing, so it was removed.
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +36,7 @@ export function Step3ReviewSubmit() {
       // Application submitted successfully
       await dispatch(setStepAPI(4)).unwrap();
     } catch (error) {
-      console.error("Failed to submit application", error);
+      logger.error("Failed to submit application", error);
       // Optional: Handle error UI here if needed
     }
   }
@@ -144,17 +127,8 @@ export function Step3ReviewSubmit() {
       {/* Bottom Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-6 shadow-sm mt-8 relative z-0 gap-6 sm:gap-0">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSavingDraft}
-            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-[#16335A] text-[#16335A] px-8 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
-          >
-            {isSavingDraft && <Loader2 className="h-4 w-4 animate-spin font-normal" />}
-            {isSavingDraft ? 'Saving...' : 'Save Draft'}
-          </button>
           <div className="flex items-center justify-center sm:justify-start gap-2 text-[15px] font-normal text-[#16335A]">
-            <Check className="h-5 w-5 text-[#16335A]" /> {lastSaved || 'Auto-saved'}
+            <Check className="h-5 w-5 text-[#16335A]" /> Your progress is saved automatically
           </div>
         </div>
 

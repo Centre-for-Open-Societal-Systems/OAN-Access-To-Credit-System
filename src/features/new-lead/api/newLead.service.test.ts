@@ -108,8 +108,6 @@ describe('newLeadService', () => {
 
       const result = await newLeadService.sendOtpAndCreateConsent({
         farmerId: 'FID-123',
-        consentFormFilename: 'consent.pdf',
-        consentFormBase64: 'base64str',
         leadId: 'LD-12345',
       });
 
@@ -118,10 +116,6 @@ describe('newLeadService', () => {
         body: JSON.stringify({
           lead_id: 'LD-12345',
           fayda_id: 'FID-123',
-          partner: 'AgriBank',
-          purpose: 'Loan for seeds and fertilizer',
-          consent_form_filename: 'consent.pdf',
-          consent_form_base64: 'base64str',
         }),
       });
       expect(result).toEqual(mockConsent);
@@ -133,8 +127,6 @@ describe('newLeadService', () => {
       await expect(
         newLeadService.sendOtpAndCreateConsent({
           farmerId: 'FID-123',
-          consentFormFilename: 'consent.pdf',
-          consentFormBase64: 'base64str',
         })
       ).rejects.toThrow('OTP service down');
     });
@@ -143,10 +135,10 @@ describe('newLeadService', () => {
   describe('verifyOtp', () => {
     it('should verify OTP and return consent details', async () => {
       const mockVerifyResponse = {
+        lead_id: 'LD-12345',
         consent_request: 'REQ-123',
-        openg2p_consent_id: 'G2P-456',
-        consent_receipt: 'REC-789',
-        status: 'Granted',
+        transaction_id: 'TX-999',
+        status: 'OTP Verified',
       };
       vi.mocked(fetchApi).mockResolvedValue({
         status: 'success',
@@ -155,13 +147,15 @@ describe('newLeadService', () => {
 
       const result = await newLeadService.verifyOtp({
         leadId: 'LD-12345',
+        consent_request: 'REQ-123',
         otp_code: '123456',
       });
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.verify_otp_for_lead', {
+      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.verify_otp', {
         method: 'POST',
         body: JSON.stringify({
           lead_id: 'LD-12345',
+          consent_request: 'REQ-123',
           otp_code: '123456',
         }),
       });
@@ -171,6 +165,7 @@ describe('newLeadService', () => {
     it('should throw an error when leadId is missing', async () => {
       await expect(
         newLeadService.verifyOtp({
+          consent_request: 'REQ-123',
           otp_code: '123456',
         })
       ).rejects.toThrow('leadId is required for OTP verification');
@@ -182,9 +177,67 @@ describe('newLeadService', () => {
       await expect(
         newLeadService.verifyOtp({
           leadId: 'LD-123',
+          consent_request: 'REQ-123',
           otp_code: '000000',
         })
       ).rejects.toThrow('Invalid OTP code');
+    });
+  });
+
+  describe('submitConsent', () => {
+    it('should submit consent with metadata and return response', async () => {
+      const mockSubmitResponse = {
+        lead_id: 'LD-12345',
+        consent_request: 'REQ-123',
+        status: 'Approved',
+        openg2p_consent_id: 'G2P-456',
+        consent_receipt: 'REC-789',
+        farmer_preview: {
+          given_name: 'John',
+          family_name: 'Doe',
+          email: '',
+          phone_no: ['1234567890'],
+        },
+      };
+
+      vi.mocked(fetchApi).mockResolvedValue({
+        status: 'success',
+        data: mockSubmitResponse,
+      });
+
+      const payload = {
+        lead_id: 'LD-12345',
+        consent_request: 'REQ-123',
+        consent_type: 'specific',
+        validity_months: 12,
+        consent_form_filename: 'consent.pdf',
+        consent_form_base64: 'base64str',
+        allowed_data_field_ids: ['given_name', 'family_name'],
+      };
+
+      const result = await newLeadService.submitConsent(payload);
+
+      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.submit_consent', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...payload,
+          lead_id: 'LD-12345',
+        }),
+      });
+      expect(result).toEqual(mockSubmitResponse);
+    });
+
+    it('should propagate error when submit fetchApi rejects', async () => {
+      vi.mocked(fetchApi).mockRejectedValue(new Error('Failed to approve consent'));
+
+      await expect(
+        newLeadService.submitConsent({
+          lead_id: 'LD-12345',
+          consent_request: 'REQ-123',
+          consent_form_filename: 'consent.pdf',
+          consent_form_base64: 'base64str',
+        })
+      ).rejects.toThrow('Failed to approve consent');
     });
   });
 
@@ -210,6 +263,12 @@ describe('newLeadService', () => {
         location: 'Ambo',
         email: 'alice@example.com',
         gender: 'Female',
+        consent_type: '',
+        purpose: '',
+        requested_data_fields: [],
+        validity_from: '',
+        validity_to: '',
+        websub_delivered_at: '',
       });
     });
 
@@ -326,7 +385,7 @@ describe('newLeadService', () => {
     });
   });
 
-  describe('getSpecificLead', () => {
+  describe('getLeadProfile', () => {
     it('should fetch and map specific lead details on success', async () => {
       const mockLeads = [
         {
@@ -341,7 +400,7 @@ describe('newLeadService', () => {
         data: mockLeads,
       });
 
-      const result = await newLeadService.getSpecificLead('LD-123');
+      const result = await newLeadService.getLeadProfile('LD-123');
       expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_leads?search_query=LD-123');
       expect(result).toEqual([
         {
@@ -359,13 +418,13 @@ describe('newLeadService', () => {
         data: null,
       });
 
-      const result = await newLeadService.getSpecificLead('LD-123');
+      const result = await newLeadService.getLeadProfile('LD-123');
       expect(result).toEqual([]);
     });
 
     it('should propagate error when fetchApi rejects', async () => {
       vi.mocked(fetchApi).mockRejectedValue(new Error('API failure'));
-      await expect(newLeadService.getSpecificLead('LD-123')).rejects.toThrow('API failure');
+      await expect(newLeadService.getLeadProfile('LD-123')).rejects.toThrow('API failure');
     });
   });
 
@@ -505,15 +564,6 @@ describe('newLeadService', () => {
         body: JSON.stringify({ lead_id: 'LD-123', content: 'Verification complete' }),
       });
       expect(result).toEqual(mockResponse);
-    });
-
-    it('should mock note creation immediately if lead ID is "new"', async () => {
-      const result = await newLeadService.addActivityNote({
-        leadId: 'new',
-        content: 'Offline note',
-      });
-      expect(fetchApi).not.toHaveBeenCalled();
-      expect(result.comment_id).toContain('new-');
     });
 
     it('should propagate error when fetchApi rejects', async () => {

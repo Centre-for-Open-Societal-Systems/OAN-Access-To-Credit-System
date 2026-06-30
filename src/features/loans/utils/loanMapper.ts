@@ -1,5 +1,90 @@
-export function mapLoanRowToFormFields(row: any): Record<string, any> {
-  const formFields: Record<string, any> = {
+export interface RawLoanRow {
+  loan_type?: string;
+  type?: string;
+  purpose_of_loan?: string;
+  requested_loan_amount?: string | number;
+  requested_amount?: string | number;
+  amount?: string | number;
+  loan_duration_months?: string | number;
+  loan_duration?: string | number;
+  nearest_branch_responsible_for_loan_administration?: string;
+  nearest_branch?: string;
+  primary_crop?: string;
+  crop_variety?: string;
+  crop_address?: string;
+  quantity_requested?: string | number;
+  unit_price?: string | number;
+  total_seed_cost?: string | number;
+  land_size?: string | number;
+  expected_yield?: string | number;
+  expected_harvest_date?: string;
+  fertilizer_used?: string;
+  other_farming_activities?: string;
+  farmer_group?: string;
+  animal_reared?: string;
+  farm_equipment?: string;
+  farm_size_hectares?: string | number;
+  region?: string;
+  zone?: string;
+  woreda?: string;
+  kebele?: string;
+  harvest_aggregator_type?: string;
+  cooperative_name?: string;
+  dap_quantity?: string | number;
+  urea_quantity?: string | number;
+  fertilizer_unit_price?: string | number;
+  total_fertilizer_cost?: string | number;
+  agrochemical_type?: string;
+  crop_protection_quantity?: string | number;
+  crop_protection_unit_price?: string | number;
+  total_crop_protection_cost?: string | number;
+  selected_input_supplier?: string;
+  male_farmer_contribution?: string | number;
+  female_farmer_contribution?: string | number;
+  crop_insurance_premium?: string | number;
+  bank_account_name?: string;
+  bank_account_number?: string;
+  bank_name?: string;
+  bank_swift_code?: string;
+  mobile_account_name?: string;
+  mobile_payments_number?: string;
+  total_amount_borrowing?: string | number;
+  tax_id?: string;
+  full_name?: string;
+  last_name?: string;
+  mobile_phone?: string;
+  date_of_birth?: string;
+  gender?: string;
+  id_type?: string;
+  id_number?: string;
+  language?: string;
+  land_size_acres?: string | number;
+  farm_id?: string;
+  farm_polygon?: string;
+  land_acreage?: string | number;
+  farm_land_number?: string;
+  marital_status?: string;
+  size_of_family?: string | number;
+  number_of_children?: string | number;
+  no_of_females_family?: string | number;
+  no_of_males_family?: string | number;
+  family_member_owns_land?: string;
+  source_of_income?: string;
+  education_level?: string;
+  total_farmland_landowner?: string | number;
+  total_farmland_crop_sharing?: string | number;
+  total_farmland_rented?: string | number;
+  certification_id?: string;
+  certification_photo?: string;
+  farmland_size_hectares?: string | number;
+  land_ownership_status?: string;
+  soil_fertility?: string;
+  moisture_levels?: string;
+  [key: string]: unknown;
+}
+
+export function mapLoanRowToFormFields(row: RawLoanRow): Record<string, unknown> {
+  const formFields: Record<string, unknown> = {
     // Step 1: Loan Details
     loanType: row.loan_type || row.type || '',
     loanPurpose: row.purpose_of_loan || '',

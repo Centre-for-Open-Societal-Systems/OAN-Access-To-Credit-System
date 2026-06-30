@@ -1,90 +1,30 @@
+'use client';
+
+import { logger } from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { nextStepAPI, prevStepAPI, setFormData as setFormDataAction } from '@/features/new-loan/store/newLoanFormSlice';
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { TextField } from '@/components/ui/TextField';
+import { maskSensitiveId } from '@/lib/utils';
 import { SelectField } from '@/components/ui/SelectField';
 import { GENDER_OPTIONS } from '@/features/loans/constants/loans.constants';
-import { loanService } from '@/features/loans/api/loan.service';
+import { loanService, type LoanApplicationFull } from '@/features/loans/api/loan.service';
 import type { AppDispatch, RootState } from '@/store';
 
-const DEFAULT_FARMER_DETAILS = {
-  firstName: '',
-  lastName: '',
-  mobilePhone: '',
-  dateOfBirth: '',
-  gender: '',
-  woreda: '',
-  kebele: '',
-  idType: '',
-  idNumber: '',
-  language: '',
-  landSize: '',
-  farmId: '',
-  farmPolygon: '',
-  landAcreage: '',
-  farmLandNumber: '',
-  maritalStatus: '',
-  sizeOfFamily: '',
-  numberOfChildren: '',
-  noOfFemales: '',
-  noOfMales: '',
-  familyMemberOwnsLand: '',
-  sourceOfIncome: '',
-  educationLevel: '',
-  totalFarmlandLandowner: '',
-  totalFarmlandCropSharing: '',
-  totalFarmlandRented: '',
-  certificationId: '',
-  certificationPhoto: '',
-  farmlandSizeHectares: '',
-  landOwnershipStatus: '',
-  soilFertility: '',
-  moistureLevels: '',
-};
-
-type FarmerDetails = typeof DEFAULT_FARMER_DETAILS;
-
-const API_FIELD_MAP: Record<keyof FarmerDetails, string> = {
-  firstName: 'first_name',
-  lastName: 'last_name',
-  mobilePhone: 'phone_number',
-  dateOfBirth: 'date_of_birth',
-  gender: 'gender',
-  woreda: 'woreda',
-  kebele: 'kebele',
-  idType: 'id_type',
-  idNumber: 'id_number',
-  language: 'language',
-  landSize: 'land_size',
-  farmId: 'farm_id',
-  farmPolygon: 'farm_polygon',
-  landAcreage: 'land_acreage',
-  farmLandNumber: 'farm_land_number',
-  maritalStatus: 'marital_status',
-  sizeOfFamily: 'size_of_family',
-  numberOfChildren: 'number_of_children',
-  noOfFemales: 'no_of_females_family',
-  noOfMales: 'no_of_males_family',
-  familyMemberOwnsLand: 'family_member_owns_land_independently',
-  sourceOfIncome: 'source_of_income',
-  educationLevel: 'education_level',
-  totalFarmlandLandowner: 'total_farmland_size_as_landowner',
-  totalFarmlandCropSharing: 'total_farmland_size_as_crop_sharing',
-  totalFarmlandRented: 'total_farmland_size_as_rented',
-  certificationId: 'certification_id',
-  certificationPhoto: 'certification_photo_url',
-  farmlandSizeHectares: 'farmland_size_hectares',
-  landOwnershipStatus: 'land_ownership_status',
-  soilFertility: 'soil_fertility_minerals',
-  moistureLevels: 'moisture_levels',
-};
+// Every form field is a read-only string input. FORM_SECTIONS (below) is the
+// single source of truth for which fields exist; there's no separate interface
+// to keep in sync. Keys are the `key` values declared in the field config.
+export type FarmerDetails = Record<string, string>;
 
 interface FieldConfig {
-  key: keyof FarmerDetails;
+  key: string;
   label: string;
+  apiKey: string;
   type?: 'text' | 'select';
   options?: typeof GENDER_OPTIONS;
+  // Masked by default in the UI (e.g. National/Fayda ID); revealed on demand.
+  sensitive?: boolean;
 }
 
 interface SectionConfig {
@@ -98,72 +38,83 @@ const FORM_SECTIONS: SectionConfig[] = [
     title: 'Basic Information',
     gridCols: 'lg:grid-cols-3',
     fields: [
-      { key: 'firstName', label: 'First Name' },
-      { key: 'lastName', label: 'Last Name' },
-      { key: 'mobilePhone', label: 'Mobile Phone' },
-      { key: 'dateOfBirth', label: 'Date of Birth' },
-      { key: 'gender', label: 'Gender', type: 'select', options: GENDER_OPTIONS },
-      { key: 'woreda', label: 'Woreda' },
-      { key: 'kebele', label: 'Kebele' },
-      { key: 'idType', label: 'ID Type' },
-      { key: 'idNumber', label: 'ID Number' },
-      { key: 'language', label: 'Language' },
+      { key: 'firstName', label: 'First Name', apiKey: 'first_name' },
+      { key: 'lastName', label: 'Last Name', apiKey: 'last_name' },
+      { key: 'mobilePhone', label: 'Mobile Phone', apiKey: 'phone_number' },
+      { key: 'dateOfBirth', label: 'Date of Birth', apiKey: 'date_of_birth' },
+      { key: 'gender', label: 'Gender', apiKey: 'gender', type: 'select', options: GENDER_OPTIONS },
+      { key: 'woreda', label: 'Woreda', apiKey: 'woreda' },
+      { key: 'kebele', label: 'Kebele', apiKey: 'kebele' },
+      { key: 'idType', label: 'ID Type', apiKey: 'id_type' },
+      { key: 'idNumber', label: 'ID Number', apiKey: 'id_number', sensitive: true },
+      { key: 'language', label: 'Language', apiKey: 'language' },
     ],
   },
   {
     title: 'Land and Crop Information',
     gridCols: 'lg:grid-cols-3',
     fields: [
-      { key: 'landSize', label: 'Land Size (Acres)' },
-      { key: 'farmId', label: 'Farm ID' },
-      { key: 'farmPolygon', label: 'Farm Polygon' },
-      { key: 'landAcreage', label: 'Land Acreage' },
-      { key: 'farmLandNumber', label: 'Farm Land Number' },
+      { key: 'landSize', label: 'Land Size (Acres)', apiKey: 'land_size' },
+      { key: 'farmId', label: 'Farm ID', apiKey: 'farm_id' },
+      { key: 'farmPolygon', label: 'Farm Polygon', apiKey: 'farm_polygon' },
+      { key: 'landAcreage', label: 'Land Acreage', apiKey: 'land_acreage' },
+      { key: 'farmLandNumber', label: 'Farm Land Number', apiKey: 'farm_land_number' },
     ],
   },
   {
     title: 'Socio Economic Information',
     gridCols: 'lg:grid-cols-3',
     fields: [
-      { key: 'maritalStatus', label: 'Marital Status' },
-      { key: 'sizeOfFamily', label: 'Size of Family' },
-      { key: 'numberOfChildren', label: 'Number of Children' },
-      { key: 'noOfFemales', label: 'No. of Females (Family)' },
-      { key: 'noOfMales', label: 'No. of Males (Family)' },
-      { key: 'familyMemberOwnsLand', label: 'A Family Member Owns Land Independently' },
-      { key: 'sourceOfIncome', label: 'Source of Income' },
-      { key: 'educationLevel', label: 'Education Level' },
+      { key: 'maritalStatus', label: 'Marital Status', apiKey: 'marital_status' },
+      { key: 'sizeOfFamily', label: 'Size of Family', apiKey: 'size_of_family' },
+      { key: 'numberOfChildren', label: 'Number of Children', apiKey: 'number_of_children' },
+      { key: 'noOfFemales', label: 'No. of Females (Family)', apiKey: 'no_of_females_family' },
+      { key: 'noOfMales', label: 'No. of Males (Family)', apiKey: 'no_of_males_family' },
+      { key: 'familyMemberOwnsLand', label: 'A Family Member Owns Land Independently', apiKey: 'family_member_owns_land_independently' },
+      { key: 'sourceOfIncome', label: 'Source of Income', apiKey: 'source_of_income' },
+      { key: 'educationLevel', label: 'Education Level', apiKey: 'education_level' },
     ],
   },
   {
     title: 'Land, Crop and Livestock Information',
     gridCols: 'lg:grid-cols-3',
     fields: [
-      { key: 'totalFarmlandLandowner', label: 'Total Farmland Size as Landowner' },
-      { key: 'totalFarmlandCropSharing', label: 'Total Farmland Size as Crop Sharing' },
-      { key: 'totalFarmlandRented', label: 'Total Farmland Size as Rented' },
-      { key: 'certificationId', label: 'Certification ID' },
-      { key: 'certificationPhoto', label: 'Certification Photo' },
+      { key: 'totalFarmlandLandowner', label: 'Total Farmland Size as Landowner', apiKey: 'total_farmland_size_as_landowner' },
+      { key: 'totalFarmlandCropSharing', label: 'Total Farmland Size as Crop Sharing', apiKey: 'total_farmland_size_as_crop_sharing' },
+      { key: 'totalFarmlandRented', label: 'Total Farmland Size as Rented', apiKey: 'total_farmland_size_as_rented' },
+      { key: 'certificationId', label: 'Certification ID', apiKey: 'certification_id' },
+      { key: 'certificationPhoto', label: 'Certification Photo', apiKey: 'certification_photo_url' },
     ],
   },
   {
     title: 'Agronomic Data',
     gridCols: 'lg:grid-cols-4',
     fields: [
-      { key: 'farmlandSizeHectares', label: 'Farmland Size (Hectares)' },
-      { key: 'landOwnershipStatus', label: 'Land Ownership Status' },
-      { key: 'soilFertility', label: 'Soil Fertility / Minerals' },
-      { key: 'moistureLevels', label: 'Moisture Levels' },
+      { key: 'farmlandSizeHectares', label: 'Farmland Size (Hectares)', apiKey: 'farmland_size_hectares' },
+      { key: 'landOwnershipStatus', label: 'Land Ownership Status', apiKey: 'land_ownership_status' },
+      { key: 'soilFertility', label: 'Soil Fertility / Minerals', apiKey: 'soil_fertility_minerals' },
+      { key: 'moistureLevels', label: 'Moisture Levels', apiKey: 'moisture_levels' },
     ],
   },
 ];
 
-function mapApiToFarmerDetails(data: Record<string, any>): FarmerDetails {
-  const result = {} as FarmerDetails;
-  (Object.keys(API_FIELD_MAP) as Array<keyof FarmerDetails>).forEach((key) => {
-    const apiKey = API_FIELD_MAP[key];
-    const val = data[apiKey];
-    result[key] = (val !== undefined && val !== null) ? val.toString() : '';
+// Empty string for every configured field — derived from FORM_SECTIONS so the
+// default shape can never drift from the rendered fields.
+const DEFAULT_FARMER_DETAILS: FarmerDetails = FORM_SECTIONS.reduce<FarmerDetails>(
+  (acc, section) => {
+    section.fields.forEach((field) => { acc[field.key] = ''; });
+    return acc;
+  },
+  {},
+);
+
+function mapApiToFarmerDetails(data: LoanApplicationFull): FarmerDetails {
+  const result: FarmerDetails = {};
+  FORM_SECTIONS.forEach((section) => {
+    section.fields.forEach((field) => {
+      const val = data[field.apiKey as keyof LoanApplicationFull];
+      result[field.key] = (val !== undefined && val !== null) ? String(val) : '';
+    });
   });
   return result;
 }
@@ -185,6 +136,11 @@ export function Step2FarmerDetails() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  // Tracks which sensitive fields (by key) the user has chosen to reveal.
+  const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>({});
+
+  const toggleReveal = (key: string) =>
+    setRevealedFields((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
     async function loadProfile() {
@@ -196,7 +152,7 @@ export function Step2FarmerDetails() {
         
         setFormData(mapApiToFarmerDetails(data));
       } catch (err) {
-        console.error("Failed to load full profile:", err);
+        logger.error("Failed to load full profile:", err);
       } finally {
         setIsLoadingProfile(false);
       }
@@ -248,18 +204,42 @@ export function Step2FarmerDetails() {
                   <SelectField
                     key={field.key}
                     label={field.label}
-                    value={formData[field.key]}
+                    value={formData[field.key] ?? ''}
                     options={field.options || []}
                     onChange={handleChange(field.key)}
                     disabled
                   />
                 );
               }
+              const rawValue = formData[field.key] ?? '';
+              if (field.sensitive) {
+                const isRevealed = !!revealedFields[field.key];
+                const displayValue = isRevealed || !rawValue ? rawValue : maskSensitiveId(rawValue);
+                return (
+                  <div key={field.key} className="relative">
+                    <TextField
+                      label={field.label}
+                      value={displayValue}
+                      readOnly
+                    />
+                    {rawValue && (
+                      <button
+                        type="button"
+                        onClick={() => toggleReveal(field.key)}
+                        className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label={isRevealed ? `Hide ${field.label}` : `Reveal ${field.label}`}
+                      >
+                        {isRevealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    )}
+                  </div>
+                );
+              }
               return (
                 <TextField
                   key={field.key}
                   label={field.label}
-                  value={formData[field.key]}
+                  value={rawValue}
                   onChange={handleChange(field.key)}
                   readOnly
                 />

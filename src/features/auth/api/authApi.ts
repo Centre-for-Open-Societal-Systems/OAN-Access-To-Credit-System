@@ -1,11 +1,10 @@
 
-export interface RawUserResponse {
-  email: string;
-  full_name: string;
-  roles: string[];
-  bank: string | null;
-  [key: string]: unknown;
-}
+import { fetchApi } from '@/lib/api/fetchApi';
+import { rawUserResponseSchema, validateResponse, type RawUserResponse } from '@/lib/api/api.schemas';
+
+// `RawUserResponse` is the validated `get_me` shape; its single source of truth
+// is the Zod schema in `@/lib/api/api.schemas`.
+export type { RawUserResponse };
 
 export interface LoginApiResponse {
   success?: boolean;
@@ -40,4 +39,16 @@ export async function loginUser({ usr, pwd }: LoginCredentials): Promise<RawUser
   }
 
   return data.user;
+}
+
+export async function getMe(): Promise<RawUserResponse> {
+  const data = await fetchApi('oan_a2c.api.auth.get_me', {
+    method: 'GET',
+  });
+
+  if (!data?.data) {
+    throw new Error('Malformed get_me API response');
+  }
+
+  return validateResponse(rawUserResponseSchema, data.data, 'auth.get_me');
 }

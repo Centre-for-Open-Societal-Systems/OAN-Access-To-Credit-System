@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CheckCircle2 } from 'lucide-react';
 
@@ -48,9 +48,9 @@ export function ConsentDetailsModal({
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {(requestedDataFields || []).map((item, index) => (
+            {(requestedDataFields || []).map((item) => (
               <div
-                key={index}
+                key={item.field_name}
                 className="flex items-center p-4 gap-3 bg-[#F0FDFA] border border-[#A7F3D0] rounded-lg"
               >
                 <CheckCircle2 size={24} className="text-[#10B981] shrink-0" fill="#10B981" color="white" />

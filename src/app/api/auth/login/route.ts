@@ -1,7 +1,14 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
+import { env } from '@/lib/env';
+import { checkCsrf } from '@/lib/csrf';
 
 export async function POST(request: Request) {
   try {
+    // CSRF: reject cross-origin login attempts.
+    const csrfError = checkCsrf(request);
+    if (csrfError) return csrfError;
+
     const body = await request.json();
     const usr = body?.usr;
     const pwd = body?.pwd;
@@ -10,15 +17,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Missing credentials in request' }, { status: 400 });
     }
 
-    // Use the base URL from .env
-    const baseUrl = process.env.API_BASE_URL;
-
-    if (!baseUrl) {
-      return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
-    }
-
     // Call external API using a clean slate (like Postman)
-    const response = await fetch(`${baseUrl}/api/method/oan_a2c.api.auth.login`, {
+    const response = await fetch(`${env.API_BASE_URL}/api/method/oan_a2c.api.auth.login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     return nextResponse;
   } catch (error) {
-    console.error('Login Proxy Error:', error);
+    logger.error('Login Proxy Error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
 
   }

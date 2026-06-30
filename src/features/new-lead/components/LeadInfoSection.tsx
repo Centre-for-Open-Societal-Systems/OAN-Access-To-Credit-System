@@ -1,13 +1,10 @@
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectLeadSource, selectLeadSourcesOptions, selectIsLeadFinalized, setLeadSource, setLeadStatus } from '../store/newLeadSlice';
+import { useAppSelector } from '@/store/hooks';
+import { selectLeadSource } from '../store/newLeadSlice';
 import { useParams } from 'next/navigation';
 import { FileText } from 'lucide-react';
 
 export function LeadInfoSection() {
-  const dispatch = useAppDispatch();
   const leadSource = useAppSelector(selectLeadSource);
-  const leadSourcesOptions = useAppSelector(selectLeadSourcesOptions);
-  const isFinalized = useAppSelector(selectIsLeadFinalized);
   const params = useParams();
   const leadId = params?.id as string;
 
@@ -43,26 +40,12 @@ export function LeadInfoSection() {
           <label className="text-[15px] font-semibold text-[#232F34]">
             Lead Source
           </label>
-          {leadId || isFinalized ? (
-            <input
-              type="text"
-              value={leadSource || 'Call Campaign'}
-              readOnly
-              className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
-            />
-          ) : (
-            <select
-              value={leadSource}
-              disabled={isFinalized}
-              onChange={(e) => dispatch(setLeadSource(e.target.value))}
-              className="appearance-none w-full h-[42px] rounded-md border border-gray-300 px-4 text-[15px] text-[#232F34] focus:outline-none focus:ring-2 focus:ring-[#16335A]/20"
-            >
-              <option value="" disabled>Select Source</option>
-              {leadSourcesOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          )}
+          <input
+            type="text"
+            value={leadSource || 'Agent Entry'}
+            readOnly
+            className="w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none bg-gray-50"
+          />
         </div>
       </div>
     </section>

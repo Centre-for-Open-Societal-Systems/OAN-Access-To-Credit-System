@@ -1,21 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'next/navigation';
 import { X, ShieldCheck, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { verifyOtpThunk, selectConsentState, selectFarmerState } from '../..';
+import { verifyOtpThunk, selectConsentState } from '../..';
+
+// Seconds the farmer must wait before a code can be resent.
+const RESEND_COOLDOWN_SECONDS = 60;
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   farmerId: string;
   maskedPhone?: string;
+  /** Re-requests an OTP. Resolves to true when a new code was sent. */
+  onResend?: () => Promise<boolean>;
 }
 
-export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }: OTPVerificationModalProps) {
+export function OTPVerificationModal({ isOpen, onClose, farmerId: _farmerId, maskedPhone, onResend }: OTPVerificationModalProps) {
   const dispatch = useAppDispatch();
-  const { isVerifyingOtp, consentRequestId } = useAppSelector(selectConsentState);
-  const { farmerDetails } = useAppSelector(selectFarmerState);
+  const { isVerifyingOtp } = useAppSelector(selectConsentState);
   const params = useParams();
   const leadId = params?.id as string || '';
 
@@ -24,6 +29,8 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [mounted, setMounted] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -33,12 +40,40 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
     if (isOpen) {
       setOtp(Array(6).fill(''));
       setError(null);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
       // Auto-focus first input when opened
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
   }, [isOpen]);
 
+  // Tick down the resend cooldown while the modal is open.
+  useEffect(() => {
+    if (!isOpen || resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen, resendCooldown]);
+
   if (!isOpen || !mounted) return null;
+
+  const handleResend = async () => {
+    if (!onResend || resendCooldown > 0 || isResending) return;
+    setIsResending(true);
+    setError(null);
+    try {
+      const sent = await onResend();
+      if (sent) {
+        setOtp(Array(6).fill(''));
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
+        inputRefs.current[0]?.focus();
+      } else {
+        setError('Failed to resend code. Please try again.');
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;
@@ -59,13 +94,13 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text/plain').slice(0, 6).split('');
-    if (pastedData.some(char => isNaN(Number(char)))) return;
+    if (pastedData.some((char: string) => isNaN(Number(char)))) return;
 
     const newOtp = [...otp];
-    pastedData.forEach((char, index) => {
+    pastedData.forEach((char: string, index: number) => {
       if (index < 6) newOtp[index] = char;
     });
     setOtp(newOtp);
@@ -84,7 +119,7 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
 
     setError(null);
     if (!leadId) {
-      alert("Missing Lead ID. Please try again.");
+      setError("Missing Lead ID. Please try again.");
       return;
     }
 
@@ -188,9 +223,20 @@ export function OTPVerificationModal({ isOpen, onClose, farmerId, maskedPhone }:
                 <span className="font-inter font-normal text-[14px] leading-5 text-[#6B7280]">
                   Didn't receive the code?
                 </span>
-                <button type="button" className="font-inter font-medium text-[14px] leading-5 text-[#9CA3AF] hover:text-[#4B5563] transition-colors">
-                  Resend Code
-                </button>
+                {resendCooldown > 0 ? (
+                  <span className="font-inter font-medium text-[14px] leading-5 text-[#9CA3AF]">
+                    Resend in {resendCooldown}s
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending || !onResend}
+                    className="font-inter font-medium text-[14px] leading-5 text-[#16A34A] hover:text-[#15803D] transition-colors disabled:text-[#9CA3AF] disabled:cursor-not-allowed"
+                  >
+                    {isResending ? 'Resending...' : 'Resend Code'}
+                  </button>
+                )}
               </div>
 
             </div>

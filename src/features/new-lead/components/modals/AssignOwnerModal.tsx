@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Loader2 } from 'lucide-react';
@@ -64,7 +65,7 @@ export default function AssignOwnerModal({
           })));
         }
       } catch (err) {
-        console.error('Failed to fetch assignable users', err);
+        logger.error('Failed to fetch assignable users', err);
       } finally {
         if (active) setIsLoading(false);
       }

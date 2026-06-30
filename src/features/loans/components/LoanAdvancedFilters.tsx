@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, SlidersHorizontal, ChevronDown, Calendar, Check } from 'lucide-react';
+import { X, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { AdvancedFilters, selectAdvancedFilters, setAdvancedFilters, clearAdvancedFilters } from '../store/loanDashboardSlice';
+import { selectAdvancedFilters, setAdvancedFilters } from '../store/loanDashboardSlice';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 
 interface LoanAdvancedFiltersProps {
@@ -88,15 +88,8 @@ export default function LoanAdvancedFilters({ isOpen, onClose }: LoanAdvancedFil
       }
       setTempIndex(amtIdx);
 
-      if (!currentFilters.dateFrom && !currentFilters.dateTo) {
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        setDateFrom(todayStr);
-        setDateTo(todayStr);
-        setQuickDate('Today');
-      } else {
-        setQuickDate('');
-      }
+      // Removed automatic date setting to 'Today'
+      setQuickDate(currentFilters.dateFrom || currentFilters.dateTo ? '' : quickDate);
     }
   }, [isOpen, currentFilters]);
 

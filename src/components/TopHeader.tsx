@@ -1,38 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import {
   Bell,
   ChevronDown,
-  CircleHelp,
-  ClipboardList,
   Database,
   Globe,
-  LockKeyhole,
   LogOut,
-  MessageSquare,
   Settings,
   UserRound,
   Languages,
-  Check,
 } from 'lucide-react';
 import { selectOfficerName, selectOfficerRole } from '@/features/auth/store/authSlice';
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useAppSelector } from '@/store/hooks'
 import menuToggleArrow from './menu-toggle-arrow.svg';
 import menuToggleBars from './menu-toggle-bars.svg';
 
 import './TopHeader.module.scss'; // keyframe animations only
-
-const profileQuickLinks = [
-  { label: 'Profile', icon: UserRound },
-  { label: 'Messages', icon: MessageSquare },
-  { label: 'Taskboard', icon: ClipboardList },
-  { label: 'Help', icon: CircleHelp },
-];
-
-const profileActions = [
-  { label: 'Settings', icon: Settings, badge: 'New' },
-  { label: 'Lock screen', icon: LockKeyhole },
-];
 
 const mockNotifications = [
   {
@@ -76,10 +60,14 @@ interface TopHeaderProps {
 }
 
 function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 'Dashboard' }: TopHeaderProps) {
+  const params = useParams();
+  const leadId = params?.id as string | undefined;
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('EN');
   const [notifications, setNotifications] = useState(mockNotifications);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -93,11 +81,12 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
   const rawOfficerName = useAppSelector(selectOfficerName);
   const rawOfficerRole = useAppSelector(selectOfficerRole);
 
-  const officerName = rawOfficerName || 'Guest User';
-  const officerRole = rawOfficerRole || 'Loan Officer';
-  const initials = officerName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'GU';
+  const officerName = mounted ? (rawOfficerName || 'Guest User') : 'Guest User';
+  const officerRole = mounted ? (rawOfficerRole || 'Loan Officer') : 'Loan Officer';
+  const initials = mounted ? (officerName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'GU') : 'GU';
 
   useEffect(() => {
+    setMounted(true);
     const handleDocumentPointerDown = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
@@ -175,9 +164,11 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
         >
           {pageTitle}
         </button>
-        <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A] whitespace-nowrap shrink-0">
-          LD-9822
-        </span>
+        {leadId && (
+          <span className="flex items-center gap-1.5 rounded-md border border-green-200 bg-[#f0fdf4] px-2 py-0.5 text-xs font-bold text-[#16A34A] whitespace-nowrap shrink-0">
+            {leadId}
+          </span>
+        )}
       </div>
 
       {/* Right: actions */}
@@ -308,16 +299,14 @@ function TopHeader({ isSidebarCollapsed, onToggleSidebar, onLogout, pageTitle = 
                   alt="User Avatar"
                   width={36}
                   height={36}
-                  className="h-full w-full object-cover hidden"
-                  onLoad={(e) => {
-                    e.currentTarget.classList.remove('hidden');
-                    const fallback = e.currentTarget.nextElementSibling;
-                    if (fallback) fallback.classList.add('hidden');
-                  }}
+                  className={`h-full w-full object-cover z-20 relative transition-opacity duration-300 ${avatarLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  onLoad={() => setAvatarLoaded(true)}
                 />
-                <span className="flex h-full w-full items-center justify-center text-[0.8rem] font-bold text-gray-500 bg-gray-100">
-                  {initials}
-                </span>
+                {!avatarLoaded && (
+                  <span className="absolute inset-0 flex h-full w-full items-center justify-center text-[0.8rem] font-bold text-gray-500 bg-gray-100 z-10">
+                    {initials}
+                  </span>
+                )}
               </div>
             </div>
 

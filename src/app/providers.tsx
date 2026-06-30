@@ -1,9 +1,10 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '@/store';
-import { hydrate } from '@/features/auth/store/authSlice';
+import { getMeThunk } from '@/features/auth/store/authSlice';
 
 export function Providers({ children }: { children: React.ReactNode }) {
 
@@ -12,14 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    try {
-      const cachedUser = sessionStorage.getItem('auth_user');
-      if (cachedUser) {
-        store.dispatch(hydrate(JSON.parse(cachedUser)));
-      }
-    } catch (e) {
-      sessionStorage.removeItem('auth_user');
-    }
+    store.dispatch(getMeThunk());
 
     if (process.env.NEXT_PUBLIC_API_MOCKING === 'true') {
       import('@/mocks/browser').then(({ worker }) => {
@@ -32,7 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           if (err.message && err.message.includes('already enabled')) {
             setMswReady(true);
           } else {
-            console.error(err);
+            logger.error(err);
           }
         });
       });

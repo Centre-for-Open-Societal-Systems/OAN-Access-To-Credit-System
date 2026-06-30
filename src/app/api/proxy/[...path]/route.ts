@@ -1,28 +1,42 @@
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
+import { env } from '@/lib/env';
+import { checkCsrf } from '@/lib/csrf';
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  const resolvedParams = await params;
-  return handleProxy(request, resolvedParams.path);
+type RouteContext = { params: Promise<{ path: string[] }> };
+
+// One shared handler exported per HTTP verb so method semantics are explicit
+// at the routing layer (and mutating verbs go through the CSRF guard below).
+async function handler(request: NextRequest, { params }: RouteContext) {
+  const { path } = await params;
+  return handleProxy(request, path);
 }
 
-// Statically export other HTTP verbs by aliasing the GET reference
-export { GET as POST, GET as PUT, GET as DELETE };
+export {
+  handler as GET,
+  handler as POST,
+  handler as PUT,
+  handler as PATCH,
+  handler as DELETE,
+};
 
 async function handleProxy(request: NextRequest, pathArray: string[]) {
-  const baseUrl = process.env.API_BASE_URL;
+  const isMutating = !['GET', 'HEAD'].includes(request.method);
 
-  if (!baseUrl) {
-    return NextResponse.json({ message: 'API_BASE_URL is not configured' }, { status: 500 });
+  // CSRF: reject cross-origin state-changing requests.
+  if (isMutating) {
+    const csrfError = checkCsrf(request);
+    if (csrfError) return csrfError;
   }
 
   // Construct the target URL
   const targetPath = pathArray.join('/');
   const search = request.nextUrl.search;
-  const targetUrl = `${baseUrl}/${targetPath}${search}`;
+  const targetUrl = `${env.API_BASE_URL}/${targetPath}${search}`;
 
   const authToken = request.cookies.get('auth_token')?.value;
 
-  // Prepare headers 
+  // Prepare headers
   const headers = new Headers();
   request.headers.forEach((value, key) => {
     // Avoid forwarding headers that might cause issues
@@ -45,10 +59,9 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
     };
 
     // Only add body if it's not a GET/HEAD request
-    if (!['GET', 'HEAD'].includes(request.method)) {
+    if (isMutating) {
       fetchOptions.body = await request.blob();
     }
-
 
     // Forward the request to the external backend
     const response = await fetch(targetUrl, fetchOptions);
@@ -63,7 +76,7 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error(`Proxy error for ${targetUrl}:`, error);
+    logger.error(`Proxy error for ${targetUrl}:`, error);
     return NextResponse.json({ message: 'Proxy request failed' }, { status: 502 });
   }
 }
