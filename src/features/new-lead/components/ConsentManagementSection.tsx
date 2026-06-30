@@ -17,7 +17,7 @@ const ConsentDetailsModal = dynamic(() => import('./modals/ConsentDetailsModal')
 
 export function ConsentManagementSection() {
   const dispatch = useAppDispatch();
-  const { farmerId, isSearchingFarmer, searchedFarmer, farmerDetails, searchError } = useAppSelector(selectFarmerState);
+  const { farmerId, isSearchingFarmer, searchedFarmer, farmerDetails, searchError, detailsError } = useAppSelector(selectFarmerState);
   const { isLoadingConsent, consentError, isOtpVerified, consentDate } = useAppSelector(selectConsentState);
   const officerName = useAppSelector(selectOfficerName) || 'AgriBank';
   const params = useParams();
@@ -26,7 +26,13 @@ export function ConsentManagementSection() {
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
   const [maskedPhone, setMaskedPhone] = useState<string>('');
 
-  const isVerified = isOtpVerified || !!consentDate || !!farmerDetails?.firstName;
+  const isProfileCreated = !!farmerDetails?.farmer_profile_created || !!farmerDetails?.firstName;
+  const isFinalizingConsent = isOtpVerified && !consentDate;
+  const isSyncInProgress = farmerDetails?.consent_request_status !== 'Pending OTP' && 
+                           farmerDetails?.consent_request_otp_verified === true && 
+                           farmerDetails?.farmer_profile_created === false;
+
+  const isVerified = isProfileCreated || isFinalizingConsent || (isSyncInProgress && !detailsError);
 
   // Dispatches an OTP request and refreshes the masked phone. Returns true on success.
   const requestOtp = async (): Promise<boolean> => {
@@ -77,13 +83,15 @@ export function ConsentManagementSection() {
             </div>
             <div className="flex flex-row items-center gap-1.5">
               <CheckCircle2 size={20} className="text-[#16A34A]" fill="#16A34A" color="white" />
-              <button
-                type="button"
-                onClick={() => setIsConsentModalOpen(true)}
-                className="text-[14px] font-bold text-[#16A34A] leading-[20px] hover:underline cursor-pointer focus:outline-none"
-              >
-                View Consent Details
-              </button>
+              {farmerDetails?.requested_data_fields && farmerDetails.requested_data_fields.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsConsentModalOpen(true)}
+                  className="text-[14px] font-bold text-[#16A34A] leading-[20px] hover:underline cursor-pointer focus:outline-none"
+                >
+                  View Consent Details
+                </button>
+              )}
               <span className="text-[14px] font-medium text-[#6B7280] leading-[20px] ml-1">
                 {consentDate ? `provided on ${consentDate}` : 'verified via registry'}
               </span>

@@ -3,13 +3,16 @@
 import { logger } from '@/lib/logger';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSearchParams } from 'next/navigation';
 import { prevStep, setStepAPI, submitApplicationAPI, selectLoanFormState } from '@/features/new-loan/store/newLoanFormSlice';
-import { setLeadStatus } from '@/features/new-lead/store/newLeadSlice';
+import { updateLeadStatusThunk } from '@/features/new-lead';
 import { ArrowLeft, Send, Check, User, Folder, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 
 export function Step3ReviewSubmit() {
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
+  const leadId = searchParams?.get('leadId');
   const { applicationId, loadingStates } = useSelector(selectLoanFormState);
 
   const [acknowledged, setAcknowledged] = useState(false);
@@ -35,7 +38,22 @@ export function Step3ReviewSubmit() {
       }
 
       // Application submitted successfully
-      dispatch(setLeadStatus('Processed'));
+      console.log('Attempting to update lead status to Processed for leadId:', leadId);
+      if (leadId) {
+        try {
+          await dispatch(updateLeadStatusThunk({
+            leadId,
+            status: 'Processed',
+            reason: 'Loan application submitted successfully.'
+          })).unwrap();
+          console.log('Successfully updated lead status to Processed on backend');
+        } catch (statusError) {
+          console.error('Failed to update lead status on backend:', statusError);
+        }
+      } else {
+        console.warn('No leadId found in URL parameters, skipping backend status update');
+      }
+
       await dispatch(setStepAPI(4)).unwrap();
     } catch (error) {
       logger.error("Failed to submit application", error);

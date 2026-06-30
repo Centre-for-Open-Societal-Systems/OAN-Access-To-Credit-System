@@ -14,6 +14,7 @@ import type { CreditInfoAPI, AddCreditInfoResponse } from '@/lib/api/api.schemas
 import { formatTiming } from './helpers';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
 import { initializeLead, clearForm } from './actions';
+import { fetchLeadDetailsThunk } from './farmerSlice';
 import { ApiError } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
 
@@ -359,6 +360,14 @@ const newLeadSlice = createSlice({
             if (lead.first_name) state.leadFirstName = lead.first_name;
             if (lead.last_name) state.leadLastName = lead.last_name;
           }
+        }
+      })
+      .addCase(fetchLeadDetailsThunk.fulfilled, (state, action) => {
+        const payload = action.payload;
+        if (payload) {
+          if (payload.firstName) state.leadFirstName = payload.firstName;
+          if (payload.lastName) state.leadLastName = payload.lastName;
+          if (payload.phoneNumber) state.leadPhoneNumber = payload.phoneNumber;
         }
       })
       .addCase(addCreditInfoThunk.fulfilled, (state, action) => {

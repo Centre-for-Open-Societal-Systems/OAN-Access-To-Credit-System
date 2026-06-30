@@ -55,12 +55,6 @@ export function useLeadInitialization(id?: string) {
             farmerId: existingLead?.farmerId || '',
             consentDate: existingLead?.consentDate || '',
             consentRequestId: existingLead?.consentRequestId || null,
-            farmerDetails: {
-                firstName,
-                lastName,
-                phoneNumber: existingLead?.farmerPhone || '',
-                location: existingLead?.location || ''
-            }
         }));
 
         lastInitializedId.current = currentIdKey;

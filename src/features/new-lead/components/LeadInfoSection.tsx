@@ -6,9 +6,10 @@ interface LeadInfoSectionProps {
   isEditable?: boolean;
   phoneNumber?: string;
   onPhoneNumberChange?: (value: string) => void;
+  phoneError?: string;
 }
 
-export function LeadInfoSection({ isEditable = false, phoneNumber: propPhoneNumber, onPhoneNumberChange }: LeadInfoSectionProps) {
+export function LeadInfoSection({ isEditable = false, phoneNumber: propPhoneNumber, onPhoneNumberChange, phoneError }: LeadInfoSectionProps) {
   const leadSource = useAppSelector(selectLeadSource);
   const leadPhoneNumber = useAppSelector(selectLeadPhoneNumber);
   const displayPhone = isEditable ? (propPhoneNumber || '') : (leadPhoneNumber || '');
@@ -46,8 +47,11 @@ export function LeadInfoSection({ isEditable = false, phoneNumber: propPhoneNumb
             onChange={(e) => isEditable && onPhoneNumberChange && onPhoneNumberChange(e.target.value)}
             readOnly={!isEditable}
             placeholder={isEditable ? "Enter Phone Number" : ""}
-            className={`w-full h-[42px] rounded-md border border-gray-200 px-4 text-[15px] text-[#232F34] focus:outline-none ${!isEditable ? 'bg-gray-50' : 'bg-white focus:ring-2 focus:ring-[#16335A]/20'}`}
+            className={`w-full h-[42px] rounded-md border px-4 text-[15px] text-[#232F34] focus:outline-none transition-colors ${!isEditable ? 'bg-gray-50 border-gray-200' : phoneError ? 'bg-white border-red-500 focus:ring-2 focus:ring-red-500/20' : 'bg-white border-gray-200 focus:ring-2 focus:ring-[#16335A]/20'}`}
           />
+          {phoneError && (
+            <span className="text-sm text-red-500 mt-1">{phoneError}</span>
+          )}
         </div>
       </div>
     </section>

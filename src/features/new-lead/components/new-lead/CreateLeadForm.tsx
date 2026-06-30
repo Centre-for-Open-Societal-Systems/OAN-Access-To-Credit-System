@@ -14,6 +14,7 @@ import {
 import { FeedbackModal } from '@/components/ui/FeedbackModal';
 import { logger } from '@/lib/logger';
 import { LeadInfoSection } from '../LeadInfoSection';
+import { createLeadSchema } from '@/features/new-lead/schemas/lead.schema';
 
 
 export function CreateLeadForm() {
@@ -31,20 +32,35 @@ export function CreateLeadForm() {
   }, [dispatch]);
 
   const handleChange = (field: keyof NewLeadDraft) => (value: string) => {
+    setValidationError(null); // Clear error on edit
     dispatch(updateNewLeadDraft({ [field]: value }));
   };
 
   const handleClear = () => {
+    setValidationError(null);
     dispatch(resetNewLeadDraft());
   };
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
+    // 1. Zod Validation
+    const validationResult = createLeadSchema.safeParse({ phoneNumber: draft.phoneNumber });
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues[0]?.message || 'Invalid phone number';
+      setValidationError(errorMsg);
+      logger.warn('Frontend validation failed:', errorMsg);
+      return; // Stop early, no API call
+    }
+
+    setValidationError(null);
     setIsSubmitting(true);
     try {
       const response = await dispatch(submitNewLeadThunk()).unwrap();
       router.push(response?.lead_id ? `/leads/${response.lead_id}` : '/leads');
     } catch (error) {
-      logger.error('Failed to create lead:', error);
+      logger.error('Failed to create lead (Backend/System Error):', error);
       setShowErrorPopup(true);
     } finally {
       setIsSubmitting(false);
@@ -79,6 +95,7 @@ export function CreateLeadForm() {
           isEditable={true}
           phoneNumber={draft.phoneNumber}
           onPhoneNumberChange={handleChange('phoneNumber')}
+          phoneError={validationError || undefined}
         />
 
         {/* Form Actions */}

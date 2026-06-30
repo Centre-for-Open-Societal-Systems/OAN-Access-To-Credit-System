@@ -123,6 +123,9 @@ const consentSlice = createSlice({
       .addCase(searchFarmerConsent.pending, (state) => {
         state.isLoadingConsent = true;
         state.consentError = null;
+        state.consentDate = null;
+        state.isOtpVerified = false;
+        state.isSubmittingConsent = false;
       })
       .addCase(searchFarmerConsent.fulfilled, (state, action) => {
         state.isLoadingConsent = false;

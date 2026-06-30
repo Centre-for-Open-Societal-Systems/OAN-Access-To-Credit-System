@@ -63,7 +63,7 @@ export function FarmerDetailsSection() {
             type="text"
             value={farmerDetails.location}
             onChange={(e) => handleChange('location')(e.target.value)}
-            placeholder="Enter Location"
+            placeholder="Location"
             readOnly={isLocked}
             className={`w-full h-[42px] rounded-md border border-[#D1D5DB] px-4 text-[15px] text-[#232F34] focus:outline-none ${isLocked ? 'bg-gray-50' : 'bg-white'}`}
           />
@@ -77,7 +77,7 @@ export function FarmerDetailsSection() {
             type="text"
             value={farmerDetails.phoneNumber}
             onChange={(e) => handleChange('phoneNumber')(e.target.value)}
-            placeholder="Enter Phone Number"
+            placeholder="Phone Number"
             readOnly={isLocked}
             className={`w-full h-[42px] rounded-md border border-[#D1D5DB] px-4 text-[15px] text-[#232F34] focus:outline-none ${isLocked ? 'bg-gray-50' : 'bg-white'}`}
           />
@@ -91,7 +91,7 @@ export function FarmerDetailsSection() {
             type="email"
             value={farmerDetails.email}
             onChange={(e) => handleChange('email')(e.target.value)}
-            placeholder="Enter Email ID"
+            placeholder="Email ID"
             readOnly={isLocked}
             className={`w-full h-[42px] rounded-md border border-[#D1D5DB] px-4 text-[15px] text-[#232F34] focus:outline-none ${isLocked ? 'bg-gray-50' : 'bg-white'}`}
           />

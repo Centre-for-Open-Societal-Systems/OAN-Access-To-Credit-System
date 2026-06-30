@@ -15,7 +15,7 @@ interface FarmerState {
   detailsError: string | null;
   isPollingLong: boolean;
 }
-
+// dont know if image url is needed since
 export const createDefaultFarmerDetails = (partial?: Partial<FarmerDetails>): FarmerDetails => ({
   firstName: partial?.firstName ?? '',
   lastName: partial?.lastName ?? '',
@@ -81,9 +81,9 @@ export const fetchLeadDetailsThunk = createAsyncThunk<
           // The backend indicates a background demographic sync is in progress
           // when the consent is submitted (status is no longer 'Pending OTP')
           // but the profile hasn't been created yet.
-          const isSyncInProgress = response.consent_request_status !== 'Pending OTP' && 
-                                   response.consent_request_otp_verified === true && 
-                                   response.farmer_profile_created === false;
+          const isSyncInProgress = response.consent_request_status !== 'Pending OTP' &&
+            response.consent_request_otp_verified === true &&
+            response.farmer_profile_created === false;
 
           if (isSyncInProgress && !shouldPoll) {
             shouldPoll = true;
@@ -174,8 +174,26 @@ const farmerSlice = createSlice({
       .addCase(fetchLeadDetailsThunk.pending, (state) => {
         state.detailsError = null;
       })
+      // dont know the usecase ( be cautious of data leakage, this can be a cause)
       .addCase(fetchLeadDetailsThunk.fulfilled, (state, action) => {
-        state.farmerDetails = action.payload;
+        state.farmerDetails = {
+          ...state.farmerDetails,
+          firstName: action.payload.firstName || state.farmerDetails.firstName,
+          lastName: action.payload.lastName || state.farmerDetails.lastName,
+          phoneNumber: action.payload.phoneNumber || state.farmerDetails.phoneNumber,
+          email: action.payload.email || state.farmerDetails.email,
+          location: action.payload.location || state.farmerDetails.location,
+          gender: action.payload.gender || state.farmerDetails.gender,
+          websub_delivered_at: action.payload.websub_delivered_at,
+          consent_type: action.payload.consent_type,
+          purpose: action.payload.purpose,
+          validity_from: action.payload.validity_from,
+          validity_to: action.payload.validity_to,
+          requested_data_fields: action.payload.requested_data_fields,
+          farmer_profile_created: action.payload.farmer_profile_created,
+          consent_request_status: action.payload.consent_request_status,
+          consent_request_otp_verified: action.payload.consent_request_otp_verified,
+        };
         state.detailsError = null;
       })
       .addCase(fetchLeadDetailsThunk.rejected, (state, action) => {
