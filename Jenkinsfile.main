@@ -1,0 +1,51 @@
+stage('Deploy to Staging VM') {
+    steps {
+        withCredentials([
+            string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID'),
+            sshUserPrivateKey(
+                credentialsId: 'backend-ssh-key',
+                keyFileVariable: 'SSH_KEY',
+                usernameVariable: 'SSH_USER'
+            )
+        ]) {
+            sh '''
+                # Copy docker-compose from workspace to staging VM
+                scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
+                    docker-compose.yaml \
+                    ${SSH_USER}@${BACKEND_IP}:/opt/oan_a2c_fe_main/docker-compose.yaml
+
+                ssh -i ${SSH_KEY} \
+                -o StrictHostKeyChecking=no \
+                ${SSH_USER}@${BACKEND_IP} <<SSHEOF
+
+                set -e
+                
+                cd /opt/oan_a2c_fe_main
+
+
+                # Change container name to avoid conflict
+                sed -i 's/oan_a2c_frontend/oan_a2c_frontend_main/' docker-compose.yaml
+
+                cat > .env <<ENVEOF
+ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:main-${BUILD_NUMBER}
+API_BASE_URL=https://a2c.oanstaging.com
+ENVEOF
+
+                aws ecr get-login-password --region ap-south-1 | \
+                docker login --username AWS --password-stdin \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
+
+                docker compose pull
+                docker compose down || true
+                docker compose up -d
+
+                sleep 15
+                curl -sf http://localhost:3001 || echo "Warning: health check failed"
+
+                echo "=== Main Frontend deployed on port 3001 ==="
+                docker compose ps
+SSHEOF
+            '''
+        }
+    }
+}
