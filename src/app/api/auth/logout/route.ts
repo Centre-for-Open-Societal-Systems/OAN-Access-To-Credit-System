@@ -3,7 +3,7 @@ import { env } from '@/lib/env';
 import { createRateLimiter } from '@/lib/rateLimit';
 import { NextRequest, NextResponse } from 'next/server';
 
-const logoutLimiter = createRateLimiter(30, 60000);
+const logoutLimiter = createRateLimiter(3, 60000);
 
 export async function POST(request: NextRequest) {
   const rateLimitResponse = logoutLimiter(request);

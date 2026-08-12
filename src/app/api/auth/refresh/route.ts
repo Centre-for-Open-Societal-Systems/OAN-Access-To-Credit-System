@@ -5,7 +5,7 @@ import { createRateLimiter } from '@/lib/rateLimit';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const refreshLimiter = createRateLimiter(30, 60000);
+const refreshLimiter = createRateLimiter(3, 60000);
 
 export async function POST(request: NextRequest) {
   try {
