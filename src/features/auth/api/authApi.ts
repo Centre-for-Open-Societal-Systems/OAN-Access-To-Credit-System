@@ -15,9 +15,10 @@ export interface LoginApiResponse {
 interface LoginCredentials {
   usr: string;
   pwd: string;
+  rememberMe?: boolean | undefined;
 }
 
-export async function loginUser({ usr, pwd }: LoginCredentials): Promise<RawUserResponse> {
+export async function loginUser({ usr, pwd, rememberMe }: LoginCredentials): Promise<RawUserResponse> {
   const res = await fetch(`/api/auth/login`, {
     method: 'POST',
     headers: {
@@ -25,7 +26,7 @@ export async function loginUser({ usr, pwd }: LoginCredentials): Promise<RawUser
       Accept: 'application/json',
     },
     credentials: 'include',
-    body: JSON.stringify({ usr, pwd }),
+    body: JSON.stringify({ usr, pwd, rememberMe }),
   });
 
   const data = (await res.json().catch(() => ({}))) as LoginApiResponse;

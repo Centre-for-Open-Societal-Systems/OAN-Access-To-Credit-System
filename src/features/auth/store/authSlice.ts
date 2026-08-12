@@ -5,13 +5,13 @@ import { classifyUser, type AuthState, type User } from '../types/auth.types';
 
 export const loginThunk = createAsyncThunk<
   User,
-  { usr: string; pwd: string },
+  { usr: string; pwd: string; rememberMe?: boolean },
   { rejectValue: string }
 >(
   'auth/login',
-  async ({ usr, pwd }, { rejectWithValue }) => {
+  async ({ usr, pwd, rememberMe }, { rejectWithValue }) => {
     try {
-      const raw = await loginUser({ usr, pwd });
+      const raw = await loginUser({ usr, pwd, rememberMe });
       return classifyUser(raw);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown Cause. Please Try Again Later';

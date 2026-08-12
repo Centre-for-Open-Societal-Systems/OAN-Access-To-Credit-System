@@ -1,10 +1,16 @@
 import { checkCsrf } from '@/lib/csrf';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
-import { NextResponse } from 'next/server';
+import { createRateLimiter } from '@/lib/rateLimit';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+const loginLimiter = createRateLimiter(10, 60000);
+
+export async function POST(request: NextRequest) {
   try {
+    const rateLimitResponse = loginLimiter(request);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // CSRF: reject cross-origin login attempts.
     const csrfError = checkCsrf(request);
     if (csrfError) return csrfError;
@@ -60,7 +66,7 @@ export async function POST(request: Request) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
+      sameSite: 'strict' as const,
       path: '/',
     };
 
@@ -80,6 +86,10 @@ export async function POST(request: Request) {
 
     if (refreshToken) {
       nextResponse.cookies.set('refresh_token', refreshToken, {
+        ...cookieOptions,
+        maxAge: sessionMaxAge,
+      });
+      nextResponse.cookies.set('session_type', rememberMe ? 'persistent' : 'session', {
         ...cookieOptions,
         maxAge: sessionMaxAge,
       });

@@ -43,6 +43,7 @@ export function LoginClient() {
   const [isTroubleModalOpen, setIsTroubleModalOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
 
   const portalSubtitle = 'Coordinate field-level agricultural credit access across regions';
@@ -66,7 +67,7 @@ export function LoginClient() {
     event.preventDefault();
     setDeniedError(null);
     dispatch(clearAuthError());
-    const result = await dispatch(loginThunk({ usr: username, pwd: password }));
+    const result = await dispatch(loginThunk({ usr: username, pwd: password, rememberMe }));
     if (loginThunk.fulfilled.match(result)) {
       const user = result.payload;
       if (user.kind === 'dev_agent') {
@@ -276,7 +277,11 @@ export function LoginClient() {
 
                   <div className="mt-6 flex items-center justify-between gap-2 text-[0.84rem]">
                     <label className="inline-flex cursor-pointer select-none items-center gap-2 text-slate-700">
-                      <input type="checkbox" />
+                      <input 
+                        type="checkbox" 
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
                       <span>Remember me</span>
                     </label>
 
@@ -295,7 +300,7 @@ export function LoginClient() {
                     </p>
                   )}
 
-                  <button className="flex items-center justify-center gap-2 rounded-lg font-bold text-white transition-colors duration-200 mt-2 w-full h-[56px] bg-[#16A34A] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] text-[14px] hover:bg-[#10883c] disabled:opacity-70 disabled:cursor-not-allowed" type="submit" disabled={isLoading}>
+                  <button suppressHydrationWarning className="flex items-center justify-center gap-2 rounded-lg font-bold text-white transition-colors duration-200 mt-2 w-full h-[56px] bg-[#16A34A] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] text-[14px] hover:bg-[#10883c] disabled:opacity-70 disabled:cursor-not-allowed" type="submit" disabled={isLoading}>
                     {isLoading ? 'Signing in…' : (
                       <>
                         Continue to Sign In

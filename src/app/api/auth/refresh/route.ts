@@ -1,11 +1,22 @@
+import { checkCsrf } from '@/lib/csrf';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { createRateLimiter } from '@/lib/rateLimit';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+const refreshLimiter = createRateLimiter(30, 60000);
+
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResponse = refreshLimiter(request);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const csrfError = checkCsrf(request);
+    if (csrfError) return csrfError;
+
     const refreshToken = request.cookies.get('refresh_token')?.value;
+    const sessionType = request.cookies.get('session_type')?.value;
 
     if (!refreshToken) {
       return NextResponse.json({ message: 'Missing refresh token' }, { status: 401 });
@@ -39,6 +50,7 @@ export async function POST(request: NextRequest) {
       );
       nextResponse.cookies.set('auth_token', '', { path: '/', maxAge: 0 });
       nextResponse.cookies.set('refresh_token', '', { path: '/', maxAge: 0 });
+      nextResponse.cookies.set('session_type', '', { path: '/', maxAge: 0 });
       return nextResponse;
     }
 
@@ -58,7 +70,7 @@ export async function POST(request: NextRequest) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
+      sameSite: 'strict' as const,
       path: '/',
     };
 
@@ -66,10 +78,7 @@ export async function POST(request: NextRequest) {
     // outlives the refresh token — "auth_token present" must reliably signal an
     // intended-alive session for the routing layer. The 15-min access-token
     // expiry is enforced inside the JWT / by the backend, not by this cookie.
-    // NOTE: refresh doesn't know the original `rememberMe`, so it can't
-    // distinguish a 1-day vs 30-day session here — see follow-up to thread that
-    // through (or have the backend return the expiry).
-    const sessionMaxAge = 30 * 24 * 60 * 60; // 30 days max container age
+    const sessionMaxAge = sessionType === 'persistent' ? 30 * 24 * 60 * 60 : 24 * 60 * 60;
 
     nextResponse.cookies.set('auth_token', token, {
       ...cookieOptions,
@@ -77,6 +86,11 @@ export async function POST(request: NextRequest) {
     });
 
     nextResponse.cookies.set('refresh_token', newRefreshToken, {
+      ...cookieOptions,
+      maxAge: sessionMaxAge,
+    });
+
+    nextResponse.cookies.set('session_type', sessionType ?? 'session', {
       ...cookieOptions,
       maxAge: sessionMaxAge,
     });

@@ -35,14 +35,7 @@ export default function config(phase) {
     },
 
     async rewrites() {
-      return {
-        fallback: [
-          {
-            source: '/api/:path*',
-            destination: `${API_BASE_URL}/api/:path*`,
-          },
-        ],
-      };
+      return [];
     },
 
     async headers() {

@@ -36,11 +36,17 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
 
   const authToken = request.cookies.get('auth_token')?.value;
 
-  // Prepare headers
+  // Prepare headers (Allow-list only)
+  const allowedRequestHeaders = new Set([
+    'content-type',
+    'accept',
+    'accept-language',
+    'user-agent',
+    'x-request-id',
+  ]);
   const headers = new Headers();
   request.headers.forEach((value, key) => {
-    // Avoid forwarding headers that might cause issues
-    if (!['host', 'cookie', 'connection', 'content-length'].includes(key.toLowerCase())) {
+    if (allowedRequestHeaders.has(key.toLowerCase())) {
       headers.set(key, value);
     }
   });
@@ -66,11 +72,42 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
     // Forward the request to the external backend
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Forward the response back to the client
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.delete('content-encoding'); // Let Next.js handle encoding
+    // Forward the response back to the client (Allow-list only)
+    const allowedResponseHeaders = new Set([
+      'content-type',
+      'content-disposition',
+      'content-length',
+      'cache-control',
+      'etag',
+      'last-modified',
+      'x-request-id',
+    ]);
+    const responseHeaders = new Headers();
+    response.headers.forEach((value, key) => {
+      if (allowedResponseHeaders.has(key.toLowerCase())) {
+        responseHeaders.set(key, value);
+      }
+    });
 
-    return new NextResponse(response.body, {
+    let body = await response.text();
+
+    // Sanitize error responses
+    if (!response.ok) {
+      try {
+        const json = JSON.parse(body);
+        // Remove sensitive technical details
+        delete json._server_messages;
+        delete json.exc_type;
+        delete json.exception;
+        delete json.exc;
+        
+        body = JSON.stringify(json);
+      } catch (e) {
+        // Not JSON, just pass through
+      }
+    }
+
+    return new NextResponse(body, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,

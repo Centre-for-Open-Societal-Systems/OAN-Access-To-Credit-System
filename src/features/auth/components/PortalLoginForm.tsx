@@ -41,6 +41,7 @@ export function PortalLoginForm({
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export function PortalLoginForm({
     dispatch(clearAuthError());
 
     try {
-      const result = await dispatch(loginThunk({ usr: username, pwd: password }));
+      const result = await dispatch(loginThunk({ usr: username, pwd: password, rememberMe }));
       if (loginThunk.fulfilled.match(result)) {
         const user = result.payload;
         if (allowedKinds.includes(user.kind)) {
@@ -137,6 +138,8 @@ export function PortalLoginForm({
             <div className="relative flex items-center justify-center w-5 h-5">
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="peer appearance-none w-5 h-5 border-2 border-[#D1D5DB] rounded-[6px] bg-white checked:bg-[#16A34A] checked:border-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 transition-all duration-300 cursor-pointer hover:border-[#16A34A]/50 active:scale-90 checked:scale-110"
               />
               <svg

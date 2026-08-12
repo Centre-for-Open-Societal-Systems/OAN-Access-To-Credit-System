@@ -3,7 +3,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('auth_token')?.value;
+  let token = request.cookies.get('auth_token')?.value;
+  if (token && token.split('.').length !== 3) {
+    token = undefined;
+  }
   const { pathname } = request.nextUrl;
 
   // Per-request nonce + CSP. The nonce is forwarded on the request headers so
