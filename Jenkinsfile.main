@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION   = 'ap-south-1'
-        ECR_REPO     = 'oan-a2c-frontend'
+        ECR_REPO     = 'oan/access-to-credit-system'
         BACKEND_IP   = '10.0.2.100'
         API_BASE_URL = 'https://a2c-backend.oanstaging.com'
     }
@@ -78,12 +78,12 @@ pipeline {
 
                         set -e
                         cd /opt/oan_a2c_fe_main
-
+                
                         sed -i 's/3000:3000/3001:3000/' docker-compose.yaml
                         sed -i 's/oan_a2c_frontend/oan_a2c_frontend_main/' docker-compose.yaml
 
                         cat > .env <<ENVEOF
-ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan-a2c-frontend:main-${BUILD_NUMBER}
+ECR_IMAGE=${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/oan/access-to-credit-system:main-${BUILD_NUMBER}
 API_BASE_URL=https://a2c-backend.oanstaging.com
 ENVEOF
 
@@ -120,7 +120,71 @@ SSHEOF
     }
 
     post {
-        success { echo "Main frontend deployed successfully! Build: main-${BUILD_NUMBER}" }
-        failure { echo "Main frontend pipeline failed!" }
+        success {
+        script {
+            def committerEmail = sh(
+                script: "git log -1 --pretty=format:'%ae'",
+                returnStdout: true
+            ).trim()
+            def committerName = sh(
+                script: "git log -1 --pretty=format:'%an'",
+                returnStdout: true
+            ).trim()
+            if (committerEmail.contains('noreply')) {
+                committerEmail = 'yourname@gmail.com'
+            }
+            mail(
+                to: committerEmail,
+                subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+Hi ${committerName},
+
+Your build was successful!
+
+Job:    ${env.JOB_NAME}
+Branch: ${env.GIT_BRANCH}
+Build:  #${env.BUILD_NUMBER}
+URL:    ${env.BUILD_URL}
+
+Regards,
+Jenkins
+                """
+            )
+        }
+        echo "Main frontend deployed successfully! Build: main-${BUILD_NUMBER}"
+    }
+    failure {
+        script {
+            def committerEmail = sh(
+                script: "git log -1 --pretty=format:'%ae'",
+                returnStdout: true
+            ).trim()
+            def committerName = sh(
+                script: "git log -1 --pretty=format:'%an'",
+                returnStdout: true
+            ).trim()
+            if (committerEmail.contains('noreply')) {
+                committerEmail = 'yourname@gmail.com'
+            }
+            mail(
+                to: committerEmail,
+                subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+Hi ${committerName},
+
+Your build failed. Please check the console output for details.
+
+Job:    ${env.JOB_NAME}
+Branch: ${env.GIT_BRANCH}
+Build:  #${env.BUILD_NUMBER}
+URL:    ${env.BUILD_URL}
+
+Regards,
+Jenkins
+                """
+            )
+        }
+        echo "Main frontend pipeline failed!"
+    }
     }
 }
