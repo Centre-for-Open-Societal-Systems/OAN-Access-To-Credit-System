@@ -92,7 +92,7 @@ export function InteractionTimelineCard() {
                     return (
                       <div key={i} className="flex flex-row items-start gap-2.5 w-full">
                         <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full mt-[9px] shrink-0" />
-                        <span className="font-roboto font-normal text-[14px] leading-6 text-[#4B5563]">
+                        <span className="font-roboto font-normal text-[14px] leading-6 text-[#4B5563] break-all">
                           {trimmedLine}
                         </span>
                       </div>
