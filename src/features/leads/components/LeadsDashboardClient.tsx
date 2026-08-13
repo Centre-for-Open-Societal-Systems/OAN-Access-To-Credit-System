@@ -159,8 +159,11 @@ export function LeadsDashboardClient() {
 
   // The backend already filters by tab (assigned_to) and paginates, but if it 
   // fails to paginate and returns all leads, we fallback to client-side slicing.
-  const visible = allLeads.length > pageSize 
-    ? allLeads.slice((currentPage - 1) * pageSize, currentPage * pageSize) 
+  // We verify this by checking if the length matches totalCount to avoid wrongly
+  // slicing data if the backend did paginate correctly but returned a different size.
+  const isUnpaginated = allLeads.length > pageSize && allLeads.length === totalCount;
+  const visible = isUnpaginated 
+    ? allLeads.slice((safePage - 1) * pageSize, safePage * pageSize) 
     : allLeads;
 
   const pageNums = useMemo(() => {
