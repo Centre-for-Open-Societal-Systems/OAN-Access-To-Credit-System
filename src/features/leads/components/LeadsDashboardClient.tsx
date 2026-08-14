@@ -21,9 +21,9 @@ import { AccessDenied } from '@/components/AccessDenied';
 import { ConnectionError } from '@/components/ConnectionError';
 import { selectOfficerName, selectUserEmail } from '@/features/auth/store/authSlice';
 import {
-    fetchLeads,
-    fetchLeadSummary, resetFilters, selectActiveTab, selectAdvFilters, selectColCallTimeFilter, selectColStatusFilter, selectDateFilter, selectIsLeadsLoading, selectLeads, selectLeadsError, selectLeadSummary,
-    selectSearch, selectTotalCount, setActiveTab, setColCallTimeFilter, setColStatusFilter, setSearch, setSort
+  fetchLeads,
+  fetchLeadSummary, resetFilters, selectActiveTab, selectAdvFilters, selectColCallTimeFilter, selectColStatusFilter, selectDateFilter, selectIsLeadsLoading, selectLeads, selectLeadsError, selectLeadSummary,
+  selectSearch, selectTotalCount, setActiveTab, setColCallTimeFilter, setColStatusFilter, setSearch, setSort
 } from '@/features/leads/store/leadSlice';
 import { fetchLeadMetadataThunk } from '@/features/new-lead/store/newLeadSlice';
 import { fetchTaxonomy } from '@/features/seller/store/loanProductsSlice';
@@ -162,8 +162,9 @@ export function LeadsDashboardClient() {
   // We verify this by checking if the length matches totalCount to avoid wrongly
   // slicing data if the backend did paginate correctly but returned a different size.
   const isUnpaginated = allLeads.length > pageSize && allLeads.length === totalCount;
-  const visible = isUnpaginated 
-    ? allLeads.slice((safePage - 1) * pageSize, safePage * pageSize) 
+
+  const visible = isUnpaginated
+    ? allLeads.slice((safePage - 1) * pageSize, safePage * pageSize)
     : allLeads;
 
   const pageNums = useMemo(() => {

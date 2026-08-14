@@ -34,7 +34,9 @@ function LeadPagination({ visibleCount, filteredCount, safePage, totalPages, onP
   return (
     <div className="flex flex-col xl:flex-row items-center justify-center xl:justify-between gap-4 md:gap-6 border-t border-[#F1F3F4] bg-white px-4 sm:px-8 py-5">
       {/* Left: record count & page size dropdown */}
+
       <div className="text-sm sm:text-base text-gray-400 font-medium flex flex-wrap items-center justify-center shrink-0 gap-4">
+
 
         <div className="relative" ref={dropdownRef}>
           <button
@@ -47,6 +49,8 @@ function LeadPagination({ visibleCount, filteredCount, safePage, totalPages, onP
               <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
             </svg>
           </button>
+
+
 
           {isDropdownOpen && (
             <div className="absolute left-0 bottom-[calc(100%+4px)] z-50 w-full min-w-[80px] rounded-md border border-gray-200 bg-white shadow-lg origin-bottom animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
@@ -63,11 +67,13 @@ function LeadPagination({ visibleCount, filteredCount, safePage, totalPages, onP
                   {size}
                 </button>
               ))}
+
             </div>
           )}
         </div>
         <span className="whitespace-nowrap">Showing <span className="font-semibold text-gray-700">{visibleCount}</span> of <span className="font-semibold text-gray-700">{filteredCount.toLocaleString()}</span> records</span>
       </div>
+
 
       {/* Right: page navigation */}
       <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-full xl:w-auto">

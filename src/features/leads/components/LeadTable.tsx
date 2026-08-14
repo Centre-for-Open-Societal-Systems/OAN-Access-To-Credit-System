@@ -178,156 +178,156 @@ function LeadTable({
     }
   };
 
+
   return (
     <div className="flex flex-col min-h-[400px]">
       <div className="overflow-x-auto w-full flex-1">
         <table className="w-full min-w-[1118px] table-fixed border-collapse">
-        <thead>
-          <tr className="border-b border-[#EDEFF1] bg-[rgba(248,250,252,0.5)] h-[57px] select-none">
-            <th className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle">
-              <div className="flex items-center justify-center h-full">
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={onToggleAll}
-                  className="h-[13px] w-[13px] rounded-[2.5px] border border-[#767676] bg-white accent-[#00A63E] cursor-pointer outline-none"
-                />
-              </div>
-            </th>
-            {TABLE_COLS.map(col => {
-              const isActive = col.isFilterable && ((colFilterCfg[col.id]?.value?.length ?? 0) > 0);
+          <thead>
+            <tr className="border-b border-[#EDEFF1] bg-[rgba(248,250,252,0.5)] h-[57px] select-none">
+              <th className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle">
+                <div className="flex items-center justify-center h-full">
+                  <input
+                    type="checkbox"
+                    checked={allChecked}
+                    onChange={onToggleAll}
+                    className="h-[13px] w-[13px] rounded-[2.5px] border border-[#767676] bg-white accent-[#00A63E] cursor-pointer outline-none"
+                  />
+                </div>
+              </th>
+              {TABLE_COLS.map(col => {
+                const isActive = col.isFilterable && ((colFilterCfg[col.id]?.value?.length ?? 0) > 0);
 
-              return (
-                <th key={col.id} className={getCellClassName(col.align, true)} style={col.minWidth ? { minWidth: col.minWidth } : undefined}>
-                  <div className={`relative flex items-center gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
-                    <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-[#6B7280]">
-                      {col.label}
-                    </span>
+                return (
+                  <th key={col.id} className={getCellClassName(col.align, true)} style={col.minWidth ? { minWidth: col.minWidth } : undefined}>
+                    <div className={`relative flex items-center gap-1.5 whitespace-nowrap ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                      <span className="font-sans font-bold text-[13px] uppercase tracking-wider text-[#6B7280]">
+                        {col.label}
+                      </span>
 
-                    {col.isFilterable && (
-                      <div className="relative inline-flex items-center">
-                        <button
-                          ref={el => { anchorRefs.current[col.id] = { current: el }; }}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onSetOpenColFilter(prev => prev === col.id ? null : col.id);
-                          }}
-                          className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col.id || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
-                        >
-                          <Filter size={16} strokeWidth={2.5} />
-                        </button>
-                        {isActive && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1E6865]" />}
-                      </div>
-                    )}
-                    {col.isFilterable && openColFilter === col.id && (
-                      <LeadColFilterPopup
-                        col={col.id}
-                        anchorRef={{ current: anchorRefs.current[col.id]?.current ?? null }}
-                        initialSelected={colFilterCfg[col.id]?.value ?? []}
-                        onApply={colFilterCfg[col.id]?.onApply ?? (() => { })}
-                        onClose={() => onSetOpenColFilter(null)}
-                      />
-                    )}
-                    {col.isSortable && (() => {
-                      const targetSortBy = col.id === 'LOAN AMOUNT' ? 'loan_amount' : 'creation';
-                      const isSortActive = sortBy === targetSortBy;
-                      return (
-                        <button
-                          type="button"
-                          title={`Sort by ${col.label}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!onSortChange) return;
-                            if (!isSortActive) {
-                              onSortChange(targetSortBy, 'desc');
-                            } else if (sortOrder === 'desc') {
-                              onSortChange(targetSortBy, 'asc');
-                            } else {
-                              onSortChange(undefined, undefined);
-                            }
-                          }}
-                          className={`inline-flex items-center justify-center p-1 rounded transition-colors hover:bg-slate-200 outline-none ${
-                            isSortActive ? 'text-[#16A34A] font-bold' : 'text-[#AEB4BA] hover:text-[#374151]'
-                          }`}
-                        >
-                          {isSortActive ? (
-                            sortOrder === 'asc' ? <ArrowUp size={14} strokeWidth={2.5} /> : <ArrowDown size={14} strokeWidth={2.5} />
-                          ) : (
-                            <ArrowUpDown size={14} strokeWidth={2} />
-                          )}
-                        </button>
-                      );
-                    })()}
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody className="bg-white">
-          {isLoading ? (
-            Array.from({ length: 10 }).map((_, i) => (
-              <tr key={i} className="animate-pulse border-b border-[#F1F3F4] h-[64px]">
-                <td className="w-[56px] p-0 text-center align-middle">
-                  <div className="h-[13px] w-[13px] rounded-[2.5px] bg-slate-200 mx-auto" />
-                </td>
-                {TABLE_COLS.map((col) => (
-                  <td key={col.id} className={getCellClassName(col.align)}>
-                    <div className={`h-4 rounded bg-slate-200 ${col.id === 'LEAD ID' || col.id === 'STATUS CHANGE DATE' ? 'w-24' : 'w-20'} ${col.align === 'center' ? 'mx-auto' : col.align === 'right' ? 'ml-auto' : ''}`} />
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : visible.length > 0 ? (
-            visible.map(l => {
-              const key = l.id + l.phone;
-
-              const isSelected = selectedRows.includes(key);
-              const isVisitScheduled = l.scheduleStatus?.toLowerCase() === 'scheduled' || l.actionType === 'visit-scheduled';
-
-              const rowBgClass = isSelected
-                ? "bg-[#F1F5F9] border-t border-[#F1F3F4] h-[64px] hover:bg-[#E2E8F0] transition-colors cursor-pointer"
-                : isVisitScheduled
-                  ? "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
-                  : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
-
-              return (
-                <tr
-                  key={key}
-                  className={rowBgClass}
-                  onClick={() => navigate(getLeadRoute(l))}
-                >
-                  <td className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center justify-center h-full">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(key)}
-                        onChange={() => onToggleRow(key)}
-                        className="h-[13px] w-[13px] rounded-[2.5px] border border-[#767676] bg-white accent-[#00A63E] cursor-pointer outline-none"
-                      />
+                      {col.isFilterable && (
+                        <div className="relative inline-flex items-center">
+                          <button
+                            ref={el => { anchorRefs.current[col.id] = { current: el }; }}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onSetOpenColFilter(prev => prev === col.id ? null : col.id);
+                            }}
+                            className={`rounded p-0.5 transition hover:bg-slate-200 outline-none ${openColFilter === col.id || isActive ? 'text-[#1E6865]' : 'text-[#AEB4BA]'}`}
+                          >
+                            <Filter size={16} strokeWidth={2.5} />
+                          </button>
+                          {isActive && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1E6865]" />}
+                        </div>
+                      )}
+                      {col.isFilterable && openColFilter === col.id && (
+                        <LeadColFilterPopup
+                          col={col.id}
+                          anchorRef={{ current: anchorRefs.current[col.id]?.current ?? null }}
+                          initialSelected={colFilterCfg[col.id]?.value ?? []}
+                          onApply={colFilterCfg[col.id]?.onApply ?? (() => { })}
+                          onClose={() => onSetOpenColFilter(null)}
+                        />
+                      )}
+                      {col.isSortable && (() => {
+                        const targetSortBy = col.id === 'LOAN AMOUNT' ? 'loan_amount' : 'creation';
+                        const isSortActive = sortBy === targetSortBy;
+                        return (
+                          <button
+                            type="button"
+                            title={`Sort by ${col.label}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!onSortChange) return;
+                              if (!isSortActive) {
+                                onSortChange(targetSortBy, 'desc');
+                              } else if (sortOrder === 'desc') {
+                                onSortChange(targetSortBy, 'asc');
+                              } else {
+                                onSortChange(undefined, undefined);
+                              }
+                            }}
+                            className={`inline-flex items-center justify-center p-1 rounded transition-colors hover:bg-slate-200 outline-none ${isSortActive ? 'text-[#16A34A] font-bold' : 'text-[#AEB4BA] hover:text-[#374151]'
+                              }`}
+                          >
+                            {isSortActive ? (
+                              sortOrder === 'asc' ? <ArrowUp size={14} strokeWidth={2.5} /> : <ArrowDown size={14} strokeWidth={2.5} />
+                            ) : (
+                              <ArrowUpDown size={14} strokeWidth={2} />
+                            )}
+                          </button>
+                        );
+                      })()}
                     </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody className="bg-white">
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, i) => (
+                <tr key={i} className="animate-pulse border-b border-[#F1F3F4] h-[64px]">
+                  <td className="w-[56px] p-0 text-center align-middle">
+                    <div className="h-[13px] w-[13px] rounded-[2.5px] bg-slate-200 mx-auto" />
                   </td>
-
                   {TABLE_COLS.map((col) => (
-                    <td
-                      key={col.id}
-                      className={getCellClassName(col.align)}
-                      onClick={col.id === 'ACTIONS' ? (e) => e.stopPropagation() : undefined}
-                    >
-                      {renderCellContent(col.id, l)}
+                    <td key={col.id} className={getCellClassName(col.align)}>
+                      <div className={`h-4 rounded bg-slate-200 ${col.id === 'LEAD ID' || col.id === 'STATUS CHANGE DATE' ? 'w-24' : 'w-20'} ${col.align === 'center' ? 'mx-auto' : col.align === 'right' ? 'ml-auto' : ''}`} />
                     </td>
                   ))}
                 </tr>
-              );
-            })
-          ) : (
-            <LeadEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />
-          )}
-        </tbody>
-      </table>
+              ))
+            ) : visible.length > 0 ? (
+              visible.map(l => {
+                const key = l.id + l.phone;
+
+                const isSelected = selectedRows.includes(key);
+                const isVisitScheduled = l.scheduleStatus?.toLowerCase() === 'scheduled' || l.actionType === 'visit-scheduled';
+
+                const rowBgClass = isSelected
+                  ? "bg-[#F1F5F9] border-t border-[#F1F3F4] h-[64px] hover:bg-[#E2E8F0] transition-colors cursor-pointer"
+                  : isVisitScheduled
+                    ? "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[rgba(240,253,250,0.5)] transition-colors cursor-pointer"
+                    : "bg-white border-t border-[#F1F3F4] h-[64px] hover:bg-[#f7fafd] transition-colors cursor-pointer";
+
+                return (
+                  <tr
+                    key={key}
+                    className={rowBgClass}
+                    onClick={() => navigate(getLeadRoute(l))}
+                  >
+                    <td className="w-[56px] min-w-[56px] max-w-[56px] p-0 text-center align-middle" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-center h-full">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(key)}
+                          onChange={() => onToggleRow(key)}
+                          className="h-[13px] w-[13px] rounded-[2.5px] border border-[#767676] bg-white accent-[#00A63E] cursor-pointer outline-none"
+                        />
+                      </div>
+                    </td>
+
+                    {TABLE_COLS.map((col) => (
+                      <td
+                        key={col.id}
+                        className={getCellClassName(col.align)}
+                        onClick={col.id === 'ACTIONS' ? (e) => e.stopPropagation() : undefined}
+                      >
+                        {renderCellContent(col.id, l)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
+            ) : (
+              <LeadEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

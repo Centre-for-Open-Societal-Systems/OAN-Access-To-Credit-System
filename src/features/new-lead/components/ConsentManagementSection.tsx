@@ -135,7 +135,7 @@ export function ConsentManagementSection() {
               </button>
             </div>
             {searchedFarmer?.firstName && (
-              <div className="text-[13px] text-green-600 font-medium bg-[#F0FDFA] border border-[#DCFCE7] rounded px-3 py-1.5 w-full break-all">
+              <div className="text-[13px] text-green-600 font-medium bg-[#F0FDFA] border border-[#DCFCE7] rounded px-3 py-1.5 w-full break-all ">
                 Farmer: {searchedFarmer.firstName} {searchedFarmer.lastName} ({searchedFarmer.phoneNumber})
               </div>
             )}
@@ -143,7 +143,7 @@ export function ConsentManagementSection() {
               type="button"
               onClick={handleSendOtp}
               disabled={!searchedFarmer?.firstName || isLoadingConsent || isSearchingFarmer}
-              className="w-full h-[42px] rounded-md bg-[#16A34A] text-[15px] font-bold text-white hover:bg-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
+              className="w-full h-[42px] rounded-md bg-[#16A34A] text-[15px] font-bold  text-white hover:bg-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
             >
               {isLoadingConsent ? 'Sending...' : 'Send OTP'}
             </button>
