@@ -244,7 +244,7 @@ export function PortalLoginForm({
             onClick={() => setIsForgotOpen(true)}
             className="text-[14px] font-bold text-[#1F2937] hover:text-[#16A34A] transition-colors bg-transparent border-none p-0 cursor-pointer"
           >
-            Forgot Password?
+            <span className='text-[#16A34A] font-bold text-[14px]'>Forgot Password?</span>
           </button>
         </div>
 
@@ -253,7 +253,7 @@ export function PortalLoginForm({
           disabled={isLoading}
           className="w-full bg-[#16A34A] hover:bg-[#15803d] text-white py-4 rounded-xl font-bold text-[14px] flex items-center justify-center space-x-2 transition-all active:scale-[0.98] shadow-sm disabled:opacity-70"
         >
-          <span>{isLoading ? 'Signing in…' : 'Continue to Sign In'}</span>
+          <span className='font-semibold'>{isLoading ? 'Signing in…' : 'Continue to Sign In'}</span>
           {!isLoading && <ArrowRight size={18} strokeWidth={2.5} />}
         </button>
 
@@ -261,7 +261,7 @@ export function PortalLoginForm({
           <div className="text-center text-[14px] font-medium text-[#6B7280]">
             New to OAN?{' '}
             <Link href="/create-account" className="text-[#16A34A] font-bold hover:underline">
-              Register account
+              <span className='text-[#16A34A]'>Register account</span>
             </Link>
           </div>
         )}
