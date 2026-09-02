@@ -24,8 +24,8 @@ export interface CatalogCardControls {
    * one (the bank's) renders no bookmark control at all.
    */
   onBookmarkToggle?:
-    | ((product: CatalogProduct, currentlyBookmarked: boolean) => Promise<void>)
-    | undefined;
+  | ((product: CatalogProduct, currentlyBookmarked: boolean) => Promise<void>)
+  | undefined;
 }
 
 interface CatalogBrowserProps {

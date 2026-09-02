@@ -30,7 +30,7 @@ export function needsVisitSchedule(lead: Lead): boolean {
 export function hasVisitScheduled(lead: Lead): boolean {
   const status = lead.status?.toLowerCase();
   const scheduleStatus = lead.scheduleStatus?.toLowerCase();
-  
+
   const hasVisit = Boolean(lead.visitDate) || scheduleStatus === 'scheduled';
   return hasVisit && scheduleStatus !== 'missed' && (status === 'active' || status === 'verified');
 }
@@ -72,7 +72,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <Eye {...ICON_PROPS} />
-          <span className='text-[14px]'>View</span>
+          <span className='text-[14px] font-semibold'>View</span>
         </button>
         {lead.visitDate && (
           <span className="inline-flex items-center justify-center gap-1 text-[10px] text-text-muted mt-0.5 w-full">
@@ -94,7 +94,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <XCircle {...ICON_PROPS} />
-          <span className='text-[14px]'>Rejected</span>
+          <span className='text-[14px] font-semibold'>Rejected</span>
         </button>
       );
 
@@ -106,7 +106,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <CheckCircle {...ICON_PROPS} className="text-[#10B981] shrink-0" />
-          <span className='text-[14px]'>Granted</span>
+          <span className='text-[14px] font-semibold'>Granted</span>
         </button>
       );
 
@@ -119,7 +119,7 @@ const LeadActionCell = memo(({ lead, navigate }: LeadActionCellProps) => {
           className={`${BADGE_CLASS} cursor-pointer hover:bg-slate-50 transition-all`}
         >
           <Eye {...ICON_PROPS} />
-          <span className='text-[14px]'>View</span>
+          <span className='text-[14px] font-semibold'>View</span>
         </button >
       );
   }

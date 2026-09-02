@@ -1,5 +1,5 @@
 // eslint-disable-next-line boundaries/dependencies -- TODO (2026-08-23): needs to be fixed later; hiding for now as this existed before our changes
-import { getMeThunk, setBankStatus } from '@/features/auth/store/authSlice';
+import { getMeThunk } from '@/features/auth/store/authSlice';
 import { logger } from '@/lib/logger';
 import type { RootState } from '@/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
@@ -7,16 +7,15 @@ import { onboardingService } from '../api/onboarding.service';
 import type {
     RegisterBankPayload,
     RegisterSellerPayload,
-    SaveOrgContactsPayload, UpdateBankStatusPayload, UploadKycDocumentPayload
+    SaveOrgContactsPayload, UploadKycDocumentPayload
 } from '../types/onboarding.types';
 
 type AsyncStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
-// saveOrgContacts, uploadKycDocument, and updateBankStatus all share the same
-// mutationStatus/mutationError pair below. This records which of them most
-// recently set it, so components driven by a different action on the same
-// page (e.g. the KYC document card vs. the contacts card) don't both surface
-// an error that belongs to their sibling.
-type MutationSource = 'contacts' | 'document' | 'bankStatus' | null;
+// saveOrgContacts and uploadKycDocument share the same mutationStatus/mutationError
+// pair below. This records which of them most recently set it, so components
+// driven by a different action on the same page (e.g. the KYC document card vs.
+// the contacts card) don't both surface an error that belongs to their sibling.
+type MutationSource = 'contacts' | 'document' | null;
 
 interface OnboardingState {
   uploadedFileUrl: string | null;
@@ -96,21 +95,6 @@ export const uploadKycDocument = createAsyncThunk(
   }
 );
 
-export const updateBankStatus = createAsyncThunk(
-  'sellerOnboarding/updateBankStatus',
-  async (payload: UpdateBankStatusPayload, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await onboardingService.updateBankStatus(payload);
-      dispatch(setBankStatus(payload.new_status));
-      void dispatch(getMeThunk());
-      return response.data;
-    } catch (error) {
-      logger.error('updateBankStatus thunk failed', { payload, error });
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to update bank onboarding status');
-    }
-  }
-);
-
 const onboardingSlice = createSlice({
   name: 'sellerOnboarding',
   initialState,
@@ -136,10 +120,7 @@ const onboardingSlice = createSlice({
       .addCase(saveOrgContacts.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'contacts'; })
       .addCase(uploadKycDocument.pending, (s) => { s.mutationStatus = 'loading'; s.mutationError = null; s.mutationSource = 'document'; })
       .addCase(uploadKycDocument.fulfilled, (s, action) => { s.mutationStatus = 'succeeded'; s.uploadedFileUrl = action.payload.file_url; })
-      .addCase(uploadKycDocument.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'document'; })
-      .addCase(updateBankStatus.pending, (s) => { s.mutationStatus = 'loading'; s.mutationError = null; s.mutationSource = 'bankStatus'; })
-      .addCase(updateBankStatus.fulfilled, (s) => { s.mutationStatus = 'succeeded'; })
-      .addCase(updateBankStatus.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'bankStatus'; });
+      .addCase(uploadKycDocument.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'document'; });
   },
 });
 

@@ -1,7 +1,7 @@
 import { combineReducers, configureStore, isRejectedWithValue, Middleware, UnknownAction } from '@reduxjs/toolkit';
 import { performGlobalLogout } from '../features/auth/logout';
 import { LOGIN_ROUTE } from '../features/auth/rbac';
-import { authReducer, logout } from '../features/auth/store/authSlice';
+import { authReducer, logout, selectUserEmail } from '../features/auth/store/authSlice';
 import { leadReducer } from '../features/leads/store/leadSlice';
 import { bankApplicationsReducer } from '../features/loans/store/bankApplicationsSlice';
 import { loanDashboardReducer } from '../features/loans/store/loanDashboardSlice';
@@ -204,3 +204,5 @@ if (typeof window !== 'undefined') {
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export { selectUserEmail };

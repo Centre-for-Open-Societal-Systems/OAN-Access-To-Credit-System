@@ -15,7 +15,7 @@ export {
 // Store — onboarding
 export {
     clearOnboardingErrors, registerSeller,
-    saveOrgContacts, sellerOnboardingReducer, updateBankStatus, uploadKycDocument
+    saveOrgContacts, sellerOnboardingReducer, uploadKycDocument
 } from './store/onboardingSlice';
 // Store — team
 export {
@@ -24,7 +24,7 @@ export {
 } from './store/teamSlice';
 // Types — safe to import from server and client contexts
 export type { ArchiveLoanProductInput, CreateLoanProductCompoundInput, CreateLoanProductPayload, ListProductsParams, SetLoanProductStatusInput, UpdateLoanProductCompoundInput, UpdateLoanProductPayload } from './types/loan-products.types';
-export type { RegisterSellerPayload, SaveOrgContactsPayload, UpdateBankStatusPayload, UploadKycDocumentPayload } from './types/onboarding.types';
+export type { RegisterSellerPayload, SaveOrgContactsPayload, UploadKycDocumentPayload } from './types/onboarding.types';
 export type { InviteTeamMemberPayload, ResetMemberPasswordPayload, UpdateUserPayload, UpdateUserProfilePayload } from './types/team.types';
 
 

@@ -155,16 +155,15 @@ export default function CatalogCard({
         {/* Floating Bottom Right: Category Pill */}
         {category && (
           <div className="absolute bottom-3 right-3.5 z-20 max-w-[calc(100%-28px)]">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold rounded-md max-w-full">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold rounded-md max-w-full">
               <Tag className="w-3 h-3 shrink-0" />
               <span className="truncate">{category}</span>
             </span>
           </div>
         )}
 
-        {/* Floating Bottom Left: caller-supplied badge (bank status). Opposite
-            the category so the two never overlap on a narrow card. */}
-        {badge && <div className="absolute bottom-3 left-3.5 z-20">{badge}</div>}
+        {/* Floating Top Right: caller-supplied badge (bank status). */}
+        {badge && <div className="absolute top-3 right-3.5 z-20">{badge}</div>}
       </div>
 
       {/* Bottom Half: Content & Financial Terms */}

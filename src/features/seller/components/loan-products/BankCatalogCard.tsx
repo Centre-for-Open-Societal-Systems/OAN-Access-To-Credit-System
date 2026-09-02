@@ -93,7 +93,7 @@ export function BankCatalogCard({ product }: BankCatalogCardProps) {
         product={product}
         badge={
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px] font-bold ${status.badgeClasses}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-bold ${status.badgeClasses}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${status.dotClasses}`} />
             {status.label}

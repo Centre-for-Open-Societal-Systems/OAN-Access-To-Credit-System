@@ -32,8 +32,8 @@ export function ProductApprovalsList({ listParams }: ProductApprovalsListProps) 
   const pendingProducts = products.filter((product) => product.status === 'Pending Approval');
 
   const header = (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-      <div className="mb-4 flex items-center gap-4">
+    <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+      <div className="p-6 pb-4 flex items-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
           <Landmark size={24} />
         </div>
@@ -42,9 +42,9 @@ export function ProductApprovalsList({ listParams }: ProductApprovalsListProps) 
           <p className="text-[14px] text-gray-500">Review product submissions before they are published to farmers.</p>
         </div>
       </div>
-      <p className="border-t border-gray-200 pt-4 text-[14px] text-gray-600">
+      <div className="border-t border-gray-200 px-6 py-4 text-[14px] text-gray-600">
         Approve to publish a product as active or reject it.
-      </p>
+      </div>
     </div>
   );
 

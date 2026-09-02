@@ -6,8 +6,9 @@ import { toast } from '@/lib/toast';
 import { ResetMemberPasswordModal } from '@/features/seller/components/profile/ResetMemberPasswordModal';
 import { generateTemporaryPassword } from '@/features/seller/utils/team.utils';
 import { useModalA11y } from '@/hooks/useModalA11y';
-import { CheckCircle2, KeyRound, Search, Trash2, UserPlus, XCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, KeyRound, Search, Trash2, UserPlus, XCircle, RefreshCw, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // fetchApi unwraps one layer of the raw response (see fetchApi.ts), so depending
 // on how a given endpoint's payload is shaped, the resolved value can land as
@@ -118,33 +119,34 @@ export default function TeamManagementTab() {
   if (loading) return <div className="py-12 text-center text-gray-500 font-medium">Loading team members...</div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900">Team Members</h3>
-          <p className="text-sm text-gray-500">Manage your team&apos;s access and roles within the platform.</p>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Search members..." 
-              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors"
-            />
+    <>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden w-full min-w-0">
+        <div className="p-6 border-b border-gray-200 min-w-0">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-gray-900 truncate">Team Members</h3>
+              <p className="text-sm text-gray-500 truncate">Manage your team&apos;s access and roles within the platform.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors"
+                />
+              </div>
+              <button
+                onClick={openInviteModal}
+                className="bg-[#16A34A] hover:bg-[#15803d] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span className='font-semibold'>Invite Member</span>
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={openInviteModal}
-            className="bg-[#16A34A] hover:bg-[#15803d] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
-          >
-            <UserPlus className="w-4 h-4" />
-            Invite Member
-          </button>
         </div>
-      </div>
-
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
               <tr>
@@ -236,7 +238,7 @@ export default function TeamManagementTab() {
         </div>
       </div>
 
-      {isInviteModalOpen && (
+      {isInviteModalOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div
             ref={inviteModalRef}
@@ -246,10 +248,10 @@ export default function TeamManagementTab() {
             tabIndex={-1}
             className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
               <h3 id="invite-member-title" className="font-bold text-gray-900">Invite Team Member</h3>
-              <button onClick={closeInviteModal} aria-label="Close" className="text-gray-400 hover:text-gray-600">
-                <XCircle className="w-5 h-5" />
+              <button onClick={closeInviteModal} aria-label="Close" className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleInvite} className="p-6 space-y-4">
@@ -257,36 +259,46 @@ export default function TeamManagementTab() {
                 <label className="block text-sm font-medium text-gray-900 mb-1.5">
                   Full Name <span className="text-red-500">*</span>
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={inviteForm.full_name}
-                  onChange={e => setInviteForm(f => ({ ...f, full_name: e.target.value }))}
-                  className={`w-full px-3 py-2 bg-white border ${inviteErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500`}
+                  onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
+                  placeholder="e.g. John Doe"
+                  className={`w-full px-3 py-2 bg-white border ${inviteErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors`}
                 />
-                {inviteErrors.full_name && <p className="mt-1 text-xs text-red-500">{inviteErrors.full_name}</p>}
+                {inviteErrors.full_name && (
+                  <p className="mt-1 text-xs text-red-500">{inviteErrors.full_name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-1.5">
                   Email Address <span className="text-red-500">*</span>
                 </label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   value={inviteForm.email}
-                  onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
-                  className={`w-full px-3 py-2 bg-white border ${inviteErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500`}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  placeholder="john@coopbank.com"
+                  className={`w-full px-3 py-2 bg-white border ${inviteErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors`}
                 />
-                {inviteErrors.email && <p className="mt-1 text-xs text-red-500">{inviteErrors.email}</p>}
+                {inviteErrors.email && (
+                  <p className="mt-1 text-xs text-red-500">{inviteErrors.email}</p>
+                )}
               </div>
-              {/* Not a choice: a Bank Admin can only add Bank Agents. Offering a
-                  "Bank Admin" option would just collect a 400 from the backend. */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">Role</label>
-                <p className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
-                  Bank Agent (Read/Write)
-                </p>
-                {inviteErrors.role && <p className="mt-1 text-xs text-red-500">{inviteErrors.role}</p>}
+                <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                  Role
+                </label>
+                <select
+                  value={inviteForm.role}
+                  disabled
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed focus:outline-none"
+                >
+                  <option value="A2C Bank Agent">A2C Bank Agent</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Currently only Bank Agent invitations are supported.</p>
               </div>
               {/* Generated once when the dialog opens and not editable: the value is
                   emailed to the new member, so an admin-typed password would only
@@ -319,27 +331,30 @@ export default function TeamManagementTab() {
                   Generated automatically and emailed to the member. They must set their own password
                   the first time they sign in.
                 </p>
-                {inviteErrors.password && <p className="mt-1 text-xs text-red-500">{inviteErrors.password}</p>}
+                {inviteErrors.password && (
+                  <p className="mt-1 text-xs text-red-500">{inviteErrors.password}</p>
+                )}
               </div>
-              <div className="pt-4 flex justify-end gap-3">
-                <button 
-                  type="button" 
+              <div className="-mx-6 px-6 pt-4 flex justify-end gap-3 border-t border-gray-200">
+                <button
+                  type="button"
                   onClick={closeInviteModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  <span className='font-semibold'>Cancel</span>
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={inviting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#16A34A] rounded-lg hover:bg-[#15803d] disabled:opacity-50"
+                <button
+                  type="submit"
+                  disabled={inviting || !inviteForm.full_name || !inviteForm.email}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#16A34A] hover:bg-[#15803d] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
                 >
-                  {inviting ? 'Inviting...' : 'Send Invite'}
+                  <span className='font-semibold'>{inviting ? 'Sending Invite...' : 'Send Invite'}</span>
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {resetTarget && (
@@ -349,6 +364,6 @@ export default function TeamManagementTab() {
           onReset={fetchUsers}
         />
       )}
-    </div>
+    </>
   );
 }

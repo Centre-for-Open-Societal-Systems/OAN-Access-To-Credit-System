@@ -124,8 +124,6 @@ export interface GetLoansParams {
    * backend moved off Frappe's static workflow states.
    */
   status?: string;
-  /** A bank's own stage label (A2C Loan Status Stage). Tenant free text, comma-separated. */
-  stage_label?: string;
   min_loan_amount?: string;
   max_loan_amount?: string;
   /** One or more loan types, comma-separated (`parse_multi_value`). Shares the

@@ -33,8 +33,8 @@ export function OrganisationDocumentsCard() {
   const mutationStatus = useAppSelector(selectOnboardingMutationStatus);
   const mutationErrorRaw = useAppSelector(selectOnboardingMutationError);
   const mutationSource = useAppSelector(selectOnboardingMutationSource);
-  // mutationError is shared with the contacts card's saveOrgContacts/updateBankStatus
-  // calls — only surface it here when this card's own upload actually caused it.
+  // mutationError is shared with the contacts card's saveOrgContacts
+  // call — only surface it here when this card's own upload actually caused it.
   const mutationError = mutationSource === 'document' ? mutationErrorRaw : null;
   const uploadedFileUrl = useAppSelector(selectUploadedFileUrl);
 

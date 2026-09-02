@@ -220,8 +220,8 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
           ) : (
             <>
               {/* Personal Information Section */}
-              <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
+              <section className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 p-6 pb-5 border-b border-gray-200">
                   <div>
                     <h3 className="text-lg font-bold text-gray-800">Personal Information</h3>
                     {isProfileReadOnly && (
@@ -245,7 +245,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
                   )}
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex flex-col md:flex-row gap-8 p-6 pt-6">
                   {/* Avatar Column */}
                   <div className="flex flex-col items-center justify-center min-w-[200px]">
                     <div className="relative">

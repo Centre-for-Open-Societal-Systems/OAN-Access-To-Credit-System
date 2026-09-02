@@ -145,7 +145,7 @@ export default function CatalogSidebarFilters({ facets, hasFailed = false, onRet
     hasAmountRange || rateCeiling !== null || tenures.length > 0 || categories.length > 0;
 
   return (
-    <div className="h-fit bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-5 border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all">
+    <div className="h-fit bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-5 border-[#F1F3F4] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all text-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
         <button
@@ -412,7 +412,7 @@ export default function CatalogSidebarFilters({ facets, hasFailed = false, onRet
                       endpoint filters on. */}
                   <span className="flex-1 group-hover:text-gray-900 transition-colors duration-200 text-sm font-medium">{cat.name}</span>
                   {cat.count !== undefined && (
-                    <span className="text-xs font-bold text-gray-400">{cat.count}</span>
+                    <span className="text-sm font-bold text-gray-400">{cat.count}</span>
                   )}
                 </label>
               );

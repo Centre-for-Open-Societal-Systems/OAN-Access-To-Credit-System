@@ -1,6 +1,6 @@
 import { Lead } from '@/features/leads/types/leads.types';
 import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Phone } from 'lucide-react';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LeadActionCell, { getLeadRoute } from './LeadActionCell';
 import { LeadColFilterPopup } from './LeadColFilterPopup';
 import { TableEmptyState } from '@/components/ui/TableEmptyState';
@@ -109,6 +109,50 @@ function LeadTable({
 }: LeadTableProps) {
   const anchorRefs = useRef<Record<string, { current: HTMLButtonElement | null }>>({});
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const [tableScrollWidth, setTableScrollWidth] = useState(1118);
+
+  const isSyncingTable = useRef(false);
+  const isSyncingScrollbar = useRef(false);
+
+  useEffect(() => {
+    if (!tableContainerRef.current) return;
+
+    setTableScrollWidth(tableContainerRef.current.scrollWidth);
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setTableScrollWidth(entry.target.scrollWidth);
+      }
+    });
+
+    observer.observe(tableContainerRef.current);
+    return () => observer.disconnect();
+  }, [visible, isLoading]);
+
+  const handleTableScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isSyncingTable.current) {
+      isSyncingTable.current = false;
+      return;
+    }
+    if (scrollbarRef.current) {
+      isSyncingScrollbar.current = true;
+      scrollbarRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
+  const handleScrollbarScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isSyncingScrollbar.current) {
+      isSyncingScrollbar.current = false;
+      return;
+    }
+    if (tableContainerRef.current) {
+      isSyncingTable.current = true;
+      tableContainerRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
   const colFilterCfg: Record<string, { value: string[]; onApply: (selected: string[]) => void }> = {
     'STATUS': { value: colStatusFilter, onApply: onApplyStatusFilter },
     'LOAN TYPE': { value: colCallTimeFilter, onApply: onApplyCallTimeFilter },
@@ -183,8 +227,12 @@ function LeadTable({
   };
 
   return (
-    <div className="flex flex-col min-h-[400px]">
-      <div className="overflow-x-auto w-full flex-1">
+    <div className="flex flex-col min-h-[400px] relative">
+      <div
+        ref={tableContainerRef}
+        onScroll={handleTableScroll}
+        className="overflow-x-auto w-full flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2"
+      >
         <table className="w-full min-w-[1118px] table-fixed border-collapse">
           <thead>
             <tr className="border-b border-[#EDEFF1] bg-[rgba(248,250,252,0.5)] h-[57px] select-none">
@@ -349,6 +397,15 @@ function LeadTable({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Sticky scrollbar container */}
+      <div
+        ref={scrollbarRef}
+        onScroll={handleScrollbarScroll}
+        className="sticky bottom-0 z-20 w-full overflow-x-auto [scrollbar-width:auto] [scrollbar-color:auto] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-[#f1f5f9] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#16A34A] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#15803d]"
+      >
+        <div style={{ width: tableScrollWidth, height: '1px' }}></div>
       </div>
     </div>
   );

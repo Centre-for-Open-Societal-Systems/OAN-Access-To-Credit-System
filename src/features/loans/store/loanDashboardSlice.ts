@@ -3,12 +3,11 @@ import { bucketStagesByArchetype, toPseudoStages } from '@/features/loans/utils/
 import { loanStagesService } from '@/features/loans/api/loanStages.service';
 import { formatLocation } from '@/features/loans/utils/formatLocation';
 import { buildStageKpiCards, compareStageSequence, getStageStyle, toStageFilterOptions } from '@/features/loans/utils/stageStyles';
-import { selectUserEmail } from '@/features/auth/store/authSlice';
 import type { LoanStage, LoanStatusMeta } from '@/lib/api/api.schemas';
 import { withCurrentSort } from '@/lib/filterSort';
 import type { ApiResponse } from '@/types/api';
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../../../store';
+import { selectUserEmail, type RootState } from '../../../store';
 
 export const fetchLoans = createAsyncThunk(
   'loanDashboard/fetchLoans',

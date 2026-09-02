@@ -1,5 +1,5 @@
 'use client';
-import { clearOnboardingErrors, saveOrgContacts, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus, updateBankStatus } from '@/features/seller/store/onboardingSlice';
+import { clearOnboardingErrors, saveOrgContacts, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus } from '@/features/seller/store/onboardingSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Check, Loader2, UserCheck } from 'lucide-react';
 import { useState } from 'react';
@@ -26,9 +26,9 @@ export function OrganizationContactsCard() {
   const mutationStatus = useAppSelector(selectOnboardingMutationStatus);
   const mutationErrorRaw = useAppSelector(selectOnboardingMutationError);
   const mutationSource = useAppSelector(selectOnboardingMutationSource);
-  // handleSave drives both saveOrgContacts and (on success) updateBankStatus,
-  // so this card owns errors from either — but not the document card's upload.
-  const isOwnMutation = mutationSource === 'contacts' || mutationSource === 'bankStatus';
+  // handleSave drives saveOrgContacts, so this card owns errors from contacts —
+  // but not the document card's upload.
+  const isOwnMutation = mutationSource === 'contacts';
   const mutationError = isOwnMutation ? mutationErrorRaw : null;
 
   const handleSave = async () => {
@@ -53,11 +53,6 @@ export function OrganizationContactsCard() {
 
     if (saveOrgContacts.fulfilled.match(result)) {
       setIsSaved(true);
-      await dispatch(
-        updateBankStatus({
-          new_status: 'Active',
-        })
-      );
     }
   };
 

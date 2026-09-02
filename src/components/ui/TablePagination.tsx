@@ -77,7 +77,7 @@ export function TablePagination({
   const pages = pageItems(currentPage, lastPage);
 
   return (
-    <div className="flex flex-col xl:flex-row items-center justify-center xl:justify-between gap-4 md:gap-6 border-t border-[#F1F3F4] bg-white px-4 sm:px-8 py-5">
+    <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 border-t border-[#F1F3F4] bg-white px-4 sm:px-8 py-5">
       {/* Left: record count & page size dropdown */}
       <div className="text-sm sm:text-base text-gray-400 font-medium flex flex-wrap items-center justify-center shrink-0 gap-4">
         <div className="relative" ref={dropdownRef}>
@@ -117,7 +117,7 @@ export function TablePagination({
       </div>
 
       {/* Right: page navigation */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-full xl:w-auto">
+      <div className="flex flex-nowrap items-center justify-center md:justify-end gap-1.5 sm:gap-2 w-full md:w-auto">
         <button
           type="button"
           disabled={currentPage <= 1}

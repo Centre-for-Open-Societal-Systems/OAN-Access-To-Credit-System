@@ -31,6 +31,11 @@ ENVEOF
 
   sleep 15
   curl -sf http://localhost:3000 >/dev/null && echo "Health check passed" || echo "Warning: health check failed"
+
+  # Reclaim disk: each deploy pulls a fresh image; -a drops old tags no running container
+  # uses so the dev VM doesn't fill up over deploys ("no space left on device" on pull).
+  echo "=== Pruning unused images ==="
+  docker image prune -af || true
   docker compose ps
 SSHEOF
 

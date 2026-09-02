@@ -57,7 +57,7 @@ export default function CatalogPagination({
   return (
     <div className="relative z-20 flex flex-col sm:flex-row items-center justify-between p-4 bg-white border border-[#F1F3F4] rounded-xl mt-6 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.05),0px_2px_4px_-1px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-lg transition-all">
       {/* Left Group: Dropdown and Info */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-3 mb-4 sm:mb-0">
+      <div className="flex flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 mb-4 sm:mb-0">
         {/* Dropdown (Now on the left side) */}
         <div className="flex items-center gap-2" ref={dropdownRef}>
           <span className="text-sm text-gray-500">Show</span>

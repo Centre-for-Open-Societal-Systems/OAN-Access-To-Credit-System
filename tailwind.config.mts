@@ -38,6 +38,15 @@ const config: Config = {
       spacing: {
         'table-cell': '151.71px',
       },
+      zIndex: {
+        dropdown: '100',
+        sticky: '200',
+        popover: '300',
+        overlay: '400',
+        modal: '500',
+        toast: '600',
+        max: '9999',
+      },
       fontFamily: {
         body: ['var(--font-body)', 'sans-serif'],
         display: ['var(--font-display)', 'sans-serif'],

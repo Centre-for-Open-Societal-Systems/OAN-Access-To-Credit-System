@@ -32,7 +32,3 @@ export interface RegisterBankPayload {
   website: string | null;
 }
 
-export interface UpdateBankStatusPayload {
-  new_status: 'In Review' | 'Active' | 'Suspended';
-}
-
