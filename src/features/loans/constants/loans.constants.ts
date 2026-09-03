@@ -23,8 +23,9 @@ export const TONE_CFG: Record<LoanStatusTone, { dot: string; badge: string }> = 
  * The four states `A2C Loan Application.status` can hold, in lifecycle order.
  *
  * These are the A2C Loan Application Workflow's states — platform constants,
- * identical for every bank. What the *business* calls each step lives separately in
- * `stage_label` (A2C Loan Status Stage), which is tenant free text.
+ * identical for every bank. They are the vocabulary of the `archetype` filter only;
+ * what a row's badge *says* is `status`, which the backend resolves to the owning
+ * bank's own name for the step.
  *
  * `get_all_loans` validates `status` against exactly this list and answers 400 for
  * anything else, so no other value may ever be used as a filter value. The names
@@ -51,18 +52,6 @@ export function loanToneCfg(tone: string | undefined): { dot: string; badge: str
 /** Tone for a row, from its archetype status. Unknown values read as neutral. */
 export function loanStatusTone(status: string | undefined): LoanStatusTone {
   return STATUS_CFG[status ?? '']?.tone ?? 'neutral';
-}
-
-/**
- * What a row's badge should say.
- *
- * The bank's own label for the step wins when it has one; the archetype is the
- * fallback for an application no bank stage has been applied to yet.
- */
-export function loanStageLabel(
-  row: { stage_label?: string | null | undefined; status?: string | null | undefined }
-): string {
-  return row.stage_label || row.status || '—';
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────

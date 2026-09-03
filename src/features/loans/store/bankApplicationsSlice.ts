@@ -4,10 +4,9 @@ import {
   loanService,
   LoanSummaryMetrics,
 } from '@/features/loans/api/loan.service';
-import { loanStagesService } from '@/features/loans/api/loanStages.service';
 import { formatLocation } from '@/features/loans/utils/formatLocation';
 import { bucketStagesByArchetype, stageToStatusMeta, toPseudoStages } from '@/features/loans/utils/archetype';
-import { getStageStyle, toStageFilterOptions } from '@/features/loans/utils/stageStyles';
+import { buildStageKpiCards, getStageStyle, toStageFilterOptions } from '@/features/loans/utils/stageStyles';
 import type { LoanStage } from '@/lib/api/api.schemas';
 import type { ApiResponse } from '@/types/api';
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -27,23 +26,6 @@ import type { RootState } from '../../../store';
 // hook: a bank user only ever receives their own bank's non-Active applications.
 // Nothing on this page can widen that, and nothing here should try to enforce it
 // — the client just renders what the scoped endpoint returned.
-
-/** Backend status -> fallback label if no matching stage is found. */
-const STATUS_LABELS: Record<string, string> = {
-  Approved: 'Granted',
-  Processing: 'Processed',
-  Processed: 'Processed',
-  Rejected: 'Rejected',
-  Draft: 'Draft',
-};
-
-export function bankStatusLabel(status: string, stages?: readonly LoanStage[]): string {
-  if (stages && stages.length > 0) {
-    const style = getStageStyle(status, stages);
-    return style.label;
-  }
-  return STATUS_LABELS[status] ?? status;
-}
 
 // There is deliberately no hardcoded status fallback here.
 //
@@ -111,9 +93,14 @@ export interface BankApplicationRow {
   type: string;
   productName: string;
   loanAmount: string;
-  /** Raw archetype status — what filters and the API speak. */
+  /**
+   * The application's status as the owning bank decided it — the backend resolves
+   * the stage, the client only renders it. Also the vocabulary the status filter
+   * speaks, so a value shown in a badge can be filtered on.
+   */
   status: string;
-  /** What the badge shows: the bank's own stage label, or the archetype behind it. */
+  /** What the badge shows. Same string as `status`; kept so `LoanTable` — which is
+   *  shared with sources that do format a label — has one field to read. */
   statusLabel: string;
   statusTone: 'success' | 'danger' | 'neutral' | 'info';
   appliedDate: string;
@@ -209,26 +196,21 @@ export const fetchBankApplications = createAsyncThunk(
 );
 
 /**
- * Where a screen gets its pipeline from.
+ * The caller's pipeline, from `loan_applications.get_loan_metadata`.
  *
- *  - `seller`: `loan_stages.get_stages`, which carries live `application_count`
- *    per stage. Bank portals only — it is guarded by a bank binding, so a
- *    Development Agent calling it gets 403.
- *  - `metadata`: `loan_applications.get_loan_metadata`, resolved per role, with
- *    no counts. This is what the Development Agent's copy of this list uses.
+ * One endpoint for every portal that renders this list. It resolves per role, so
+ * a bank user gets their own bank's stages and a Development Agent gets theirs —
+ * which is why the `seller` `get_stages` alternative that used to sit behind a
+ * `stageSource` prop is gone: it is guarded by a bank binding and 403s for the
+ * Development Agent, and the two portals want the same rows anyway. Live counts
+ * come from `get_loan_summary` (see `selectBankStageCards`), not from here.
  */
-export type StageSource = 'seller' | 'metadata';
-
 export const fetchBankStages = createAsyncThunk(
   'bankApplications/fetchStages',
-  async (source: StageSource = 'seller', { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
-      if (source === 'metadata') {
-        const response = await loanService.getLoanMetadata();
-        return toPseudoStages(response?.data?.statuses ?? []);
-      }
-      const response = await loanStagesService.getStages();
-      return response?.data?.stages ?? [];
+      const response = await loanService.getLoanMetadata();
+      return toPseudoStages(response?.data?.statuses ?? []);
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw error;
@@ -359,9 +341,20 @@ export const selectBankSearchQuery = (state: RootState) => state.bankApplication
 export const selectBankFilters = (state: RootState) => state.bankApplications.filters;
 export const selectBankSortBy = (state: RootState) => state.bankApplications.sortBy;
 export const selectBankSortOrder = (state: RootState) => state.bankApplications.sortOrder;
-const selectSummary = (state: RootState) => state.bankApplications.summary;
+export const selectBankSummary = (state: RootState) => state.bankApplications.summary;
 
 export const selectBankStageOptions = createSelector([selectBankStages], toStageFilterOptions);
+
+/**
+ * One KPI card per stage for the bank applications portal.
+ *
+ * Joins the bank's configured stages (from `get_loan_metadata` or `get_stages`)
+ * with live counts from `get_loan_summary().stages`.
+ */
+export const selectBankStageCards = createSelector(
+  [selectBankStages, selectBankSummary],
+  (stages, summary) => buildStageKpiCards(stages, summary?.data?.stages)
+);
 
 // --- Derived selectors ---
 const selectRowsData = createSelector([selectRaw, selectBankStages], (raw, stages) => {
@@ -379,11 +372,8 @@ const selectRowsData = createSelector([selectRaw, selectBankStages], (raw, stage
       year: 'numeric',
     });
     const appliedTime = created.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    // 'In Transition' is the first archetype state a bank ever sees, so it is the
-    // safer fallback than the pre-archetype 'Processing' that stood here.
-    const rawStatus = row.status || 'In Transition';
-    const displayLabel = row.stage_label || bankStatusLabel(rawStatus, stages);
-    const stageStyle = getStageStyle(row.stage_label || rawStatus, stages);
+    const status = row.status;
+    const stageStyle = getStageStyle(status, stages);
     const location = formatLocation(row);
 
     return {
@@ -400,9 +390,9 @@ const selectRowsData = createSelector([selectRaw, selectBankStages], (raw, stage
       // name, which lives in its own column-sub-line and would match nothing.
       type: row.loan_type || 'Unknown Type',
       productName: row.loan_product_name || '',
-      loanAmount: row.loan_amount ? row.loan_amount.toLocaleString() : '—',
-      status: rawStatus,
-      statusLabel: displayLabel,
+      loanAmount: row.loan_amount != null ? row.loan_amount.toLocaleString() : '—',
+      status,
+      statusLabel: status,
       statusTone: stageStyle.tone,
       appliedDate,
       appliedTime,
@@ -440,33 +430,17 @@ export const selectBankLoanTypeOptions = createSelector(
 /**
  * Bank-side KPI figures, bucketed by archetype state.
  *
- * The stage list is preferred because it carries live per-stage counts. When it
- * has not resolved (or reports nothing), fall back to `get_loan_summary`'s
- * per-label counts classified through the same stage list — not to
- * `summary.by_status`, which the endpoint has never sent.
+ * Uses `get_loan_summary`'s total and per-label counts classified through the
+ * stage metadata (via `bucketStagesByArchetype`).
  */
-export const selectBankMetrics = createSelector([selectSummary, selectBankStages], (summary, stages) => {
-  if (stages.length > 0) {
-    let inTransition = 0;
-    let completed = 0;
-    let cancelled = 0;
-    let total = 0;
-    for (const stage of stages) {
-      const count = stage.application_count ?? 0;
-      total += count;
-      if (stage.archetype_state === 'In Transition') inTransition += count;
-      else if (stage.archetype_state === 'Completed') completed += count;
-      else if (stage.archetype_state === 'Rejected' || stage.archetype_state === 'Cancelled') cancelled += count;
-    }
-    if (total > 0) {
-      return { total, inTransition, completed, cancelled };
-    }
-  }
-
-  const counts = bucketStagesByArchetype(summary?.data?.stages, stages.map(stageToStatusMeta));
+export const selectBankMetrics = createSelector([selectBankSummary, selectBankStages], (summary, stages) => {
+  const summaryData = summary?.data;
+  const statusMeta = stages.map(stageToStatusMeta);
+  const counts = bucketStagesByArchetype(summaryData?.stages, statusMeta);
+  const total = summaryData?.total ?? counts.total;
 
   return {
-    total: summary?.data?.total ?? counts.total,
+    total,
     inTransition: counts.active + counts.inTransition,
     completed: counts.completed,
     cancelled: counts.cancelled,

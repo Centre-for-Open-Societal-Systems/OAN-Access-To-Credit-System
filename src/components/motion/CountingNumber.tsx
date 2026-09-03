@@ -48,7 +48,7 @@ export function CountingNumber({
 }: CountingNumberProps) {
   const prefersReducedMotion = useReducedMotion();
   const spanRef = React.useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(prefersReducedMotion ? value : from);
+  const motionValue = useMotionValue(from);
   const spring = useSpring(motionValue, transition);
 
   const format = React.useCallback(
@@ -64,11 +64,12 @@ export function CountingNumber({
   React.useEffect(() => {
     if (prefersReducedMotion) {
       motionValue.set(value);
+      if (spanRef.current) spanRef.current.textContent = format(value);
       return;
     }
     const timeoutId = setTimeout(() => motionValue.set(value), delay);
     return () => clearTimeout(timeoutId);
-  }, [value, delay, motionValue, prefersReducedMotion]);
+  }, [value, delay, motionValue, prefersReducedMotion, format]);
 
   React.useEffect(() => {
     const unsubscribe = spring.on('change', (latest) => {
@@ -87,8 +88,8 @@ export function CountingNumber({
     >
       {/* The starting figure, formatted the same way — so server output and the
           first client render agree and hydration doesn't warn. Under reduced
-          motion that starting figure is already the final value. */}
-      {format(prefersReducedMotion ? value : from)}
+          motion that starting figure is updated in useEffect after hydration. */}
+      {format(from)}
     </span>
   );
 }

@@ -62,10 +62,13 @@ export function ConsentFinalizationSection({ leadId: leadIdProp, audience = 'age
     };
   }, []);
 
-  const isApproved = isConsentApproved(farmerDetails, consentDate);
+  const isApproved = isFarmer
+    ? !!consentDate
+    : isConsentApproved(farmerDetails, consentDate);
 
-  const isOtpVerifiedReady =
-    isOtpVerified || farmerDetails?.consent_request_otp_verified === true;
+  const isOtpVerifiedReady = isFarmer
+    ? isOtpVerified
+    : (isOtpVerified || farmerDetails?.consent_request_otp_verified === true);
 
   // Fetch metadata options on mount if OTP is verified
   useEffect(() => {

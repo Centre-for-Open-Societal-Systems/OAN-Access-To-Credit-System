@@ -91,17 +91,43 @@ export interface GetLoansParams {
   page_size?: number;
   search_query?: string; // free-text search by Application ID, Lead ID, or Phone Number
   /**
-   * One or more archetype states, comma-separated — 'Active' | 'In Transition' |
-   * 'Completed' | 'Rejected' | 'Cancelled' (the five in `ARCHETYPE_STATES`).
-   * `GetAllLoansSchema` validates every member against the workflow's states and
-   * answers 400 for anything else, so this is never a display label and never a
-   * bank stage name.
+   * One or more of the caller's own pipeline statuses: a bank stage label, a
+   * stage ID, an external code, or the initial state `Active`.
+   *
+   * `resolve_status_filter` matches each token against the stages visible to the
+   * caller and rewrites the lot into a `stage_id in (...)` filter. Accepts a
+   * comma-separated string or a JSON array string — send the JSON array, since a
+   * bank may legitimately name a stage "Approved, Pending Disbursal" and
+   * splitting on the comma turns one valid stage into two invalid ones.
+   *
+   * Three ways this 400s:
+   *  - a token that is not one of the caller's stages,
+   *  - `Active` mixed with pipeline stage names in the same request — `Active`
+   *    means "no stage yet", so it cannot be unioned with a stage filter. No
+   *    caller here can trip this: the filter chips come from the bank-scoped
+   *    `get_loan_metadata`, which does not offer `Active`, and the farmer list
+   *    narrows by tab client-side without sending a status at all,
+   *  - a value over 140 characters (`GetAllLoansSchema`'s `max_length`).
+   *
+   * That 140 is a backend artifact worth fixing there rather than working around
+   * here. It is Frappe's default `Data` column width, applied uniformly to every
+   * string field in `GetAllLoansSchema` (`region`, `lead_id`, `search_query`, …),
+   * which is correct for the ones that carry a single value matched against a
+   * column that wide. `status` and `loan_type` outgrew it: both now take a list
+   * (`resolve_status_filter` / `parse_multi_value` accept a JSON array or a
+   * comma-separated string) while keeping the width of one value, so the cap
+   * silently limits how many stages or types can be filtered at once. Truncating
+   * the selection client-side would hide the mismatch instead of fixing it.
+   *
+   * This is NOT the archetype vocabulary — that is the separate `archetype`
+   * param below. An earlier revision documented the opposite, from before the
+   * backend moved off Frappe's static workflow states.
    */
   status?: string;
-  /** A bank's own stage label (A2C Loan Status Stage). Tenant free text, comma-separated. */
-  stage_label?: string;
   min_loan_amount?: string;
   max_loan_amount?: string;
+  /** One or more loan types, comma-separated (`parse_multi_value`). Shares the
+   *  140-character cap described on `status` above, and for the same reason. */
   loan_type?: string;
   phone_number?: string;
   loan_officer?: string; // user email, or the literal 'unassigned' (get_all_loans filter)
@@ -208,21 +234,16 @@ export const loanService = {
   /**
    * Submits a drafted application into the owning bank's pipeline.
    *
-   * Posts the archetype, not a stage label: 'In Transition' is the workflow's
-   * Submit target, and `resolve_bank_stage` maps it onto whatever the bank calls
-   * its own first step. The literal 'Processing' this used to send matches
-   * neither the archetype states nor any bank stage, so every submit threw a
-   * ValidationError.
-   *
-   * Not `farmer.applications.submit_application`, which is the farmer's own
-   * route into the same transition: this service backs the Development Agent's
-   * new-loan flow, and that endpoint is gated `@require_role([FARMER_ROLE])`.
-   * `update_loan_status` accepts `A2C Development Agent`.
+   * Uses `farmer.applications.submit_application`, which is accessible to both
+   * Farmer and Development Agent roles. The backend automatically looks up the
+   * bank's initial pipeline stage, checks prerequisites (e.g. approved consent),
+   * stamps `stage_id` and `stage_label`, and transitions the application into
+   * the active pipeline.
    */
   async submitApplication(application_id: string): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.loan_applications.update_loan_status', {
+    return fetchApi('oan_a2c.api.v1.farmer.applications.submit_application', {
       method: 'POST',
-      body: JSON.stringify({ application_id, status: 'In Transition' }),
+      body: JSON.stringify({ application_id }),
     }) as Promise<ApiResponse<null>>;
   },
 

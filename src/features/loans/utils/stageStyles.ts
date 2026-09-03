@@ -213,3 +213,55 @@ export function toStageFilterOptions(stages: readonly LoanStage[]): StageFilterO
     };
   });
 }
+
+/**
+ * Stable comparator to sort pipeline stages or metadata by their configured sequence.
+ */
+export function compareStageSequence(
+  a: { sequence?: number | null | undefined },
+  b: { sequence?: number | null | undefined }
+): number {
+  return (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER);
+}
+
+export interface StageKpiCard {
+  key: string;
+  label: string;
+  archetype: string;
+  value: number;
+}
+
+/**
+ * Builds KPI cards for loan pipeline stages by joining configured stages with live summary counts.
+ * Handles key deduplication and orders cards strictly by pipeline sequence.
+ */
+export function buildStageKpiCards(
+  stages: readonly LoanStage[],
+  counts?: Record<string, number> | undefined
+): StageKpiCard[] {
+  const countsMap = counts ?? {};
+  const byLabel = new Map(
+    Object.entries(countsMap).map(([label, count]) => [label.toLowerCase(), count])
+  );
+  const seenKeys = new Map<string, number>();
+
+  return [...stages]
+    .sort(compareStageSequence)
+    .map((stage, index) => {
+      const rawKey = stage.stage_id || stage.name || stage.label || `stage-${index}`;
+      const occurrence = seenKeys.get(rawKey) ?? 0;
+      seenKeys.set(rawKey, occurrence + 1);
+      const key = occurrence === 0 ? rawKey : `${rawKey}-${occurrence}`;
+
+      return {
+        key,
+        label: stage.label,
+        archetype: stage.archetype_state,
+        value:
+          byLabel.get(stage.label.toLowerCase()) ??
+          (stage.stage_id ? byLabel.get(stage.stage_id.toLowerCase()) : undefined) ??
+          0,
+      };
+    });
+}
+

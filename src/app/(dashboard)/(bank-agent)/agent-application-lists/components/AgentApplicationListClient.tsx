@@ -11,7 +11,6 @@ import {
   selectBankApplicationsLoading,
   selectBankQueryParams,
   selectBankTotalCount,
-  type StageSource,
 } from '@/features/loans/store/bankApplicationsSlice';
 import { ApiErrorCode, classifyError } from '@/lib/api/apiErrors';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -27,17 +26,7 @@ const LoanApplicationModal = dynamic(
   { ssr: false }
 );
 
-interface AgentApplicationListClientProps {
-  /**
-   * Which endpoint supplies the pipeline. Defaults to the seller stage API,
-   * which is what the two bank portals want — it carries per-stage counts. The
-   * Development Agent renders this same list but holds no bank binding, so that
-   * endpoint answers 403 for them; they pass `metadata` instead.
-   */
-  stageSource?: StageSource;
-}
-
-export default function AgentApplicationListClient({ stageSource = 'seller' }: AgentApplicationListClientProps = {}) {
+export default function AgentApplicationListClient() {
   const dispatch = useAppDispatch();
   const queryParams = useAppSelector(selectBankQueryParams);
   const error = useAppSelector(selectBankApplicationsError);
@@ -62,8 +51,8 @@ export default function AgentApplicationListClient({ stageSource = 'seller' }: A
 
   useEffect(() => {
     dispatch(fetchBankApplicationSummary());
-    dispatch(fetchBankStages(stageSource));
-  }, [dispatch, stageSource]);
+    dispatch(fetchBankStages());
+  }, [dispatch]);
 
   const handleView = useCallback((row: BankApplicationRow) => {
     setSelectedRow(row);

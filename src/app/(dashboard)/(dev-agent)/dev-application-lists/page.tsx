@@ -11,5 +11,5 @@ import AgentApplicationListClient from '@/app/(dashboard)/(bank-agent)/agent-app
  * stages across the banks they can see.
  */
 export default function DevAgentApplicationListsPage() {
-  return <AgentApplicationListClient stageSource="metadata" />;
+  return <AgentApplicationListClient />;
 }

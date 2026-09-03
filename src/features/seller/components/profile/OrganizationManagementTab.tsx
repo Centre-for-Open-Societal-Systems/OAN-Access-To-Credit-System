@@ -8,8 +8,7 @@ import { ArrowRight, Camera } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const inputClass = (disabled: boolean) =>
-  `w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-[#16A34A] ${
-    disabled ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed' : 'border-gray-300 bg-white text-gray-900'
+  `w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-[#16A34A] ${disabled ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed' : 'border-gray-300 bg-white text-gray-900'
   }`;
 
 export default function OrganizationManagementTab({ readOnly = false }: { readOnly?: boolean }) {
@@ -85,24 +84,24 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
   if (!profile) return null;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-1 duration-300">
 
       {/* SECTION 1: Organization Details */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-6">
-        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
           <h2 className="text-lg font-bold text-gray-900">Organization Details</h2>
           {!readOnly && (
             <button
               onClick={handleSave}
               disabled={saving}
-              className="bg-[#16A34A] hover:bg-[#15803d] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="bg-[#fff] border border-[#16A34A] hover:bg-[#16A34A] text-[#16A34A] hover:text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Change'}
+              <span className='font-semibold'>{saving ? 'Saving...' : 'Save Change'}</span>
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           {[
             { label: 'Legal Name', name: 'bank_name', placeholder: 'Ethiopia OpenAgriNet PLC', required: true },
             { label: 'Registration Number', name: 'bank_code', placeholder: 'REG-ET-20231042', required: true },
@@ -135,66 +134,74 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
       </div>
 
       {/* SECTION 2: Branding */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-6">
-        <h2 className="text-lg font-bold text-gray-900">Branding</h2>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-lg font-bold text-gray-900">Branding</h2>
+        </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center overflow-hidden">
-                {logoPreview || profile.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- logoPreview can be a data: URL (fresh selection, needs `unoptimized` on next/image, unverified without a browser here)
-                  <img src={toProxiedFileUrl(logoPreview || profile.logo)} alt="Logo" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[#16A34A] font-bold text-lg">oan</span>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 items-start md:items-end w-full">
+
+            {/* Left half: Logo and Upload */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center overflow-hidden">
+                  {logoPreview || profile.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- logoPreview can be a data: URL (fresh selection, needs `unoptimized` on next/image, unverified without a browser here)
+                    <img src={toProxiedFileUrl(logoPreview || profile.logo)} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[#16A34A] font-bold text-lg">oan</span>
+                  )}
+                </div>
+                {!readOnly && (
+                  <>
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#16A34A] rounded-full border-2 border-white flex items-center justify-center text-white hover:bg-[#15803d] transition-colors"
+                    >
+                      <Camera className="w-3 h-3" />
+                    </button>
+                    <input type="file" ref={logoInputRef} accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  </>
                 )}
               </div>
-              {!readOnly && (
-                <>
-                  <button
-                    onClick={() => logoInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#16A34A] rounded-full border-2 border-white flex items-center justify-center text-white hover:bg-[#15803d] transition-colors"
-                  >
-                    <Camera className="w-3 h-3" />
+              <div className="pb-2">
+                <p className="font-bold text-gray-900 text-sm">{profile.brand_name || profile.bank_name || 'Ethiopia OpenAgriNet'}</p>
+                {!readOnly && (
+                  <button onClick={() => logoInputRef.current?.click()} className="text-[#16A34A] text-xs font-semibold hover:underline mt-0.5">
+                    Upload new photo
                   </button>
-                  <input type="file" ref={logoInputRef} accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                </>
-              )}
+                )}
+              </div>
             </div>
-            <div>
-              <p className="font-bold text-gray-900 text-sm">{profile.brand_name || profile.bank_name || 'Ethiopia OpenAgriNet'}</p>
+
+            {/* Right half: Display Name and Save Button */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-bold text-gray-900 mb-1.5">
+                  Display Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="brand_name"
+                  value={profile.brand_name || profile.bank_name || ''}
+                  onChange={handleChange}
+                  disabled={readOnly}
+                  placeholder="Ethiopia OpenAgriNet"
+                  className={inputClass(readOnly)}
+                />
+              </div>
               {!readOnly && (
-                <button onClick={() => logoInputRef.current?.click()} className="text-[#16A34A] text-xs font-semibold hover:underline mt-0.5">
-                  Upload new photo
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full sm:w-auto bg-[#fff] border border-[#16A34A] hover:bg-[#16A34A] text-[#16A34A] hover:text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <span className='font-semibold'>Save Change</span>
                 </button>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center gap-4 w-full sm:w-auto">
-            <div>
-              <label className="block text-xs font-bold text-gray-900 mb-1.5">
-                Display Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="brand_name"
-                value={profile.brand_name || profile.bank_name || ''}
-                onChange={handleChange}
-                disabled={readOnly}
-                placeholder="Ethiopia OpenAgriNet"
-                className={`w-64 ${inputClass(readOnly)}`}
-              />
-            </div>
-            {!readOnly && (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="mt-6 bg-[#16A34A] hover:bg-[#15803d] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
-              >
-                Save Change
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -207,9 +214,9 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-[#16A34A] hover:bg-[#15803d] text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm"
+            className="bg-[#16A34A] hover:bg-[#15803d] text-white px-6 py-3 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm"
           >
-            <span>Update Organization Details</span>
+            <span className='font-semibold'>Update Organization Details</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

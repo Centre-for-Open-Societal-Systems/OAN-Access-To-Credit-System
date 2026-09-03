@@ -47,7 +47,7 @@ export default function ApplicationActionModal({
   // Prefer the freshly fetched document over the row that opened the modal: the
   // bank may have moved the application on since the list was loaded.
   const current = details ?? application;
-  const statusLabel = current.stage_label || current.status;
+  const statusLabel = current.status;
   // After a successful submit the application is no longer a draft, but the list
   // behind us has not refetched yet — so stop offering to submit it again.
   const canSubmit = !hasSubmitted && isDraftApplication(current);
@@ -59,10 +59,12 @@ export default function ApplicationActionModal({
     const fetchApp = async () => {
       setIsLoading(true);
       try {
+        // No cast: `getApplication` parses the payload now, so `res.data` is
+        // already a `FarmerLoanApplication` — the old `as unknown as` was
+        // asserting a shape nothing had checked.
         const res = await getApplication(applicationId);
-        const data = res.data ?? res;
-        if (isMounted && data) {
-          setDetails(data as unknown as FarmerLoanApplication);
+        if (isMounted && res.data) {
+          setDetails(res.data);
         }
       } catch (err) {
         logger.warn('Failed to load application details', { applicationId, error: err });

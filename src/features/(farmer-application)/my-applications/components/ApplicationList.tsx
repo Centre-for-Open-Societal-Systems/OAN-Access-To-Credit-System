@@ -1,21 +1,36 @@
 "use client";
 import { DiscoverLoansCta } from '@/components/DiscoverLoansCta';
 import { useMemo } from 'react';
-import { NO_VALUE, formatRate, formatTenure } from '../../format';
-import type { FarmerLoanApplication } from '../../types';
+import { NO_VALUE, formatAmount, formatRate, formatRateRange, formatTenure } from '../../format';
+import type { CatalogProduct, FarmerLoanApplication } from '../../types';
 import { ALL_TAB, filterByTab, type StageTab } from '../counts';
 import ApplicationCard from './ApplicationCard';
+
+export function formatCreationDate(creation?: string | null): string {
+  if (!creation) return NO_VALUE;
+  const d = new Date(creation);
+  if (isNaN(d.getTime())) {
+    return `Created on ${creation.split(' ')[0]}`;
+  }
+  return `Created on ${d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })}`;
+}
 
 export default function ApplicationList({
   activeTab,
   onTabChange,
   applications,
+  products,
   tabs,
   onRefresh,
 }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
   applications: FarmerLoanApplication[];
+  products?: CatalogProduct[] | undefined;
   /** One per stage, from `buildStageTabs`. Never a hardcoded list. */
   tabs: StageTab[];
   onRefresh?: () => void;
@@ -24,6 +39,16 @@ export default function ApplicationList({
     () => filterByTab(applications, activeTab),
     [applications, activeTab]
   );
+
+  const productMap = useMemo(() => {
+    const map = new Map<string, CatalogProduct>();
+    for (const p of products ?? []) {
+      if (p.name) map.set(p.name, p);
+      if (p.slug) map.set(p.slug, p);
+      if (p.product_name) map.set(p.product_name.toLowerCase(), p);
+    }
+    return map;
+  }, [products]);
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -69,27 +94,38 @@ export default function ApplicationList({
         )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredApplications.map((app) => (
-            <ApplicationCard
-              key={app.application_id}
-              applicationId={app.application_id}
-              application={app}
-              title={app.loan_product_name}
-              subtitle={`Created on ${app.creation.split(' ')[0]}`}
-              maxAmount={`ETB ${app.requested_amount.toLocaleString()}`}
-              // The application's own snapshotted terms — never the product's
-              // current ones, and never a stand-in pulled from another field.
-              // These two slots used to be filled with `app.bank` and a second
-              // copy of `app.status`, so every card advertised its bank's name as
-              // an interest rate.
-              interest={formatRate(app.interest_rate)}
-              tenure={formatTenure(app.tenure_months)}
-              // No repayment schedule is stored on an application yet. A dash says
-              // so; anything else here would be invented.
-              repayment={NO_VALUE}
-              onApplicationUpdated={onRefresh}
-            />
-          ))}
+          {filteredApplications.map((app) => {
+            const product =
+              (app.loan_product ? productMap.get(app.loan_product) : undefined) ??
+              (app.loan_product_name ? productMap.get(app.loan_product_name.toLowerCase()) : undefined);
+
+            const interest = app.interest_rate != null
+              ? formatRate(app.interest_rate)
+              : formatRateRange(product?.min_interest_rate, product?.max_interest_rate);
+
+            const tenure = app.tenure_months != null
+              ? formatTenure(app.tenure_months)
+              : formatTenure(product?.tenure_months);
+
+            const maxAmount = formatAmount(app.requested_amount ?? app.loan_amount ?? product?.max_amount);
+            const title = app.loan_product_name || product?.product_name || app.loan_type || 'Unknown Product';
+            const subtitle = formatCreationDate(app.creation);
+
+            return (
+              <ApplicationCard
+                key={app.application_id}
+                applicationId={app.application_id}
+                application={app}
+                title={title}
+                subtitle={subtitle}
+                maxAmount={maxAmount}
+                interest={interest}
+                tenure={tenure}
+                repayment={NO_VALUE}
+                onApplicationUpdated={onRefresh}
+              />
+            );
+          })}
         </div>
       )}
     </div>

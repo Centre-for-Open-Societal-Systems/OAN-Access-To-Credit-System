@@ -7,8 +7,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { toast } from '@/lib/toast';
 import { logger } from '@/lib/logger';
 import { useAppSelector } from '@/store/hooks';
-import { isConsentApproved, selectConsentState } from '@/features/consent';
-import { selectFarmerState } from '@/features/new-lead';
+import { selectConsentState } from '@/features/consent';
 import { startApplication, submitApplication } from '../../api/farmerApi';
 import type { DetailedLoanProduct } from '../../types';
 
@@ -19,9 +18,8 @@ interface CreditInformationProps {
 export default function CreditInformation({ product }: CreditInformationProps) {
   const router = useRouter();
   const { consentDate } = useAppSelector(selectConsentState);
-  const { farmerDetails } = useAppSelector(selectFarmerState);
 
-  const isConsentCompleted = isConsentApproved(farmerDetails, consentDate);
+  const isConsentCompleted = !!consentDate;
 
   const defaultAmount = product.min_amount ? String(product.min_amount) : '100000';
 

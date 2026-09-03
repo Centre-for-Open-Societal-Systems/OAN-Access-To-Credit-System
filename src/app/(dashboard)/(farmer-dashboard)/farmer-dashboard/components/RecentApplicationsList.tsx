@@ -49,13 +49,15 @@ export default function RecentApplicationsList({ applications = [] }: { applicat
             return (
               <div key={app.application_id || idx} className={`flex items-start justify-between ${idx !== applications.length - 1 ? 'border-b border-gray-50 pb-5' : ''}`}>
                 <div>
-                  <div className="font-bold text-gray-900 mb-1">{app.bank}</div>
+                  <div className="font-bold text-gray-900 mb-1">{app.bank || '—'}</div>
                   <div className="text-sm font-medium text-gray-400">
-                    {app.loan_product_name} · {dateStr}
+                    {app.loan_product_name || 'Unknown Product'} · {dateStr || '—'}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-gray-900 mb-1">ETB {app.requested_amount?.toLocaleString() || 0}</div>
+                  <div className="font-bold text-gray-900 mb-1">
+                    {app.requested_amount != null ? `ETB ${app.requested_amount.toLocaleString()}` : '—'}
+                  </div>
                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[12px] font-bold ${getStatusColor(app.status)}`}>
                     {app.status}
                   </span>

@@ -307,7 +307,7 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${localStatuses.length === 0 ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300'}`}>
                             {localStatuses.length === 0 && <Check size={12} strokeWidth={3} />}
                           </div>
-                          <span className="text-sm font-medium">All</span>
+                          <span className="text-sm font-semibold">All</span>
                         </button>
                         {statusFilterOptions.length === 0 ? (
                           <p className="px-4 py-3 text-xs text-gray-400">
@@ -326,7 +326,7 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                                 {isChecked && <Check size={12} strokeWidth={3} />}
                               </div>
                               <span className={`h-2 w-2 shrink-0 rounded-full ${opt.dot ?? "bg-slate-400"}`} aria-hidden="true" />
-                              <span className="text-sm font-medium">{opt.label}</span>
+                              <span className="text-sm font-semibold">{opt.label}</span>
                             </button>
                           );
                         })}
@@ -389,7 +389,7 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${localLoanTypes.length === 0 ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300'}`}>
                             {localLoanTypes.length === 0 && <Check size={12} strokeWidth={3} />}
                           </div>
-                          <span className="text-sm font-medium">All</span>
+                          <span className="text-sm font-semibold">All</span>
                         </button>
                         {loanTypeOptions.length === 0 ? (
                           <p className="px-4 py-3 text-xs text-gray-400">
@@ -408,7 +408,7 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300'}`}>
                                   {isChecked && <Check size={12} strokeWidth={3} />}
                                 </div>
-                                <span className="text-sm font-medium">{opt}</span>
+                                <span className="text-sm font-semibold">{opt}</span>
                               </button>
                             );
                           })
@@ -531,7 +531,7 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                               <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSel ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300'}`}>
                                 {isSel && <Check size={12} strokeWidth={3} />}
                               </div>
-                              <span className="text-sm font-medium text-gray-700">{opt.label}</span>
+                              <span className="text-sm font-semibold text-gray-700">{opt.label}</span>
                             </button>
                           );
                         })}
@@ -720,10 +720,10 @@ const LoanTable = memo(({ onView, stageOptions }: LoanTableProps) => {
                         <button
                           type="button"
                           onClick={() => onView?.(row)}
-                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95"
+                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 active:scale-95"
                         >
-                          <Eye size={16} className="text-gray-400" />
-                          View
+                          <Eye size={16} className="text-gray-600" />
+                          <span className='font-semibold'>View</span>
                         </button>
                       </div>
                     </td>

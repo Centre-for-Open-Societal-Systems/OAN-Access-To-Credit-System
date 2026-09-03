@@ -32,7 +32,7 @@ export default function DiscoverLoansClient() {
         actions={
           <Link
             href={`/discover-loans/apply/${product.name}`}
-            className="w-full bg-[#16A34A] hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
+            className="w-full bg-[#16A34A] hover:bg-green-700 !text-white font-bold py-2.5 px-3.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
           >
             Apply Now <ArrowRight className="w-4 h-4" />
           </Link>

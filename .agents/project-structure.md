@@ -136,6 +136,7 @@ Route groups can appear as feature names too, e.g. `src/features/(bank-admin)/`,
 ## Docs index
 
 - [docs/api-flow-frontend.md](../docs/api-flow-frontend.md) — frontend API flow
-- [docs/seller-backend.md](../docs/seller-backend.md), [docs/seller-integration-plan.md](../docs/seller-integration-plan.md)
+- [docs/seller-backend.md](../docs/seller-backend.md) — backend seller API contract
+- [docs/frontend-development-guide.md](../docs/frontend-development-guide.md) — frontend development guide
 - [.agents/.gemini/api-flow-backend.md](.gemini/api-flow-backend.md) — backend API flow (referenced by services)
 - Code-authoring/quality rules for the engineer: [.claude/CLAUDE.md](../.claude/CLAUDE.md) (preferences), [.agents/code-review-agent/rules.md](code-review-agent/rules.md)

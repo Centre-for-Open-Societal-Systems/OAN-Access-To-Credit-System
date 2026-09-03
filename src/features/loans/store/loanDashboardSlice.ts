@@ -1,14 +1,13 @@
 import { GetLoansParams, LoanApplicationSummary, loanService, LoanSummaryMetrics } from '@/features/loans/api/loan.service';
-import { archetypeOf, bucketStagesByArchetype, toPseudoStages } from '@/features/loans/utils/archetype';
+import { bucketStagesByArchetype, toPseudoStages } from '@/features/loans/utils/archetype';
 import { loanStagesService } from '@/features/loans/api/loanStages.service';
 import { formatLocation } from '@/features/loans/utils/formatLocation';
-import { getStageStyle, toStageFilterOptions } from '@/features/loans/utils/stageStyles';
-import { selectUserEmail } from '@/features/auth/store/authSlice';
+import { buildStageKpiCards, compareStageSequence, getStageStyle, toStageFilterOptions } from '@/features/loans/utils/stageStyles';
 import type { LoanStage, LoanStatusMeta } from '@/lib/api/api.schemas';
 import { withCurrentSort } from '@/lib/filterSort';
 import type { ApiResponse } from '@/types/api';
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../../../store';
+import { selectUserEmail, type RootState } from '../../../store';
 
 export const fetchLoans = createAsyncThunk(
   'loanDashboard/fetchLoans',
@@ -116,9 +115,12 @@ export interface MappedLoanRow extends Omit<LoanApplicationSummary, 'status'> {
   type: string;
   /** Region · Woreda, built from the hierarchy fields the endpoint returns. */
   location: string;
-  /** The archetype state — what the status filter and the API speak. */
+  /**
+   * The application's status as the owning bank decided it — the backend resolves
+   * the stage, the client only renders it. Also what the status filter speaks.
+   */
   status: string;
-  /** What the badge shows: the owning bank's stage label, or the archetype. */
+  /** What the badge shows. Same string as `status`. */
   statusLabel: string;
   statusTone: string;
   updated: string;
@@ -484,7 +486,7 @@ export const selectBankPipelineStagesError = (state: RootState) => state.loanDas
  */
 export const selectOrderedBankPipelineStages = createSelector(
   [selectBankPipelineStages],
-  (stages) => [...stages].sort((a, b) => a.sequence - b.sequence)
+  (stages) => [...stages].sort(compareStageSequence)
 );
 
 // --- Derived Memoized Selectors ---
@@ -508,32 +510,23 @@ export const selectPagedRowsData = createSelector(
       const lastName = row.last_name || '';
       const applicantName = `${firstName} ${lastName}`.trim();
       const location = formatLocation(row);
-      // 'Active' is the state create_loan_application stamps, so it is the
-      // fallback here — 'Draft' was never one of the four archetype states, and a
-      // row falling back to it produced a status the filter could not express.
-      const status = row.status || 'Active';
-
-      // The badge text: the owning bank's label for the step when it has one,
-      // otherwise the archetype. 'Draft' stood here as the fallback and was never
-      // one of the four archetype states.
-      const displayStatus = row.stage_label || status;
-      const stageStyle = getStageStyle(row.stage_label || status, stages);
+      const status = row.status;
+      const stageStyle = getStageStyle(status, stages);
 
       return {
         ...row,
         id: formattedId,
         applicant: applicantName,
         phone: row.phone_number || '',
-        loanAmount: row.loan_amount ? row.loan_amount.toLocaleString() : '—',
+        loanAmount: row.loan_amount != null ? row.loan_amount.toLocaleString() : '—',
         type: row.loan_type || 'Unknown Type',
         // A dash, not an empty cell: the record genuinely carries no location yet.
         location: location || '—',
-        // The archetype — what the status filter and the API speak. Kept distinct
-        // from the badge text: assigning the stage label here made the value the
-        // filter sends and the value the badge shows one and the same string, so
-        // filtering by what you could see returned nothing.
+        // Badge text and filter value are deliberately the same string: the
+        // backend decides the status, so what you can see is what you can
+        // filter on.
         status,
-        statusLabel: displayStatus,
+        statusLabel: status,
         statusTone: stageStyle.tone,
         updated: `${dateStr} · ${timeStr}`,
         timestamp: rawDate.getTime(),
@@ -596,21 +589,8 @@ export const selectLiveMetrics = createSelector(
  */
 export const selectLoanStageCards = createSelector(
   [selectLoanStatusMeta, selectRawSummaryData],
-  (statusMeta, rawSummaryData) => {
-    const counts = rawSummaryData?.data?.stages ?? {};
-    const byLabel = new Map(
-      Object.entries(counts).map(([label, count]) => [label.toLowerCase(), count])
-    );
-
-    return [...statusMeta]
-      .sort((a, b) => (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER))
-      .map((meta) => ({
-        key: meta.stage_id || meta.status,
-        label: meta.status,
-        archetype: archetypeOf(meta),
-        value: byLabel.get(meta.status.toLowerCase()) ?? 0,
-      }));
-  }
+  (statusMeta, rawSummaryData) =>
+    buildStageKpiCards(toPseudoStages(statusMeta), rawSummaryData?.data?.stages)
 );
 
 export const selectTabCounts = createSelector(

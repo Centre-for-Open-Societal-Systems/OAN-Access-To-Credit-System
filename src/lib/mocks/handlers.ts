@@ -167,7 +167,6 @@ export const handlers = [
           application_id: "APP-2026-03538",
           status: "Draft",
           stage_id: "draft",
-          stage_label: "Draft",
           step: 1,
           lead_id: leadIdQuery,
           first_name: "Abebe",

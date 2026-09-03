@@ -35,7 +35,7 @@ export function buildStageTabs(
 ): StageTab[] {
   const counts = new Map<string, number>();
   for (const application of applications) {
-    const key = (application.stage_label || application.status || '').toLowerCase();
+    const key = application.status.toLowerCase();
     if (!key) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
@@ -52,7 +52,7 @@ export function buildStageTabs(
 
   const known = new Set(tabs.map((tab) => tab.value.toLowerCase()));
   for (const application of applications) {
-    const label = application.stage_label || application.status;
+    const label = application.status;
     if (!label || known.has(label.toLowerCase())) continue;
     known.add(label.toLowerCase());
     tabs.push({
@@ -74,6 +74,6 @@ export function filterByTab(
 ): FarmerLoanApplication[] {
   if (tab === ALL_TAB) return [...applications];
   return applications.filter(
-    (application) => (application.stage_label || application.status)?.toLowerCase() === tab.toLowerCase()
+    (application) => application.status.toLowerCase() === tab.toLowerCase()
   );
 }

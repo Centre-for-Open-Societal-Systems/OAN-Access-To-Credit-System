@@ -37,8 +37,8 @@ import StatusFilter from './filters/StatusFilter';
  *
  * Colour comes from the bank's own stage definition (`getStageStyle`), not from the
  * archetype: two banks can call the same step different things and colour it their
- * own way. `label` is the row's `stage_label`, falling back to the archetype for an
- * application no stage has been applied to yet.
+ * own way. `label` is the row's `status` — the backend already resolved it to the
+ * owning bank's name for the step, so it is rendered as-is.
  */
 function StatusBadge({ status, label }: { status: string; label: string }) {
   const stages = useAppSelector(selectBankStages);
@@ -220,7 +220,7 @@ export default function AgentApplicationTable({ onView }: AgentApplicationTableP
                   onChange={(amounts) => dispatch(setBankFilters({ ...filters, loanAmount: amounts }))}
                 />
               </th>
-              <th 
+              <th
                 className="px-6 py-4 font-semibold text-center cursor-pointer hover:bg-gray-100 transition-colors select-none group"
                 onClick={handleSortToggle}
               >
@@ -358,10 +358,10 @@ export default function AgentApplicationTable({ onView }: AgentApplicationTableP
                           type="button"
                           onClick={() => onView(row)}
                           aria-label={`View application ${row.id}`}
-                          className="inline-flex w-[80px] items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md hover:border-gray-300 active:scale-95"
+                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 active:scale-95 whitespace-nowrap"
                         >
-                          <Eye size={16} className="text-gray-500" />
-                          View
+                          <Eye size={16} className="text-gray-600" />
+                          <span className='font-semibold'>View</span>
                         </button>
                       </div>
                     </td>

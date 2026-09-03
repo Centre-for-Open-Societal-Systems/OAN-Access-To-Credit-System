@@ -1,6 +1,6 @@
 import type { LoanStage, LoanStatusMeta } from '@/lib/api/api.schemas';
 import type { StageFilterOption } from '../types/loanStages.types';
-import { getStageStyle } from './stageStyles';
+import { compareStageSequence, getStageStyle } from './stageStyles';
 
 /**
  * The four workflow buckets every bank's pipeline collapses into.
@@ -79,7 +79,7 @@ export function bucketStagesByArchetype(
  */
 export function toStatusFilterOptions(statuses: readonly LoanStatusMeta[]): StageFilterOption[] {
   return [...statuses]
-    .sort((a, b) => (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER))
+    .sort(compareStageSequence)
     .map((meta) => {
       const style = getStageStyle(meta.status);
       return {
@@ -105,7 +105,7 @@ export function toStatusFilterOptions(statuses: readonly LoanStatusMeta[]): Stag
  */
 export function toPseudoStages(statuses: readonly LoanStatusMeta[]): LoanStage[] {
   return [...statuses]
-    .sort((a, b) => (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER))
+    .sort(compareStageSequence)
     .map((meta) => ({
       name: meta.status,
       bank: '',

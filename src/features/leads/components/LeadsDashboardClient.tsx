@@ -250,16 +250,16 @@ export function LeadsDashboardClient() {
 
   return (
     <div className="space-y-4 min-w-0 w-full">
-      <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
-        <div>
+      <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-0 rounded-2xl border border-[#e9e9e9] bg-white px-6 py-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
+        <div className="flex-1 min-w-0 pr-0 lg:pr-4">
           <h1 className="text-2xl font-bold text-text-primary">Welcome, {isMounted && officerName ? officerName : 'Agent'}</h1>
           <p className="mt-1 text-base text-text-muted">Manage, filter, and process your entire lead pipeline.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 font-semibold w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 font-semibold w-full lg:w-auto mt-2 lg:mt-0 shrink-0">
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-3 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
+            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-3 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
           >
             <FileOutput size={18} />
             {/* Only a partial selection differs from a page export: select-all (allChecked)
@@ -269,7 +269,7 @@ export function LeadsDashboardClient() {
           <button
             type="button"
             onClick={() => router.push('/leads/new')}
-            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
+            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-green-700 active:scale-95"
           >
             <Plus size={18} strokeWidth={2.5} />
             Create New Lead
@@ -288,8 +288,8 @@ export function LeadsDashboardClient() {
             </div>
           ))}
         </div>
-        {/* Mobile Slider Indicator (3 dots) */}
-        <div className="flex md:hidden justify-center items-center gap-1.5 pb-1">
+        {/* Slider Indicator (3 dots) */}
+        <div className="flex justify-center items-center gap-1.5 pb-1 mt-2">
           {[0, 1, 2].map(idx => (
             <div
               key={idx}

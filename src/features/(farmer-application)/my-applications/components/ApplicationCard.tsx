@@ -95,7 +95,7 @@ export default function ApplicationCard({
 
   const theme = themeForApplication(application);
   const Icon = theme.icon;
-  const statusLabel = application.stage_label || application.status;
+  const statusLabel = application.status;
   const isDraft = isDraftApplication(application);
 
   return (

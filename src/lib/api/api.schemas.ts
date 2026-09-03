@@ -29,13 +29,17 @@ export const sendOtpAndCreateConsentResponseSchema = z.object({
 });
 export type SendOtpAndCreateConsentResponse = z.infer<typeof sendOtpAndCreateConsentResponseSchema>;
 
+export const loanApplicationStatusSchema = z
+  .string()
+  .nullish()
+  .transform((val) => (val && val.trim() ? val : 'Unknown'));
+
 // 4. loan_applications.get_full_profile
 export const loanApplicationFullSchema = z.object({
   application_id: z.string(),
   lead_id: z.string().nullable().optional(),
-  status: z.string(),
+  status: loanApplicationStatusSchema,
   stage_id: z.string().nullable().optional(),
-  stage_label: z.string().nullable().optional(),
   creation: z.string().nullable().optional(),
   farmer_profile: z.string().nullish().transform(val => val ?? undefined),
   phone_number: z.string().nullish().transform(val => val ?? ''),
@@ -44,7 +48,7 @@ export const loanApplicationFullSchema = z.object({
   farmer_id: z.string().nullable().optional(),
   consent_id: z.string().nullable().optional(),
   loan_type: z.string().nullish().transform(val => val ?? undefined),
-  loan_amount: z.number().nullish().transform(val => val ?? 0),
+  loan_amount: z.number().nullable().optional(),
   profile_data: z.record(z.string(), z.unknown()).nullish(),
   loan_product: z.string().nullish().transform(val => val ?? undefined),
   loan_product_name: z.string().nullish().transform(val => val ?? undefined),
@@ -102,16 +106,19 @@ export type LoanApplicationFull = z.infer<typeof loanApplicationFullSchema>;
 
 export const loanApplicationSummarySchema = z.object({
   application_id: z.string(),
-  /** Archetype state: Active | In Transition | Completed | Cancelled. */
-  status: z.string(),
+  /**
+   * The owning bank's name for the step the application has reached. Tenant free
+   * text, resolved by the backend — not an archetype and not a fixed set, so the
+   * client renders it rather than mapping it. Falls back to 'Unknown' when omitted
+   * or null (e.g. during backend stage migrations).
+   */
+  status: loanApplicationStatusSchema,
   stage_id: z.string().nullable().optional(),
-  /** The owning bank's label for the current step; absent until a stage is applied. */
-  stage_label: z.string().nullable().optional(),
   // `get_all_loans` sends `step`; the farmer's `list_applications` rows do not,
   // so it cannot be required without failing every farmer-side parse.
   step: z.number().nullish().transform((val) => val ?? undefined),
   lead_id: z.string().nullable().optional(),
-  loan_amount: z.number().nullish().transform((val) => val ?? 0),
+  loan_amount: z.number().nullable().optional(),
   loan_type: z.string().nullish().transform((val) => val ?? undefined),
   loan_product: z.string().nullish().transform((val) => val ?? undefined),
   loan_product_name: z.string().nullish().transform((val) => val ?? undefined),
@@ -138,6 +145,28 @@ export const loanApplicationSummarySchema = z.object({
   archetype_state: z.string().nullable().optional(),
 });
 export type LoanApplicationSummary = z.infer<typeof loanApplicationSummarySchema>;
+
+/**
+ * `farmer.applications.list_applications` / `get_application`.
+ *
+ * The same row as `loanApplicationSummarySchema` — same status semantics, same
+ * stage placement fields — plus the four the farmer's own views need and the
+ * bank list has no use for. Extended rather than redeclared so the two endpoints
+ * cannot drift: a field added to the summary is a field the farmer list gets too.
+ */
+export const farmerLoanApplicationSchema = loanApplicationSummarySchema.extend({
+  requested_amount: z.number().nullable().optional(),
+  loan_product: z.string().nullable().optional(),
+  loan_product_name: z.string().nullable().optional(),
+  bank: z.string().nullable().optional(),
+  loan_reason: z.string().nullish().transform((val) => val ?? undefined),
+  // Snapshotted from the product at creation time. Null for applications made
+  // before the snapshot existed — the card shows a placeholder rather than
+  // inventing a rate, so null is kept rather than defaulted.
+  interest_rate: z.number().nullable().optional(),
+  tenure_months: z.number().nullable().optional(),
+});
+export type FarmerLoanApplication = z.infer<typeof farmerLoanApplicationSchema>;
 
 /**
  * `loan_applications.get_loan_metadata` — the caller-scoped list of statuses the

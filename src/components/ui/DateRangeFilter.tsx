@@ -140,7 +140,7 @@ export function DateRangeFilter(props: DateRangeFilterProps) {
               : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700'
               }`}
           >
-            <span className='font-semibold'>{option}</span>
+            <span className='font-medium'>{option}</span>
 
           </button>
         ))}

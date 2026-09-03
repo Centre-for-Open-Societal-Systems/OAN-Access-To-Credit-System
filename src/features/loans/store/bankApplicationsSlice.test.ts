@@ -5,7 +5,9 @@ import {
   bankApplicationsReducer,
   clearBankFilters,
   selectBankApplicationRows,
+  selectBankMetrics,
   selectBankQueryParams,
+  selectBankStageCards,
   setBankFilters,
   setBankPage,
   setBankPageSize,
@@ -190,12 +192,11 @@ describe('selectBankApplicationRows', () => {
     });
   }
 
-  it("shows the bank's own stage label while keeping the archetype status", () => {
+  it("shows the status directly from the application payload", () => {
     const store = createTestStore();
     seed(store, {
       application_id: 'APP-0001',
-      status: 'In Transition',
-      stage_label: 'Credit Committee',
+      status: 'Credit Committee',
       step: 5,
       loan_amount: 15000,
       loan_type: 'Crop Loan',
@@ -214,8 +215,7 @@ describe('selectBankApplicationRows', () => {
       id: 'APP-0001',
       applicant: 'Abebe Girma',
       initials: 'AG',
-      // Filters and the API speak the archetype; only the badge shows the stage.
-      status: 'In Transition',
+      status: 'Credit Committee',
       statusLabel: 'Credit Committee',
       statusTone: 'info',
       // Built from the three hierarchy fields — there is no `location` field to read.
@@ -229,7 +229,7 @@ describe('selectBankApplicationRows', () => {
     });
   });
 
-  it('uses dynamic stage_label when provided in the payload', () => {
+  it('uses status directly when provided in the payload', () => {
     const store = createTestStore();
     store.dispatch({
       type: 'bankApplications/fetch/pending',
@@ -242,9 +242,8 @@ describe('selectBankApplicationRows', () => {
         data: [
           {
             application_id: 'APP-2026-01482',
-            status: 'In Transition',
+            status: 'Verified',
             stage_id: 'LSS-00021',
-            stage_label: 'Verified',
             step: 1,
             lead_id: null,
             loan_amount: 124.0,
@@ -263,9 +262,24 @@ describe('selectBankApplicationRows', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       id: 'APP-2026-01482',
+      status: 'Verified',
       statusLabel: 'Verified',
       statusTone: 'info',
     });
+  });
+
+  it('formats a $0 loan amount as "0" rather than missing data "—"', () => {
+    const store = createTestStore();
+    seed(store, {
+      application_id: 'APP-0003',
+      status: 'Active',
+      loan_amount: 0,
+      creation: '2026-05-28T10:42:00',
+    });
+
+    const rows = selectBankApplicationRows(asRootState(store.getState()));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.loanAmount).toBe('0');
   });
 
   it('populates dynamic stages and derives stage options', () => {
@@ -324,5 +338,106 @@ describe('selectBankApplicationRows', () => {
       // A dash, not an empty cell: the record genuinely carries no location.
       location: '—',
     });
+  });
+});
+
+describe('selectBankStageCards & selectBankMetrics', () => {
+  it('combines pipeline stages with live summary counts from get_loan_summary', () => {
+    const store = createTestStore();
+
+    store.dispatch({
+      type: 'bankApplications/fetchStages/fulfilled',
+      payload: [
+        {
+          name: 'stg-1',
+          bank: 'Coop Bank',
+          stage_id: 'submitted',
+          label: 'Submitted',
+          archetype_state: 'In Transition',
+          sequence: 1,
+          application_count: 0,
+        },
+        {
+          name: 'stg-2',
+          bank: 'Coop Bank',
+          stage_id: 'disbursed',
+          label: 'Disbursed',
+          archetype_state: 'Completed',
+          sequence: 2,
+          application_count: 0,
+        },
+      ],
+    });
+
+    store.dispatch({
+      type: 'bankApplications/fetchSummary/fulfilled',
+      payload: {
+        data: {
+          total: 2,
+          stages: {
+            Submitted: 1,
+            Disbursed: 1,
+          },
+        },
+      },
+    });
+
+    const rootState = asRootState(store.getState());
+    const cards = selectBankStageCards(rootState);
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toEqual({
+      key: 'submitted',
+      label: 'Submitted',
+      archetype: 'In Transition',
+      value: 1,
+    });
+    expect(cards[1]).toEqual({
+      key: 'disbursed',
+      label: 'Disbursed',
+      archetype: 'Completed',
+      value: 1,
+    });
+
+    const metrics = selectBankMetrics(rootState);
+    expect(metrics).toEqual({
+      total: 2,
+      inTransition: 1,
+      completed: 1,
+      cancelled: 0,
+    });
+  });
+
+  it('disambiguates keys when two stages share the same stage_id or label', () => {
+    const store = createTestStore();
+
+    store.dispatch({
+      type: 'bankApplications/fetchStages/fulfilled',
+      payload: [
+        {
+          name: 'stg-1',
+          bank: 'Bank A',
+          stage_id: 'under_review',
+          label: 'Under Review',
+          archetype_state: 'In Transition',
+          sequence: 1,
+          application_count: 5,
+        },
+        {
+          name: 'stg-2',
+          bank: 'Bank B',
+          stage_id: 'under_review',
+          label: 'Under Review',
+          archetype_state: 'In Transition',
+          sequence: 2,
+          application_count: 8,
+        },
+      ],
+    });
+
+    const cards = selectBankStageCards(asRootState(store.getState()));
+    expect(cards).toHaveLength(2);
+    expect(cards[0]?.key).toBe('under_review');
+    expect(cards[1]?.key).toBe('under_review-1');
+    expect(cards[0]?.key).not.toBe(cards[1]?.key);
   });
 });

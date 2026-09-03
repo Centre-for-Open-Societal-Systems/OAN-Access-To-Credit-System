@@ -23,7 +23,7 @@ function LeadKpiCard({ stat, index }: LeadKpiCardProps) {
 
   return (
     <div
-      className="relative h-full bg-white border border-[#e9e9e9] rounded-2xl shadow-sm p-3.5 sm:p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-center justify-between gap-2"
+      className="relative h-full bg-white border border-[#e9e9e9] rounded-2xl shadow-sm px-4 py-2 sm:px-5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-all overflow-hidden flex items-center justify-between gap-2"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex-1">

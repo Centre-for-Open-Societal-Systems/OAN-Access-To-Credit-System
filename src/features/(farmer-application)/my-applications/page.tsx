@@ -3,8 +3,8 @@ import { PanelLoader } from '@/components/ui/Loader';
 import type { LoanStatusMeta } from '@/lib/api/api.schemas';
 import { logger } from '@/lib/logger';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getAllMyApplications, getLoanStatusMetadata } from '../api/farmerApi';
-import type { FarmerLoanApplication } from '../types';
+import { getAllMyApplications, getCatalog, getLoanStatusMetadata } from '../api/farmerApi';
+import type { CatalogProduct, FarmerLoanApplication } from '../types';
 import ApplicationList from './components/ApplicationList';
 import ApplicationSummary from './components/ApplicationSummary';
 import { DiscoverLoansCta } from '@/components/DiscoverLoansCta';
@@ -20,6 +20,7 @@ export default function MyApplicationsPage() {
     const [activeTab, setActiveTab] = useState<TabType>(ALL_TAB);
     const [applications, setApplications] = useState<FarmerLoanApplication[]>([]);
     const [statuses, setStatuses] = useState<LoanStatusMeta[]>([]);
+    const [products, setProducts] = useState<CatalogProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     // A swallowed failure rendered as "no applications", which for someone who
     // has applied is not a neutral message — it is the app telling them their
@@ -36,12 +37,12 @@ export default function MyApplicationsPage() {
             setLoadFailed(false);
             try {
                 // The applications are the page; the stage metadata only names
-                // and orders the tabs. So a failure to load the metadata is not
-                // a failure of the page — the tabs fall back to the stages the
-                // applications themselves report.
-                const [applicationsResult, statusesResult] = await Promise.allSettled([
+                // and orders the tabs. The catalog products enrich applications
+                // with terms (interest rate range, tenure) when not snapshotted.
+                const [applicationsResult, statusesResult, catalogResult] = await Promise.allSettled([
                     getAllMyApplications(),
                     getLoanStatusMetadata(),
+                    getCatalog({ limit: 100 }),
                 ]);
 
                 if (!isMounted) return;
@@ -56,6 +57,13 @@ export default function MyApplicationsPage() {
                 } else {
                     logger.warn('Failed to load loan status metadata', statusesResult.reason);
                     setStatuses([]);
+                }
+
+                if (catalogResult.status === 'fulfilled' && catalogResult.value.data?.products) {
+                    setProducts(catalogResult.value.data.products);
+                } else if (catalogResult.status === 'rejected') {
+                    logger.warn('Failed to load product catalog for application enrichment', catalogResult.reason);
+                    setProducts([]);
                 }
             } catch (e) {
                 logger.error('Failed to load farmer applications', e);
@@ -116,6 +124,7 @@ export default function MyApplicationsPage() {
                         activeTab={selectedTab}
                         onTabChange={setActiveTab}
                         applications={applications}
+                        products={products}
                         tabs={tabs}
                         onRefresh={retry}
                     />

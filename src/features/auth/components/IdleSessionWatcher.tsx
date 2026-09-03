@@ -57,7 +57,7 @@ export function IdleSessionWatcher() {
       aria-modal="true"
       aria-labelledby="idle-warning-title"
       aria-describedby="idle-warning-body"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-max flex items-center justify-center bg-black/40 p-4"
     >
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-start gap-4">

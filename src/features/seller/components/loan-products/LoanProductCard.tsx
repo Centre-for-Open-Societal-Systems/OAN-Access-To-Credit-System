@@ -109,7 +109,7 @@ export function LoanProductCard({ product, variant = 'default', canDelete = true
         showRateRange
         badge={
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold shadow-sm ${status.badgeClasses}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold shadow-sm ${status.badgeClasses}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${status.dotClasses}`} />
             {status.label}
@@ -148,7 +148,7 @@ export function LoanProductCard({ product, variant = 'default', canDelete = true
                 <button
                   type="button"
                   onClick={() => setIsReviewModalOpen(true)}
-                  className="w-full bg-[#16A34A] hover:bg-[#15803d] text-white font-bold py-2.5 px-3.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full bg-[#16A34A] hover:bg-[#15803d] text-white font-bold py-2.5 px-4 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <span className='font-semibold'>Review</span>
                 </button>

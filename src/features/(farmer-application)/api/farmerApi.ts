@@ -1,4 +1,6 @@
 import { fetchApi } from '@/lib/api/fetchApi';
+import { farmerLoanApplicationSchema, validateResponse } from '@/lib/api/api.schemas';
+import { z } from 'zod';
 import type { LoanStatusMeta } from '@/lib/api/api.schemas';
 import type {
   CreateApplicationPayload,
@@ -66,7 +68,20 @@ export async function getMyApplications(
   if (params.page !== undefined) query.append('page', params.page.toString());
   if (params.page_size !== undefined) query.append('page_size', params.page_size.toString());
 
-  return fetchApi(`oan_a2c.api.v1.farmer.applications.list_applications?${query.toString()}`);
+  const response = await fetchApi(`oan_a2c.api.v1.farmer.applications.list_applications?${query.toString()}`);
+
+  // Validated, not cast. `fetchApi` returns `any`, so the declared return type
+  // was an assertion nothing checked — a row arriving without `status` (which
+  // the backend does send as null mid stage-migration) falls back to 'Unknown'
+  // via farmerLoanApplicationSchema rather than failing the whole list.
+  return {
+    ...response,
+    data: validateResponse(
+      z.array(farmerLoanApplicationSchema),
+      response?.data ?? [],
+      'list_applications'
+    ),
+  };
 }
 
 /** Hard ceiling on the paging loop below, so a runaway response can't spin. */
@@ -114,7 +129,12 @@ export async function getLoanStatusMetadata(): Promise<ApiResponse<{ statuses: L
  * Retrieves a single application by application_id.
  */
 export async function getApplication(application_id: string): Promise<ApiResponse<FarmerLoanApplication>> {
-  return fetchApi(`oan_a2c.api.v1.farmer.applications.get_application?application_id=${encodeURIComponent(application_id)}`);
+  const response = await fetchApi(`oan_a2c.api.v1.farmer.applications.get_application?application_id=${encodeURIComponent(application_id)}`);
+
+  return {
+    ...response,
+    data: validateResponse(farmerLoanApplicationSchema, response?.data, 'get_application'),
+  };
 }
 
 /**

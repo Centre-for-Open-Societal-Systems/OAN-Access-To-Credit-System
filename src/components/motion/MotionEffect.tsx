@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion, type HTMLMotionProps, type Transition, type Variant } from 'motion/react';
+import { motion, type HTMLMotionProps, type Transition, type Variant } from 'motion/react';
 import * as React from 'react';
 
 /**
@@ -76,8 +76,6 @@ export function MotionEffect({
   blur = false,
   ...props
 }: MotionEffectProps) {
-  const prefersReducedMotion = useReducedMotion();
-
   const hidden: Variant = {};
   const visible: Variant = {};
 
@@ -108,11 +106,6 @@ export function MotionEffect({
     const finalBlur = typeof blur === 'boolean' ? DEFAULTS.blurBlur : blur.blur ?? DEFAULTS.blurBlur;
     hidden.filter = `blur(${initialBlur}px)`;
     visible.filter = `blur(${finalBlur}px)`;
-  }
-
-  // Straight to the end state — no initial variant, no transition to run.
-  if (prefersReducedMotion) {
-    return <motion.div {...props}>{children}</motion.div>;
   }
 
   return (

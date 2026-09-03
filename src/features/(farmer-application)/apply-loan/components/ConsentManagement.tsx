@@ -5,7 +5,7 @@ import {
   ConsentManagementSection,
   clearConsentState,
 } from '@/features/consent';
-import { clearFarmerState, fetchLeadDetailsThunk } from '@/features/new-lead';
+import { clearFarmerState } from '@/features/new-lead';
 import { useAppDispatch } from '@/store/hooks';
 import { useEffect } from 'react';
 
@@ -23,12 +23,9 @@ export default function ConsentManagement() {
   useEffect(() => {
     // Consent state is global (one `consent` slice shared with the agent flow), so
     // clear anything a previous visit left behind before adopting this flow —
-    // otherwise a stale "OTP verified" would skip straight to the finalize step.
+    // ensuring each loan application requires a fresh consent transaction.
     dispatch(clearConsentState());
     dispatch(clearFarmerState());
-
-    // Check if the authenticated farmer already has a bound profile / verified consent
-    dispatch(fetchLeadDetailsThunk({ shouldPoll: false }));
   }, [dispatch]);
 
   return (

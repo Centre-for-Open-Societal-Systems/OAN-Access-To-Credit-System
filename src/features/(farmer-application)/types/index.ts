@@ -62,47 +62,24 @@ export interface BankDetails {
   country?: string;
 }
 
-export interface FarmerLoanApplication {
-  application_id: string;
-  /**
-   * Where the application stands, in the *owning bank's* own words.
-   *
-   * Not a fixed set: every bank names the stages of its pipeline itself, so this
-   * is `Active` while the application is still a draft with the farmer, and
-   * after submission whatever that bank calls the stage it has reached. It was
-   * typed as `'Draft' | 'Under Review' | 'Disbursed' | 'Rejected'` — four values
-   * the endpoint has never returned, which left every tab reading zero.
-   *
-   * To decide what an application *means*, read the flags below rather than
-   * matching this string.
-   */
-  status: string;
-  /** Absent while the application is still a draft (`Active`). */
-  stage_id?: string | null;
-  stage_label?: string | null;
-  /** Position in the owning bank's pipeline; orders the stages for display. */
-  sequence?: number | null;
-  /** The application has stopped moving. */
-  is_terminal?: boolean;
-  /** How it stopped: true = completed, false = rejected. Only meaningful with `is_terminal`. */
-  is_successful?: boolean;
-  loan_amount: number;
-  requested_amount: number;
-  loan_product: string;
-  loan_product_name: string;
-  bank: string;
-  creation: string;
-  loan_reason?: string;
-  /** Terms the application was made under, snapshotted from the product when it
-   *  was created. Null for applications made before the snapshot existed — the
-   *  card shows a placeholder rather than inventing a rate for them.
-   *
-   *  Note: `list_applications` does not currently send either field, so the list
-   *  view shows the placeholder for every card. They are populated only where a
-   *  caller has hydrated them from the product catalogue. */
-  interest_rate?: number | null;
-  tenure_months?: number | null;
-}
+/**
+ * A farmer's loan application row.
+ *
+ * Inferred from `farmerLoanApplicationSchema`, which extends the shared
+ * `loanApplicationSummarySchema` the bank list already validates against — the
+ * two endpoints return the same row, so they are described once and the type is
+ * whatever the parser actually produces. Hand-writing it here let it drift:
+ * `status` was typed `'Draft' | 'Under Review' | 'Disbursed' | 'Rejected'`, four
+ * values the endpoint has never returned, which left every tab reading zero.
+ *
+ * On `status`: not a fixed set. Every bank names the stages of its own pipeline,
+ * so this is `Active` while the application is still a draft with the farmer and
+ * afterwards whatever that bank calls the stage it has reached. To decide what an
+ * application *means*, read `is_terminal` / `is_successful` rather than matching
+ * this string.
+ */
+import type { FarmerLoanApplication } from '@/lib/api/api.schemas';
+export type { FarmerLoanApplication };
 
 /**
  * True while the application is still with the farmer and has not been sent to

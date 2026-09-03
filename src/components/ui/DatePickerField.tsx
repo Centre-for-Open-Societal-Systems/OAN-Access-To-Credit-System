@@ -2,12 +2,17 @@
 
 import { useEscapeToClose } from '@/hooks/useEscapeToClose';
 import { Calendar, ChevronDown } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+// useLayoutEffect warns when a client component is server-rendered (Next.js
+// renders these on the server too), and there is nothing to measure there
+// anyway — fall back to useEffect outside the browser.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface DatePickerFieldProps {
   id?: string;
@@ -70,36 +75,39 @@ export function DatePickerField({ id, label, value, onChange, required, error, d
     }
     if (isOpen) {
       document.addEventListener('mousedown', h);
-
-      // Calculate position
-      if (ref.current) {
-        const rect = ref.current.getBoundingClientRect();
-        let left = rect.left + window.scrollX;
-        if (left + 280 > window.innerWidth) {
-          left = Math.max(0, rect.right + window.scrollX - 280);
-        }
-
-        let top = rect.bottom + window.scrollY;
-        // Approximate calendar height is 340px
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-        // forcePosition pins the calendar; otherwise flip up only when it would not fit below.
-        const openUp =
-          forcePosition === 'top' ||
-          (forcePosition !== 'bottom' && spaceBelow < 340 && spaceAbove > spaceBelow);
-        if (openUp) {
-          top = rect.top + window.scrollY - 350;
-        }
-
-        setDropdownPos({
-          top,
-          left
-        });
-      }
     }
     return () => {
       document.removeEventListener('mousedown', h);
     };
+  }, [isOpen]);
+
+  // Positioning runs in a layout effect, not a plain one. `dropdownPos` starts at
+  // {0,0}, so the portal's first commit puts the calendar in the top-left corner
+  // of the page; measuring in a passive effect happens after that frame is painted
+  // and the calendar visibly jumps to the trigger. useLayoutEffect commits the
+  // measured position before the browser paints, so the {0,0} frame is never shown.
+  useIsomorphicLayoutEffect(() => {
+    if (!isOpen || !ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+    let left = rect.left + window.scrollX;
+    if (left + 280 > window.innerWidth) {
+      left = Math.max(0, rect.right + window.scrollX - 280);
+    }
+
+    let top = rect.bottom + window.scrollY;
+    // Approximate calendar height is 340px
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // forcePosition pins the calendar; otherwise flip up only when it would not fit below.
+    const openUp =
+      forcePosition === 'top' ||
+      (forcePosition !== 'bottom' && spaceBelow < 340 && spaceAbove > spaceBelow);
+    if (openUp) {
+      top = rect.top + window.scrollY - 350;
+    }
+
+    setDropdownPos({ top, left });
   }, [isOpen, forcePosition]);
 
   const displayValue = selectedDate

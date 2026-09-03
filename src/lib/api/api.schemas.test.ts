@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
+  farmerLoanApplicationSchema,
     loanApplicationFullSchema, loanApplicationSummarySchema, validateResponse
 } from './api.schemas';
 
@@ -34,8 +35,7 @@ describe('api.schemas validation', () => {
     it('should validate correctly with valid fields and default null/missing values', () => {
       const validData = {
         application_id: 'APP-123',
-        status: 'In Transition' as const,
-        stage_label: 'Credit Committee',
+        status: 'Credit Committee' as const,
         step: 1,
         lead_id: 'LEAD-123',
         loan_amount: 1000,
@@ -59,11 +59,10 @@ describe('api.schemas validation', () => {
       });
     });
 
-    it('should leave null location, stage and name fields undefined', () => {
+    it('should leave null location and name fields undefined', () => {
       const inputData = {
         application_id: 'APP-123',
         status: 'Active' as const,
-        stage_label: null,
         step: 1,
         lead_id: 'LEAD-123',
         loan_amount: 1000,
@@ -83,10 +82,6 @@ describe('api.schemas validation', () => {
       expect(result.region).toBeUndefined();
       expect(result.woreda).toBeUndefined();
       expect(result.kebele).toBeUndefined();
-      // `stage_label` keeps its null rather than collapsing to undefined — every
-      // consumer reads it as `stage_label || status`, so absent and null are the
-      // same thing to them, and the raw value stays faithful to the payload.
-      expect(result.stage_label).toBeNull();
       expect(result.first_name).toBeUndefined();
       expect(result.last_name).toBeUndefined();
     });
@@ -105,7 +100,6 @@ describe('api.schemas validation', () => {
 
       const result = loanApplicationSummarySchema.parse(inputData);
       expect(result.region).toBeUndefined();
-      expect(result.stage_label).toBeUndefined();
       expect(result.first_name).toBeUndefined();
       expect(result.last_name).toBeUndefined();
     });
@@ -124,13 +118,28 @@ describe('api.schemas validation', () => {
 
       expect(parsed).not.toHaveProperty('location');
     });
+
+    it('should fall back to "Unknown" when status is null or missing', () => {
+      const parsedNull = loanApplicationSummarySchema.parse({
+        application_id: 'APP-123',
+        creation: '2026-06-24',
+        status: null,
+      });
+      expect(parsedNull.status).toBe('Unknown');
+
+      const parsedUndefined = loanApplicationSummarySchema.parse({
+        application_id: 'APP-123',
+        creation: '2026-06-24',
+      });
+      expect(parsedUndefined.status).toBe('Unknown');
+    });
   });
 
   describe('loanApplicationFullSchema', () => {
-    it('should transform nullish name and reason fields', () => {
+    it('should transform nullish name, reason and status fields', () => {
       const inputData = {
         application_id: 'APP-123',
-        status: 'Draft' as const,
+        status: null,
         phone_number: '1234567890',
         loan_type: 'Agri',
         loan_amount: 1000,
@@ -145,6 +154,7 @@ describe('api.schemas validation', () => {
       };
 
       const result = loanApplicationFullSchema.parse(inputData);
+      expect(result.status).toBe('Unknown');
       expect(result.loan_reason).toBe('');
       expect(result.first_name).toBeUndefined();
       expect(result.last_name).toBeUndefined();
@@ -153,6 +163,67 @@ describe('api.schemas validation', () => {
       expect(result.gender).toBeUndefined();
       expect(result.marital_status).toBeUndefined();
       expect(result.education_level).toBeUndefined();
+    });
+  });
+
+  describe('farmerLoanApplicationSchema', () => {
+    const validRow = {
+      application_id: 'APP-123',
+      status: 'Credit Committee',
+      creation: '2026-01-01 10:00:00',
+      requested_amount: 5000,
+      loan_product: 'PROD-1',
+      loan_product_name: 'Crop Loan',
+      bank: 'Coop Bank',
+    };
+
+    it('accepts a farmer row and leaves missing optional fields undefined', () => {
+      const result = farmerLoanApplicationSchema.parse({
+        application_id: 'APP-123',
+        status: 'Active',
+        creation: '2026-01-01 10:00:00',
+      });
+
+      expect(result.requested_amount).toBeUndefined();
+      expect(result.loan_product).toBeUndefined();
+      expect(result.loan_product_name).toBeUndefined();
+      expect(result.bank).toBeUndefined();
+    });
+
+    it('keeps null amounts, product names, banks and terms as null without fake defaults', () => {
+      const result = farmerLoanApplicationSchema.parse({
+        ...validRow,
+        requested_amount: null,
+        loan_product_name: null,
+        bank: null,
+        interest_rate: null,
+        tenure_months: null,
+      });
+      expect(result.requested_amount).toBeNull();
+      expect(result.loan_product_name).toBeNull();
+      expect(result.bank).toBeNull();
+      expect(result.interest_rate).toBeNull();
+      expect(result.tenure_months).toBeNull();
+    });
+
+    it('falls back to "Unknown" when status is null or missing', () => {
+      const resultNull = farmerLoanApplicationSchema.parse({ ...validRow, status: null });
+      expect(resultNull.status).toBe('Unknown');
+
+      const resultUndefined = farmerLoanApplicationSchema.parse({ ...validRow, status: undefined });
+      expect(resultUndefined.status).toBe('Unknown');
+    });
+
+    it('inherits the summary schema fields', () => {
+      const result = farmerLoanApplicationSchema.parse({
+        ...validRow,
+        stage_id: 'LSS-00021',
+        sequence: 2,
+        is_terminal: null,
+      });
+      expect(result.stage_id).toBe('LSS-00021');
+      expect(result.sequence).toBe(2);
+      expect(result.is_terminal).toBe(false);
     });
   });
 });

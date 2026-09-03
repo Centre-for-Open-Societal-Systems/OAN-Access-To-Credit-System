@@ -60,11 +60,6 @@ const authSlice = createSlice({
       state.status = 'idle';
       state.error = null;
     },
-    setBankStatus(state, action: PayloadAction<'In Review' | 'Active' | 'Suspended'>) {
-      if (state.user?.kind === 'bank_admin' || state.user?.kind === 'bank_agent') {
-        state.user.bankStatus = action.payload;
-      }
-    },
     clearAuthError(state) {
       state.error = null;
     },
@@ -111,7 +106,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError, hydrate, setBankStatus, setUserImage } = authSlice.actions;
+export const { logout, clearAuthError, hydrate, setUserImage } = authSlice.actions;
 
 export const selectUser = (state: RootState) => state.auth.user;
 export const selectOfficerName = (state: RootState) => state.auth.user?.name ?? null;
