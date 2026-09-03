@@ -1,6 +1,7 @@
 'use client';
 import { clearOnboardingErrors, saveOrgContacts, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus } from '@/features/seller/store/onboardingSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { PHONE_NUMBER_REGEX, toDigitsOnly } from '@/lib/validation/phone';
 import { Check, Loader2, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,6 +35,12 @@ export function OrganizationContactsCard() {
   const handleSave = async () => {
     if (!form.groName.trim() || !form.groMobile.trim() || !form.opsName.trim() || !form.opsMobile.trim()) {
       setLocalError('Please fill in all contact fields.');
+      setIsSaved(false);
+      return;
+    }
+
+    if (!PHONE_NUMBER_REGEX.test(form.groMobile) || !PHONE_NUMBER_REGEX.test(form.opsMobile)) {
+      setLocalError('Mobile numbers must be exactly 10 digits.');
       setIsSaved(false);
       return;
     }
@@ -87,9 +94,11 @@ export function OrganizationContactsCard() {
               <label className="text-[14px] font-bold text-gray-900">Mobile No.</label>
               <input
                 type="text"
-                placeholder="Enter mobile number"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Enter phone number"
                 value={form.groMobile}
-                onChange={(event) => setForm((current) => ({ ...current, groMobile: event.target.value }))}
+                onChange={(event) => setForm((current) => ({ ...current, groMobile: toDigitsOnly(event.target.value) }))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -110,9 +119,11 @@ export function OrganizationContactsCard() {
               <label className="text-[14px] font-bold text-gray-900">Mobile No.</label>
               <input
                 type="text"
-                placeholder="Enter mobile number"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Enter phone number"
                 value={form.opsMobile}
-                onChange={(event) => setForm((current) => ({ ...current, opsMobile: event.target.value }))}
+                onChange={(event) => setForm((current) => ({ ...current, opsMobile: toDigitsOnly(event.target.value) }))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
