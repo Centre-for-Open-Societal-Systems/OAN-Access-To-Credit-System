@@ -2,6 +2,8 @@
 
 import { onboardingService, type BankProfile } from '@/features/seller/api/onboarding.service';
 import { POSTAL_CODE_MAX_LENGTH } from '@/features/seller/constants/field-limits';
+import { isValidTaxRegistrationLength } from '@/lib/validation/taxRegistration';
+import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import { toProxiedFileUrl } from '@/lib/utils';
 import { ArrowRight, Camera } from 'lucide-react';
@@ -13,6 +15,7 @@ const inputClass = (disabled: boolean) =>
 
 export default function OrganizationManagementTab({ readOnly = false }: { readOnly?: boolean }) {
   const [profile, setProfile] = useState<BankProfile | null>(null);
+  const [originalBankCode, setOriginalBankCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -20,8 +23,14 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
 
   useEffect(() => {
     onboardingService.getBankProfile()
-      .then((res) => setProfile(res.data))
-      .catch(() => toast.error('Failed to load organization profile'))
+      .then((res) => {
+        setProfile(res.data);
+        setOriginalBankCode(res.data.bank_code);
+      })
+      .catch((error) => {
+        logger.error('getBankProfile failed', { error });
+        toast.error('Failed to load organization profile');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -33,6 +42,16 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
 
   const handleSave = async () => {
     if (!profile || readOnly) return;
+    // bank_code isn't part of the update_bank_profile payload below (the
+    // backend doesn't support changing it post-registration), so only
+    // enforce the length rule when it was actually edited — an org whose
+    // registration number predates this rule shouldn't be unable to save
+    // an unrelated change (name, address, logo) because of it.
+    const bankCodeChanged = profile.bank_code !== originalBankCode;
+    if (bankCodeChanged && !isValidTaxRegistrationLength(profile.bank_code)) {
+      toast.error('Registration number must be 9-10 characters.');
+      return;
+    }
     setSaving(true);
     try {
       await onboardingService.updateBankProfile({
@@ -104,7 +123,7 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           {[
             { label: 'Legal Name', name: 'bank_name', placeholder: 'Ethiopia OpenAgriNet PLC', required: true },
-            { label: 'Registration Number', name: 'bank_code', placeholder: 'REG-ET-20231042', required: true },
+            { label: 'Registration Number', name: 'bank_code', placeholder: 'REG-ET-20231042', required: true, maxLength: 10 },
             { label: 'Street address', name: 'registered_street', placeholder: 'Enter Street address', required: true },
             { label: 'Kebele / Village', name: 'registered_kebele_village', placeholder: 'Enter Kebele / Village' },
             { label: 'Woreda / District', name: 'registered_woreda_district', placeholder: 'Enter Woreda / District' },

@@ -8,6 +8,7 @@ import {
     CreateLeadResponse, GetActivitiesResponse, GetCallDetailsResponse, GetLeadMetadataResponse, newLeadService,
     SpecificLeadAPI, UpdateLeadStatusResponse
 } from '../api/newLead.service';
+import { stripLeadingZero } from '@/lib/validation/phone';
 import { createLeadSchema } from '../schemas/lead.schema';
 import { clearForm, initializeLead } from './actions';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
@@ -17,6 +18,10 @@ import { scheduleVisitThunk } from './visitSlice';
 
 
 
+
+// The lead phone field has no country-code selector (see lead.schema.ts) —
+// every lead created through this form is assumed Ethiopian.
+const LEAD_PHONE_COUNTRY_CODE = '+251';
 
 export interface CreditInfo {
   id: string;
@@ -240,11 +245,21 @@ export const submitNewLeadThunk = createAsyncThunk<
       // so fall back to the raw value (as before) rather than throwing when
       // the schema rejects it; the backend remains the final validator for
       // that path.
+      // The field itself only ever holds a bare 10-digit local number (no
+      // country-code selector on this form) — the backend stores/matches
+      // leads by phone_number in "+251..." E.164 form (api-flow-backend.md),
+      // so the dial code is added here, once, at the payload boundary. Only
+      // do that when the value actually parsed as a bare local number —
+      // the raw fallback (see comment above) could be anything, and
+      // prepending +251 to it unconditionally would deform it further
+      // rather than passing it through as-is for the backend to validate.
       const parsed = createLeadSchema.safeParse({ phoneNumber: draft.phoneNumber });
-      const phoneNumber = parsed.success ? parsed.data.phoneNumber : draft.phoneNumber;
+      const phoneNumberForBackend = parsed.success
+        ? `${LEAD_PHONE_COUNTRY_CODE}${stripLeadingZero(parsed.data.phoneNumber)}`
+        : draft.phoneNumber;
 
       const payload = {
-        phone_number: phoneNumber,
+        phone_number: phoneNumberForBackend,
         first_name: draft.firstName,
         last_name: draft.lastName,
         email: draft.email,
