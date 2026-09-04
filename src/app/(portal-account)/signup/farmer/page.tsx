@@ -2,93 +2,22 @@
 
 import { PortalShell } from '@/app/(portal-account)/components/PortalShell';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
-import { useClickOutside } from '@/hooks/useClickOutside';
+import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { fetchApi, ApiError } from '@/lib/api/fetchApi';
 import { Lock, Mail, User } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Spinner } from '@/components/ui/Loader';
 import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
 import { strongPasswordSchema } from '@/lib/api/api.schemas';
+import { PHONE_NUMBER_REGEX, stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
 
-const COUNTRY_CODES = [
+const COUNTRY_CODES: CountryCodeOption[] = [
   { code: '+251', flagUrl: '/images/flags/et.svg', country: 'Ethiopia' },
   { code: '+254', flagUrl: '/images/flags/ke.svg', country: 'Kenya' },
   { code: '+256', flagUrl: '/images/flags/ug.svg', country: 'Uganda' },
   { code: '+250', flagUrl: '/images/flags/rw.svg', country: 'Rwanda' },
 ];
-
-/**
- * Dialling-code picker for the phone field.
- *
- * This is a hand-rolled dropdown standing in for a native <select>, which is
- * where the ARIA below comes from: a <select> announces itself as a collapsed
- * list, says which option is current, and closes on Escape without anyone
- * writing that. None of it is free once the control is a button and a div, so
- * it is spelled out — expanded state on the trigger, a menu role with a checked
- * item, and Escape returning focus to the trigger it came from.
- */
-function CountryCodeSelect({ value, onChange }: { value: string; onChange: (val: string) => void }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const active = COUNTRY_CODES.find((c) => c.code === value) || COUNTRY_CODES[0];
-
-  const close = useCallback(() => setIsOpen(false), []);
-  useClickOutside(ref, close, isOpen);
-
-  return (
-    <div
-      className="relative flex shrink-0"
-      ref={ref}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape' && isOpen) {
-          event.stopPropagation();
-          setIsOpen(false);
-          triggerRef.current?.focus();
-        }
-      }}
-    >
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        aria-label={`Country code, ${active!.country} ${active!.code}`}
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-3 bg-gray-50 border border-r-0 border-[#D1D5DB] rounded-l-xl text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] font-medium cursor-pointer hover:bg-gray-100 min-w-[90px]"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={active!.flagUrl} alt="" width={20} height={16} className="w-5 h-4 rounded-sm object-cover" />
-        <span>{active!.code}</span>
-      </button>
-      {isOpen && (
-        <div role="menu" aria-label="Country code" className="absolute top-full left-0 mt-1 w-full min-w-[120px] bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-          {COUNTRY_CODES.map((c) => (
-            <button
-              key={c.code}
-              type="button"
-              role="menuitemradio"
-              aria-checked={value === c.code}
-              onClick={() => {
-                onChange(c.code);
-                setIsOpen(false);
-                triggerRef.current?.focus();
-              }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-[14px] hover:bg-gray-50 ${value === c.code ? 'bg-gray-50 font-bold' : 'font-medium text-gray-700'}`}
-            >
-              {/* The flag repeats the country the label already names, so it is
-                  decorative — an alt here reads the country out twice. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.flagUrl} alt="" width={20} height={16} className="w-5 h-4 rounded-sm object-cover shrink-0" />
-              <span>{c.country} {c.code}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function FarmerSignupPage() {
   const [fullName, setFullName] = useState('');
@@ -104,6 +33,11 @@ export default function FarmerSignupPage() {
   const handleSignUpSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
+    if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
+      setError('Phone number must be exactly 10 digits.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -121,7 +55,7 @@ export default function FarmerSignupPage() {
       // The phone number is kept — the consent webhook matches a farmer profile to
       // this account by mobile_no — but the email is the credential. Registering
       // without one is rejected by the backend: there is nothing to sign in with.
-      const fullPhone = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
+      const fullPhone = `${countryCode}${stripLeadingZero(phoneNumber)}`;
       const response = await fetchApi('oan_a2c.api.v1.auth.register_user', {
         method: 'POST',
         body: JSON.stringify({
@@ -224,20 +158,19 @@ export default function FarmerSignupPage() {
                 Phone Number <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="flex shadow-sm">
-                <CountryCodeSelect 
-                  value={countryCode} 
-                  onChange={(val) => setCountryCode(val)} 
+                <CountryCodeSelect
+                  value={countryCode}
+                  onChange={(val) => setCountryCode(val)}
+                  options={COUNTRY_CODES}
+                  triggerClassName="flex items-center gap-2 px-3 py-3 bg-gray-50 border border-r-0 border-[#D1D5DB] rounded-l-xl text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] font-medium cursor-pointer hover:bg-gray-100 min-w-[90px]"
                 />
                 <input
                   type="tel"
+                  inputMode="numeric"
                   value={phoneNumber}
-                  onChange={(e) => {
-                    // Only allow digits
-                    const val = e.target.value.replace(/\D/g, '');
-                    setPhoneNumber(val);
-                  }}
-                  maxLength={9}
-                  placeholder="912 345 678"
+                  onChange={(e) => setPhoneNumber(toDigitsOnly(e.target.value))}
+                  maxLength={10}
+                  placeholder="Enter phone number"
                   required
                   className="w-full px-4 py-3 bg-white border border-[#D1D5DB] rounded-r-xl text-[14px] text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] transition-all placeholder:text-[#9CA3AF] font-medium"
                 />
@@ -252,6 +185,7 @@ export default function FarmerSignupPage() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Lock className="w-5 h-5" /></span>
                 <input
                   type="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -269,6 +203,7 @@ export default function FarmerSignupPage() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Lock className="w-5 h-5" /></span>
                 <input
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
