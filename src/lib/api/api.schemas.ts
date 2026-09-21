@@ -398,7 +398,12 @@ export const registerSellerSchema = z.object({
   email: z.string().email('Invalid email address format.'),
   full_name: z.string().min(2, 'Full name must be at least 2 characters long.'),
   password: strongPasswordSchema,
-  phone_number: z.string().min(8, 'Mobile number must be at least 8 digits.'),
+  // Dial code + 9-10 local digits: the form validates the local part is
+  // exactly 10 digits (see PHONE_NUMBER_REGEX), then strips a leading trunk
+  // 0 before concatenating the country code (stripLeadingZero), so the
+  // combined value is 9 or 10 digits after the code depending on whether
+  // one was present. This is a defense-in-depth check on that combined value.
+  phone_number: z.string().regex(/^\+\d{1,4}\d{9,10}$/, 'Mobile number must be a country code followed by 9-10 digits.'),
 });
 export type RegisterSellerSchemaPayload = z.infer<typeof registerSellerSchema>;
 

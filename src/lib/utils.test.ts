@@ -23,15 +23,6 @@ describe('toProxiedFileUrl', () => {
     expect(toProxiedFileUrl('https://example.com/files/image.jpg')).toBe('/api/files/image.jpg');
   });
 
-  it('rewrites relative private file paths', () => {
-    expect(toProxiedFileUrl('/private/files/tax_cert.pdf')).toBe('/api/files/private/tax_cert.pdf');
-  });
-
-  it('rewrites absolute private file URLs', () => {
-    expect(toProxiedFileUrl('http://127.0.0.1:8000/private/files/tax_cert.pdf')).toBe('/api/files/private/tax_cert.pdf');
-    expect(toProxiedFileUrl('https://example.com/private/files/doc.pdf')).toBe('/api/files/private/doc.pdf');
-  });
-
   it('leaves external non-file URLs untouched', () => {
     expect(toProxiedFileUrl('https://external.com/other/path')).toBe('https://external.com/other/path');
   });

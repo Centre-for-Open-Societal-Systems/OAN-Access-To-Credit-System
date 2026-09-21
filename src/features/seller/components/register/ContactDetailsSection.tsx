@@ -1,9 +1,16 @@
 'use client';
 
 import { PHONE_NUMBER_MAX_LENGTH } from '@/features/seller/constants/field-limits';
-import { ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
+import { useState } from 'react';
 import { FormCard } from './FormCard';
+
+const CONTACT_COUNTRY_CODES: CountryCodeOption[] = [
+  { code: '+255', country: 'Tanzania', flagUrl: '/images/flags/tz.svg' },
+  { code: '+251', country: 'Ethiopia', flagUrl: '/images/flags/et.svg' },
+  { code: '+1', country: 'United States', flagUrl: '/images/flags/us.svg' },
+];
 
 export interface ContactFields {
   registered_email: string;
@@ -16,29 +23,27 @@ interface ContactDetailsSectionProps {
   isAgreed: boolean;
   setIsAgreed: (agreed: boolean) => void;
   errors?: Record<string, string>;
+  onPhoneValidityChange?: (isValid: boolean) => void;
 }
 
-export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed, errors = {} }: ContactDetailsSectionProps) {
-  const [isPhoneDropdownOpen, setIsPhoneDropdownOpen] = useState(false);
+export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed, errors = {}, onPhoneValidityChange }: ContactDetailsSectionProps) {
   const [selectedPhoneCode, setSelectedPhoneCode] = useState('+255');
   // Keep local digits separate so switching the country code dropdown never
   // alters/appends to what the user already typed (Bug #27).
   const [localPhoneDigits, setLocalPhoneDigits] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsPhoneDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const [isPhoneTouched, setIsPhoneTouched] = useState(false);
+  const phoneLengthError =
+    isPhoneTouched && localPhoneDigits.length > 0 && localPhoneDigits.length !== PHONE_NUMBER_MAX_LENGTH
+      ? `Phone number must be exactly ${PHONE_NUMBER_MAX_LENGTH} digits.`
+      : null;
 
   // Propagate the full number (code + digits) upstream whenever either changes.
+  // The typed digits keep any leading trunk 0 for the on-screen field/length
+  // check; it's stripped only in the value sent upstream, so "+251" + digits
+  // comes out as valid E.164 rather than gaining an extra digit.
   const propagatePhone = (code: string, digits: string) => {
-    onChange({ registered_phone: digits ? `${code}${digits}` : '' });
+    onChange({ registered_phone: digits ? `${code}${stripLeadingZero(digits)}` : '' });
+    onPhoneValidityChange?.(digits.length === PHONE_NUMBER_MAX_LENGTH);
   };
 
   return (
@@ -68,61 +73,36 @@ export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed,
             Phone <span className="text-red-500">*</span>
           </label>
           <div className="flex space-x-3">
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setIsPhoneDropdownOpen(!isPhoneDropdownOpen)}
-                className={`flex items-center justify-between w-[100px] px-3 py-2.5 bg-white border rounded-lg text-[14px] text-[#1F2937] focus:outline-none transition-all ${
-                  isPhoneDropdownOpen ? 'border-[#16A34A] ring-2 ring-[#16A34A]/20' : 'border-[#D1D5DB]'
-                }`}
-              >
-                <span>{selectedPhoneCode}</span>
-                <ChevronDown size={16} className={`text-[#6B7280] transition-transform duration-200 ${isPhoneDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <div
-                className={`absolute top-full left-0 mt-1 w-full bg-white border border-[#E5E7EB] rounded-lg shadow-lg overflow-hidden z-10 transition-all duration-200 origin-top ${
-                  isPhoneDropdownOpen
-                    ? 'opacity-100 scale-y-100'
-                    : 'opacity-0 scale-y-0 pointer-events-none'
-                }`}
-              >
-                {['+255', '+251', '+1'].map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => {
-                      setSelectedPhoneCode(code);
-                      setIsPhoneDropdownOpen(false);
-                      // Re-propagate with new code but keep digits untouched
-                      propagatePhone(code, localPhoneDigits);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-[14px] hover:bg-gray-50 transition-colors ${
-                      selectedPhoneCode === code ? 'bg-[#F0FDF4] text-[#16A34A] font-medium' : 'text-[#374151]'
-                    }`}
-                  >
-                    {code}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <CountryCodeSelect
+              value={selectedPhoneCode}
+              onChange={(code) => {
+                setSelectedPhoneCode(code);
+                // Re-propagate with new code but keep digits untouched
+                propagatePhone(code, localPhoneDigits);
+              }}
+              options={CONTACT_COUNTRY_CODES}
+              showChevron
+              triggerClassName="flex items-center justify-between gap-2 w-[100px] px-3 py-2.5 bg-white border border-[#D1D5DB] rounded-lg text-[14px] text-[#1F2937] focus:outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/20 transition-all cursor-pointer"
+            />
             <input
               type="tel"
+              inputMode="numeric"
               autoComplete="off"
               maxLength={PHONE_NUMBER_MAX_LENGTH}
-              placeholder="Enter Phone Number"
+              placeholder="Enter phone number"
               value={localPhoneDigits}
               onChange={(e) => {
-                const digits = e.target.value;
+                const digits = toDigitsOnly(e.target.value);
                 setLocalPhoneDigits(digits);
                 propagatePhone(selectedPhoneCode, digits);
               }}
-              className={`flex-1 px-3 py-2.5 bg-white border ${errors.registered_phone ? 'border-red-500' : 'border-[#D1D5DB]'} rounded-lg text-[14px] text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] transition-all placeholder:text-[#9CA3AF]`}
+              onBlur={() => setIsPhoneTouched(true)}
+              className={`flex-1 px-3 py-2.5 bg-white border ${errors.registered_phone || phoneLengthError ? 'border-red-500' : 'border-[#D1D5DB]'} rounded-lg text-[14px] text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] transition-all placeholder:text-[#9CA3AF]`}
             />
           </div>
-          {errors.registered_phone && (
-            <span className="text-[12px] text-red-500 block mt-1">{errors.registered_phone}</span>
-          )}
+          {errors.registered_phone || phoneLengthError ? (
+            <span className="text-[12px] text-red-500 block mt-1">{errors.registered_phone || phoneLengthError}</span>
+          ) : null}
         </div>
       </div>
 

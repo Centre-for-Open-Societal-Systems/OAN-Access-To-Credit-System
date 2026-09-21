@@ -8,8 +8,20 @@ import { createPortal } from 'react-dom';
 import { getUserProfile, updateProfile, changePassword, type UserProfileResponse } from '@/features/auth/api/authApi';
 import { onboardingService } from '@/features/seller/api/onboarding.service';
 import { toast } from '@/lib/toast';
+import { logger } from '@/lib/logger';
 import { toProxiedFileUrl } from '@/lib/utils';
+import { PHONE_NUMBER_REGEX, splitPhoneNumber, stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { SelectField } from '@/components/ui/SelectField';
+
+const PROFILE_COUNTRY_CODES: CountryCodeOption[] = [
+  { code: '+251', country: 'Ethiopia', flagUrl: '/images/flags/et.svg' },
+  { code: '+255', country: 'Tanzania', flagUrl: '/images/flags/tz.svg' },
+  { code: '+254', country: 'Kenya', flagUrl: '/images/flags/ke.svg' },
+  { code: '+256', country: 'Uganda', flagUrl: '/images/flags/ug.svg' },
+  { code: '+250', country: 'Rwanda', flagUrl: '/images/flags/rw.svg' },
+  { code: '+1', country: 'United States', flagUrl: '/images/flags/us.svg' },
+];
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -35,7 +47,8 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
 
   const [formData, setFormData] = useState({
     full_name: '',
-    phone_number: '',
+    phoneCountryCode: '+251',
+    phoneLocalDigits: '',
     language: 'English',
     gender: '',
   });
@@ -58,6 +71,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
   // still accepts these fields from any signed-in user; closing that is a
   // separate backend change.
   const isProfileReadOnly = userKind === 'farmer';
+  const phoneCountryFlagUrl = PROFILE_COUNTRY_CODES.find((c) => c.code === formData.phoneCountryCode)?.flagUrl;
 
   // A locked field looks locked the way this modal already locks one -- the
   // Account Information fields below have always rendered like this.
@@ -76,16 +90,19 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
       setIsLoading(true);
       const data = await getUserProfile();
       setProfile(data);
+      const { countryCode, localDigits } = splitPhoneNumber(data.personal_information.phone_number || '');
       setFormData({
         full_name: data.personal_information.full_name || '',
-        phone_number: data.personal_information.phone_number || '',
+        phoneCountryCode: countryCode,
+        phoneLocalDigits: localDigits,
         language: data.personal_information.language || 'English',
         gender: data.personal_information.gender || '',
       });
       if (data.personal_information.user_image) {
         dispatch(setUserImage(data.personal_information.user_image));
       }
-    } catch {
+    } catch (error) {
+      logger.error('getUserProfile failed', { error });
       toast.error('Failed to load profile');
     } finally {
       setIsLoading(false);
@@ -101,17 +118,37 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
   }, [isOpen, loadProfile]);
 
   const handleSaveProfile = async () => {
+    // Only enforce the fresh-entry 10-digit format when the phone was
+    // actually edited this session. A stored number may be legitimately 9
+    // local digits (E.164 with no trunk 0, e.g. "+251912345678"), and an
+    // unrelated save (name/language) shouldn't be blocked by that.
+    const originalPhoneNumber = profile?.personal_information.phone_number || '';
+    const original = splitPhoneNumber(originalPhoneNumber);
+    const phoneChanged =
+      formData.phoneCountryCode !== original.countryCode || formData.phoneLocalDigits !== original.localDigits;
+    if (!isProfileReadOnly && phoneChanged && !PHONE_NUMBER_REGEX.test(formData.phoneLocalDigits)) {
+      toast.error('Phone number must be exactly 10 digits');
+      return;
+    }
+    // Untouched: send the original value through byte-for-byte rather than
+    // re-deriving it from the split — splitPhoneNumber falls back to +251
+    // for any dial code it doesn't recognize, and re-concatenating that
+    // fallback would corrupt a legacy/foreign number nobody actually edited.
+    const phoneNumber = phoneChanged
+      ? `${formData.phoneCountryCode}${stripLeadingZero(formData.phoneLocalDigits)}`
+      : originalPhoneNumber;
     try {
       setIsSaving(true);
       const updated = await updateProfile({
         full_name: formData.full_name,
-        phone_number: formData.phone_number,
+        phone_number: phoneNumber,
         language: formData.language,
         ...(formData.gender ? { gender: formData.gender } : {}),
       });
       setProfile(updated);
       toast.success('Profile updated successfully');
-    } catch {
+    } catch (error) {
+      logger.error('updateProfile failed', { error });
       toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
@@ -169,14 +206,16 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
             dispatch(setUserImage(uploadRes.data.file_url));
             toast.success('Photo updated successfully');
           }
-        } catch {
+        } catch (error) {
+          logger.error('Photo upload failed', { error });
           toast.error('Failed to upload photo');
         } finally {
           setIsUploading(false);
         }
       };
       reader.readAsDataURL(file);
-    } catch {
+    } catch (error) {
+      logger.error('Failed to read photo file', { error });
       toast.error('Failed to read file');
       setIsUploading(false);
     }
@@ -350,15 +389,47 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
                       <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-900 mb-1.5">
                         Phone Number {!isProfileReadOnly && <span className="text-red-500">*</span>}
                       </label>
-                      <input
-                        id="profile-phone"
-                        type="tel"
-                        value={isProfileReadOnly ? displayValue(formData.phone_number) : formData.phone_number}
-                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                        placeholder="Enter Phone Number"
-                        disabled={isProfileReadOnly}
-                        className={isProfileReadOnly ? lockedFieldClass : editableFieldClass}
-                      />
+                      {isProfileReadOnly ? (
+                        <div className="flex gap-2">
+                          <div
+                            aria-hidden="true"
+                            className="flex items-center gap-2 w-[110px] shrink-0 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600"
+                          >
+                            {phoneCountryFlagUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={phoneCountryFlagUrl} alt="" width={20} height={16} className="w-5 h-4 rounded-sm object-cover" />
+                            )}
+                            <span>{formData.phoneCountryCode}</span>
+                          </div>
+                          <input
+                            id="profile-phone"
+                            type="tel"
+                            value={displayValue(formData.phoneLocalDigits)}
+                            disabled
+                            className={lockedFieldClass}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <CountryCodeSelect
+                            value={formData.phoneCountryCode}
+                            onChange={(code) => setFormData({ ...formData, phoneCountryCode: code })}
+                            options={PROFILE_COUNTRY_CODES}
+                            showChevron
+                            triggerClassName="flex items-center justify-between gap-2 w-[110px] shrink-0 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors cursor-pointer"
+                          />
+                          <input
+                            id="profile-phone"
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={formData.phoneLocalDigits}
+                            onChange={(e) => setFormData({ ...formData, phoneLocalDigits: toDigitsOnly(e.target.value) })}
+                            placeholder="Enter phone number"
+                            className={editableFieldClass}
+                          />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="profile-language" className="block text-sm font-medium text-gray-900 mb-1.5">

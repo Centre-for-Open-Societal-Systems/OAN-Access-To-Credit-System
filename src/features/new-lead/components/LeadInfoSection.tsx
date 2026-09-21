@@ -1,4 +1,5 @@
 import { useAppSelector } from '@/store/hooks';
+import { toDigitsOnly } from '@/lib/validation/phone';
 import { FileText } from 'lucide-react';
 import { selectLeadPhoneNumber, selectLeadSource } from '../store/newLeadSlice';
 
@@ -45,17 +46,14 @@ export function LeadInfoSection({ isEditable = false, phoneNumber: propPhoneNumb
           <input
             id="lead-phone-number"
             type="text"
+            inputMode="numeric"
             value={displayPhone}
-            onChange={(e) => isEditable && onPhoneNumberChange && onPhoneNumberChange(e.target.value)}
+            onChange={(e) => isEditable && onPhoneNumberChange && onPhoneNumberChange(toDigitsOnly(e.target.value))}
             readOnly={!isEditable}
             maxLength={10}
-            placeholder={isEditable ? "Enter Phone Number" : ""}
-            className="flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-green-600 focus-visible:ring-offset-0 border-gray-200 hover:border-green-600 bg-white ring-1 ring-green-600/15
-            ${!isEditable ? 'bg-gray-50 border-gray-200' : phoneError ? 'bg-white focus:ring-2 focus:ring-red-500/20' : 'bg-white border-gray-200 focus:ring-2 focus:ring-[#16335A]/20'}`}"
+            placeholder={isEditable ? "Enter phone number" : ""}
+            className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-green-600 focus-visible:ring-offset-0 hover:border-green-600 bg-white ring-1 ring-green-600/15 ${!isEditable ? 'bg-gray-50 border-gray-200' : phoneError ? 'bg-white border-gray-200 focus:ring-2 focus:ring-red-500/20' : 'bg-white border-gray-200 focus:ring-2 focus:ring-[#16335A]/20'}`}
             style={{ boxShadow: 'rgba(0, 0, 0, 0.05) 0px 1px 2px' }}
-
-
-          // className={`w-full h-[42px] rounded-md border px-4 text-[15px] text-[#232F34] focus:outline-none transition-colors ${!isEditable ? 'bg-gray-50 border-gray-200' : phoneError ? 'bg-white border-red-500 focus:ring-2 focus:ring-red-500/20' : 'bg-white border-gray-200 focus:ring-2 focus:ring-[#16335A]/20'}`}
           />
           {phoneError && (
             <span role="alert" aria-live="assertive" className="text-sm text-red-500 mt-1">{phoneError}</span>
