@@ -53,46 +53,59 @@ export const onboardingService = {
   async registerSeller(payload: RegisterSellerPayload): Promise<ApiResponse<{ message: string }>> {
     // Public self-registration endpoint (guest-accessible). `role` is omitted so
     // the backend applies its default (BANK_ADMIN_ROLE), matching this page's intent.
-    return fetchApi('oan_a2c.api.v1.auth.register_user', {
+    return fetchApi('v1/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async registerBank(payload: RegisterBankPayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.register_bank', {
+    return fetchApi('v1/banks', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async saveOrgContacts(payload: SaveOrgContactsPayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.save_org_contacts', {
-      method: 'POST',
+    return fetchApi('v1/banks/me/contacts', {
+      method: 'PUT',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async uploadKycDocument(payload: UploadKycDocumentPayload): Promise<ApiResponse<{ message: string; file_url: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.upload_kyc_document', {
+    const res = await fetchApi('v1/banks/me/kyc-documents', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }) as Promise<ApiResponse<{ message: string; file_url: string }>>;
+    }) as ApiResponse<{ message: string; file_url: string }>;
+    if (res?.data) {
+      res.data.file_url = '/api/proxy/v1/banks/me/kyc-documents';
+    }
+    return res;
+  },
+
+  getKycDocumentUrl(options?: { inline?: boolean }): string {
+    return options?.inline
+      ? '/api/proxy/v1/banks/me/kyc-documents?view=1'
+      : '/api/proxy/v1/banks/me/kyc-documents';
   },
 
   async getBankProfile(): Promise<ApiResponse<BankProfile>> {
-    const res = await fetchApi('oan_a2c.api.v1.seller.onboarding.get_bank_profile', {
+    const res = await fetchApi('v1/banks/me', {
       method: 'GET',
     }) as ApiResponse<BankProfile>;
     if (res?.data?.logo) {
       res.data.logo = toProxiedFileUrl(res.data.logo) ?? res.data.logo;
     }
+    if (res?.data?.kyc_document_uploaded || res?.data?.kyc_document) {
+      res.data.kyc_document = '/api/proxy/v1/banks/me/kyc-documents';
+    }
     return res;
   },
 
   async updateBankProfile(payload: UpdateBankProfilePayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.update_bank_profile', {
-      method: 'POST',
+    return fetchApi('v1/banks/me', {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
@@ -101,7 +114,7 @@ export const onboardingService = {
   // `image` field, bank `logo`, etc.); it is proxied to `/api/files/...` only at
   // read/display time (see `toProxiedFileUrl`), never before persisting.
   async uploadImage(payload: { filename: string; filedata: string }): Promise<ApiResponse<{ message: string; file_url: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.upload_image', {
+    return fetchApi('v1/images', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string; file_url: string }>>;

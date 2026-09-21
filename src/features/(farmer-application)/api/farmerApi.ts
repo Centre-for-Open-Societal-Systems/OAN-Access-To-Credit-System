@@ -29,16 +29,16 @@ export async function getSavedProducts(
   if (params.limit !== undefined) query.append('limit', params.limit.toString());
   if (params.start !== undefined) query.append('start', params.start.toString());
 
-  return fetchApi(`oan_a2c.api.v1.farmer.catalog.get_saved_products?${query.toString()}`);
+  const queryStr = query.toString();
+  return fetchApi(`v1/catalog/saved-products${queryStr ? `?${queryStr}` : ''}`);
 }
 
 /**
  * Bookmarks a product for the farmer.
  */
 export async function saveBookmark(loan_product: string): Promise<ApiResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.catalog.save_product', {
-    method: 'POST',
-    body: JSON.stringify({ loan_product }),
+  return fetchApi(`v1/catalog/saved-products/${encodeURIComponent(loan_product)}`, {
+    method: 'PUT',
   });
 }
 
@@ -46,9 +46,8 @@ export async function saveBookmark(loan_product: string): Promise<ApiResponse> {
  * Removes a bookmark for the farmer.
  */
 export async function removeBookmark(loan_product: string): Promise<ApiResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.catalog.unsave_product', {
-    method: 'POST',
-    body: JSON.stringify({ loan_product }),
+  return fetchApi(`v1/catalog/saved-products/${encodeURIComponent(loan_product)}`, {
+    method: 'DELETE',
   });
 }
 
@@ -68,7 +67,8 @@ export async function getMyApplications(
   if (params.page !== undefined) query.append('page', params.page.toString());
   if (params.page_size !== undefined) query.append('page_size', params.page_size.toString());
 
-  const response = await fetchApi(`oan_a2c.api.v1.farmer.applications.list_applications?${query.toString()}`);
+  const queryStr = query.toString();
+  const response = await fetchApi(`v1/applications${queryStr ? `?${queryStr}` : ''}`);
 
   // Validated, not cast. `fetchApi` returns `any`, so the declared return type
   // was an assertion nothing checked — a row arriving without `status` (which
@@ -122,14 +122,14 @@ export async function getAllMyApplications(): Promise<FarmerLoanApplication[]> {
  * a stage label belongs to the bank that defined it.
  */
 export async function getLoanStatusMetadata(): Promise<ApiResponse<{ statuses: LoanStatusMeta[] }>> {
-  return fetchApi('oan_a2c.api.v1.loan_applications.get_loan_metadata');
+  return fetchApi('v1/loan-applications/metadata');
 }
 
 /**
  * Retrieves a single application by application_id.
  */
 export async function getApplication(application_id: string): Promise<ApiResponse<FarmerLoanApplication>> {
-  const response = await fetchApi(`oan_a2c.api.v1.farmer.applications.get_application?application_id=${encodeURIComponent(application_id)}`);
+  const response = await fetchApi(`v1/applications/${encodeURIComponent(application_id)}`);
 
   return {
     ...response,
@@ -143,7 +143,7 @@ export async function getApplication(application_id: string): Promise<ApiRespons
 export async function startApplication(
   data: CreateApplicationPayload
 ): Promise<ApiResponse<{ application_id: string }>> {
-  return fetchApi('oan_a2c.api.v1.farmer.applications.create_application', {
+  return fetchApi('v1/applications', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -155,9 +155,10 @@ export async function startApplication(
 export async function updateApplication(
   data: UpdateApplicationPayload
 ): Promise<ApiResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.applications.update_application', {
-    method: 'POST',
-    body: JSON.stringify(data),
+  const { application_id, ...payload } = data;
+  return fetchApi(`v1/applications/${encodeURIComponent(application_id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
   });
 }
 
@@ -165,9 +166,8 @@ export async function updateApplication(
  * Submits an application to the bank (Draft -> Processing).
  */
 export async function submitApplication(application_id: string): Promise<ApiResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.applications.submit_application', {
+  return fetchApi(`v1/applications/${encodeURIComponent(application_id)}/submit`, {
     method: 'POST',
-    body: JSON.stringify({ application_id }),
   });
 }
 
@@ -175,21 +175,21 @@ export async function submitApplication(application_id: string): Promise<ApiResp
  * Fetches dashboard summary for the farmer.
  */
 export async function getDashboardSummary(): Promise<ApiResponse<FarmerDashboardSummary>> {
-  return fetchApi('oan_a2c.api.v1.farmer.dashboard.get_dashboard_summary');
+  return fetchApi('v1/me/dashboard');
 }
 
 /**
  * Retrieves detailed information for a loan product.
  */
 export async function getProduct(productId: string): Promise<ApiResponse<{ product: DetailedLoanProduct }>> {
-  return fetchApi(`oan_a2c.api.v1.seller.loan_products.get_product?product_id=${encodeURIComponent(productId)}`);
+  return fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}`);
 }
 
 /**
  * Retrieves bank storefront details and branding.
  */
 export async function getBankDetails(bank: string): Promise<ApiResponse<BankDetails>> {
-  return fetchApi(`oan_a2c.api.v1.farmer.catalog.get_bank_details?bank=${encodeURIComponent(bank)}`);
+  return fetchApi(`v1/catalog/banks/${encodeURIComponent(bank)}`);
 }
 
 

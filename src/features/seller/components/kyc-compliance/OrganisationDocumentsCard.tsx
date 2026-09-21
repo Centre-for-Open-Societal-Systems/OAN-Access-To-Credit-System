@@ -1,5 +1,14 @@
 'use client';
-import { clearOnboardingErrors, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus, selectUploadedFileUrl, uploadKycDocument } from '@/features/seller/store/onboardingSlice';
+import {
+  clearOnboardingErrors,
+  selectBankProfile,
+  selectOnboardingMutationError,
+  selectOnboardingMutationSource,
+  selectOnboardingMutationStatus,
+  selectUploadedFileUrl,
+  uploadKycDocument,
+} from '@/features/seller/store/onboardingSlice';
+import type { BankProfile } from '@/features/seller/api/onboarding.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { FileText, Loader2, Upload } from 'lucide-react';
 import React, { useRef, useState } from 'react';
@@ -23,9 +32,14 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-export function OrganisationDocumentsCard() {
+interface OrganisationDocumentsCardProps {
+  profile?: BankProfile | null;
+}
+
+export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCardProps = {}) {
   const dispatch = useAppDispatch();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isExistingRemoved, setIsExistingRemoved] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -37,6 +51,28 @@ export function OrganisationDocumentsCard() {
   // call — only surface it here when this card's own upload actually caused it.
   const mutationError = mutationSource === 'document' ? mutationErrorRaw : null;
   const uploadedFileUrl = useAppSelector(selectUploadedFileUrl);
+  const storeBankProfile = useAppSelector(selectBankProfile);
+  const currentProfile = profile ?? storeBankProfile;
+  const existingDocumentUrl =
+    uploadedFileUrl ||
+    currentProfile?.kyc_document ||
+    (currentProfile?.kyc_document_uploaded ? '/api/proxy/v1/banks/me/kyc-documents' : null);
+  const hasExistingDoc = Boolean(!isExistingRemoved && existingDocumentUrl);
+  const existingFileName = existingDocumentUrl
+    ? (existingDocumentUrl.includes('kyc-documents')
+        ? 'Tax Registration Certificate.pdf'
+        : decodeURIComponent(existingDocumentUrl.split('/').pop()?.split('?')[0] || 'Tax Registration Certificate.pdf'))
+    : null;
+
+  const previewUrl = existingDocumentUrl
+    ? (existingDocumentUrl.includes('kyc-documents')
+        ? `${existingDocumentUrl.split('?')[0]}?view=1`
+        : existingDocumentUrl)
+    : null;
+
+  const downloadUrl = existingDocumentUrl
+    ? existingDocumentUrl.split('?')[0]
+    : null;
 
   const handleBoxClick = () => {
     fileInputRef.current?.click();
@@ -67,12 +103,15 @@ export function OrganisationDocumentsCard() {
       // Uploading the KYC document only persists the file. Activation happens
       // separately when the organization contacts are saved (by then the KYC
       // doc exists, so the backend's "KYC required" guard is satisfied).
-      await dispatch(
+      const result = await dispatch(
         uploadKycDocument({
           filename: uploadedFile.name,
           filedata,
         })
       );
+      if (uploadKycDocument.fulfilled.match(result)) {
+        setIsExistingRemoved(false);
+      }
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : 'Unable to upload document.');
     }
@@ -80,6 +119,7 @@ export function OrganisationDocumentsCard() {
 
   const handleRemoveFile = () => {
     setUploadedFile(null);
+    setIsExistingRemoved(true);
     setIsDeleteModalOpen(false);
     setLocalError(null);
     dispatch(clearOnboardingErrors());
@@ -116,7 +156,7 @@ export function OrganisationDocumentsCard() {
             accept=".pdf,application/pdf"
           />
 
-          {!uploadedFile ? (
+          {!uploadedFile && !hasExistingDoc ? (
             <button
               type="button"
               onClick={handleBoxClick}
@@ -131,24 +171,26 @@ export function OrganisationDocumentsCard() {
           ) : (
             <div className="rounded-xl border border-[#DCFCE7] bg-[#F0FDF4] p-4">
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#DCFCE7]">
                     <FileText size={24} className="text-[#16A34A]" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-bold leading-tight text-gray-900">{uploadedFile.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[15px] font-bold leading-tight text-gray-900 truncate">
+                      {uploadedFile?.name || existingFileName}
+                    </span>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
                       <span className="text-[14px] font-medium text-[#16A34A]">
-                        {uploadedFileUrl ? 'Uploaded to backend' : 'Ready to upload'}
+                        {uploadedFile ? (uploadedFileUrl ? 'Uploaded to backend' : 'Ready to upload') : 'Uploaded to backend'}
                       </span>
                     </div>
-                    {uploadedFileUrl ? (
-                      <span className="mt-1 break-all text-[12px] text-gray-500">File URL: {uploadedFileUrl}</span>
+                    {existingDocumentUrl && !existingDocumentUrl.includes('kyc-documents') ? (
+                      <span className="mt-1 break-all text-[12px] text-gray-500">File: {existingDocumentUrl}</span>
                     ) : null}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsViewModalOpen(true)}
@@ -168,20 +210,36 @@ export function OrganisationDocumentsCard() {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <p className="text-[13px] text-gray-600">
-                  You can preview the selected file before uploading it to the backend.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#16A34A] px-4 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-80"
-                >
-                  {isUploading ? <Loader2 size={18} className="animate-spin" /> : null}
-                  <span>{isUploading ? 'Uploading...' : 'Upload PDF'}</span>
-                </button>
-              </div>
+              {uploadedFile ? (
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <p className="text-[13px] text-gray-600">
+                    You can preview the selected file before uploading it to the backend.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#16A34A] px-4 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-80"
+                  >
+                    {isUploading ? <Loader2 size={18} className="animate-spin" /> : null}
+                    <span>{isUploading ? 'Uploading...' : 'Upload PDF'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-green-200/60 pt-3">
+                  <p className="text-[13px] text-gray-600">
+                    KYC document is verified on the backend.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleBoxClick}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#16A34A] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#16A34A] transition-colors hover:bg-green-50"
+                  >
+                    <Upload size={14} />
+                    <span>Replace PDF</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -197,13 +255,16 @@ export function OrganisationDocumentsCard() {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         file={uploadedFile}
+        fileUrl={!uploadedFile ? previewUrl : null}
+        downloadUrl={!uploadedFile ? downloadUrl : null}
+        fileName={uploadedFile?.name || existingFileName}
       />
 
       <DeleteDocumentModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleRemoveFile}
-        fileName={uploadedFile?.name || null}
+        fileName={uploadedFile?.name || existingFileName || null}
       />
     </>
   );

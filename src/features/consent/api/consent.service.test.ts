@@ -26,7 +26,7 @@ describe('consentService', () => {
         leadId: 'LD-12345',
       });
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.request_otp', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/otp', {
         method: 'POST',
         body: '{"fayda_id":"FID-123","lead_id":"LD-12345"}',
       });
@@ -54,7 +54,7 @@ describe('consentService', () => {
         otp_code: '123456',
       });
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.verify_otp', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/otp/verify', {
         method: 'POST',
         body: JSON.stringify({
           consent_request: 'REQ-123',
@@ -90,7 +90,7 @@ describe('consentService', () => {
 
       const result = await consentService.submitConsent(payload);
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.submit_consent', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/requests', {
         method: 'POST',
         body: JSON.stringify(payload),
       });

@@ -26,7 +26,7 @@ describe('teamService.inviteTeamMember', () => {
 
     await teamService.inviteTeamMember(payload);
 
-    expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.seller.onboarding.invite_team_member', {
+    expect(fetchApi).toHaveBeenCalledWith('v1/banks/me/team', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -58,8 +58,8 @@ describe('teamService.resetMemberPassword', () => {
     await teamService.resetMemberPassword(payload);
 
     expect(fetchApi).toHaveBeenCalledWith(
-      'oan_a2c.api.v1.seller.onboarding.reset_member_password',
-      { method: 'POST', body: JSON.stringify(payload) }
+      'v1/banks/me/team/agent%40bank.com/password-reset',
+      { method: 'POST', body: JSON.stringify({ password: payload.password }) }
     );
   });
 
@@ -81,8 +81,8 @@ describe('teamService.resetMemberPassword', () => {
     await teamService.resetMemberPassword(payload, controller.signal);
 
     expect(fetchApi).toHaveBeenCalledWith(
-      'oan_a2c.api.v1.seller.onboarding.reset_member_password',
-      { method: 'POST', body: JSON.stringify(payload), signal: controller.signal }
+      'v1/banks/me/team/agent%40bank.com/password-reset',
+      { method: 'POST', body: JSON.stringify({ password: payload.password }), signal: controller.signal }
     );
   });
 });

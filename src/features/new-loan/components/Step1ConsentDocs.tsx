@@ -64,12 +64,13 @@ export function Step1ConsentDocs({ leadId }: { leadId?: string | undefined }) {
       setSupportPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     } else if (selectedSupportingDoc.id) {
-      const url = `/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${selectedSupportingDoc.id}&view=1`;
+      const targetAppId = applicationId || 'current';
+      const url = `/api/proxy/v1/loan-applications/${encodeURIComponent(targetAppId)}/documents/${encodeURIComponent(selectedSupportingDoc.id)}/content?view=1`;
       setSupportPreviewUrl(url);
     } else {
       setSupportPreviewUrl(null);
     }
-  }, [selectedSupportingDoc]);
+  }, [selectedSupportingDoc, applicationId]);
 
   const [showAddDocPopup, setShowAddDocPopup] = useState(false);
 
@@ -164,7 +165,8 @@ export function Step1ConsentDocs({ leadId }: { leadId?: string | undefined }) {
       if (doc.file) {
         url = URL.createObjectURL(doc.file);
       } else if (doc.id) {
-        url = `/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document?file_id=${doc.id}&view=0`;
+        const targetAppId = applicationId || 'current';
+        url = `/api/proxy/v1/loan-applications/${encodeURIComponent(targetAppId)}/documents/${encodeURIComponent(doc.id)}/content?view=0`;
       }
 
       if (url) {

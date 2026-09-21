@@ -4,7 +4,7 @@ import type { ApiResponse } from '@/types/api';
 
 export const loanStagesService = {
   async getStages(options?: RequestInit): Promise<ApiResponse<LoanStagesData>> {
-    const path = 'oan_a2c.api.v1.seller.loan_stages.get_stages';
+    const path = 'v1/banks/me/pipeline-stages';
     const raw = (await fetchApi(path, options)) as ApiResponse<Record<string, unknown>>;
     return {
       ...raw,

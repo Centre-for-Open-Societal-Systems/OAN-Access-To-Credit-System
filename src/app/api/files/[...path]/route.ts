@@ -22,7 +22,18 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   // Safely construct the full URL so query params can't smuggle in path segments.
-  const targetUrlObj = new URL(`/files/${path.join('/')}`, env.API_BASE_URL);
+  const rawPath = path.join('/');
+  let upstreamPath: string;
+  if (rawPath.startsWith('private/files/')) {
+    upstreamPath = `/${rawPath}`;
+  } else if (rawPath.startsWith('private/')) {
+    upstreamPath = `/private/files/${rawPath.slice('private/'.length)}`;
+  } else if (rawPath.startsWith('files/')) {
+    upstreamPath = `/${rawPath}`;
+  } else {
+    upstreamPath = `/files/${rawPath}`;
+  }
+  const targetUrlObj = new URL(upstreamPath, env.API_BASE_URL);
   targetUrlObj.search = request.nextUrl.search;
   const targetUrl = targetUrlObj.toString();
 

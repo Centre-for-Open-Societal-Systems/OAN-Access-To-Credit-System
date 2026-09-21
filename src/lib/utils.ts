@@ -22,16 +22,23 @@ export function normalizeLeadId(id: string | null | undefined): string {
  *  - absolute: `https://<backend>/files/x.jpg` → `/api/files/x.jpg`
  *  - relative: `/files/x.jpg`                  → `/api/files/x.jpg`
  *
+ * Also handles private files:
+ *  - absolute: `https://<backend>/private/files/x.pdf` → `/api/files/private/x.pdf`
+ *  - relative: `/private/files/x.pdf`                  → `/api/files/private/x.pdf`
+ *
  * Already-proxied paths (`/api/files/...`) and absolute non-`/files` URLs are
  * returned unchanged.
  */
 export function toProxiedFileUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
   if (url.startsWith('/api/files/')) return url;
-  // Absolute backend URL: strip scheme+host, leaving the `/files/` path.
-  const absRewritten = url.replace(/^https?:\/\/[^/]+\/files\//, '/api/files/');
-  if (absRewritten !== url) return absRewritten;
+  // Absolute backend URL: strip scheme+host, leaving the `/files/` or `/private/files/` path.
+  const absPrivateRewritten = url.replace(/^https?:\/\/[^/]+\/private\/files\//, '/api/files/private/');
+  if (absPrivateRewritten !== url) return absPrivateRewritten;
+  const absPublicRewritten = url.replace(/^https?:\/\/[^/]+\/files\//, '/api/files/');
+  if (absPublicRewritten !== url) return absPublicRewritten;
   // Relative backend path served from the frontend origin otherwise.
+  if (url.startsWith('/private/files/')) return `/api/files/private/${url.slice('/private/files/'.length)}`;
   if (url.startsWith('/files/')) return `/api/files/${url.slice('/files/'.length)}`;
   return url;
 }

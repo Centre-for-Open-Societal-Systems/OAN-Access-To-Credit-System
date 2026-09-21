@@ -3,7 +3,7 @@ import { getMeThunk } from '@/features/auth/store/authSlice';
 import { logger } from '@/lib/logger';
 import type { RootState } from '@/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { onboardingService } from '../api/onboarding.service';
+import { onboardingService, type BankProfile } from '../api/onboarding.service';
 import type {
     RegisterBankPayload,
     RegisterSellerPayload,
@@ -18,6 +18,9 @@ type AsyncStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 type MutationSource = 'contacts' | 'document' | null;
 
 interface OnboardingState {
+  bankProfile: BankProfile | null;
+  profileStatus: AsyncStatus;
+  profileError: string | null;
   uploadedFileUrl: string | null;
   registrationStatus: AsyncStatus;
   mutationStatus: AsyncStatus;
@@ -27,6 +30,9 @@ interface OnboardingState {
 }
 
 const initialState: OnboardingState = {
+  bankProfile: null,
+  profileStatus: 'idle',
+  profileError: null,
   uploadedFileUrl: null,
   registrationStatus: 'idle',
   mutationStatus: 'idle',
@@ -95,6 +101,19 @@ export const uploadKycDocument = createAsyncThunk(
   }
 );
 
+export const fetchBankProfile = createAsyncThunk(
+  'sellerOnboarding/fetchBankProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await onboardingService.getBankProfile();
+      return response.data;
+    } catch (error) {
+      logger.error('fetchBankProfile thunk failed', error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to load bank profile');
+    }
+  }
+);
+
 const onboardingSlice = createSlice({
   name: 'sellerOnboarding',
   initialState,
@@ -103,6 +122,7 @@ const onboardingSlice = createSlice({
       state.mutationError = null;
       state.mutationSource = null;
       state.registrationError = null;
+      state.profileError = null;
       state.mutationStatus = 'idle';
       state.registrationStatus = 'idle';
     },
@@ -116,11 +136,42 @@ const onboardingSlice = createSlice({
       .addCase(registerSeller.fulfilled, (s) => { s.registrationStatus = 'succeeded'; })
       .addCase(registerSeller.rejected, (s, action) => { s.registrationStatus = 'failed'; s.registrationError = action.payload as string; })
       .addCase(saveOrgContacts.pending, (s) => { s.mutationStatus = 'loading'; s.mutationError = null; s.mutationSource = 'contacts'; })
-      .addCase(saveOrgContacts.fulfilled, (s) => { s.mutationStatus = 'succeeded'; })
+      .addCase(saveOrgContacts.fulfilled, (s, action) => {
+        s.mutationStatus = 'succeeded';
+        if (s.bankProfile) {
+          s.bankProfile.org_grievance_updated = true;
+          s.bankProfile.gro_name = action.meta.arg.gro_name;
+          s.bankProfile.gro_mobile = action.meta.arg.gro_mobile;
+          s.bankProfile.ops_name = action.meta.arg.ops_name;
+          s.bankProfile.ops_mobile = action.meta.arg.ops_mobile;
+        }
+      })
       .addCase(saveOrgContacts.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'contacts'; })
       .addCase(uploadKycDocument.pending, (s) => { s.mutationStatus = 'loading'; s.mutationError = null; s.mutationSource = 'document'; })
-      .addCase(uploadKycDocument.fulfilled, (s, action) => { s.mutationStatus = 'succeeded'; s.uploadedFileUrl = action.payload.file_url; })
-      .addCase(uploadKycDocument.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'document'; });
+      .addCase(uploadKycDocument.fulfilled, (s, action) => {
+        s.mutationStatus = 'succeeded';
+        s.uploadedFileUrl = action.payload.file_url;
+        if (s.bankProfile) {
+          s.bankProfile.kyc_document = action.payload.file_url;
+          s.bankProfile.kyc_document_uploaded = true;
+        }
+      })
+      .addCase(uploadKycDocument.rejected, (s, action) => { s.mutationStatus = 'failed'; s.mutationError = action.payload as string; s.mutationSource = 'document'; })
+      .addCase(fetchBankProfile.pending, (s) => {
+        s.profileStatus = 'loading';
+        s.profileError = null;
+      })
+      .addCase(fetchBankProfile.fulfilled, (s, action) => {
+        s.profileStatus = 'succeeded';
+        s.bankProfile = action.payload;
+        if (action.payload.kyc_document) {
+          s.uploadedFileUrl = action.payload.kyc_document;
+        }
+      })
+      .addCase(fetchBankProfile.rejected, (s, action) => {
+        s.profileStatus = 'failed';
+        s.profileError = action.payload as string;
+      });
   },
 });
 
@@ -134,3 +185,6 @@ export const selectOnboardingRegistrationError = (state: RootState) => state.sel
 export const selectOnboardingMutationStatus = (state: RootState) => state.sellerOnboarding.mutationStatus;
 export const selectOnboardingMutationError = (state: RootState) => state.sellerOnboarding.mutationError;
 export const selectOnboardingMutationSource = (state: RootState) => state.sellerOnboarding.mutationSource;
+export const selectBankProfile = (state: RootState) => state.sellerOnboarding.bankProfile;
+export const selectBankProfileStatus = (state: RootState) => state.sellerOnboarding.profileStatus;
+export const selectBankProfileError = (state: RootState) => state.sellerOnboarding.profileError;

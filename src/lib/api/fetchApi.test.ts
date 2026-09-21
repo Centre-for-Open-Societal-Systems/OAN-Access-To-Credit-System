@@ -6,8 +6,8 @@ describe('fetchApi', () => {
     vi.restoreAllMocks();
   });
 
-  it('should successfully fetch data and return the unwrapped message if present', async () => {
-    const mockData = { message: { status: 'success', data: 'test-data' } };
+  it('should successfully fetch data and return the REST envelope', async () => {
+    const mockData = { status: 'success', data: 'test-data' };
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -16,13 +16,13 @@ describe('fetchApi', () => {
     const result = await fetchApi('test-path', { method: 'POST', body: JSON.stringify({ key: 'value' }) });
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      'http://localhost:3000/api/proxy/api/method/test-path',
+      'http://localhost:3000/api/proxy/v1/test-path',
       expect.objectContaining({
         method: 'POST',
         headers: expect.any(Headers),
       })
     );
-    expect(result).toEqual({ status: 'success', data: 'test-data' });
+    expect(result).toEqual(mockData);
   });
 
   it('should return raw responseData if message wrapper is not present', async () => {
@@ -111,10 +111,8 @@ describe('fetchApi', () => {
 
   it('should throw ApiError when status is 200 OK but application level status is error', async () => {
     const appErrorResponse = {
-      message: {
-        status: 'error',
-        message: 'Application level validation failed',
-      },
+      status: 'error',
+      message: 'Application level validation failed',
     };
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -197,7 +195,7 @@ describe('fetchApi', () => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ message: { status: 'success', data: 'retry-success' } }),
+          json: async () => ({ status: 'success', data: 'retry-success' }),
         } as Response;
       });
 
@@ -250,15 +248,15 @@ describe('fetchApi', () => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ message: 'success' }),
+          json: async () => ({ status: 'success', data: 'success' }),
         } as Response;
       });
 
       const [r1, r2] = await Promise.all([p1, p2]);
 
       expect(refreshCalls).toBe(1); // Only one call to /api/auth/refresh
-      expect(r1).toBe('success');
-      expect(r2).toBe('success');
+      expect(r1).toEqual({ status: 'success', data: 'success' });
+      expect(r2).toEqual({ status: 'success', data: 'success' });
     });
 
     it('should propagate UNAUTHORIZED if token refresh fails', async () => {

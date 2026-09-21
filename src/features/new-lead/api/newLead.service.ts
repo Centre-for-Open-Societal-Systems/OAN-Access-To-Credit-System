@@ -202,9 +202,8 @@ const cleanId = (id: string): string => normalizeLeadId(id);
 
 export const newLeadService = {
   async searchFarmer(faydaId: string): Promise<FarmerDetails> {
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.search_farmer', {
-      method: 'POST',
-      body: JSON.stringify({ fayda_id: faydaId }),
+    const response = await fetchApi(`v1/consent/farmers?fayda_id=${encodeURIComponent(faydaId)}`, {
+      method: 'GET',
     }) as ApiResponse<SearchFarmerBackendData | null>;
 
     const payload = response.data;
@@ -233,9 +232,11 @@ export const newLeadService = {
 
   // Fetch basic details of a consent_request (farmer details, etc.)
   async getLeadDetails(leadId?: string, signal?: AbortSignal): Promise<FarmerDetails> {
-    const query = leadId ? `?lead_id=${cleanId(leadId)}&include_consent_data=1` : '?include_consent_data=1';
     const fetchInit = signal ? { signal } : {};
-    const response = await fetchApi(`oan_a2c.api.v1.loan_applications.get_basic_profile${query}`, fetchInit) as ApiResponse<
+    const path = leadId
+      ? `v1/loan-applications/${cleanId(leadId)}/basic-profile?include_consent_data=1`
+      : 'v1/loan-applications/basic-profile?include_consent_data=1';
+    const response = await fetchApi(path, fetchInit) as ApiResponse<
       BasicProfileBackendData | null
     >;
 
@@ -275,7 +276,7 @@ export const newLeadService = {
   // Fetch the specific lead profile to populate status robustly (especially on page reload)
   async getLeadProfile(leadId: string): Promise<SpecificLeadAPI[]> {
     const cleanLeadId = cleanId(leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_leads?search_query=${cleanLeadId}`) as ApiResponse<Array<{
+    const response = await fetchApi(`v1/leads?search_query=${cleanLeadId}`) as ApiResponse<Array<{
       name?: string;
       lead_id?: string;
       id?: string;
@@ -303,15 +304,21 @@ export const newLeadService = {
   // Fetch credit information for a lead
   async getCreditInfo(leadId: string): Promise<CreditInfoAPI[]> {
     const cleanLeadId = cleanId(leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_lead_credit_infos?lead_id=${cleanLeadId}`) as ApiResponse<CreditInfoAPI[]>;
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/credit-info`) as ApiResponse<CreditInfoAPI[]>;
     return validateResponse(z.array(creditInfoApiSchema), response.data, 'leads.get_lead_credit_infos');
   },
 
   // Add credit information for a lead
   async addCreditInfo(data: { lead_id: string; loan_type?: string; loan_product?: string; loan_amount: number; purpose_message?: string }): Promise<AddCreditInfoResponse> {
-    const response = await fetchApi('oan_a2c.api.v1.leads.add_lead_credit_info', {
+    const cleanLeadId = cleanId(data.lead_id);
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/credit-info`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        loan_type: data.loan_type,
+        loan_product: data.loan_product,
+        loan_amount: data.loan_amount,
+        purpose_message: data.purpose_message,
+      }),
     }) as ApiResponse<AddCreditInfoResponse>;
     return validateResponse(addCreditInfoResponseSchema, response.data, 'leads.add_lead_credit_info');
   },
@@ -319,23 +326,23 @@ export const newLeadService = {
   // Fetch call details for a lead
   async getCallDetails(leadId: string): Promise<GetCallDetailsResponse> {
     const cleanLeadId = cleanId(leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_lead_call_logs?lead_id=${cleanLeadId}`) as ApiResponse<GetCallDetailsResponse>;
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/call-logs`) as ApiResponse<GetCallDetailsResponse>;
     return response.data;
   },
 
   // Fetch activities (timeline) for a lead
   async getActivities(leadId: string): Promise<GetActivitiesResponse> {
     const cleanLeadId = cleanId(leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_lead_timeline?lead_id=${cleanLeadId}`) as ApiResponse<GetActivitiesResponse>;
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/timeline`) as ApiResponse<GetActivitiesResponse>;
     return response.data;
   },
 
   // Add a new note/comment to the lead's timeline
   async addActivityNote(data: { leadId: string; content: string }): Promise<AddActivityNoteResponse> {
     const cleanLeadId = cleanId(data.leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.add_lead_comment`, {
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ lead_id: cleanLeadId, content: data.content }),
+      body: JSON.stringify({ comment: data.content, content: data.content }),
     }) as ApiResponse<AddActivityNoteResponse>;
     return response.data;
   },
@@ -352,7 +359,7 @@ export const newLeadService = {
     meeting_location: string;
     notes: string;
   }): Promise<ScheduleVisitResponse> {
-    const response = await fetchApi('oan_a2c.api.v1.leads.schedule_visit', {
+    const response = await fetchApi('v1/visit-schedules', {
       method: 'POST',
       body: JSON.stringify(data),
     }) as ApiResponse<ScheduleVisitResponse>;
@@ -362,32 +369,31 @@ export const newLeadService = {
   // Fetch visit schedules for a lead
   async getVisitSchedules(leadId: string): Promise<VisitScheduleAPI[]> {
     const cleanLeadId = cleanId(leadId);
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_visit_schedules?lead_id=${cleanLeadId}&start=0&page_length=50`) as ApiResponse<VisitScheduleAPI[]>;
+    const response = await fetchApi(`v1/visit-schedules?lead_id=${cleanLeadId}&start=0&page_length=50`) as ApiResponse<VisitScheduleAPI[]>;
     return response.data;
   },
 
   // Update visit schedule status
   async updateVisitScheduleStatus(data: { schedule_id: string; status: string }): Promise<UpdateVisitScheduleStatusResponse> {
-    const response = await fetchApi('oan_a2c.api.v1.leads.update_visit_schedule_status', {
-      method: 'POST',
-      body: JSON.stringify(data),
+    const response = await fetchApi(`v1/visit-schedules/${encodeURIComponent(data.schedule_id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: data.status }),
     }) as ApiResponse<UpdateVisitScheduleStatusResponse>;
     return response.data;
   },
 
   // Fetch assignable users matching search query
   async getAssignableUsers(searchQuery: string): Promise<AssignableUserAPI[]> {
-    const response = await fetchApi(`oan_a2c.api.v1.leads.get_assignable_users?search_query=${encodeURIComponent(searchQuery)}`) as ApiResponse<AssignableUserAPI[]>;
+    const response = await fetchApi(`v1/leads/assignable-users?search_query=${encodeURIComponent(searchQuery)}`) as ApiResponse<AssignableUserAPI[]>;
     return response.data || [];
   },
 
   // Hit the actual assign_lead API endpoint
   async assignLead(data: { leadId: string; assigneeName: string; assigneeId?: string; email?: string; region?: string }): Promise<AssignLeadResponse> {
     const cleanLeadId = cleanId(data.leadId);
-    const response = await fetchApi('oan_a2c.api.v1.leads.assign_lead', {
-      method: 'POST',
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/assignment`, {
+      method: 'PATCH',
       body: JSON.stringify({
-        lead_id: cleanLeadId,
         assigned_to: data.email || data.assigneeId
       })
     }) as ApiResponse<AssignLeadBackendData>;
@@ -404,7 +410,7 @@ export const newLeadService = {
 
   // API to create a new lead
   async createLead(data: CreateLeadPayload): Promise<CreateLeadResponse> {
-    const response = await fetchApi('oan_a2c.api.v1.leads.create_lead', {
+    const response = await fetchApi('v1/leads', {
       method: 'POST',
       body: JSON.stringify(data),
     }) as ApiResponse<CreateLeadResponse>;
@@ -413,19 +419,18 @@ export const newLeadService = {
 
   // Fetch lead metadata (statuses, sources)
   async getLeadMetadata(): Promise<GetLeadMetadataResponse> {
-    const response = await fetchApi('oan_a2c.api.v1.leads.get_lead_metadata') as ApiResponse<GetLeadMetadataResponse>;
+    const response = await fetchApi('v1/leads/metadata') as ApiResponse<GetLeadMetadataResponse>;
     return response.data;
   },
 
   // Update lead status (e.g. Processed, Rejected)
   async updateLeadStatus(data: { lead_id: string; status: string; reason?: string }): Promise<UpdateLeadStatusResponse> {
     const cleanLeadId = cleanId(data.lead_id);
-    const response = await fetchApi('oan_a2c.api.v1.leads.update_lead_status', {
-      method: 'POST',
+    const response = await fetchApi(`v1/leads/${cleanLeadId}/status`, {
+      method: 'PATCH',
       body: JSON.stringify({
-        lead_id: cleanLeadId,
         status: data.status,
-        reason: data.reason
+        ...(data.reason ? { reason: data.reason } : {})
       }),
     }) as ApiResponse<UpdateLeadStatusResponse>;
     return response.data;

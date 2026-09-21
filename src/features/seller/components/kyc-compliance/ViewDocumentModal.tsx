@@ -7,11 +7,21 @@ import { useEffect, useId, useState } from 'react';
 interface ViewDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  file: File | null;
+  file?: File | null | undefined;
+  fileUrl?: string | null | undefined;
+  downloadUrl?: string | null | undefined;
+  fileName?: string | null | undefined;
 }
 
-export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalProps) {
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+export function ViewDocumentModal({
+  isOpen,
+  onClose,
+  file = null,
+  fileUrl: externalFileUrl = null,
+  downloadUrl: externalDownloadUrl = null,
+  fileName: externalFileName = null,
+}: ViewDocumentModalProps) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const titleId = useId();
 
@@ -21,15 +31,19 @@ export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalPr
       // required cleanup — can't be computed during render, has to live in an effect.
       const url = URL.createObjectURL(file);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFileUrl(url);
+      setBlobUrl(url);
       return () => URL.revokeObjectURL(url);
     }
+    setBlobUrl(null);
   }, [file]);
 
   if (!isOpen) return null;
 
-  const isImage = file?.type.startsWith('image/');
-  const isPdf = file?.type === 'application/pdf';
+  const resolvedUrl = file ? blobUrl : externalFileUrl;
+  const resolvedDownloadUrl = file ? blobUrl : (externalDownloadUrl ?? externalFileUrl);
+  const resolvedName = file?.name ?? externalFileName ?? 'Document';
+  const isImage = (file?.type.startsWith('image/') || /\.(png|jpe?g|webp)($|\?)/i.test(resolvedUrl ?? '')) ?? false;
+  const isPdf = (file?.type === 'application/pdf' || /\.pdf($|\?)/i.test(resolvedUrl ?? '') || (!isImage && Boolean(resolvedUrl))) ?? false;
 
   return (
     <Portal>
@@ -56,18 +70,18 @@ export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalPr
           </h2>
           <p className="text-[15px] text-[#6B7280] leading-relaxed">
             You are viewing the uploaded document: <br />
-            <span className="font-bold text-[#374151]">&quot;{file?.name}&quot;</span>
+            <span className="font-bold text-[#374151]">&quot;{resolvedName}&quot;</span>
           </p>
         </div>
 
         {/* Document Viewer Area */}
         <div className="px-8 pb-6">
           <div className="bg-gray-50 border border-gray-200 rounded-2xl h-[280px] flex flex-col items-center justify-center overflow-hidden relative">
-            {fileUrl && isImage ? (
-              // eslint-disable-next-line @next/next/no-img-element -- fileUrl is a blob: URL from URL.createObjectURL, which next/image's optimizer can't fetch
-              <img src={fileUrl} alt={file?.name || 'Document'} className="w-full h-full object-contain p-2" />
-            ) : fileUrl && isPdf ? (
-              <iframe src={`${fileUrl}#toolbar=0`} className="w-full h-full" title={file?.name || 'Document'} />
+            {resolvedUrl && isImage ? (
+              // eslint-disable-next-line @next/next/no-img-element -- resolvedUrl is a blob: URL from URL.createObjectURL or proxied same-origin URL
+              <img src={resolvedUrl} alt={resolvedName} className="w-full h-full object-contain p-2" />
+            ) : resolvedUrl && isPdf ? (
+              <iframe src={`${resolvedUrl}#toolbar=0`} className="w-full h-full" title={resolvedName} />
             ) : (
               <>
                 <FileText size={48} className="text-gray-300 mb-4" strokeWidth={1} />
@@ -87,8 +101,8 @@ export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalPr
             Close
           </button>
           <a 
-            href={fileUrl || '#'}
-            download={file?.name}
+            href={resolvedDownloadUrl || '#'}
+            download={resolvedName}
             className="flex-1 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl text-[15px] font-bold transition-colors flex items-center justify-center space-x-2 shadow-sm shadow-blue-200"
           >
             <Download size={18} />

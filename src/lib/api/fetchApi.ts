@@ -89,8 +89,18 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 1
   }
 }
 
+export function resolveProxyPath(path: string): string {
+  if (path.startsWith('/api/proxy/')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const finalPath = cleanPath.startsWith('v1/') ? cleanPath : `v1/${cleanPath}`;
+  return `/api/proxy/${finalPath}`;
+}
+
 export async function fetchApi(path: string, options: RequestInit = {}) {
-  const url = new URL(`/api/proxy/api/method/${path}`, BASE_URL);
+  const proxyPath = resolveProxyPath(path);
+  const url = new URL(proxyPath, BASE_URL);
   
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData)) {
@@ -156,43 +166,29 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     if (authCode === ApiErrorCode.Auth || authCode === ApiErrorCode.Forbidden) {
       throw new Error(authCode);
     }
-    // 5xx still throws an ApiError carrying the parsed server message (callers may
-    // surface it in a toast); classifyError(error) recognizes it via .status.
-    //
-    // Note on `_server_messages`: this used to read the error text out of it.
-    // That field is Frappe's raw exception channel — on an unhandled error it
-    // carries the traceback, absolute file paths and, for a failed query, the
-    // SQL — so rendering it put backend internals in front of whoever tripped
-    // the bug. The proxy now strips it before it reaches the browser (see
-    // lib/proxyHeaders.ts), and the message is taken from the app's own
-    // `{status, message, details}` envelope, which is written for people.
     let errorMsg = genericMessageForStatus(response.status);
-    if (responseData?.message?.details && typeof responseData.message.details === 'object') {
-      const detailEntries = Object.entries(responseData.message.details).filter(([, v]) => Boolean(v));
+    if (responseData?.details && typeof responseData.details === 'object') {
+      const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
       if (detailEntries.length > 0) {
         errorMsg = detailEntries
           .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
           .join('. ');
-      } else if (responseData?.message?.message) {
-        errorMsg = responseData.message.message;
+      } else if (typeof responseData.message === 'string') {
+        errorMsg = responseData.message;
       }
-    } else if (responseData?.message?.message) {
-      errorMsg = responseData.message.message;
     } else if (typeof responseData?.message === 'string') {
       errorMsg = responseData.message;
+    } else if (typeof responseData?.error === 'string') {
+      errorMsg = responseData.error;
     }
-    // A non-string, non-envelope `message` is deliberately not stringified into
-    // the error: JSON.stringify on an unrecognised payload is exactly how raw
-    // backend internals used to end up rendered in a toast. The whole payload is
-    // still attached to the ApiError for callers that need to inspect it.
     throw new ApiError(errorMsg, responseData, response.status);
   }
 
   // Handle "200 OK" application-level errors
-  if (responseData?.message?.status === 'error') {
-    let errorMsg = responseData.message.message || 'Application Error';
-    if (responseData.message.details && typeof responseData.message.details === 'object') {
-      const detailEntries = Object.entries(responseData.message.details).filter(([, v]) => Boolean(v));
+  if (responseData?.status === 'error') {
+    let errorMsg = responseData.message || 'Application Error';
+    if (responseData.details && typeof responseData.details === 'object') {
+      const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
       if (detailEntries.length > 0) {
         errorMsg = detailEntries
           .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
@@ -202,5 +198,5 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     throw new ApiError(errorMsg, responseData);
   }
 
-  return responseData?.message ?? responseData;
+  return responseData;
 }

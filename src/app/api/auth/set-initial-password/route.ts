@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     // X-Forwarded-For carries the derived client IP for the same reason as
     // /api/auth/login: Frappe keys its own limit and attempt tracker off it.
     const response = await fetch(
-      `${env.API_BASE_URL}/api/method/oan_a2c.api.auth.set_initial_password`,
+      `${env.API_BASE_URL}/v1/auth/password/initial`,
       {
         method: 'POST',
         headers: {
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     );
 
     const data = await response.json().catch(() => null);
-    const envelope: Envelope = (data?.message ?? {}) as Envelope;
+    const envelope: Envelope = (data ?? {}) as Envelope;
 
     if (!response.ok || envelope.status === 'error') {
       logger.security(

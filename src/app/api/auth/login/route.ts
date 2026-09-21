@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     // which keys its own login rate limit and attempt tracker — without this the
     // bench would see this container's address for every sign-in on the platform
     // and throttle everyone as one bucket.
-    const response = await fetch(`${env.API_BASE_URL}/api/method/oan_a2c.api.auth.login`, {
+    const response = await fetch(`${env.API_BASE_URL}/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     // one that must be rotated first. The backend deliberately issued no token, so
     // there is nothing to set as a cookie — forward the code and the login id the
     // caller typed so the client can show the set-password step instead of an error.
-    if (data?.message?.code === 'PASSWORD_CHANGE_REQUIRED') {
+    if (data?.code === 'PASSWORD_CHANGE_REQUIRED') {
       return NextResponse.json(
         {
           code: 'PASSWORD_CHANGE_REQUIRED',
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       // a stack-trace viewer). See lib/authMessages.ts.
       logger.security(
         `Login rejected for ${clientIp} with status ${response.status}:`,
-        typeof data?.message === 'string' ? data.message : JSON.stringify(data?.message ?? data)
+        typeof data?.message === 'string' ? data.message : JSON.stringify(data)
       );
 
       const status = response.status >= 500 ? 502 : 401;
@@ -91,10 +91,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message }, { status: response.status === 429 ? 429 : status });
     }
 
-    // Extract the JWT token, refresh token, and user strictly based on the provided API response structure
-    const token = data.message?.data?.token as string | undefined;
-    const refreshToken = data.message?.data?.refresh_token as string | undefined;
-    const user = data.message?.data?.user ?? null;
+    // Extract the JWT token, refresh token, and user strictly based on the REST envelope
+    const token = data?.data?.token as string | undefined;
+    const refreshToken = data?.data?.refresh_token as string | undefined;
+    const user = data?.data?.user ?? null;
 
     const nextResponse = NextResponse.json({
       success: true,

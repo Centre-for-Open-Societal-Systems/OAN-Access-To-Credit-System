@@ -46,7 +46,8 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
   if (params.start !== undefined) query.append('start', params.start.toString());
   if (params.loan_product) query.append('loan_product', params.loan_product);
 
-  return fetchApi(`oan_a2c.api.v1.farmer.catalog.list_catalog?${query.toString()}`);
+  const queryStr = query.toString();
+  return fetchApi(`v1/catalog/products${queryStr ? `?${queryStr}` : ''}`);
 }
 
 /**
@@ -61,5 +62,5 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
  * from their own products instead (`deriveCatalogFacets`).
  */
 export async function getCatalogFacets(): Promise<CatalogFacetsResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.catalog.get_catalog_facets');
+  return fetchApi('v1/catalog/facets');
 }

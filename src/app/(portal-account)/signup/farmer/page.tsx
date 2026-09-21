@@ -122,7 +122,7 @@ export default function FarmerSignupPage() {
       // this account by mobile_no — but the email is the credential. Registering
       // without one is rejected by the backend: there is nothing to sign in with.
       const fullPhone = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
-      const response = await fetchApi('oan_a2c.api.v1.auth.register_user', {
+      const response = await fetchApi('v1/auth/register', {
         method: 'POST',
         body: JSON.stringify({
           full_name: fullName,
