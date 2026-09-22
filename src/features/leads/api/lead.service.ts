@@ -5,6 +5,7 @@ import type {
 } from '@/features/leads/types/leads.types';
 import { httpStatusToErrorCode } from '@/lib/api/apiErrors';
 import { logger } from '@/lib/logger';
+import { normalizeLeadId } from '@/lib/utils';
 
 // TODO: [OAN-452] The visit-schedules list is fetched independently of leads
 // pagination/filters (same start=0&page_length=100 on every call), so it's
@@ -70,8 +71,13 @@ function getVisitSchedules(): Promise<VisitSchedule[]> {
 export const leadService = {
   async getLeads(params?: GetLeadsParams, signal?: AbortSignal): Promise<{ results: Lead[]; totalCount: number }> {
     const searchParams = new URLSearchParams();
-    if (params?.start !== undefined) searchParams.set('start', params.start.toString());
-    if (params?.page_length !== undefined) searchParams.set('page_length', params.page_length.toString());
+    // Always sent explicitly. Callers that want the first page omit them
+    // entirely (useLeadInitialization's direct-link path, for one), and relying
+    // on the REST endpoint to default them the same way the old Frappe method
+    // did is an assumption this client shouldn't make — an unbounded
+    // page_length silently turns a lead lookup into a full-table read.
+    searchParams.set('start', params?.start?.toString() ?? '0');
+    searchParams.set('page_length', params?.page_length?.toString() ?? '20');
     if (params?.search_query) searchParams.set('search_query', params.search_query);
     if (params?.status) searchParams.set('status', params.status);
     if (params?.lead_source) searchParams.set('lead_source', params.lead_source);
@@ -175,7 +181,7 @@ export const leadService = {
   },
 
   async updateLeadStatus(lead_id: string, status: string, reason?: string): Promise<UpdateLeadStatusResponseData> {
-    const cleanLeadId = encodeURIComponent(lead_id.replace(/^#/, ''));
+    const cleanLeadId = encodeURIComponent(normalizeLeadId(lead_id));
     const response = await fetch(`/api/proxy/v1/leads/${cleanLeadId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -194,7 +200,7 @@ export const leadService = {
   },
 
   async assignLead(lead_id: string, assigned_to: string): Promise<AssignLeadBackendData> {
-    const cleanLeadId = encodeURIComponent(lead_id.replace(/^#/, ''));
+    const cleanLeadId = encodeURIComponent(normalizeLeadId(lead_id));
     const response = await fetch(`/api/proxy/v1/leads/${cleanLeadId}/assignment`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

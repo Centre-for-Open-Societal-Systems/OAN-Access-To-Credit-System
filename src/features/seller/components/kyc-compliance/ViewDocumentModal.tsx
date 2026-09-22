@@ -1,6 +1,8 @@
 'use client';
 import { Portal } from '@/components/Portal';
 import { useModalA11y } from '@/hooks/useModalA11y';
+import { fetchFileWithAuthRetry } from '@/lib/api/fetchApi';
+import { logger } from '@/lib/logger';
 import { Download, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 
@@ -31,6 +33,21 @@ export function ViewDocumentModal({
     let active = true;
     let createdUrl: string | null = null;
 
+    // Gated on `isOpen`: this modal is mounted unconditionally by its parent
+    // with the KYC document URL already wired up, so an ungated effect pulled
+    // the whole PDF down on every page load, before anyone asked to see it.
+    if (!isOpen) {
+      queueMicrotask(() => {
+        if (!active) return;
+        setBlobUrl(null);
+        setIsLoadingBlob(false);
+        setBlobError(false);
+      });
+      return () => {
+        active = false;
+      };
+    }
+
     if (file) {
       createdUrl = URL.createObjectURL(file);
       const url = createdUrl;
@@ -52,9 +69,12 @@ export function ViewDocumentModal({
         setIsLoadingBlob(true);
         setBlobError(false);
       });
-      fetch(externalFileUrl, { credentials: 'same-origin' })
+      // Routed through `fetchFileWithAuthRetry` rather than a bare `fetch` so an
+      // expired access token is refreshed and the read retried, matching every
+      // other authenticated request on the page.
+      fetchFileWithAuthRetry(externalFileUrl)
         .then((res) => {
-          if (!res.ok) throw new Error('Failed to load document');
+          if (!res.ok) throw new Error(`Failed to load document: HTTP ${res.status}`);
           return res.blob();
         })
         .then((blob) => {
@@ -63,7 +83,8 @@ export function ViewDocumentModal({
           setBlobUrl(createdUrl);
           setIsLoadingBlob(false);
         })
-        .catch(() => {
+        .catch((error) => {
+          logger.error('Failed to load document preview', { url: externalFileUrl, error });
           if (!active) return;
           setIsLoadingBlob(false);
           setBlobError(true);
@@ -83,7 +104,7 @@ export function ViewDocumentModal({
     return () => {
       active = false;
     };
-  }, [file, externalFileUrl]);
+  }, [isOpen, file, externalFileUrl]);
 
   if (!isOpen) return null;
 

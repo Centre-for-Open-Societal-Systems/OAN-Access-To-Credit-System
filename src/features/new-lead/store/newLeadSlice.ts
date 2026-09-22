@@ -1,5 +1,5 @@
 import type { AddCreditInfoResponse, CreditInfoAPI } from '@/lib/api/api.schemas';
-import { ApiError } from '@/lib/api/fetchApi';
+import { ApiError, extractFieldErrors } from '@/lib/api/fetchApi';
 import { normalizeLeadId } from '@/lib/utils';
 import type { RootState } from '@/store';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -270,8 +270,8 @@ export const submitNewLeadThunk = createAsyncThunk<
       return await newLeadService.createLead(payload);
     } catch (error) {
       if (error instanceof ApiError) {
-        const details = (error.responseData as { message?: { details?: Record<string, string> } })?.message?.details;
-        if (details) return rejectWithValue({ message: error.message, details });
+        const details = extractFieldErrors(error);
+        if (Object.keys(details).length > 0) return rejectWithValue({ message: error.message, details });
       }
       return rejectWithValue({ message: error instanceof Error ? error.message : 'Unknown Cause: Failed to create lead' });
     }

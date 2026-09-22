@@ -5,10 +5,11 @@ import {
   selectOnboardingMutationError,
   selectOnboardingMutationSource,
   selectOnboardingMutationStatus,
-  selectUploadedFileUrl,
   uploadKycDocument,
 } from '@/features/seller/store/onboardingSlice';
 import type { BankProfile } from '@/features/seller/api/onboarding.service';
+import { getKycDocumentUrl, isKycDocumentUrl } from '@/features/seller/api/onboarding.service';
+import { toProxiedFileUrl } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { FileText, Loader2, Upload } from 'lucide-react';
 import React, { useRef, useState } from 'react';
@@ -49,24 +50,28 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
   // mutationError is shared with the contacts card's saveOrgContacts
   // call — only surface it here when this card's own upload actually caused it.
   const mutationError = mutationSource === 'document' ? mutationErrorRaw : null;
-  const uploadedFileUrl = useAppSelector(selectUploadedFileUrl);
   const storeBankProfile = useAppSelector(selectBankProfile);
   const currentProfile = profile ?? storeBankProfile;
-  const existingDocumentUrl =
-    uploadedFileUrl ||
-    currentProfile?.kyc_document ||
-    (currentProfile?.kyc_document_uploaded ? '/api/proxy/v1/banks/me/kyc-documents' : null);
+  // `kyc_document` is already normalized by onboarding.service — to the KYC
+  // endpoint for a streamed document, and through `toProxiedFileUrl` for a
+  // stored file. Both are reapplied here (they're idempotent) so a profile that
+  // reached this component without passing through that service still renders.
+  const rawDocumentUrl =
+    currentProfile?.kyc_document ??
+    (currentProfile?.kyc_document_uploaded ? getKycDocumentUrl() : null);
+  const existingDocumentUrl = rawDocumentUrl
+    ? toProxiedFileUrl(rawDocumentUrl) ?? rawDocumentUrl
+    : null;
+  const isStreamedKycDoc = isKycDocumentUrl(existingDocumentUrl);
   const hasExistingDoc = Boolean(existingDocumentUrl);
   const existingFileName = existingDocumentUrl
-    ? (existingDocumentUrl.includes('kyc-documents')
+    ? (isStreamedKycDoc
         ? 'Tax Registration Certificate.pdf'
         : decodeURIComponent(existingDocumentUrl.split('/').pop()?.split('?')[0] || 'Tax Registration Certificate.pdf'))
     : null;
 
   const previewUrl = existingDocumentUrl
-    ? (existingDocumentUrl.includes('kyc-documents')
-        ? `${existingDocumentUrl.split('?')[0]}?view=1`
-        : existingDocumentUrl)
+    ? (isStreamedKycDoc ? getKycDocumentUrl({ inline: true }) : existingDocumentUrl)
     : null;
 
   const downloadUrl = existingDocumentUrl
@@ -177,10 +182,10 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
                       <span className="text-[14px] font-medium text-[#16A34A]">
-                        {uploadedFile ? (uploadedFileUrl ? 'Uploaded to backend' : 'Ready to upload') : 'Uploaded to backend'}
+                        {uploadedFile && !hasExistingDoc ? 'Ready to upload' : 'Uploaded to backend'}
                       </span>
                     </div>
-                    {existingDocumentUrl && !existingDocumentUrl.includes('kyc-documents') ? (
+                    {existingDocumentUrl && !isStreamedKycDoc ? (
                       <span className="mt-1 break-all text-[12px] text-gray-500">File: {existingDocumentUrl}</span>
                     ) : null}
                   </div>

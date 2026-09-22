@@ -44,7 +44,11 @@ const { mockProfile, serviceMock } = vi.hoisted(() => {
   return { mockProfile, serviceMock };
 });
 
-vi.mock('@/features/seller/api/onboarding.service', () => ({
+// Partial mock: only the network-calling service object is stubbed. The pure
+// URL helpers (getKycDocumentUrl / isKycDocumentUrl) are real, since the
+// components under test use them to decide how to render the document.
+vi.mock('@/features/seller/api/onboarding.service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/seller/api/onboarding.service')>()),
   onboardingService: serviceMock,
 }));
 

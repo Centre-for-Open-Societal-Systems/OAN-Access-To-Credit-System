@@ -6,6 +6,7 @@ import { generateTemporaryPassword } from '@/features/seller/utils/team.utils';
 import { useModalA11y } from '@/hooks/useModalA11y';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
+import { extractFieldErrors } from '@/lib/api/fetchApi';
 import type { TeamUser } from '@/lib/api/api.schemas';
 import { RefreshCw, X } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -39,9 +40,8 @@ export function ResetMemberPasswordModal({ member, onClose, onReset }: ResetMemb
       onReset();
       onClose();
     } catch (error) {
-      const details = (error as { responseData?: { message?: { details?: Record<string, string> } } })
-        .responseData?.message?.details;
-      if (details?.password) {
+      const details = extractFieldErrors(error);
+      if (details.password) {
         setFieldError(details.password);
       }
       logger.error('resetMemberPassword failed', { email: member.email, error });

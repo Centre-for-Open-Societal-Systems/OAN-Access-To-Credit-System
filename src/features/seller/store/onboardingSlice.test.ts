@@ -46,7 +46,6 @@ const {
   selectBankProfile,
   selectBankProfileStatus,
   selectBankProfileError,
-  selectUploadedFileUrl,
   sellerOnboardingReducer,
 } = await import('./onboardingSlice');
 
@@ -73,7 +72,7 @@ describe('onboardingSlice — bankProfile and KYC flow', () => {
     const state = store.getState() as unknown as RootState;
     expect(selectBankProfileStatus(state)).toBe('succeeded');
     expect(selectBankProfile(state)).toEqual(mockProfile);
-    expect(selectUploadedFileUrl(state)).toBe('/api/proxy/v1/banks/me/kyc-documents');
+    expect(selectBankProfile(state)?.kyc_document).toBe('/api/proxy/v1/banks/me/kyc-documents');
   });
 
   it('handles fetchBankProfile rejection', async () => {
@@ -96,7 +95,6 @@ describe('onboardingSlice — bankProfile and KYC flow', () => {
     );
 
     const state = store.getState() as unknown as RootState;
-    expect(selectUploadedFileUrl(state)).toBe('/api/proxy/v1/banks/me/kyc-documents');
     expect(selectBankProfile(state)?.kyc_document).toBe('/api/proxy/v1/banks/me/kyc-documents');
     expect(selectBankProfile(state)?.kyc_document_uploaded).toBe(true);
   });

@@ -21,7 +21,6 @@ interface OnboardingState {
   bankProfile: BankProfile | null;
   profileStatus: AsyncStatus;
   profileError: string | null;
-  uploadedFileUrl: string | null;
   registrationStatus: AsyncStatus;
   mutationStatus: AsyncStatus;
   registrationError: string | null;
@@ -33,7 +32,6 @@ const initialState: OnboardingState = {
   bankProfile: null,
   profileStatus: 'idle',
   profileError: null,
-  uploadedFileUrl: null,
   registrationStatus: 'idle',
   mutationStatus: 'idle',
   registrationError: null,
@@ -150,7 +148,6 @@ const onboardingSlice = createSlice({
       .addCase(uploadKycDocument.pending, (s) => { s.mutationStatus = 'loading'; s.mutationError = null; s.mutationSource = 'document'; })
       .addCase(uploadKycDocument.fulfilled, (s, action) => {
         s.mutationStatus = 'succeeded';
-        s.uploadedFileUrl = action.payload.file_url;
         if (s.bankProfile) {
           s.bankProfile.kyc_document = action.payload.file_url;
           s.bankProfile.kyc_document_uploaded = true;
@@ -164,9 +161,6 @@ const onboardingSlice = createSlice({
       .addCase(fetchBankProfile.fulfilled, (s, action) => {
         s.profileStatus = 'succeeded';
         s.bankProfile = action.payload;
-        if (action.payload.kyc_document) {
-          s.uploadedFileUrl = action.payload.kyc_document;
-        }
       })
       .addCase(fetchBankProfile.rejected, (s, action) => {
         s.profileStatus = 'failed';
@@ -179,7 +173,6 @@ export const { clearOnboardingErrors } = onboardingSlice.actions;
 export const sellerOnboardingReducer = onboardingSlice.reducer;
 export default onboardingSlice.reducer;
 
-export const selectUploadedFileUrl = (state: RootState) => state.sellerOnboarding.uploadedFileUrl;
 export const selectOnboardingRegistrationStatus = (state: RootState) => state.sellerOnboarding.registrationStatus;
 export const selectOnboardingRegistrationError = (state: RootState) => state.sellerOnboarding.registrationError;
 export const selectOnboardingMutationStatus = (state: RootState) => state.sellerOnboarding.mutationStatus;

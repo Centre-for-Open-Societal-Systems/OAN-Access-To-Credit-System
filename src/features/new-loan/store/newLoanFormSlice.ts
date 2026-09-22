@@ -96,11 +96,21 @@ export const createLoanApplicationAPI = createAsyncThunk(
       if (!appId) throw new Error('No Application ID returned');
       return appId;
     } catch (err) {
-      const error = err as Error & { responseData?: { message?: { name?: string } } };
-      if (error.responseData?.message?.name) {
+      // A duplicate application comes back carrying the existing document's
+      // `name`. The REST envelope is flat (`{ message, name }`); the older
+      // Frappe-method envelope nested it under `message`. Read both, since not
+      // every endpoint on this path has been migrated.
+      const error = err as Error & {
+        responseData?: { name?: string; message?: { name?: string } };
+      };
+      const envelope = error.responseData;
+      const duplicateName =
+        envelope?.name ??
+        (typeof envelope?.message === 'object' ? envelope.message?.name : undefined);
+      if (duplicateName) {
         return rejectWithValue({
           message: error.message || 'Failed to create application',
-          name: error.responseData.message.name
+          name: duplicateName
         });
       }
       return rejectWithValue(error.message || 'Failed to create application');

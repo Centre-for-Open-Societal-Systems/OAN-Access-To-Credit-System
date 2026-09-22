@@ -1,3 +1,4 @@
+import { authEnvelopeLogMessage } from '@/lib/api/authEnvelope';
 import { AUTH_MESSAGES } from '@/lib/authMessages';
 import { getClientIp } from '@/lib/clientIp';
 import { checkCsrf } from '@/lib/csrf';
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       // a stack-trace viewer). See lib/authMessages.ts.
       logger.security(
         `Login rejected for ${clientIp} with status ${response.status}:`,
-        typeof data?.message === 'string' ? data.message : JSON.stringify(data)
+        authEnvelopeLogMessage(data)
       );
 
       const status = response.status >= 500 ? 502 : 401;

@@ -22,9 +22,24 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Field-level validation errors out of an error envelope.
+ *
+ * The REST backend replies flat — `{ message: string, details: { field: msg } }`
+ * — which is the shape `fetchApi` below reads. The older Frappe-method envelope
+ * nested the same payload one level deeper under `message`, so both are accepted:
+ * some endpoints have not been migrated, and an `ApiError` can also be
+ * constructed from a Next route handler that still forwards the nested form.
+ *
+ * Accepts any thrown value so callers can pass a bare `unknown` from `catch`.
+ */
 export function extractFieldErrors(error: unknown): Record<string, string> {
-  if (!(error instanceof ApiError)) return {};
-  const details = (error.responseData as { message?: { details?: unknown } } | undefined)?.message?.details;
+  const responseData = (error as { responseData?: unknown } | null | undefined)?.responseData;
+  if (!responseData || typeof responseData !== 'object') return {};
+  const envelope = responseData as { details?: unknown; message?: { details?: unknown } };
+  const details =
+    envelope.details ??
+    (typeof envelope.message === 'object' ? envelope.message?.details : undefined);
   if (!details || typeof details !== 'object') return {};
   return Object.fromEntries(
     Object.entries(details).filter(([, v]) => typeof v === 'string')
@@ -60,6 +75,40 @@ async function refreshSession(): Promise<boolean> {
     return false;
   }
 }
+/**
+ * Same-origin GET that participates in the shared 401 → refresh → retry flow,
+ * but hands back the raw `Response` instead of parsed JSON.
+ *
+ * `fetchApi` always parses the body as JSON, so it can't be used to pull a file
+ * down as a blob. Without this, binary reads (PDF/image previews through
+ * `/api/proxy/...`) were plain `fetch()` calls that simply failed on an expired
+ * access token while every other request on the page silently recovered.
+ */
+export async function fetchFileWithAuthRetry(url: string, init: RequestInit = {}): Promise<Response> {
+  const options: RequestInit = { credentials: 'same-origin', ...init };
+  let response = await fetch(url, options);
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    if (!activeRefresh) {
+      activeRefresh = refreshSession().then(
+        (success) => {
+          activeRefresh = null;
+          return success;
+        },
+        () => {
+          activeRefresh = null;
+          return false;
+        }
+      );
+    }
+    if (await activeRefresh) {
+      response = await fetch(url, options);
+    }
+  }
+
+  return response;
+}
+
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(new Error('TimeoutError')), timeoutMs);

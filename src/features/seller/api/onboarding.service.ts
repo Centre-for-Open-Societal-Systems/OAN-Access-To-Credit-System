@@ -49,7 +49,28 @@ export interface UpdateBankProfilePayload {
   logo?: string;
 }
 
+/**
+ * The canonical same-origin URL for the current bank's KYC document.
+ *
+ * The document is not a `/files/...` asset with a stable path — it is streamed
+ * by a dedicated endpoint, so `toProxiedFileUrl` has nothing to rewrite. This
+ * is the single place that spelling lives; callers that need an inline preview
+ * pass `{ inline: true }` rather than appending `?view=1` themselves.
+ */
+export const KYC_DOCUMENT_PATH = '/api/proxy/v1/banks/me/kyc-documents';
+
+export function getKycDocumentUrl(options?: { inline?: boolean }): string {
+  return options?.inline ? `${KYC_DOCUMENT_PATH}?view=1` : KYC_DOCUMENT_PATH;
+}
+
+/** True when `url` points at the KYC-document endpoint rather than a stored file. */
+export function isKycDocumentUrl(url: string | null | undefined): boolean {
+  return Boolean(url && url.split('?')[0] === KYC_DOCUMENT_PATH);
+}
+
 export const onboardingService = {
+  getKycDocumentUrl,
+
   async registerSeller(payload: RegisterSellerPayload): Promise<ApiResponse<{ message: string }>> {
     // Public self-registration endpoint (guest-accessible). `role` is omitted so
     // the backend applies its default (BANK_ADMIN_ROLE), matching this page's intent.
@@ -79,15 +100,9 @@ export const onboardingService = {
       body: JSON.stringify(payload),
     }) as ApiResponse<{ message: string; file_url: string }>;
     if (res?.data) {
-      res.data.file_url = '/api/proxy/v1/banks/me/kyc-documents';
+      res.data.file_url = getKycDocumentUrl();
     }
     return res;
-  },
-
-  getKycDocumentUrl(options?: { inline?: boolean }): string {
-    return options?.inline
-      ? '/api/proxy/v1/banks/me/kyc-documents?view=1'
-      : '/api/proxy/v1/banks/me/kyc-documents';
   },
 
   async getBankProfile(): Promise<ApiResponse<BankProfile>> {
@@ -98,7 +113,7 @@ export const onboardingService = {
       res.data.logo = toProxiedFileUrl(res.data.logo) ?? res.data.logo;
     }
     if (res?.data?.kyc_document_uploaded || res?.data?.kyc_document) {
-      res.data.kyc_document = '/api/proxy/v1/banks/me/kyc-documents';
+      res.data.kyc_document = getKycDocumentUrl();
     }
     return res;
   },

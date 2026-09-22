@@ -1,3 +1,4 @@
+import { authEnvelopeLogMessage, readAuthEnvelope } from '@/lib/api/authEnvelope';
 import { AUTH_MESSAGES } from '@/lib/authMessages';
 import { getClientIp } from '@/lib/clientIp';
 import { checkCsrf } from '@/lib/csrf';
@@ -6,13 +7,6 @@ import { logger } from '@/lib/logger';
 import { checkRateLimit, rateLimitedResponse } from '@/lib/rateLimit';
 import { RATE_LIMITS } from '@/lib/securityConfig';
 import { NextResponse } from 'next/server';
-
-/** The `{ status, message, code }` envelope oan_a2c replies with. */
-interface Envelope {
-  status?: string;
-  message?: string;
-  code?: string;
-}
 
 /**
  * Exchanges an admin-issued temporary password for one only the user knows.
@@ -72,12 +66,12 @@ export async function POST(request: Request) {
     );
 
     const data = await response.json().catch(() => null);
-    const envelope: Envelope = (data ?? {}) as Envelope;
+    const envelope = readAuthEnvelope(data);
 
     if (!response.ok || envelope.status === 'error') {
       logger.security(
         `Set-initial-password rejected for ${clientIp} with status ${response.status}:`,
-        envelope.message ?? JSON.stringify(data)
+        authEnvelopeLogMessage(data)
       );
 
       // Unlike login, the backend's own message is forwarded: the person is

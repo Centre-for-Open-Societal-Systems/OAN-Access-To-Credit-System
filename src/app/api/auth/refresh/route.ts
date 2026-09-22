@@ -1,3 +1,4 @@
+import { authEnvelopeLogMessage } from '@/lib/api/authEnvelope';
 import { AUTH_MESSAGES } from '@/lib/authMessages';
 import { getClientIp } from '@/lib/clientIp';
 import { checkCsrf } from '@/lib/csrf';
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       // which of those it is holding.
       logger.security(
         `Token refresh failed on backend, status ${response.status}:`,
-        typeof data?.message === 'string' ? data.message : JSON.stringify(data)
+        authEnvelopeLogMessage(data)
       );
       return endSession(AUTH_MESSAGES.sessionExpired);
     }
