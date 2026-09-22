@@ -167,19 +167,24 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
       throw new Error(authCode);
     }
     let errorMsg = genericMessageForStatus(response.status);
-    if (responseData?.details && typeof responseData.details === 'object') {
-      const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
-      if (detailEntries.length > 0) {
-        errorMsg = detailEntries
-          .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
-          .join('. ');
-      } else if (typeof responseData.message === 'string') {
+    // On 5xx, preserve genericMessageForStatus so backend internals, tracebacks,
+    // and database errors are never exposed in user-facing error messages.
+    // For 4xx client errors, extract structured validation details or messages.
+    if (response.status < 500) {
+      if (responseData?.details && typeof responseData.details === 'object') {
+        const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
+        if (detailEntries.length > 0) {
+          errorMsg = detailEntries
+            .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
+            .join('. ');
+        } else if (typeof responseData.message === 'string') {
+          errorMsg = responseData.message;
+        }
+      } else if (typeof responseData?.message === 'string') {
         errorMsg = responseData.message;
+      } else if (typeof responseData?.error === 'string') {
+        errorMsg = responseData.error;
       }
-    } else if (typeof responseData?.message === 'string') {
-      errorMsg = responseData.message;
-    } else if (typeof responseData?.error === 'string') {
-      errorMsg = responseData.error;
     }
     throw new ApiError(errorMsg, responseData, response.status);
   }

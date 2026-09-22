@@ -1,7 +1,7 @@
 'use client';
 import { Portal } from '@/components/Portal';
 import { useModalA11y } from '@/hooks/useModalA11y';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 
 interface ViewDocumentModalProps {
@@ -22,28 +22,76 @@ export function ViewDocumentModal({
   fileName: externalFileName = null,
 }: ViewDocumentModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isLoadingBlob, setIsLoadingBlob] = useState(false);
+  const [blobError, setBlobError] = useState(false);
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const titleId = useId();
 
   useEffect(() => {
+    let active = true;
+    let createdUrl: string | null = null;
+
     if (file) {
-      // URL.createObjectURL/revokeObjectURL is an imperative browser API with
-      // required cleanup — can't be computed during render, has to live in an effect.
-      const url = URL.createObjectURL(file);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBlobUrl(url);
-      return () => URL.revokeObjectURL(url);
+      createdUrl = URL.createObjectURL(file);
+      const url = createdUrl;
+      queueMicrotask(() => {
+        if (!active) return;
+        setBlobUrl(url);
+        setIsLoadingBlob(false);
+        setBlobError(false);
+      });
+      return () => {
+        active = false;
+        URL.revokeObjectURL(url);
+      };
     }
-    setBlobUrl(null);
-  }, [file]);
+
+    if (externalFileUrl) {
+      queueMicrotask(() => {
+        if (!active) return;
+        setIsLoadingBlob(true);
+        setBlobError(false);
+      });
+      fetch(externalFileUrl, { credentials: 'same-origin' })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load document');
+          return res.blob();
+        })
+        .then((blob) => {
+          if (!active) return;
+          createdUrl = URL.createObjectURL(blob);
+          setBlobUrl(createdUrl);
+          setIsLoadingBlob(false);
+        })
+        .catch(() => {
+          if (!active) return;
+          setIsLoadingBlob(false);
+          setBlobError(true);
+        });
+      return () => {
+        active = false;
+        if (createdUrl) URL.revokeObjectURL(createdUrl);
+      };
+    }
+
+    queueMicrotask(() => {
+      if (!active) return;
+      setBlobUrl(null);
+      setIsLoadingBlob(false);
+      setBlobError(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [file, externalFileUrl]);
 
   if (!isOpen) return null;
 
-  const resolvedUrl = file ? blobUrl : externalFileUrl;
-  const resolvedDownloadUrl = file ? blobUrl : (externalDownloadUrl ?? externalFileUrl);
+  const resolvedUrl = blobUrl ?? externalFileUrl;
+  const resolvedDownloadUrl = blobUrl ?? (externalDownloadUrl ?? externalFileUrl);
   const resolvedName = file?.name ?? externalFileName ?? 'Document';
-  const isImage = (file?.type.startsWith('image/') || /\.(png|jpe?g|webp)($|\?)/i.test(resolvedUrl ?? '')) ?? false;
-  const isPdf = (file?.type === 'application/pdf' || /\.pdf($|\?)/i.test(resolvedUrl ?? '') || (!isImage && Boolean(resolvedUrl))) ?? false;
+  const isImage = Boolean(file?.type.startsWith('image/') || /\.(png|jpe?g|webp)($|\?)/i.test(resolvedUrl ?? ''));
+  const isPdf = Boolean(file?.type === 'application/pdf' || /\.pdf($|\?)/i.test(resolvedUrl ?? '') || (!isImage && Boolean(resolvedUrl)));
 
   return (
     <Portal>
@@ -77,10 +125,15 @@ export function ViewDocumentModal({
         {/* Document Viewer Area */}
         <div className="px-8 pb-6">
           <div className="bg-gray-50 border border-gray-200 rounded-2xl h-[280px] flex flex-col items-center justify-center overflow-hidden relative">
-            {resolvedUrl && isImage ? (
+            {isLoadingBlob ? (
+              <div className="flex flex-col items-center justify-center p-4">
+                <Loader2 size={32} className="animate-spin text-blue-500 mb-2" />
+                <p className="text-sm text-gray-500">Loading document preview...</p>
+              </div>
+            ) : resolvedUrl && isImage && !blobError ? (
               // eslint-disable-next-line @next/next/no-img-element -- resolvedUrl is a blob: URL from URL.createObjectURL or proxied same-origin URL
               <img src={resolvedUrl} alt={resolvedName} className="w-full h-full object-contain p-2" />
-            ) : resolvedUrl && isPdf ? (
+            ) : resolvedUrl && isPdf && !blobError ? (
               <iframe src={`${resolvedUrl}#toolbar=0`} className="w-full h-full" title={resolvedName} />
             ) : (
               <>

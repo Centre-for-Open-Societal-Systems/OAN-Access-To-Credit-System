@@ -78,7 +78,8 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
     });
     return new NextResponse(body, init);
   } catch (error) {
-    logger.error(`Proxy error for ${targetUrl}:`, error);
+    const safeTargetUrl = `${env.API_BASE_URL}/${targetPath}`;
+    logger.error(`Proxy error for ${safeTargetUrl}:`, error);
     return NextResponse.json({ message: 'Proxy request failed' }, { status: 502 });
   }
 }

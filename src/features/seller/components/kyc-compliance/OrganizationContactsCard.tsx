@@ -44,18 +44,30 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
     Boolean(currentProfile?.org_grievance_updated || (currentProfile?.gro_name && currentProfile?.gro_mobile))
   );
 
-  if (currentProfile !== prevProfile) {
+  const [isDirty, setIsDirty] = useState(false);
+
+  const prevContactSignature = prevProfile
+    ? `${prevProfile.gro_name}:${prevProfile.gro_mobile}:${prevProfile.ops_name}:${prevProfile.ops_mobile}:${prevProfile.org_grievance_updated}`
+    : null;
+  const currentContactSignature = currentProfile
+    ? `${currentProfile.gro_name}:${currentProfile.gro_mobile}:${currentProfile.ops_name}:${currentProfile.ops_mobile}:${currentProfile.org_grievance_updated}`
+    : null;
+
+  if (currentContactSignature !== prevContactSignature) {
     setPrevProfile(currentProfile);
-    setForm({
-      groName: currentProfile?.gro_name ?? '',
-      groMobile: currentProfile?.gro_mobile ?? '',
-      opsName: currentProfile?.ops_name ?? '',
-      opsMobile: currentProfile?.ops_mobile ?? '',
-    });
-    setIsSaved(Boolean(currentProfile?.org_grievance_updated || (currentProfile?.gro_name && currentProfile?.gro_mobile)));
+    if (!isDirty) {
+      setForm({
+        groName: currentProfile?.gro_name ?? '',
+        groMobile: currentProfile?.gro_mobile ?? '',
+        opsName: currentProfile?.ops_name ?? '',
+        opsMobile: currentProfile?.ops_mobile ?? '',
+      });
+      setIsSaved(Boolean(currentProfile?.org_grievance_updated || (currentProfile?.gro_name && currentProfile?.gro_mobile)));
+    }
   }
 
   const handleInputChange = (field: keyof ContactFormState, value: string) => {
+    setIsDirty(true);
     setForm((current) => ({ ...current, [field]: value }));
     setIsSaved(false);
     setLocalError(null);
@@ -93,6 +105,7 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
     );
 
     if (saveOrgContacts.fulfilled.match(result)) {
+      setIsDirty(false);
       setIsSaved(true);
     }
   };

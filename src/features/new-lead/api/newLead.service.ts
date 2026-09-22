@@ -198,7 +198,7 @@ export interface BasicProfileBackendData {
   fayda_id?: string;
 }
 
-const cleanId = (id: string): string => normalizeLeadId(id);
+const cleanId = (id: string): string => encodeURIComponent(normalizeLeadId(id));
 
 export const newLeadService = {
   async searchFarmer(faydaId: string): Promise<FarmerDetails> {

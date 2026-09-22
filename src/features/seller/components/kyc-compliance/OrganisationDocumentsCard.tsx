@@ -39,7 +39,6 @@ interface OrganisationDocumentsCardProps {
 export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCardProps = {}) {
   const dispatch = useAppDispatch();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isExistingRemoved, setIsExistingRemoved] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -57,7 +56,7 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
     uploadedFileUrl ||
     currentProfile?.kyc_document ||
     (currentProfile?.kyc_document_uploaded ? '/api/proxy/v1/banks/me/kyc-documents' : null);
-  const hasExistingDoc = Boolean(!isExistingRemoved && existingDocumentUrl);
+  const hasExistingDoc = Boolean(existingDocumentUrl);
   const existingFileName = existingDocumentUrl
     ? (existingDocumentUrl.includes('kyc-documents')
         ? 'Tax Registration Certificate.pdf'
@@ -103,15 +102,12 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
       // Uploading the KYC document only persists the file. Activation happens
       // separately when the organization contacts are saved (by then the KYC
       // doc exists, so the backend's "KYC required" guard is satisfied).
-      const result = await dispatch(
+      await dispatch(
         uploadKycDocument({
           filename: uploadedFile.name,
           filedata,
         })
       );
-      if (uploadKycDocument.fulfilled.match(result)) {
-        setIsExistingRemoved(false);
-      }
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : 'Unable to upload document.');
     }
@@ -119,7 +115,6 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
 
   const handleRemoveFile = () => {
     setUploadedFile(null);
-    setIsExistingRemoved(true);
     setIsDeleteModalOpen(false);
     setLocalError(null);
     dispatch(clearOnboardingErrors());
@@ -199,14 +194,16 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
-                    aria-label="Remove selected document"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
-                  </button>
+                  {uploadedFile ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
+                      aria-label="Remove selected document"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
