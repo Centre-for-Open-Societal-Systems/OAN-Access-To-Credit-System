@@ -71,11 +71,11 @@ function getVisitSchedules(): Promise<VisitSchedule[]> {
 export const leadService = {
   async getLeads(params?: GetLeadsParams, signal?: AbortSignal): Promise<{ results: Lead[]; totalCount: number }> {
     const searchParams = new URLSearchParams();
-    // Always sent explicitly. Callers that want the first page omit them
-    // entirely (useLeadInitialization's direct-link path, for one), and relying
-    // on the REST endpoint to default them the same way the old Frappe method
-    // did is an assumption this client shouldn't make — an unbounded
-    // page_length silently turns a lead lookup into a full-table read.
+    // Pagination is always sent explicitly, never left to the server's default.
+    // Several callers omit it (useLeadInitialization's direct-link path, for
+    // one) and just want the first page; pinning 0/20 here means the page size
+    // is decided by this client rather than silently changing under it if the
+    // endpoint's default ever moves.
     searchParams.set('start', params?.start?.toString() ?? '0');
     searchParams.set('page_length', params?.page_length?.toString() ?? '20');
     if (params?.search_query) searchParams.set('search_query', params.search_query);

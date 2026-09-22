@@ -96,23 +96,12 @@ export const createLoanApplicationAPI = createAsyncThunk(
       if (!appId) throw new Error('No Application ID returned');
       return appId;
     } catch (err) {
-      // A duplicate application comes back carrying the existing document's
-      // `name`. The REST envelope is flat (`{ message, name }`); the older
-      // Frappe-method envelope nested it under `message`. Read both, since not
-      // every endpoint on this path has been migrated.
-      const error = err as Error & {
-        responseData?: { name?: string; message?: { name?: string } };
-      };
-      const envelope = error.responseData;
-      const duplicateName =
-        envelope?.name ??
-        (typeof envelope?.message === 'object' ? envelope.message?.name : undefined);
-      if (duplicateName) {
-        return rejectWithValue({
-          message: error.message || 'Failed to create application',
-          name: duplicateName
-        });
-      }
+      // Always a string: the `rejected` reducer assigns this straight into
+      // `errors.createApp`, which is typed `string | null`. A duplicate lead
+      // surfaces here as the backend's own "Loan application already exists for
+      // this lead" message — it does not identify the existing application, so
+      // there is nothing extra to hand the caller.
+      const error = err as Error;
       return rejectWithValue(error.message || 'Failed to create application');
     }
   }

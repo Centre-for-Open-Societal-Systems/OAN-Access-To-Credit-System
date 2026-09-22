@@ -25,21 +25,15 @@ export class ApiError extends Error {
 /**
  * Field-level validation errors out of an error envelope.
  *
- * The REST backend replies flat — `{ message: string, details: { field: msg } }`
- * — which is the shape `fetchApi` below reads. The older Frappe-method envelope
- * nested the same payload one level deeper under `message`, so both are accepted:
- * some endpoints have not been migrated, and an `ApiError` can also be
- * constructed from a Next route handler that still forwards the nested form.
+ * The backend replies flat — `{ message: string, details: { field: msg } }` —
+ * which is the same shape `fetchApi` below reads to build its error message.
  *
  * Accepts any thrown value so callers can pass a bare `unknown` from `catch`.
  */
 export function extractFieldErrors(error: unknown): Record<string, string> {
   const responseData = (error as { responseData?: unknown } | null | undefined)?.responseData;
   if (!responseData || typeof responseData !== 'object') return {};
-  const envelope = responseData as { details?: unknown; message?: { details?: unknown } };
-  const details =
-    envelope.details ??
-    (typeof envelope.message === 'object' ? envelope.message?.details : undefined);
+  const { details } = responseData as { details?: unknown };
   if (!details || typeof details !== 'object') return {};
   return Object.fromEntries(
     Object.entries(details).filter(([, v]) => typeof v === 'string')
@@ -238,19 +232,9 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     throw new ApiError(errorMsg, responseData, response.status);
   }
 
-  // Handle "200 OK" application-level errors
-  if (responseData?.status === 'error') {
-    let errorMsg = responseData.message || 'Application Error';
-    if (responseData.details && typeof responseData.details === 'object') {
-      const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
-      if (detailEntries.length > 0) {
-        errorMsg = detailEntries
-          .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
-          .join('. ');
-      }
-    }
-    throw new ApiError(errorMsg, responseData);
-  }
-
+  // No "200 OK with an error body" branch: every error envelope the backend
+  // builds (`error_response` in api/utils.py) is returned alongside an explicit
+  // 4xx/5xx status, so a 2xx response is unambiguously a success and is handled
+  // entirely by the `!response.ok` block above.
   return responseData;
 }
