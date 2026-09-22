@@ -1,4 +1,5 @@
 import { fetchApi } from '@/lib/api/fetchApi';
+import { withQuery } from '@/lib/utils';
 import type {
   CatalogFacetsResponse,
   CatalogListResponse,
@@ -46,8 +47,8 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
   if (params.start !== undefined) query.append('start', params.start.toString());
   if (params.loan_product) query.append('loan_product', params.loan_product);
 
-  const queryStr = query.toString();
-  return fetchApi(`v1/catalog/products${queryStr ? `?${queryStr}` : ''}`);
+  return fetchApi(withQuery('v1/catalog/products', query));
+
 }
 
 /**

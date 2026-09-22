@@ -1,4 +1,5 @@
 import { fetchApi } from '@/lib/api/fetchApi';
+import { withQuery } from '@/lib/utils';
 import { farmerLoanApplicationSchema, validateResponse } from '@/lib/api/api.schemas';
 import { z } from 'zod';
 import type { LoanStatusMeta } from '@/lib/api/api.schemas';
@@ -29,8 +30,8 @@ export async function getSavedProducts(
   if (params.limit !== undefined) query.append('limit', params.limit.toString());
   if (params.start !== undefined) query.append('start', params.start.toString());
 
-  const queryStr = query.toString();
-  return fetchApi(`v1/catalog/saved-products${queryStr ? `?${queryStr}` : ''}`);
+  return fetchApi(withQuery('v1/catalog/saved-products', query));
+
 }
 
 /**
@@ -67,8 +68,8 @@ export async function getMyApplications(
   if (params.page !== undefined) query.append('page', params.page.toString());
   if (params.page_size !== undefined) query.append('page_size', params.page_size.toString());
 
-  const queryStr = query.toString();
-  const response = await fetchApi(`v1/applications${queryStr ? `?${queryStr}` : ''}`);
+  const response = await fetchApi(withQuery('v1/applications', query));
+
 
   // Validated, not cast. `fetchApi` returns `any`, so the declared return type
   // was an assertion nothing checked — a row arriving without `status` (which

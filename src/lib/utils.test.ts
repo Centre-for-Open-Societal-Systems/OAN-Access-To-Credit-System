@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskSensitiveId, normalizeLeadId, toProxiedFileUrl } from './utils';
+import { maskSensitiveId, normalizeLeadId, toProxiedFileUrl, withQuery } from './utils';
 
 describe('toProxiedFileUrl', () => {
   it('returns undefined for empty/null/undefined input', () => {
@@ -43,3 +43,22 @@ describe('maskSensitiveId', () => {
     expect(maskSensitiveId('', 4)).toBe('');
   });
 });
+
+describe('withQuery', () => {
+  it('returns path unchanged when query is empty', () => {
+    expect(withQuery('v1/catalog/products', '')).toBe('v1/catalog/products');
+    expect(withQuery('v1/catalog/products', new URLSearchParams())).toBe('v1/catalog/products');
+  });
+
+  it('appends query string with ? separator', () => {
+    const params = new URLSearchParams({ page: '1', limit: '20' });
+    expect(withQuery('v1/catalog/products', params)).toBe('v1/catalog/products?page=1&limit=20');
+  });
+
+  it('appends to path with existing query using & separator', () => {
+    expect(withQuery('v1/catalog/products?status=Active', 'page=2')).toBe(
+      'v1/catalog/products?status=Active&page=2'
+    );
+  });
+});
+

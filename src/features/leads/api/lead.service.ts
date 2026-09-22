@@ -1,6 +1,6 @@
 import type {
     AssignableUser,
-    AssignLeadBackendData, GetLeadsParams,
+    AssignLeadBackendData, GetLeadsParams, GetLeadsResponse,
     Lead, LeadStatus, LeadSummaryResponse, RawLead, UpdateLeadStatusResponseData, VisitSchedule
 } from '@/features/leads/types/leads.types';
 import { httpStatusToErrorCode } from '@/lib/api/apiErrors';
@@ -69,7 +69,7 @@ function getVisitSchedules(): Promise<VisitSchedule[]> {
 }
 
 export const leadService = {
-  async getLeads(params?: GetLeadsParams, signal?: AbortSignal): Promise<{ results: Lead[]; totalCount: number }> {
+  async getLeads(params?: GetLeadsParams, signal?: AbortSignal): Promise<GetLeadsResponse> {
     const searchParams = new URLSearchParams();
     // Pagination is always sent explicitly, never left to the server's default.
     // Several callers omit it (useLeadInitialization's direct-link path, for

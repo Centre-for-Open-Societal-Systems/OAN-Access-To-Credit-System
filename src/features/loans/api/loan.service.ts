@@ -8,7 +8,7 @@ import {
     type LoanMetadata
 } from '@/lib/api/api.schemas';
 import { fetchApi } from '@/lib/api/fetchApi';
-import { normalizeLeadId } from '@/lib/utils';
+import { normalizeLeadId, withQuery } from '@/lib/utils';
 import type { ApiResponse } from '@/types/api';
 import { z } from 'zod';
 import type { LoanFormData } from '../types/loans.types';
@@ -161,8 +161,7 @@ export const loanService = {
       });
     }
 
-    const queryStr = searchParams.toString();
-    const path = `v1/loan-applications${queryStr ? `?${queryStr}` : ''}`;
+    const path = withQuery('v1/loan-applications', searchParams);
     const response = await fetchApi(path, options) as ApiResponse<LoanApplicationSummary[]>;
     return {
       ...response,
@@ -190,6 +189,10 @@ export const loanService = {
       ...response,
       data: validateResponse(loanMetadataSchema, response?.data, 'get_loan_metadata'),
     };
+  },
+
+  getSupportingDocumentUrl(applicationId: string, fileId: string | number, view: 0 | 1 = 0): string {
+    return `/api/proxy/v1/loan-applications/${encodeURIComponent(applicationId)}/documents/${encodeURIComponent(fileId)}/content?view=${view}`;
   },
 
   async downloadSupportingDocument(file_id: string, view = 0, application_id = 'current'): Promise<null> {

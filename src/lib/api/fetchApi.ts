@@ -7,6 +7,7 @@ const BASE_URL =
     : process.env.NEXT_PUBLIC_SITE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
 
 import { ApiErrorCode, httpStatusToErrorCode } from './apiErrors';
+import { extractErrorMessage } from './authEnvelope';
 
 export class ApiError extends Error {
   responseData: unknown;
@@ -133,9 +134,6 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 1
 }
 
 export function resolveProxyPath(path: string): string {
-  if (path.startsWith('/api/proxy/')) {
-    return path;
-  }
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   const finalPath = cleanPath.startsWith('v1/') ? cleanPath : `v1/${cleanPath}`;
   return `/api/proxy/${finalPath}`;
@@ -209,32 +207,21 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
     if (authCode === ApiErrorCode.Auth || authCode === ApiErrorCode.Forbidden) {
       throw new Error(authCode);
     }
-    let errorMsg = genericMessageForStatus(response.status);
-    // On 5xx, preserve genericMessageForStatus so backend internals, tracebacks,
-    // and database errors are never exposed in user-facing error messages.
-    // For 4xx client errors, extract structured validation details or messages.
-    if (response.status < 500) {
-      if (responseData?.details && typeof responseData.details === 'object') {
-        const detailEntries = Object.entries(responseData.details).filter(([, v]) => Boolean(v));
-        if (detailEntries.length > 0) {
-          errorMsg = detailEntries
-            .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${v}`)
-            .join('. ');
-        } else if (typeof responseData.message === 'string') {
-          errorMsg = responseData.message;
-        }
-      } else if (typeof responseData?.message === 'string') {
-        errorMsg = responseData.message;
-      } else if (typeof responseData?.error === 'string') {
-        errorMsg = responseData.error;
-      }
-    }
+    const extracted = extractErrorMessage(responseData);
+    const errorMsg = extracted ?? genericMessageForStatus(response.status);
     throw new ApiError(errorMsg, responseData, response.status);
   }
 
-  // No "200 OK with an error body" branch: every error envelope the backend
-  // builds (`error_response` in api/utils.py) is returned alongside an explicit
-  // 4xx/5xx status, so a 2xx response is unambiguously a success and is handled
-  // entirely by the `!response.ok` block above.
+  // Handle application-level errors returned with HTTP 200 OK
+  if (
+    responseData &&
+    typeof responseData === 'object' &&
+    'status' in responseData &&
+    responseData.status === 'error'
+  ) {
+    const errorMsg = extractErrorMessage(responseData) || 'Application Error';
+    throw new ApiError(errorMsg, responseData, response.status);
+  }
+
   return responseData;
 }

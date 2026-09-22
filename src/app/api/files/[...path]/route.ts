@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   // Safely construct the full URL so query params can't smuggle in path segments.
   const rawPath = path.join('/');
-  const upstreamPath = rawPath.startsWith('files/') ? `/${rawPath}` : `/files/${rawPath}`;
+  const upstreamPath = `/files/${rawPath}`;
   const targetUrlObj = new URL(upstreamPath, env.API_BASE_URL);
   if (!targetUrlObj.pathname.startsWith('/files/')) {
     return NextResponse.json({ message: 'Invalid file path' }, { status: 400 });

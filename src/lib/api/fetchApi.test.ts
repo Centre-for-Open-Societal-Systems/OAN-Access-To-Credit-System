@@ -109,18 +109,35 @@ describe('fetchApi', () => {
     }
   });
 
-  it('should return the REST envelope when status is 200 OK', async () => {
+  it('should throw ApiError when status is 200 OK but envelope has status error', async () => {
     const appErrorResponse = {
       status: 'error',
       message: 'Application level validation failed',
     };
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => appErrorResponse,
     } as Response);
 
-    await expect(fetchApi('test-path')).resolves.toEqual(appErrorResponse);
+    await expect(fetchApi('test-path')).rejects.toThrow(ApiError);
+    await expect(fetchApi('test-path')).rejects.toThrow('Application level validation failed');
   });
+
+  it('should surface backend-supplied error message on 5xx responses', async () => {
+    const errorResponse = {
+      status: 'error',
+      message: 'Database query timed out',
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 504,
+      json: async () => errorResponse,
+    } as Response);
+
+    await expect(fetchApi('test-path')).rejects.toThrow('Database query timed out');
+  });
+
 
   // An abort that lands after the headers but before the body is read rejects in
   // `response.json()`, with `response.ok` still true. Returning null there made

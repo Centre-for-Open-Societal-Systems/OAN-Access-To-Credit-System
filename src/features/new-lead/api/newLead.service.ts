@@ -202,8 +202,9 @@ const cleanId = (id: string): string => encodeURIComponent(normalizeLeadId(id));
 
 export const newLeadService = {
   async searchFarmer(faydaId: string): Promise<FarmerDetails> {
-    const response = await fetchApi(`v1/consent/farmers?fayda_id=${encodeURIComponent(faydaId)}`, {
-      method: 'GET',
+    const response = await fetchApi('v1/consent/farmers', {
+      method: 'POST',
+      body: JSON.stringify({ fayda_id: faydaId }),
     }) as ApiResponse<SearchFarmerBackendData | null>;
 
     const payload = response.data;
@@ -342,7 +343,7 @@ export const newLeadService = {
     const cleanLeadId = cleanId(data.leadId);
     const response = await fetchApi(`v1/leads/${cleanLeadId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ comment: data.content, content: data.content }),
+      body: JSON.stringify({ content: data.content }),
     }) as ApiResponse<AddActivityNoteResponse>;
     return response.data;
   },

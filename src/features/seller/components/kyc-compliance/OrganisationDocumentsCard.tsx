@@ -16,6 +16,8 @@ import React, { useRef, useState } from 'react';
 import { DeleteDocumentModal } from './DeleteDocumentModal';
 import { ViewDocumentModal } from './ViewDocumentModal';
 
+const DEFAULT_KYC_DOCUMENT_NAME = 'Tax Registration Certificate.pdf';
+
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -66,8 +68,8 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
   const hasExistingDoc = Boolean(existingDocumentUrl);
   const existingFileName = existingDocumentUrl
     ? (isStreamedKycDoc
-        ? 'Tax Registration Certificate.pdf'
-        : decodeURIComponent(existingDocumentUrl.split('/').pop()?.split('?')[0] || 'Tax Registration Certificate.pdf'))
+        ? DEFAULT_KYC_DOCUMENT_NAME
+        : decodeURIComponent(existingDocumentUrl.split('/').pop()?.split('?')[0] || DEFAULT_KYC_DOCUMENT_NAME))
     : null;
 
   const previewUrl = existingDocumentUrl
@@ -256,10 +258,18 @@ export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCard
       <ViewDocumentModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        file={uploadedFile}
-        fileUrl={!uploadedFile ? previewUrl : null}
-        downloadUrl={!uploadedFile ? downloadUrl : null}
-        fileName={uploadedFile?.name || existingFileName}
+        document={
+          uploadedFile
+            ? { type: 'file', file: uploadedFile }
+            : previewUrl
+              ? {
+                  type: 'remote',
+                  fileUrl: previewUrl,
+                  downloadUrl,
+                  fileName: existingFileName,
+                }
+              : null
+        }
       />
 
       <DeleteDocumentModal

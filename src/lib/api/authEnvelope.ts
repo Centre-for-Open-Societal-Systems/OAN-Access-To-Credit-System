@@ -12,17 +12,46 @@ export interface AuthEnvelope {
   status?: string;
   message?: string;
   code?: string;
+  details?: Record<string, unknown>;
+  error?: string;
 }
 
 /** Narrows an unknown JSON body to the envelope shape (never null). */
 export function readAuthEnvelope(data: unknown): AuthEnvelope {
   if (!data || typeof data !== 'object') return {};
-  const { status, message, code } = data as Record<string, unknown>;
+  const record = data as Record<string, unknown>;
+  const status = typeof record.status === 'string' ? record.status : undefined;
+  const message = typeof record.message === 'string' ? record.message : undefined;
+  const code = typeof record.code === 'string' ? record.code : undefined;
+  const error = typeof record.error === 'string' ? record.error : undefined;
+  const details =
+    record.details && typeof record.details === 'object' && !Array.isArray(record.details)
+      ? (record.details as Record<string, unknown>)
+      : undefined;
+
   return {
-    ...(typeof status === 'string' ? { status } : {}),
-    ...(typeof message === 'string' ? { message } : {}),
-    ...(typeof code === 'string' ? { code } : {}),
+    ...(status !== undefined ? { status } : {}),
+    ...(message !== undefined ? { message } : {}),
+    ...(code !== undefined ? { code } : {}),
+    ...(error !== undefined ? { error } : {}),
+    ...(details !== undefined ? { details } : {}),
   };
+}
+
+/** Extracts a human-readable error message from an envelope payload, if present. */
+export function extractErrorMessage(data: unknown): string | null {
+  const envelope = readAuthEnvelope(data);
+  if (envelope.details) {
+    const detailEntries = Object.entries(envelope.details).filter(([, v]) => Boolean(v));
+    if (detailEntries.length > 0) {
+      return detailEntries
+        .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}: ${v}`)
+        .join('. ');
+    }
+  }
+  if (envelope.message) return envelope.message;
+  if (envelope.error) return envelope.error;
+  return null;
 }
 
 /**
@@ -36,3 +65,4 @@ export function readAuthEnvelope(data: unknown): AuthEnvelope {
 export function authEnvelopeLogMessage(data: unknown): string {
   return readAuthEnvelope(data).message ?? JSON.stringify(data);
 }
+

@@ -60,6 +60,18 @@ export function preventInvalidNumberChars(e: KeyboardEvent<HTMLInputElement>) {
 }
 
 /**
+ * Appends URLSearchParams or a query string to a path, avoiding a trailing '?' when empty.
+ */
+export function withQuery(path: string, query: URLSearchParams | string): string {
+  const queryStr = typeof query === 'string' ? query : query.toString();
+  if (!queryStr) return path;
+  const cleanQuery = queryStr.startsWith('?') ? queryStr.slice(1) : queryStr;
+  if (!cleanQuery) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}${cleanQuery}`;
+}
+
+
+/**
  * Sanitizes a string from a number input by removing exponent and special characters.
  */
 export function sanitizeNumberInput(value: string): string {

@@ -37,8 +37,9 @@ describe('newLeadService', () => {
         gender: '',
         profileImageUrl: 'https://example.com/image.jpg',
       });
-      expect(fetchApi).toHaveBeenCalledWith('v1/consent/farmers?fayda_id=FID-123', {
-        method: 'GET',
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/farmers', {
+        method: 'POST',
+        body: JSON.stringify({ fayda_id: 'FID-123' }),
       });
     });
 
@@ -458,7 +459,7 @@ describe('newLeadService', () => {
       });
       expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/comments', {
         method: 'POST',
-        body: JSON.stringify({ comment: 'Verification complete', content: 'Verification complete' }),
+        body: JSON.stringify({ content: 'Verification complete' }),
       });
       expect(result).toEqual(mockResponse);
     });
