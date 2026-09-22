@@ -109,7 +109,7 @@ describe('fetchApi', () => {
     }
   });
 
-  it('should throw ApiError when status is 200 OK but application level status is error', async () => {
+  it('should return the REST envelope when status is 200 OK', async () => {
     const appErrorResponse = {
       status: 'error',
       message: 'Application level validation failed',
@@ -119,15 +119,7 @@ describe('fetchApi', () => {
       json: async () => appErrorResponse,
     } as Response);
 
-    try {
-      await fetchApi('test-path');
-      expect.unreachable('fetchApi should have thrown an error');
-    } catch (error) {
-      expect(error).toBeInstanceOf(ApiError);
-      const apiError = error as ApiError;
-      expect(apiError.message).toBe('Application level validation failed');
-      expect(apiError.responseData).toEqual(appErrorResponse);
-    }
+    await expect(fetchApi('test-path')).resolves.toEqual(appErrorResponse);
   });
 
   // An abort that lands after the headers but before the body is read rejects in
@@ -281,4 +273,3 @@ describe('fetchApi', () => {
     });
   });
 });
-
