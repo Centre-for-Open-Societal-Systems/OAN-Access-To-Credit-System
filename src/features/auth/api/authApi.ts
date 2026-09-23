@@ -173,7 +173,7 @@ export async function logoutUser(): Promise<boolean> {
 }
 
 export async function getMe(): Promise<RawUserResponse> {
-  const data = await fetchApi('oan_a2c.api.auth.get_me', {
+  const data = await fetchApi('v1/me', {
     method: 'GET',
   });
 
@@ -207,7 +207,7 @@ function normalizeFileUrl(url: string | null | undefined): string | null {
 }
 
 export async function getUserProfile(): Promise<UserProfileResponse> {
-  const res = await fetchApi('oan_a2c.api.auth.get_user_profile', {
+  const res = await fetchApi('v1/me/profile', {
     method: 'GET',
   });
   const data = res.data as UserProfileResponse;
@@ -227,8 +227,8 @@ export interface UpdateProfilePayload {
 }
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<UserProfileResponse> {
-  const res = await fetchApi('oan_a2c.api.auth.update_profile', {
-    method: 'POST',
+  const res = await fetchApi('v1/me/profile', {
+    method: 'PATCH',
     body: JSON.stringify(payload),
   });
   const data = res.data as UserProfileResponse;
@@ -239,22 +239,22 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
 }
 
 export async function forgotPassword(email: string): Promise<void> {
-  await fetchApi('oan_a2c.api.auth.forgot_password', {
+  await fetchApi('v1/auth/password/forgot', {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
 }
 
 export async function resetPassword(email: string, key: string, new_password: string): Promise<void> {
-  await fetchApi('oan_a2c.api.auth.reset_password', {
+  await fetchApi('v1/auth/password/reset', {
     method: 'POST',
     body: JSON.stringify({ email, key, new_password }),
   });
 }
 
 export async function changePassword(current_password: string, new_password: string): Promise<void> {
-  await fetchApi('oan_a2c.api.auth.change_password', {
-    method: 'POST',
+  await fetchApi('v1/me/password', {
+    method: 'PATCH',
     body: JSON.stringify({ current_password, new_password }),
   });
 }

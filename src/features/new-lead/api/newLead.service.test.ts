@@ -37,7 +37,7 @@ describe('newLeadService', () => {
         gender: '',
         profileImageUrl: 'https://example.com/image.jpg',
       });
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.consent.api.search_farmer', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/farmers', {
         method: 'POST',
         body: JSON.stringify({ fayda_id: 'FID-123' }),
       });
@@ -214,7 +214,7 @@ describe('newLeadService', () => {
 
       const result = await newLeadService.createLead(payload);
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.create_lead', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -254,10 +254,9 @@ describe('newLeadService', () => {
         reason: 'Checks passed',
       });
 
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.update_lead_status', {
-        method: 'POST',
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/status', {
+        method: 'PATCH',
         body: JSON.stringify({
-          lead_id: 'LD-123',
           status: 'Processed',
           reason: 'Checks passed',
         }),
@@ -293,7 +292,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getLeadProfile('LD-123');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_leads?search_query=LD-123');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads?search_query=LD-123');
       expect(result).toEqual([
         {
           lead_id: 'LD-NAME',
@@ -339,7 +338,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getCreditInfo('LD-123');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_lead_credit_infos?lead_id=LD-123');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/credit-info');
       expect(result).toEqual(mockCreditInfo);
     });
 
@@ -364,9 +363,13 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.addCreditInfo(payload);
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.add_lead_credit_info', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/credit-info', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          loan_type: payload.loan_type,
+          loan_amount: payload.loan_amount,
+          purpose_message: payload.purpose_message,
+        }),
       });
       expect(result).toEqual(mockResponse);
     });
@@ -401,7 +404,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getCallDetails('LD-123');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_lead_call_logs?lead_id=LD-123');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/call-logs');
       expect(result).toEqual(mockResponse);
     });
 
@@ -432,7 +435,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getActivities('LD-123');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_lead_timeline?lead_id=LD-123');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/timeline');
       expect(result).toEqual(mockResponse);
     });
 
@@ -454,9 +457,9 @@ describe('newLeadService', () => {
         leadId: 'LD-123',
         content: 'Verification complete',
       });
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.add_lead_comment', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/comments', {
         method: 'POST',
-        body: JSON.stringify({ lead_id: 'LD-123', content: 'Verification complete' }),
+        body: JSON.stringify({ content: 'Verification complete' }),
       });
       expect(result).toEqual(mockResponse);
     });
@@ -492,7 +495,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.scheduleVisit(payload);
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.schedule_visit', {
+      expect(fetchApi).toHaveBeenCalledWith('v1/visit-schedules', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -533,7 +536,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getVisitSchedules('LD-123');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_visit_schedules?lead_id=LD-123&start=0&page_length=50');
+      expect(fetchApi).toHaveBeenCalledWith('v1/visit-schedules?lead_id=LD-123&start=0&page_length=50');
       expect(result).toEqual(mockResponse);
     });
 
@@ -553,9 +556,9 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.updateVisitScheduleStatus(payload);
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.update_visit_schedule_status', {
-        method: 'POST',
-        body: JSON.stringify(payload),
+      expect(fetchApi).toHaveBeenCalledWith('v1/visit-schedules/SCHED-1/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'Completed' }),
       });
       expect(result).toEqual(mockResponse);
     });
@@ -587,7 +590,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getAssignableUsers('agent');
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_assignable_users?search_query=agent');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/assignable-users?search_query=agent');
       expect(result).toEqual(mockResponse);
     });
 
@@ -626,10 +629,9 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.assignLead(input);
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.assign_lead', {
-        method: 'POST',
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/LD-123/assignment', {
+        method: 'PATCH',
         body: JSON.stringify({
-          lead_id: 'LD-123',
           assigned_to: 'agent@oan.com',
         }),
       });
@@ -663,7 +665,7 @@ describe('newLeadService', () => {
       });
 
       const result = await newLeadService.getLeadMetadata();
-      expect(fetchApi).toHaveBeenCalledWith('oan_a2c.api.v1.leads.get_lead_metadata');
+      expect(fetchApi).toHaveBeenCalledWith('v1/leads/metadata');
       expect(result).toEqual(mockResponse);
     });
 

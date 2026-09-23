@@ -1,4 +1,5 @@
 import { fetchApi } from '@/lib/api/fetchApi';
+import { withQuery } from '@/lib/utils';
 import type {
   CatalogFacetsResponse,
   CatalogListResponse,
@@ -46,7 +47,8 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
   if (params.start !== undefined) query.append('start', params.start.toString());
   if (params.loan_product) query.append('loan_product', params.loan_product);
 
-  return fetchApi(`oan_a2c.api.v1.farmer.catalog.list_catalog?${query.toString()}`);
+  return fetchApi(withQuery('v1/catalog/products', query));
+
 }
 
 /**
@@ -61,5 +63,5 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
  * from their own products instead (`deriveCatalogFacets`).
  */
 export async function getCatalogFacets(): Promise<CatalogFacetsResponse> {
-  return fetchApi('oan_a2c.api.v1.farmer.catalog.get_catalog_facets');
+  return fetchApi('v1/catalog/facets');
 }

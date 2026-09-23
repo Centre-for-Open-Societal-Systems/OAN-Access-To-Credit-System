@@ -9,8 +9,8 @@ type RouteContext = { params: Promise<{ path: string[] }> };
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { path } = await params;
 
-  // Prevent path traversal attacks by rejecting relative path indicators
-  if (path.some(segment => segment === '..' || segment === '.')) {
+  // Prevent path traversal attacks by rejecting relative path indicators and encoded separators
+  if (path.some(segment => segment.includes('..') || segment === '.' || /%2[ef]/i.test(segment) || segment.includes('\\'))) {
     return NextResponse.json({ message: 'Invalid file path' }, { status: 400 });
   }
 
@@ -22,7 +22,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   // Safely construct the full URL so query params can't smuggle in path segments.
-  const targetUrlObj = new URL(`/files/${path.join('/')}`, env.API_BASE_URL);
+  const rawPath = path.join('/');
+  const upstreamPath = `/files/${rawPath}`;
+  const targetUrlObj = new URL(upstreamPath, env.API_BASE_URL);
+  if (!targetUrlObj.pathname.startsWith('/files/')) {
+    return NextResponse.json({ message: 'Invalid file path' }, { status: 400 });
+  }
   targetUrlObj.search = request.nextUrl.search;
   const targetUrl = targetUrlObj.toString();
 

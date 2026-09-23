@@ -77,6 +77,18 @@ export default function config(phase) {
             },
           ],
         },
+        {
+          source: '/api/proxy/:path*',
+          headers: [
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          ],
+        },
+        {
+          source: '/api/files/:path*',
+          headers: [
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          ],
+        },
       ];
     },
   };

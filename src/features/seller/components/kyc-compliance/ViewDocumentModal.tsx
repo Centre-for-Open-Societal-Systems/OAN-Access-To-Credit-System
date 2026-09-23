@@ -1,35 +1,140 @@
 'use client';
 import { Portal } from '@/components/Portal';
 import { useModalA11y } from '@/hooks/useModalA11y';
-import { Download, FileText } from 'lucide-react';
+import { fetchFileWithAuthRetry } from '@/lib/api/fetchApi';
+import { logger } from '@/lib/logger';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 
-interface ViewDocumentModalProps {
+export type DocumentSource =
+  | { type: 'file'; file: File; fileName?: string | null | undefined }
+  | { type: 'remote'; fileUrl: string; downloadUrl?: string | null | undefined; fileName?: string | null | undefined };
+
+export interface ViewDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  file: File | null;
+  document: DocumentSource | null;
 }
 
-export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalProps) {
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+export function ViewDocumentModal({
+  isOpen,
+  onClose,
+  document: docSource,
+}: ViewDocumentModalProps) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isLoadingBlob, setIsLoadingBlob] = useState(false);
+  const [blobError, setBlobError] = useState(false);
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const titleId = useId();
 
   useEffect(() => {
-    if (file) {
-      // URL.createObjectURL/revokeObjectURL is an imperative browser API with
-      // required cleanup — can't be computed during render, has to live in an effect.
-      const url = URL.createObjectURL(file);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFileUrl(url);
-      return () => URL.revokeObjectURL(url);
+    let active = true;
+    let createdUrl: string | null = null;
+
+    // Gated on `isOpen`: this modal is mounted unconditionally by its parent
+    // with the KYC document URL already wired up, so an ungated effect pulled
+    // the whole PDF down on every page load, before anyone asked to see it.
+    if (!isOpen || !docSource) {
+      queueMicrotask(() => {
+        if (!active) return;
+        setBlobUrl(null);
+        setIsLoadingBlob(false);
+        setBlobError(false);
+      });
+      return () => {
+        active = false;
+      };
     }
-  }, [file]);
+
+    if (docSource.type === 'file') {
+      createdUrl = URL.createObjectURL(docSource.file);
+      const url = createdUrl;
+      queueMicrotask(() => {
+        if (!active) return;
+        setBlobUrl(url);
+        setIsLoadingBlob(false);
+        setBlobError(false);
+      });
+      return () => {
+        active = false;
+        URL.revokeObjectURL(url);
+      };
+    }
+
+    if (docSource.type === 'remote') {
+      const { fileUrl } = docSource;
+      queueMicrotask(() => {
+        if (!active) return;
+        setIsLoadingBlob(true);
+        setBlobError(false);
+      });
+      // Routed through `fetchFileWithAuthRetry` rather than a bare `fetch` so an
+      // expired access token is refreshed and the read retried, matching every
+      // other authenticated request on the page.
+      fetchFileWithAuthRetry(fileUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to load document: HTTP ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          if (!active) return;
+          createdUrl = URL.createObjectURL(blob);
+          setBlobUrl(createdUrl);
+          setIsLoadingBlob(false);
+        })
+        .catch((error) => {
+          logger.error('Failed to load document preview', { url: fileUrl, error });
+          if (!active) return;
+          setIsLoadingBlob(false);
+          setBlobError(true);
+        });
+      return () => {
+        active = false;
+        if (createdUrl) URL.revokeObjectURL(createdUrl);
+      };
+    }
+  }, [isOpen, docSource]);
 
   if (!isOpen) return null;
 
-  const isImage = file?.type.startsWith('image/');
-  const isPdf = file?.type === 'application/pdf';
+  const fileObj = docSource?.type === 'file' ? docSource.file : null;
+  const remoteFileUrl = docSource?.type === 'remote' ? docSource.fileUrl : null;
+  const remoteDownloadUrl = docSource?.type === 'remote' ? (docSource.downloadUrl ?? docSource.fileUrl) : null;
+  const resolvedUrl = blobUrl ?? remoteFileUrl;
+  const resolvedDownloadUrl = blobUrl ?? remoteDownloadUrl;
+  const resolvedName = fileObj?.name ?? docSource?.fileName ?? 'Document';
+  const isImage = Boolean(fileObj?.type.startsWith('image/') || /\.(png|jpe?g|webp)($|\?)/i.test(resolvedUrl ?? ''));
+  const isPdf = Boolean(fileObj?.type === 'application/pdf' || /\.pdf($|\?)/i.test(resolvedUrl ?? '') || (!isImage && Boolean(resolvedUrl)));
+
+  const renderViewerContent = () => {
+    if (isLoadingBlob) {
+      return (
+        <div className="flex flex-col items-center justify-center p-4">
+          <Loader2 size={32} className="animate-spin text-blue-500 mb-2" />
+          <p className="text-sm text-gray-500">Loading document preview...</p>
+        </div>
+      );
+    }
+
+    if (resolvedUrl && isImage && !blobError) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element -- resolvedUrl is a blob: URL from URL.createObjectURL or proxied same-origin URL
+        <img src={resolvedUrl} alt={resolvedName} className="w-full h-full object-contain p-2" />
+      );
+    }
+
+    if (resolvedUrl && isPdf && !blobError) {
+      return <iframe src={`${resolvedUrl}#toolbar=0`} className="w-full h-full" title={resolvedName} />;
+    }
+
+    return (
+      <>
+        <FileText size={48} className="text-gray-300 mb-4" strokeWidth={1} />
+        <p className="text-sm text-gray-500 font-medium">Document preview unavailable</p>
+        <p className="text-xs text-gray-400 mt-1">Please download to view the full file.</p>
+      </>
+    );
+  };
 
   return (
     <Portal>
@@ -56,25 +161,14 @@ export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalPr
           </h2>
           <p className="text-[15px] text-[#6B7280] leading-relaxed">
             You are viewing the uploaded document: <br />
-            <span className="font-bold text-[#374151]">&quot;{file?.name}&quot;</span>
+            <span className="font-bold text-[#374151]">&quot;{resolvedName}&quot;</span>
           </p>
         </div>
 
         {/* Document Viewer Area */}
         <div className="px-8 pb-6">
           <div className="bg-gray-50 border border-gray-200 rounded-2xl h-[280px] flex flex-col items-center justify-center overflow-hidden relative">
-            {fileUrl && isImage ? (
-              // eslint-disable-next-line @next/next/no-img-element -- fileUrl is a blob: URL from URL.createObjectURL, which next/image's optimizer can't fetch
-              <img src={fileUrl} alt={file?.name || 'Document'} className="w-full h-full object-contain p-2" />
-            ) : fileUrl && isPdf ? (
-              <iframe src={`${fileUrl}#toolbar=0`} className="w-full h-full" title={file?.name || 'Document'} />
-            ) : (
-              <>
-                <FileText size={48} className="text-gray-300 mb-4" strokeWidth={1} />
-                <p className="text-sm text-gray-500 font-medium">Document preview unavailable</p>
-                <p className="text-xs text-gray-400 mt-1">Please download to view the full file.</p>
-              </>
-            )}
+            {renderViewerContent()}
           </div>
         </div>
 
@@ -87,8 +181,8 @@ export function ViewDocumentModal({ isOpen, onClose, file }: ViewDocumentModalPr
             Close
           </button>
           <a 
-            href={fileUrl || '#'}
-            download={file?.name}
+            href={resolvedDownloadUrl || '#'}
+            download={resolvedName}
             className="flex-1 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl text-[15px] font-bold transition-colors flex items-center justify-center space-x-2 shadow-sm shadow-blue-200"
           >
             <Download size={18} />

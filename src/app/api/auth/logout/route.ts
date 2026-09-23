@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   // backend endpoint deletes the row, which is what actually ends the session.
   if (refreshToken) {
     try {
-      const response = await fetch(`${env.API_BASE_URL}/api/method/oan_a2c.api.auth.logout`, {
+      const response = await fetch(`${env.API_BASE_URL}/v1/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

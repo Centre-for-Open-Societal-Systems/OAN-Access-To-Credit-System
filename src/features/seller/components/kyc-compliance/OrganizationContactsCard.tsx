@@ -1,5 +1,13 @@
 'use client';
-import { clearOnboardingErrors, saveOrgContacts, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus } from '@/features/seller/store/onboardingSlice';
+import {
+  clearOnboardingErrors,
+  saveOrgContacts,
+  selectBankProfile,
+  selectOnboardingMutationError,
+  selectOnboardingMutationSource,
+  selectOnboardingMutationStatus,
+} from '@/features/seller/store/onboardingSlice';
+import type { BankProfile } from '@/features/seller/api/onboarding.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { PHONE_NUMBER_REGEX, toDigitsOnly } from '@/lib/validation/phone';
 import { Check, Loader2, UserCheck } from 'lucide-react';
@@ -12,21 +20,59 @@ interface ContactFormState {
   opsMobile: string;
 }
 
-const initialFormState: ContactFormState = {
-  groName: '',
-  groMobile: '',
-  opsName: '',
-  opsMobile: '',
-};
+interface OrganizationContactsCardProps {
+  profile?: BankProfile | null;
+}
 
-export function OrganizationContactsCard() {
+export function OrganizationContactsCard({ profile }: OrganizationContactsCardProps = {}) {
   const dispatch = useAppDispatch();
-  const [form, setForm] = useState<ContactFormState>(initialFormState);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
   const mutationStatus = useAppSelector(selectOnboardingMutationStatus);
   const mutationErrorRaw = useAppSelector(selectOnboardingMutationError);
   const mutationSource = useAppSelector(selectOnboardingMutationSource);
+  const storeProfile = useAppSelector(selectBankProfile);
+  const currentProfile = profile ?? storeProfile;
+
+  const [prevProfile, setPrevProfile] = useState(currentProfile);
+  const [form, setForm] = useState<ContactFormState>(() => ({
+    groName: currentProfile?.gro_name ?? '',
+    groMobile: currentProfile?.gro_mobile ?? '',
+    opsName: currentProfile?.ops_name ?? '',
+    opsMobile: currentProfile?.ops_mobile ?? '',
+  }));
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(() =>
+    Boolean(currentProfile?.org_grievance_updated || (currentProfile?.gro_name && currentProfile?.gro_mobile))
+  );
+
+  const [isDirty, setIsDirty] = useState(false);
+
+  const prevContactSignature = prevProfile
+    ? `${prevProfile.gro_name}:${prevProfile.gro_mobile}:${prevProfile.ops_name}:${prevProfile.ops_mobile}:${prevProfile.org_grievance_updated}`
+    : null;
+  const currentContactSignature = currentProfile
+    ? `${currentProfile.gro_name}:${currentProfile.gro_mobile}:${currentProfile.ops_name}:${currentProfile.ops_mobile}:${currentProfile.org_grievance_updated}`
+    : null;
+
+  if (currentContactSignature !== prevContactSignature) {
+    setPrevProfile(currentProfile);
+    if (!isDirty) {
+      setForm({
+        groName: currentProfile?.gro_name ?? '',
+        groMobile: currentProfile?.gro_mobile ?? '',
+        opsName: currentProfile?.ops_name ?? '',
+        opsMobile: currentProfile?.ops_mobile ?? '',
+      });
+      setIsSaved(Boolean(currentProfile?.org_grievance_updated || (currentProfile?.gro_name && currentProfile?.gro_mobile)));
+    }
+  }
+
+  const handleInputChange = (field: keyof ContactFormState, value: string) => {
+    setIsDirty(true);
+    setForm((current) => ({ ...current, [field]: value }));
+    setIsSaved(false);
+    setLocalError(null);
+  };
+
   // handleSave drives saveOrgContacts, so this card owns errors from contacts —
   // but not the document card's upload.
   const isOwnMutation = mutationSource === 'contacts';
@@ -59,6 +105,7 @@ export function OrganizationContactsCard() {
     );
 
     if (saveOrgContacts.fulfilled.match(result)) {
+      setIsDirty(false);
       setIsSaved(true);
     }
   };
@@ -86,7 +133,7 @@ export function OrganizationContactsCard() {
                 type="text"
                 placeholder="Enter full name"
                 value={form.groName}
-                onChange={(event) => setForm((current) => ({ ...current, groName: event.target.value }))}
+                onChange={(event) => handleInputChange('groName', event.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -98,7 +145,7 @@ export function OrganizationContactsCard() {
                 maxLength={10}
                 placeholder="Enter phone number"
                 value={form.groMobile}
-                onChange={(event) => setForm((current) => ({ ...current, groMobile: toDigitsOnly(event.target.value) }))}
+                onChange={(event) => handleInputChange('groMobile', toDigitsOnly(event.target.value))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -111,7 +158,7 @@ export function OrganizationContactsCard() {
                 type="text"
                 placeholder="Enter full name"
                 value={form.opsName}
-                onChange={(event) => setForm((current) => ({ ...current, opsName: event.target.value }))}
+                onChange={(event) => handleInputChange('opsName', event.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -123,7 +170,7 @@ export function OrganizationContactsCard() {
                 maxLength={10}
                 placeholder="Enter phone number"
                 value={form.opsMobile}
-                onChange={(event) => setForm((current) => ({ ...current, opsMobile: toDigitsOnly(event.target.value) }))}
+                onChange={(event) => handleInputChange('opsMobile', toDigitsOnly(event.target.value))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
