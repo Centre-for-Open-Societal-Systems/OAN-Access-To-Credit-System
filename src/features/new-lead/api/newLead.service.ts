@@ -202,9 +202,8 @@ const cleanId = (id: string): string => encodeURIComponent(normalizeLeadId(id));
 
 export const newLeadService = {
   async searchFarmer(faydaId: string): Promise<FarmerDetails> {
-    const response = await fetchApi('v1/consent/farmers', {
-      method: 'POST',
-      body: JSON.stringify({ fayda_id: faydaId }),
+    const response = await fetchApi(`v1/consent/farmers?fayda_id=${encodeURIComponent(faydaId)}`, {
+      method: 'GET',
     }) as ApiResponse<SearchFarmerBackendData | null>;
 
     const payload = response.data;

@@ -37,9 +37,8 @@ describe('newLeadService', () => {
         gender: '',
         profileImageUrl: 'https://example.com/image.jpg',
       });
-      expect(fetchApi).toHaveBeenCalledWith('v1/consent/farmers', {
-        method: 'POST',
-        body: JSON.stringify({ fayda_id: 'FID-123' }),
+      expect(fetchApi).toHaveBeenCalledWith('v1/consent/farmers?fayda_id=FID-123', {
+        method: 'GET',
       });
     });
 
