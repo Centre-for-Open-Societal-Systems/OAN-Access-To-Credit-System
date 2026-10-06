@@ -47,12 +47,12 @@ export const notificationService = {
       limit: limit.toString(),
       start: start.toString(),
     });
-    return fetchApi(`oan_a2c.api.v1.notifications.get_notifications?${query.toString()}`);
+    return fetchApi(`v1/notifications?${query.toString()}`);
   },
 
   async markRead(params: MarkReadParams): Promise<{ status: string; message?: string }> {
-    return fetchApi('oan_a2c.api.v1.notifications.mark_read', {
-      method: 'POST',
+    return fetchApi('v1/notifications/read', {
+      method: 'PATCH',
       body: JSON.stringify({
         notification_ids: params.notification_ids ?? [],
         mark_all: params.mark_all ?? false,
@@ -61,8 +61,8 @@ export const notificationService = {
   },
 
   async clearNotifications(params: ClearNotificationsParams): Promise<{ status: string; message?: string }> {
-    return fetchApi('oan_a2c.api.v1.notifications.clear', {
-      method: 'POST',
+    return fetchApi('v1/notifications', {
+      method: 'DELETE',
       body: JSON.stringify({
         notification_ids: params.notification_ids ?? [],
         clear_all: params.clear_all ?? false,

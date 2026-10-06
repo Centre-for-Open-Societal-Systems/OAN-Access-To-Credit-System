@@ -9,6 +9,7 @@ import { performGlobalLogout } from '@/features/auth/logout';
 // eslint-disable-next-line boundaries/dependencies -- TODO (2026-08-23): needs to be fixed later; hiding for now as this existed before our changes
 import { selectAuthStatus, selectUser } from '@/features/auth/store/authSlice';
 import { registerBank, selectOnboardingRegistrationError, selectOnboardingRegistrationStatus } from '@/features/seller/store/onboardingSlice';
+import { isValidTaxRegistrationLength } from '@/lib/validation/taxRegistration';
 import { toast } from '@/lib/toast';
 import type { AppDispatch } from '@/store';
 import { ArrowLeft } from 'lucide-react';
@@ -59,11 +60,20 @@ export default function RegisterPage() {
     registered_email: '',
     registered_phone: '',
   });
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
 
   const isLoading = registrationStatus === 'loading';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPhoneValid) {
+      toast.error('Phone number must be exactly 10 digits.');
+      return;
+    }
+    if (!isValidTaxRegistrationLength(orgFields.bank_code)) {
+      toast.error('Tax registration number must be 9-10 characters.');
+      return;
+    }
     const result = await dispatch(registerBank({
       ...orgFields,
       ...addressFields,
@@ -161,6 +171,7 @@ export default function RegisterPage() {
             isAgreed={isAgreed}
             setIsAgreed={setIsAgreed}
             errors={parsedErrors}
+            onPhoneValidityChange={setIsPhoneValid}
           />
           {parsedErrors.global && (
             <p className="text-sm text-red-600 px-1">{parsedErrors.global}</p>

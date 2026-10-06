@@ -82,15 +82,14 @@ export function RoleTabs() {
             {isActive && (
               <motion.div
                 layoutId="active-role-tab"
-                className={`absolute inset-0 bg-[#F4FDF7] border-2 border-[#16A34A] ${tab.highlightShape}`}
-                style={{ zIndex: -1 }}
+                className={`absolute inset-0 z-0 bg-[#F4FDF7] border-2 border-[#16A34A] ${tab.highlightShape}`}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
-            <div className={`w-10 h-10 rounded-full ${tab.iconWrapper} flex items-center justify-center shrink-0`}>
+            <div className={`relative z-10 w-10 h-10 rounded-full ${tab.iconWrapper} flex items-center justify-center shrink-0`}>
               <Icon className={`w-5 h-5 ${tab.iconColor}`} aria-hidden="true" />
             </div>
-            <div className="flex flex-col">
+            <div className="relative z-10 flex flex-col">
               <span className="text-[14px] sm:text-[15px] font-bold text-gray-900 leading-tight mb-1">
                 {tab.title}
               </span>

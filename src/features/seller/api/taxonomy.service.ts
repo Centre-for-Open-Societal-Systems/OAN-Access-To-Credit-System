@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 export const taxonomyService = {
   async getCategories(): Promise<ApiResponse<TaxonomyCategory[]>> {
-    const raw = (await fetchApi('oan_a2c.api.v1.seller.taxonomy.get_categories')) as ApiResponse<Record<string, unknown>>;
+    const raw = (await fetchApi('v1/taxonomy/categories')) as ApiResponse<Record<string, unknown>>;
     return {
       ...raw,
       data: validateResponse(z.array(taxonomyCategorySchema), raw.data?.categories, 'seller.get_categories'),
@@ -17,7 +17,7 @@ export const taxonomyService = {
   },
 
   async getTags(): Promise<ApiResponse<TaxonomyTag[]>> {
-    const raw = (await fetchApi('oan_a2c.api.v1.seller.taxonomy.get_tags')) as ApiResponse<Record<string, unknown>>;
+    const raw = (await fetchApi('v1/taxonomy/tags')) as ApiResponse<Record<string, unknown>>;
     return {
       ...raw,
       data: validateResponse(z.array(taxonomyTagSchema), raw.data?.tags, 'seller.get_tags'),
@@ -25,7 +25,7 @@ export const taxonomyService = {
   },
 
   async getAttributes(): Promise<ApiResponse<TaxonomyAttribute[]>> {
-    const raw = (await fetchApi('oan_a2c.api.v1.seller.taxonomy.get_attributes')) as ApiResponse<Record<string, unknown>>;
+    const raw = (await fetchApi('v1/taxonomy/attributes')) as ApiResponse<Record<string, unknown>>;
     return {
       ...raw,
       data: validateResponse(z.array(taxonomyAttributeSchema), raw.data?.attributes, 'seller.get_attributes'),
@@ -33,23 +33,23 @@ export const taxonomyService = {
   },
 
   async setProductCategories(productId: string, termIds: string[]): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.seller.taxonomy.set_product_categories', {
-      method: 'POST',
-      body: JSON.stringify({ product_id: productId, term_ids: termIds }),
+    return fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}/categories`, {
+      method: 'PUT',
+      body: JSON.stringify({ term_ids: termIds }),
     }) as Promise<ApiResponse<null>>;
   },
 
   async setProductTags(productId: string, termIds: string[]): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.seller.taxonomy.set_product_tags', {
-      method: 'POST',
-      body: JSON.stringify({ product_id: productId, term_ids: termIds }),
+    return fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}/tags`, {
+      method: 'PUT',
+      body: JSON.stringify({ term_ids: termIds }),
     }) as Promise<ApiResponse<null>>;
   },
 
   async setProductAttributes(productId: string, attributes: Record<string, string[]>): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.seller.taxonomy.set_product_attributes', {
-      method: 'POST',
-      body: JSON.stringify({ product_id: productId, attributes }),
+    return fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}/attributes`, {
+      method: 'PUT',
+      body: JSON.stringify({ attributes }),
     }) as Promise<ApiResponse<null>>;
   },
 };

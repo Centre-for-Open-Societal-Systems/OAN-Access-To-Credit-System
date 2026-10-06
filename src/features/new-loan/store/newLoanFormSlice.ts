@@ -96,13 +96,12 @@ export const createLoanApplicationAPI = createAsyncThunk(
       if (!appId) throw new Error('No Application ID returned');
       return appId;
     } catch (err) {
-      const error = err as Error & { responseData?: { message?: { name?: string } } };
-      if (error.responseData?.message?.name) {
-        return rejectWithValue({
-          message: error.message || 'Failed to create application',
-          name: error.responseData.message.name
-        });
-      }
+      // Always a string: the `rejected` reducer assigns this straight into
+      // `errors.createApp`, which is typed `string | null`. A duplicate lead
+      // surfaces here as the backend's own "Loan application already exists for
+      // this lead" message — it does not identify the existing application, so
+      // there is nothing extra to hand the caller.
+      const error = err as Error;
       return rejectWithValue(error.message || 'Failed to create application');
     }
   }

@@ -47,6 +47,7 @@ export function OrganisationSection({ fields, onChange, errors = {} }: Organisat
           required
           placeholder="Enter Tax registration number"
           hint="Tax Identification number (9-10 characters)"
+          maxLength={10}
           value={fields.bank_code}
           onChange={(e) => onChange({ bank_code: e.target.value })}
           error={errors.bank_code}

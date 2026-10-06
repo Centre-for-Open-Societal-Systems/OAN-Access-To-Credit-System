@@ -29,8 +29,8 @@ export const loanProductsService = {
     }
     const queryString = query.toString();
     const path = queryString
-      ? `oan_a2c.api.v1.seller.loan_products.list_products?${queryString}`
-      : 'oan_a2c.api.v1.seller.loan_products.list_products';
+      ? `v1/banks/me/products?${queryString}`
+      : 'v1/banks/me/products';
 
     const raw = (await fetchApi(path)) as ApiResponse<Record<string, unknown>>;
     const productsData = raw.data?.products;
@@ -42,7 +42,7 @@ export const loanProductsService = {
   },
 
   async getProduct(productId: string): Promise<ApiResponse<LoanProductDetail>> {
-    const path = `oan_a2c.api.v1.seller.loan_products.get_product?product_id=${encodeURIComponent(productId)}`;
+    const path = `v1/banks/me/products/${encodeURIComponent(productId)}`;
     const raw = (await fetchApi(path)) as ApiResponse<Record<string, unknown>>;
     const productData = raw.data?.product;
 
@@ -60,10 +60,7 @@ export const loanProductsService = {
   // Review comment left by the Bank Admin when a product was rejected. Only
   // meaningful for Rejected products; other statuses generally have none.
   async getProductComment(productId: string): Promise<ApiResponse<string | null>> {
-    const raw = (await fetchApi('oan_a2c.api.v1.seller.loan_products.get_product_comment', {
-      method: 'POST',
-      body: JSON.stringify({ product_id: productId }),
-    })) as ApiResponse<unknown>;
+    const raw = (await fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}/audit-log`)) as ApiResponse<unknown>;
 
     return {
       ...raw,
@@ -72,24 +69,24 @@ export const loanProductsService = {
   },
 
   async createProduct(payload: CreateLoanProductPayload): Promise<ApiResponse<{ product_ids: string[] }>> {
-    return fetchApi('oan_a2c.api.v1.seller.loan_products.create_product', {
+    return fetchApi('v1/banks/me/products', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ product_ids: string[] }>>;
   },
 
   async updateProduct(payload: UpdateLoanProductPayload): Promise<ApiResponse<{ product_id: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.loan_products.update_product', {
-      method: 'POST',
+    return fetchApi(`v1/banks/me/products/${encodeURIComponent(payload.product_id)}`, {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ product_id: string }>>;
   },
 
   async setProductStatus(productId: string, status: 'Active' | 'Archived' | 'Rejected' | 'Pending Approval', reason?: string): Promise<ApiResponse<null>> {
     const finalReason = reason ?? (status === 'Archived' ? DEFAULT_ARCHIVE_REASON : undefined);
-    return fetchApi('oan_a2c.api.v1.seller.loan_products.set_product_status', {
-      method: 'POST',
-      body: JSON.stringify({ product_id: productId, status, reason: finalReason }),
+    return fetchApi(`v1/banks/me/products/${encodeURIComponent(productId)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, reason: finalReason }),
     }) as Promise<ApiResponse<null>>;
   },
 
@@ -99,8 +96,8 @@ export const loanProductsService = {
 
   async getDashboardStats(bankCode?: string): Promise<ApiResponse<SellerDashboardStats>> {
     const path = bankCode
-      ? `oan_a2c.api.v1.seller.dashboard.get_stats?bank=${encodeURIComponent(bankCode)}`
-      : 'oan_a2c.api.v1.seller.dashboard.get_stats';
+      ? `v1/banks/me/dashboard/stats?bank=${encodeURIComponent(bankCode)}`
+      : 'v1/banks/me/dashboard/stats';
 
     const raw = (await fetchApi(path)) as ApiResponse<Record<string, unknown>>;
     const statsData = raw.data?.stats;

@@ -1,10 +1,22 @@
 'use client';
-import { clearOnboardingErrors, selectOnboardingMutationError, selectOnboardingMutationSource, selectOnboardingMutationStatus, selectUploadedFileUrl, uploadKycDocument } from '@/features/seller/store/onboardingSlice';
+import {
+  clearOnboardingErrors,
+  selectBankProfile,
+  selectOnboardingMutationError,
+  selectOnboardingMutationSource,
+  selectOnboardingMutationStatus,
+  uploadKycDocument,
+} from '@/features/seller/store/onboardingSlice';
+import type { BankProfile } from '@/features/seller/api/onboarding.service';
+import { getKycDocumentUrl, isKycDocumentUrl } from '@/features/seller/api/onboarding.service';
+import { toProxiedFileUrl } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { FileText, Loader2, Upload } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { DeleteDocumentModal } from './DeleteDocumentModal';
 import { ViewDocumentModal } from './ViewDocumentModal';
+
+const DEFAULT_KYC_DOCUMENT_NAME = 'Tax Registration Certificate.pdf';
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -23,7 +35,11 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-export function OrganisationDocumentsCard() {
+interface OrganisationDocumentsCardProps {
+  profile?: BankProfile | null;
+}
+
+export function OrganisationDocumentsCard({ profile }: OrganisationDocumentsCardProps = {}) {
   const dispatch = useAppDispatch();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -36,7 +52,33 @@ export function OrganisationDocumentsCard() {
   // mutationError is shared with the contacts card's saveOrgContacts
   // call — only surface it here when this card's own upload actually caused it.
   const mutationError = mutationSource === 'document' ? mutationErrorRaw : null;
-  const uploadedFileUrl = useAppSelector(selectUploadedFileUrl);
+  const storeBankProfile = useAppSelector(selectBankProfile);
+  const currentProfile = profile ?? storeBankProfile;
+  // `kyc_document` is already normalized by onboarding.service — to the KYC
+  // endpoint for a streamed document, and through `toProxiedFileUrl` for a
+  // stored file. Both are reapplied here (they're idempotent) so a profile that
+  // reached this component without passing through that service still renders.
+  const rawDocumentUrl =
+    currentProfile?.kyc_document ??
+    (currentProfile?.kyc_document_uploaded ? getKycDocumentUrl() : null);
+  const existingDocumentUrl = rawDocumentUrl
+    ? toProxiedFileUrl(rawDocumentUrl) ?? rawDocumentUrl
+    : null;
+  const isStreamedKycDoc = isKycDocumentUrl(existingDocumentUrl);
+  const hasExistingDoc = Boolean(existingDocumentUrl);
+  const existingFileName = existingDocumentUrl
+    ? (isStreamedKycDoc
+        ? DEFAULT_KYC_DOCUMENT_NAME
+        : decodeURIComponent(existingDocumentUrl.split('/').pop()?.split('?')[0] || DEFAULT_KYC_DOCUMENT_NAME))
+    : null;
+
+  const previewUrl = existingDocumentUrl
+    ? (isStreamedKycDoc ? getKycDocumentUrl({ inline: true }) : existingDocumentUrl)
+    : null;
+
+  const downloadUrl = existingDocumentUrl
+    ? existingDocumentUrl.split('?')[0]
+    : null;
 
   const handleBoxClick = () => {
     fileInputRef.current?.click();
@@ -116,7 +158,7 @@ export function OrganisationDocumentsCard() {
             accept=".pdf,application/pdf"
           />
 
-          {!uploadedFile ? (
+          {!uploadedFile && !hasExistingDoc ? (
             <button
               type="button"
               onClick={handleBoxClick}
@@ -131,24 +173,26 @@ export function OrganisationDocumentsCard() {
           ) : (
             <div className="rounded-xl border border-[#DCFCE7] bg-[#F0FDF4] p-4">
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#DCFCE7]">
                     <FileText size={24} className="text-[#16A34A]" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-bold leading-tight text-gray-900">{uploadedFile.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[15px] font-bold leading-tight text-gray-900 truncate">
+                      {uploadedFile?.name || existingFileName}
+                    </span>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
                       <span className="text-[14px] font-medium text-[#16A34A]">
-                        {uploadedFileUrl ? 'Uploaded to backend' : 'Ready to upload'}
+                        {uploadedFile && !hasExistingDoc ? 'Ready to upload' : 'Uploaded to backend'}
                       </span>
                     </div>
-                    {uploadedFileUrl ? (
-                      <span className="mt-1 break-all text-[12px] text-gray-500">File URL: {uploadedFileUrl}</span>
+                    {existingDocumentUrl && !isStreamedKycDoc ? (
+                      <span className="mt-1 break-all text-[12px] text-gray-500">File: {existingDocumentUrl}</span>
                     ) : null}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsViewModalOpen(true)}
@@ -157,31 +201,49 @@ export function OrganisationDocumentsCard() {
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
-                    aria-label="Remove selected document"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
-                  </button>
+                  {uploadedFile ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100"
+                      aria-label="Remove selected document"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <p className="text-[13px] text-gray-600">
-                  You can preview the selected file before uploading it to the backend.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#16A34A] px-4 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-80"
-                >
-                  {isUploading ? <Loader2 size={18} className="animate-spin" /> : null}
-                  <span>{isUploading ? 'Uploading...' : 'Upload PDF'}</span>
-                </button>
-              </div>
+              {uploadedFile ? (
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <p className="text-[13px] text-gray-600">
+                    You can preview the selected file before uploading it to the backend.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#16A34A] px-4 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-80"
+                  >
+                    {isUploading ? <Loader2 size={18} className="animate-spin" /> : null}
+                    <span>{isUploading ? 'Uploading...' : 'Upload PDF'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-green-200/60 pt-3">
+                  <p className="text-[13px] text-gray-600">
+                    KYC document is verified on the backend.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleBoxClick}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#16A34A] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#16A34A] transition-colors hover:bg-green-50"
+                  >
+                    <Upload size={14} />
+                    <span>Replace PDF</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -196,14 +258,25 @@ export function OrganisationDocumentsCard() {
       <ViewDocumentModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        file={uploadedFile}
+        document={
+          uploadedFile
+            ? { type: 'file', file: uploadedFile }
+            : previewUrl
+              ? {
+                  type: 'remote',
+                  fileUrl: previewUrl,
+                  downloadUrl,
+                  fileName: existingFileName,
+                }
+              : null
+        }
       />
 
       <DeleteDocumentModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleRemoveFile}
-        fileName={uploadedFile?.name || null}
+        fileName={uploadedFile?.name || existingFileName || null}
       />
     </>
   );

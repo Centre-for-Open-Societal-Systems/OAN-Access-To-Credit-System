@@ -29,8 +29,8 @@ export function toProxiedFileUrl(url: string | null | undefined): string | undef
   if (!url) return undefined;
   if (url.startsWith('/api/files/')) return url;
   // Absolute backend URL: strip scheme+host, leaving the `/files/` path.
-  const absRewritten = url.replace(/^https?:\/\/[^/]+\/files\//, '/api/files/');
-  if (absRewritten !== url) return absRewritten;
+  const absPublicRewritten = url.replace(/^https?:\/\/[^/]+\/files\//, '/api/files/');
+  if (absPublicRewritten !== url) return absPublicRewritten;
   // Relative backend path served from the frontend origin otherwise.
   if (url.startsWith('/files/')) return `/api/files/${url.slice('/files/'.length)}`;
   return url;
@@ -58,6 +58,18 @@ export function preventInvalidNumberChars(e: KeyboardEvent<HTMLInputElement>) {
     e.preventDefault();
   }
 }
+
+/**
+ * Appends URLSearchParams or a query string to a path, avoiding a trailing '?' when empty.
+ */
+export function withQuery(path: string, query: URLSearchParams | string): string {
+  const queryStr = typeof query === 'string' ? query : query.toString();
+  if (!queryStr) return path;
+  const cleanQuery = queryStr.startsWith('?') ? queryStr.slice(1) : queryStr;
+  if (!cleanQuery) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}${cleanQuery}`;
+}
+
 
 /**
  * Sanitizes a string from a number input by removing exponent and special characters.

@@ -50,7 +50,7 @@ export const handlers = [
     return HttpResponse.json(newLoan, { status: 201 });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_leads', ({ request }) => {
+  http.get('*/api/proxy/v1/leads', ({ request }) => {
     const url = new URL(request.url);
     const searchQuery = url.searchParams.get('search_query')?.toLowerCase() || '';
     const statusQuery = url.searchParams.get('status') || '';
@@ -88,17 +88,15 @@ export const handlers = [
     }));
 
     return HttpResponse.json({
-      message: {
-        status: 'success',
-        data: mappedResults,
-        pagination: {
-          total: mappedResults.length
-        }
+      status: 'success',
+      data: mappedResults,
+      pagination: {
+        total: mappedResults.length
       }
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_lead_summary', () => {
+  http.get('*/api/proxy/v1/leads/summary', () => {
     // Dynamically calculate the summary based on the mock data
     const by_status = leadRows.reduce((acc: Record<string, number>, lead) => {
       acc[lead.status] = (acc[lead.status] || 0) + 1;
@@ -106,17 +104,15 @@ export const handlers = [
     }, {});
 
     return HttpResponse.json({
-      message: {
-        status: 'success',
-        data: {
-          total: leadRows.length,
-          by_status
-        }
+      status: 'success',
+      data: {
+        total: leadRows.length,
+        by_status
       }
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.create_lead', async ({ request }) => {
+  http.post('*/api/proxy/v1/leads', async ({ request }) => {
     const body = (await request.json()) as CreateLeadPayload;
     const newLeadId = `LD-${Math.floor(10000 + Math.random() * 90000)}`;
     const newLead: LeadRow = {
@@ -143,15 +139,13 @@ export const handlers = [
     leadRows.unshift(newLead);
 
     return HttpResponse.json({
-      message: {
-        status: 'success',
-        lead_id: `#${newLeadId}`,
-        message: 'Lead created successfully.'
-      }
+      status: 'success',
+      lead_id: `#${newLeadId}`,
+      message: 'Lead created successfully.'
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_all_loans', ({ request }) => {
+  http.get('*/api/proxy/v1/loan-applications', ({ request }) => {
     const url = new URL(request.url);
     const leadIdQuery = url.searchParams.get('lead_id');
     const pageSize = parseInt(url.searchParams.get('page_size') || '10', 10);
@@ -185,18 +179,16 @@ export const handlers = [
       ];
 
       return HttpResponse.json({
-        message: {
-          status: "success",
-          message: "Loan applications retrieved successfully",
-          data: leadRows,
-          meta: {},
-          pagination: {
-            page: 1,
-            limit: pageSize,
-            total: leadRows.length,
-            total_pages: 1,
-            has_next: false
-          }
+        status: "success",
+        message: "Loan applications retrieved successfully",
+        data: leadRows,
+        meta: {},
+        pagination: {
+          page: 1,
+          limit: pageSize,
+          total: leadRows.length,
+          total_pages: 1,
+          has_next: false
         }
       });
     }
@@ -297,23 +289,21 @@ export const handlers = [
     }));
 
     return HttpResponse.json({
-      message: {
-        status: "success",
-        message: "Loan applications retrieved successfully",
-        data: mappedRows,
-        meta: {},
-        pagination: {
-          page: page,
-          limit: pageSize,
-          total: totalCount,
-          total_pages: Math.ceil(totalCount / pageSize) || 1,
-          has_next: (page * pageSize) < totalCount
-        }
+      status: "success",
+      message: "Loan applications retrieved successfully",
+      data: mappedRows,
+      meta: {},
+      pagination: {
+        page: page,
+        limit: pageSize,
+        total: totalCount,
+        total_pages: Math.ceil(totalCount / pageSize) || 1,
+        has_next: (page * pageSize) < totalCount
       }
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_loan_summary', () => {
+  http.get('*/api/proxy/v1/loan-applications/summary', () => {
     const allRows = getFallbackMockRows();
     const summary = allRows.reduce((acc, row) => {
       acc.total = (acc.total || 0) + 1;
@@ -336,97 +326,101 @@ export const handlers = [
     };
 
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: summary
-      }
+      status: "success",
+      data: summary
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_basic_profile', () => {
+  http.get('*/api/proxy/v1/loan-applications/:id/basic-profile', () => {
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: {
-          first_name: "Pending",
-          last_name: "Pending",
-          phone_number: "+251999999999",
-          email: null,
-          location: null
-        }
+      status: "success",
+      data: {
+        first_name: "Pending",
+        last_name: "Pending",
+        phone_number: "+251999999999",
+        email: null,
+        location: null
       }
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_full_profile', ({ request }) => {
+  http.get('*/api/proxy/v1/loan-applications/basic-profile', () => {
+    return HttpResponse.json({
+      status: "success",
+      data: {
+        first_name: "Pending",
+        last_name: "Pending",
+        phone_number: "+251999999999",
+        email: null,
+        location: null
+      }
+    });
+  }),
+
+  http.get('*/api/proxy/v1/loan-applications/:id/full-profile', ({ params, request }) => {
     const url = new URL(request.url);
-    const appId = url.searchParams.get('application_id') || 'APP-2026-00083';
+    const appId = (params.id as string) || url.searchParams.get('application_id') || 'APP-2026-00083';
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: {
-          name: appId,
-          owner: "Administrator",
-          creation: new Date().toISOString(),
-          modified: new Date().toISOString(),
-          modified_by: "admin@example.com",
-          docstatus: 0,
-          idx: 0,
-          lead_id: null,
-          farmer_id: null,
-          first_name: "Pending",
-          last_name: "Pending",
-          phone_number: "+251999999999",
-          email: null,
-          location: null,
-          date_of_birth: null,
-          gender: "",
-          marital_status: "",
-          size_of_family: 0,
-          number_of_children: 0,
-          no_of_females_family: 0,
-          no_of_males_family: 0,
-          source_of_income: null,
-          education_level: "",
-          family_member_owns_land_independently: 0,
-          total_farmland_size_as_landowner: 0.0,
-          total_farmland_size_as_crop_sharing: 0.0,
-          total_farmland_size_as_rented: 0.0,
-          farmland_size_hectares: 0.0,
-          land_ownership_status: null,
-          soil_fertility_minerals: null,
-          moisture_levels: null,
-          certification_id: null,
-          certification_photo_url: null,
-          consent_id: null,
-          loan_amount: 50000.0,
-          loan_type: "Input Loan",
-          loan_reason: "Buy fertilizer and seeds",
-          duration: "12 Months",
-          primary_crops: "Wheat, Barley",
-          crop_variety: "Local",
-          expected_yield: 25,
-          bank_account_no: "1000123456789",
-          ifsc_code: "COOPETAA",
-          bank_name: "Cooperative Bank of Oromia",
-          account_holder: "Yosef Tekle",
-          doctype: "A2C Loan Application"
-        }
+      status: "success",
+      data: {
+        name: appId,
+        owner: "Administrator",
+        creation: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        modified_by: "admin@example.com",
+        docstatus: 0,
+        idx: 0,
+        lead_id: null,
+        farmer_id: null,
+        first_name: "Pending",
+        last_name: "Pending",
+        phone_number: "+251999999999",
+        email: null,
+        location: null,
+        date_of_birth: null,
+        gender: "",
+        marital_status: "",
+        size_of_family: 0,
+        number_of_children: 0,
+        no_of_females_family: 0,
+        no_of_males_family: 0,
+        source_of_income: null,
+        education_level: "",
+        family_member_owns_land_independently: 0,
+        total_farmland_size_as_landowner: 0.0,
+        total_farmland_size_as_crop_sharing: 0.0,
+        total_farmland_size_as_rented: 0.0,
+        farmland_size_hectares: 0.0,
+        land_ownership_status: null,
+        soil_fertility_minerals: null,
+        moisture_levels: null,
+        certification_id: null,
+        certification_photo_url: null,
+        consent_id: null,
+        loan_amount: 50000.0,
+        loan_type: "Input Loan",
+        loan_reason: "Buy fertilizer and seeds",
+        duration: "12 Months",
+        primary_crops: "Wheat, Barley",
+        crop_variety: "Local",
+        expected_yield: 25,
+        bank_account_no: "1000123456789",
+        ifsc_code: "COOPETAA",
+        bank_name: "Cooperative Bank of Oromia",
+        account_holder: "Yosef Tekle",
+        doctype: "A2C Loan Application"
       }
     });
   }),
 
-
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.get_supporting_documents', () => {
+  http.get('*/api/proxy/v1/loan-applications/:id/documents', () => {
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: []
-      }
+      status: "success",
+      data: []
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.download_supporting_document', () => {
+  http.get('*/api/proxy/v1/loan-applications/:id/documents/:docId/content', () => {
     return new HttpResponse("Mock document content", {
       headers: {
         'Content-Type': 'text/plain',
@@ -435,89 +429,78 @@ export const handlers = [
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.upload_supporting_documents', () => {
+  http.post('*/api/proxy/v1/loan-applications/:id/documents', () => {
     return HttpResponse.json({
-      message: {
-        status: "success",
-        message: "Document uploaded successfully"
-      }
+      status: "success",
+      message: "Document uploaded successfully"
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.loan_applications.update_loan_step', async ({ request }) => {
+  http.patch('*/api/proxy/v1/loan-applications/:id/step', async ({ request }) => {
     const data = await request.json() as { step?: number };
     return HttpResponse.json({
-      message: {
-        status: "success",
-        message: `Loan application step updated to ${data.step}`
-      }
+      status: "success",
+      message: `Loan application step updated to ${data.step}`
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.update_lead_status', async ({ request }) => {
-    const data = await request.json() as { lead_id?: string; status?: string };
+  http.patch('*/api/proxy/v1/leads/:id/status', async ({ params, request }) => {
+    const data = await request.json() as { status?: string };
+    const leadId = (params.id as string) || "LEAD-2026-00202";
     return HttpResponse.json({
-      message: {
-        status: "success",
-        lead_id: data.lead_id || "LEAD-2026-00202",
-        new_status: data.status || "Processed",
-        message: "Lead status updated successfully."
-      }
+      status: "success",
+      lead_id: leadId,
+      new_status: data.status || "Processed",
+      message: "Lead status updated successfully."
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_assignable_users', () => {
+  http.get('*/api/proxy/v1/leads/assignable-users', () => {
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: [
-          {
-            email: "arnavjagadeesh12@gmail.com",
-            full_name: "arnav",
-            agent_id: "arnav",
-            region: "Oromia"
-          }
-        ]
-      }
+      status: "success",
+      data: [
+        {
+          email: "arnavjagadeesh12@gmail.com",
+          full_name: "arnav",
+          agent_id: "arnav",
+          region: "Oromia"
+        }
+      ]
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.assign_lead', async ({ request }) => {
-    const data = await request.json() as { lead_id?: string; assigned_to?: string };
+  http.patch('*/api/proxy/v1/leads/:id/assignment', async ({ params, request }) => {
+    const data = await request.json() as { assigned_to?: string };
+    const leadId = (params.id as string) || "LEAD-2026-00202";
     return HttpResponse.json({
-      message: {
-        status: "success",
-        lead_id: data.lead_id || "LEAD-2026-00202",
-        assigned_to: data.assigned_to || "arnavjagadeesh12@gmail.com",
-        assigned_date: "2026-06-08",
-        message: "Lead assigned successfully."
-      }
+      status: "success",
+      lead_id: leadId,
+      assigned_to: data.assigned_to || "arnavjagadeesh12@gmail.com",
+      assigned_date: "2026-06-08",
+      message: "Lead assigned successfully."
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.schedule_visit', () => {
+  http.post('*/api/proxy/v1/visit-schedules', () => {
     return HttpResponse.json({
-      message: {
-        status: "success",
-        schedule_id: "VSCH-2026-00267",
-        message: "Visit scheduled successfully."
-      }
+      status: "success",
+      schedule_id: "VSCH-2026-00267",
+      message: "Visit scheduled successfully."
     });
   }),
 
-  http.post('*/api/proxy/api/method/oan_a2c.api.v1.leads.update_visit_schedule_status', async ({ request }) => {
-    const data = await request.json() as { schedule_id?: string; status?: string };
+  http.patch('*/api/proxy/v1/visit-schedules/:id/status', async ({ params, request }) => {
+    const data = await request.json() as { status?: string };
+    const scheduleId = (params.id as string) || "VSCH-2026-03598";
     return HttpResponse.json({
-      message: {
-        status: "success",
-        schedule_id: data.schedule_id || "VSCH-2026-03598",
-        new_status: data.status || "Completed",
-        message: "Visit schedule status updated successfully."
-      }
+      status: "success",
+      schedule_id: scheduleId,
+      new_status: data.status || "Completed",
+      message: "Visit schedule status updated successfully."
     });
   }),
 
-  http.get('*/api/proxy/api/method/oan_a2c.api.v1.leads.get_visit_schedules', ({ request }) => {
+  http.get('*/api/proxy/v1/visit-schedules', ({ request }) => {
     const url = new URL(request.url);
     const leadId = url.searchParams.get('lead_id');
 
@@ -573,39 +556,105 @@ export const handlers = [
     if (leadId) {
       const filtered = mockSchedules.filter(s => s.lead.replace('#', '') === leadId.replace('#', ''));
       return HttpResponse.json({
-        message: {
-          status: "success",
-          data: filtered.length > 0 ? filtered : [
-            {
-              name: "VSCH-2026-00267",
-              lead: leadId,
-              visit_date: "2026-06-10",
-              visit_time: "14:30:00",
-              meeting_location: "Cooperative Office",
-              region: "Oromia",
-              zone: "East Shewa",
-              woreda: "Ada'ama",
-              kebele: "Kebele 02",
-              status: "Scheduled",
-              scheduled_by: "arnavjagadeesh12@gmail.com",
-              creation: new Date().toISOString()
-            }
-          ],
-          pagination: {
-            total: filtered.length
+        status: "success",
+        data: filtered.length > 0 ? filtered : [
+          {
+            name: "VSCH-2026-00267",
+            lead: leadId,
+            visit_date: "2026-06-10",
+            visit_time: "14:30:00",
+            meeting_location: "Cooperative Office",
+            region: "Oromia",
+            zone: "East Shewa",
+            woreda: "Ada'ama",
+            kebele: "Kebele 02",
+            status: "Scheduled",
+            scheduled_by: "arnavjagadeesh12@gmail.com",
+            creation: new Date().toISOString()
           }
+        ],
+        pagination: {
+          total: filtered.length
         }
       });
     }
 
     return HttpResponse.json({
-      message: {
-        status: "success",
-        data: mockSchedules,
-        pagination: {
-          total: mockSchedules.length
-        }
+      status: "success",
+      data: mockSchedules,
+      pagination: {
+        total: mockSchedules.length
       }
+    });
+  }),
+
+  http.get('*/api/proxy/v1/banks/me', () => {
+    return HttpResponse.json({
+      status: 'success',
+      message: 'Success',
+      data: {
+        bank_id: 'A2C-BANK-0001',
+        bank_code: 'BNK001',
+        bank_name: 'Example Bank',
+        brand_name: 'Example Brand',
+        entity_type: 'Bank',
+        registered_street: 'Bole Road',
+        registered_kebele_village: 'Kebele 01',
+        registered_woreda_district: 'Bole',
+        registered_zone: 'Bole Zone',
+        registered_region: 'Addis Ababa',
+        registered_country: 'Ethiopia',
+        registered_postal_code: '1000',
+        registered_email: 'ops@example.com',
+        registered_phone: '+251911234567',
+        website: 'https://example.com',
+        status: 'In Review',
+        gro_name: 'Abebe Kebede',
+        gro_mobile: '+251911000001',
+        ops_name: 'Tigist Haile',
+        ops_mobile: '+251911000002',
+        kyc_document: '/api/proxy/v1/banks/me/kyc-documents',
+        kyc_document_uploaded: true,
+        org_grievance_updated: true,
+        logo: null,
+      },
+    });
+  }),
+
+  http.get('*/api/proxy/v1/banks/me/kyc-documents', ({ request }) => {
+    const url = new URL(request.url);
+    const isView = url.searchParams.get('view') === '1';
+    return new HttpResponse(new Uint8Array([0x25, 0x50, 0x44, 0x46]), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': isView
+          ? 'inline; filename="tax_registration_cert.pdf"'
+          : 'attachment; filename="tax_registration_cert.pdf"',
+      },
+    });
+  }),
+
+  http.put('*/api/proxy/v1/banks/me/contacts', async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({
+      status: 'success',
+      message: 'Contacts saved successfully.',
+      data: {
+        message: 'Contacts saved successfully.',
+        ...body,
+      },
+    });
+  }),
+
+  http.post('*/api/proxy/v1/banks/me/kyc-documents', async ({ request }) => {
+    await request.json();
+    return HttpResponse.json({
+      status: 'success',
+      message: 'KYC document uploaded successfully.',
+      data: {
+        message: 'KYC document uploaded successfully.',
+        file_url: '/api/proxy/v1/banks/me/kyc-documents',
+      },
     });
   }),
 ];

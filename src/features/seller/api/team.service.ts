@@ -10,7 +10,7 @@ import type {
 
 export const teamService = {
   async listUsers(): Promise<ApiResponse<TeamUser[]>> {
-    const raw = (await fetchApi('oan_a2c.api.v1.seller.onboarding.list_users')) as ApiResponse<Record<string, unknown>>;
+    const raw = (await fetchApi('v1/banks/me/team')) as ApiResponse<Record<string, unknown>>;
     return {
       ...raw,
       data: validateResponse(z.array(teamUserSchema), raw.data?.users, 'seller.list_users'),
@@ -18,7 +18,7 @@ export const teamService = {
   },
 
   async inviteTeamMember(payload: InviteTeamMemberPayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.invite_team_member', {
+    return fetchApi('v1/banks/me/team', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
@@ -28,9 +28,10 @@ export const teamService = {
     payload: ResetMemberPasswordPayload,
     signal?: AbortSignal
   ): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.reset_member_password', {
+    const { email, password } = payload;
+    return fetchApi(`v1/banks/me/team/${encodeURIComponent(email)}/password-reset`, {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ password }),
       ...(signal ? { signal } : {}),
     }) as Promise<ApiResponse<null>>;
   },
@@ -38,9 +39,10 @@ export const teamService = {
   // Consolidated update endpoint: change full_name, role and/or enabled in one
   // call. Send only the fields that should change.
   async updateUser(payload: UpdateUserPayload): Promise<ApiResponse<null>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.update_user', {
-      method: 'POST',
-      body: JSON.stringify(payload),
+    const { email, ...body } = payload;
+    return fetchApi(`v1/banks/me/team/${encodeURIComponent(email)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     }) as Promise<ApiResponse<null>>;
   },
 };

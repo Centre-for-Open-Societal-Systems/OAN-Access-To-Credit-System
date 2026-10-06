@@ -33,7 +33,7 @@ export const consentService = {
     if (data.leadId) {
       payload.lead_id = cleanId(data.leadId);
     }
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.request_otp', {
+    const response = await fetchApi('v1/consent/otp', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as ApiResponse<SendOtpAndCreateConsentResponse>;
@@ -48,7 +48,7 @@ export const consentService = {
     if (data.leadId) {
       payload.lead_id = cleanId(data.leadId);
     }
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.verify_otp', {
+    const response = await fetchApi('v1/consent/otp/verify', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as ApiResponse<VerifyOtpResponse>;
@@ -71,7 +71,7 @@ export const consentService = {
     } else {
       delete payload.lead_id;
     }
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.submit_consent', {
+    const response = await fetchApi('v1/consent/requests', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as ApiResponse<SubmitConsentResponse>;
@@ -79,14 +79,14 @@ export const consentService = {
   },
 
   async get_consent_reasons(): Promise<ConsentReason[]> {
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.get_consent_reasons', {
+    const response = await fetchApi('v1/consent/reasons', {
       method: 'GET',
     }) as ApiResponse<ConsentReason[]>;
     return response.data;
   },
 
   async get_consent_allowed_fields(): Promise<AllowedDataField[]> {
-    const response = await fetchApi('oan_a2c.api.v1.consent.api.get_consent_allowed_fields', {
+    const response = await fetchApi('v1/consent/allowed-fields', {
       method: 'GET',
     }) as ApiResponse<AllowedDataField[]>;
     return response.data;

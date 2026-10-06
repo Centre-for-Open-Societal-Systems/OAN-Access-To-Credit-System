@@ -49,50 +49,78 @@ export interface UpdateBankProfilePayload {
   logo?: string;
 }
 
+/**
+ * The canonical same-origin URL for the current bank's KYC document.
+ *
+ * The document is not a `/files/...` asset with a stable path — it is streamed
+ * by a dedicated endpoint, so `toProxiedFileUrl` has nothing to rewrite. This
+ * is the single place that spelling lives; callers that need an inline preview
+ * pass `{ inline: true }` rather than appending `?view=1` themselves.
+ */
+export const KYC_DOCUMENT_PATH = '/api/proxy/v1/banks/me/kyc-documents';
+
+export function getKycDocumentUrl(options?: { inline?: boolean }): string {
+  return options?.inline ? `${KYC_DOCUMENT_PATH}?view=1` : KYC_DOCUMENT_PATH;
+}
+
+/** True when `url` points at the KYC-document endpoint rather than a stored file. */
+export function isKycDocumentUrl(url: string | null | undefined): boolean {
+  return Boolean(url && url.split('?')[0] === KYC_DOCUMENT_PATH);
+}
+
 export const onboardingService = {
+  getKycDocumentUrl,
+
   async registerSeller(payload: RegisterSellerPayload): Promise<ApiResponse<{ message: string }>> {
     // Public self-registration endpoint (guest-accessible). `role` is omitted so
     // the backend applies its default (BANK_ADMIN_ROLE), matching this page's intent.
-    return fetchApi('oan_a2c.api.v1.auth.register_user', {
+    return fetchApi('v1/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async registerBank(payload: RegisterBankPayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.register_bank', {
+    return fetchApi('v1/banks', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async saveOrgContacts(payload: SaveOrgContactsPayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.save_org_contacts', {
-      method: 'POST',
+    return fetchApi('v1/banks/me/contacts', {
+      method: 'PUT',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
 
   async uploadKycDocument(payload: UploadKycDocumentPayload): Promise<ApiResponse<{ message: string; file_url: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.upload_kyc_document', {
+    const res = await fetchApi('v1/banks/me/kyc-documents', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }) as Promise<ApiResponse<{ message: string; file_url: string }>>;
+    }) as ApiResponse<{ message: string; file_url: string }>;
+    if (res?.data) {
+      res.data.file_url = getKycDocumentUrl();
+    }
+    return res;
   },
 
   async getBankProfile(): Promise<ApiResponse<BankProfile>> {
-    const res = await fetchApi('oan_a2c.api.v1.seller.onboarding.get_bank_profile', {
+    const res = await fetchApi('v1/banks/me', {
       method: 'GET',
     }) as ApiResponse<BankProfile>;
     if (res?.data?.logo) {
       res.data.logo = toProxiedFileUrl(res.data.logo) ?? res.data.logo;
     }
+    if (res?.data?.kyc_document_uploaded || res?.data?.kyc_document) {
+      res.data.kyc_document = getKycDocumentUrl();
+    }
     return res;
   },
 
   async updateBankProfile(payload: UpdateBankProfilePayload): Promise<ApiResponse<{ message: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.update_bank_profile', {
-      method: 'POST',
+    return fetchApi('v1/banks/me', {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string }>>;
   },
@@ -101,7 +129,7 @@ export const onboardingService = {
   // `image` field, bank `logo`, etc.); it is proxied to `/api/files/...` only at
   // read/display time (see `toProxiedFileUrl`), never before persisting.
   async uploadImage(payload: { filename: string; filedata: string }): Promise<ApiResponse<{ message: string; file_url: string }>> {
-    return fetchApi('oan_a2c.api.v1.seller.onboarding.upload_image', {
+    return fetchApi('v1/images', {
       method: 'POST',
       body: JSON.stringify(payload),
     }) as Promise<ApiResponse<{ message: string; file_url: string }>>;

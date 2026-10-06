@@ -239,15 +239,15 @@ describe('buildClientResponse', () => {
     // Regression: /api/proxy uses `redirect: 'manual'`, so the 3xx arrives here
     // intact. The response allowlist alone dropped Location and the browser was
     // left with a redirect and no destination.
-    const response = redirectResponse(`${BACKEND}/api/method/oan_a2c.api.v1.leads.get?name=L-1`);
+    const response = redirectResponse(`${BACKEND}/v1/leads/L-1`);
 
-    const { init } = await buildClientResponse(response, `${BACKEND}/api/method/x`, {
+    const { init } = await buildClientResponse(response, `${BACKEND}/v1/leads`, {
       proxyPrefix: '/api/proxy',
     });
 
     expect(init.status).toBe(302);
     expect(new Headers(init.headers).get('location')).toBe(
-      '/api/proxy/api/method/oan_a2c.api.v1.leads.get?name=L-1'
+      '/api/proxy/v1/leads/L-1'
     );
   });
 

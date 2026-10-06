@@ -1,5 +1,6 @@
 'use client';
 import { teamService } from '@/features/seller/api/team.service';
+import { extractFieldErrors } from '@/lib/api/fetchApi';
 import type { TeamUser } from '@/lib/api/api.schemas';
 import type { InviteTeamMemberPayload } from '@/features/seller/types/team.types';
 import { toast } from '@/lib/toast';
@@ -78,8 +79,8 @@ export default function TeamManagementTab() {
       setInviteForm({ email: '', full_name: '', role: 'A2C Bank Agent', password: '' });
       fetchUsers();
     } catch (err) {
-      const details = (err as { responseData?: { message?: { details?: Record<string, string> } } }).responseData?.message?.details;
-      if (details) {
+      const details = extractFieldErrors(err);
+      if (Object.keys(details).length > 0) {
         setInviteErrors(details);
       }
       toast.error((err instanceof Error && err.message) || 'Failed to invite team member');
