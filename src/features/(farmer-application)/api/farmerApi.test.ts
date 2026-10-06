@@ -1,6 +1,6 @@
 import { fetchApi } from '@/lib/api/fetchApi';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getCatalog } from './farmerApi';
+import { getCatalog, getProduct } from './farmerApi';
 
 vi.mock('@/lib/api/fetchApi', () => ({ fetchApi: vi.fn() }));
 
@@ -58,3 +58,16 @@ describe('getCatalog — bookmarked-only filter', () => {
     expect(lastQuery().has('category')).toBe(false);
   });
 });
+
+describe('getProduct', () => {
+  beforeEach(() => {
+    mockedFetchApi.mockReset();
+    mockedFetchApi.mockResolvedValue({} as never);
+  });
+
+  it('calls v1/banks/me/products/${productId}', async () => {
+    await getProduct('prod-123');
+    expect(mockedFetchApi).toHaveBeenCalledWith('v1/banks/me/products/prod-123');
+  });
+});
+

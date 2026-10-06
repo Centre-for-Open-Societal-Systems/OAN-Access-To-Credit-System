@@ -3,13 +3,20 @@ allowBuilds:
   msw: false
   sharp: false
   unrs-resolver: false
+# GHSA-vfj7-8cjw-p6xm (braces <= 3.0.3 stack exhaustion DoS in devDependencies):
+# No upstream patch exists on npm yet (micromatch/braces#70, #73).
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
 
 overrides:
   postcss: "^8.5.18"
-  brace-expansion: "^5.0.8"
+  brace-expansion: "^5.0.12"
   immutable: "^5.1.8"
   sharp: "^0.35.4"
   js-yaml: "^4.3.2"
   # minimatch@3 (an ESLint dependency) needs brace-expansion's old ^1.x API —
-  # scoped so the blanket ^5.0.8 fix above still applies to everything else.
-  "minimatch@3>brace-expansion": "^1.1.12"
+  # scoped so the blanket ^5.0.12 fix above still applies to everything else.
+  "minimatch@3>brace-expansion": "^1.1.21"
+  source-map-js: "^1.2.2"
+  undici: "^8.11.2"
