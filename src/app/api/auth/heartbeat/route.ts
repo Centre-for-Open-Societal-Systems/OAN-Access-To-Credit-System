@@ -1,4 +1,5 @@
 import { getClientIp } from '@/lib/clientIp';
+import { readAppIamSession } from '@/lib/activeSession';
 import { checkCsrf } from '@/lib/csrf';
 import { checkRateLimit, rateLimitedResponse } from '@/lib/rateLimit';
 import { RATE_LIMITS } from '@/lib/securityConfig';
@@ -31,6 +32,12 @@ export async function POST(request: NextRequest) {
   );
   if (!limit.allowed) {
     return rateLimitedResponse(limit.retryAfterSeconds);
+  }
+
+  // An SSO session has no idle clock here (Keycloak owns it): report it live,
+  // touch nothing.
+  if (!request.cookies.get(AUTH_TOKEN_COOKIE)?.value && readAppIamSession(request)) {
+    return NextResponse.json({ active: true });
   }
 
   const hasSession = !!request.cookies.get(AUTH_TOKEN_COOKIE)?.value;

@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // The real module talks to /api/auth/logout; what matters here is what the
 // sign-out path does with the result, not the request itself.
 const logoutUser = vi.fn<() => Promise<boolean>>();
+// Set by a test to stand in for an SSO session, whose logout answers with the
+// identity provider's logout URL.
+let providerLogoutUrl: string | null = null;
 vi.mock('@/features/auth/api/authApi', () => ({
   logoutUser: () => logoutUser(),
+  endServerSession: async () => ({ cleared: await logoutUser(), redirectTo: providerLogoutUrl }),
 }));
 
 const assign = vi.fn();
@@ -29,6 +33,7 @@ async function loadLogoutModule() {
 beforeEach(() => {
   vi.clearAllMocks();
   logoutUser.mockResolvedValue(true);
+  providerLogoutUrl = null;
   assign.mockReset();
 });
 
@@ -46,6 +51,16 @@ describe('performGlobalLogout', () => {
 
       expect(assign).toHaveBeenCalledWith('/login');
     }
+  });
+
+  it('sends an SSO session to the identity provider to end its session there', async () => {
+    const { performGlobalLogout } = await loadLogoutModule();
+    stubLocation('/leads');
+    providerLogoutUrl = 'https://keycloak.example.org/logout?post_logout_redirect_uri=x';
+
+    await performGlobalLogout(vi.fn());
+
+    expect(assign).toHaveBeenCalledWith('https://keycloak.example.org/logout?post_logout_redirect_uri=x');
   });
 
   it('carries the reason so the login page can explain the sign-out', async () => {

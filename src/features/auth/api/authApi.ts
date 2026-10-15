@@ -3,6 +3,7 @@ import { rawUserResponseSchema, validateResponse, type RawUserResponse } from '@
 import { fetchApi } from '@/lib/api/fetchApi';
 import { AUTH_MESSAGES } from '@/lib/authMessages';
 import { logger } from '@/lib/logger';
+import { flattenMe } from '@/lib/meMapper';
 
 // `RawUserResponse` is the validated `get_me` shape; its single source of truth
 // is the Zod schema in `@/lib/api/api.schemas`.
@@ -152,28 +153,42 @@ interface EnvelopeMessage {
  * is a real outcome and no longer a synonym for success.
  */
 export async function logoutUser(): Promise<boolean> {
+  return (await endServerSession()).cleared;
+}
+
+/**
+ * `logoutUser`, plus where to send the browser next. For an SSO session the
+ * server returns the identity provider's logout URL: the provider's own session
+ * lives in the browser, so only a navigation there ends it.
+ */
+export async function endServerSession(
+  returnTo?: string
+): Promise<{ cleared: boolean; redirectTo: string | null }> {
   try {
     const res = await fetch(`/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
+      ...(returnTo ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnTo }) } : {}),
     });
 
     if (!res.ok) {
       logger.security(`Logout refused by the server with status ${res.status}`);
-      return false;
+      return { cleared: false, redirectTo: null };
     }
 
-    return true;
+    const body = (await res.json().catch(() => null)) as { redirectTo?: unknown } | null;
+    const redirectTo = typeof body?.redirectTo === 'string' ? body.redirectTo : null;
+    return { cleared: true, redirectTo };
   } catch (error) {
     // The cookies are httpOnly, so an unreachable route leaves the session live
     // server-side. Report that honestly rather than reporting success.
     logger.error('Logout request failed:', error);
-    return false;
+    return { cleared: false, redirectTo: null };
   }
 }
 
 export async function getMe(): Promise<RawUserResponse> {
-  const data = await fetchApi('v1/me', {
+  const data = await fetchApi('v1/auth/me', {
     method: 'GET',
   });
 
@@ -181,7 +196,7 @@ export async function getMe(): Promise<RawUserResponse> {
     throw new Error('Malformed get_me API response');
   }
 
-  return validateResponse(rawUserResponseSchema, data.data, 'auth.get_me');
+  return validateResponse(rawUserResponseSchema, flattenMe(data.data), 'auth.get_me');
 }
 
 export interface UserProfileResponse {
@@ -241,14 +256,14 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
 export async function forgotPassword(email: string): Promise<void> {
   await fetchApi('v1/auth/password/forgot', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ usr: email }),
   });
 }
 
 export async function resetPassword(email: string, key: string, new_password: string): Promise<void> {
   await fetchApi('v1/auth/password/reset', {
     method: 'POST',
-    body: JSON.stringify({ email, key, new_password }),
+    body: JSON.stringify({ usr: email, otp: key, new_password }),
   });
 }
 

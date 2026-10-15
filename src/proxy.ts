@@ -1,4 +1,6 @@
-import { canAccess, homeRouteFor, isProtectedRoute, readRoutingSession } from '@/features/auth/rbac';
+import { canAccess, homeRouteFor, isProtectedRoute, readIamRoutingSession, readRoutingSession } from '@/features/auth/rbac';
+import { readAppIamSession } from '@/lib/activeSession';
+import { canRefreshIamSession } from '@/lib/iamSession';
 import {
     AUTH_TOKEN_COOKIE,
     clearAuthTokenCookie,
@@ -35,8 +37,15 @@ export function proxy(request: NextRequest) {
   };
 
   const token = request.cookies.get(AUTH_TOKEN_COOKIE)?.value;
-  const session = readRoutingSession(token);
+  const localSession = readRoutingSession(token);
   const hasRefreshToken = !!request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+
+  // A Development Agent signs in through SSO: the session is the OpenG2P IAM
+  // service's cookies, not ours (lib/iamSession.ts). A local session wins when a
+  // browser somehow holds both — it is the one this app issued.
+  const iam = localSession.state === 'none' && !hasRefreshToken ? readAppIamSession(request) : null;
+  const session = iam ? readIamRoutingSession(iam.claims) : localSession;
+  const canRenew = iam ? canRefreshIamSession(iam) : hasRefreshToken;
 
   // 0. Idle timeout. The activity cookie outlives its own max-age only while
   //    someone is actually using the app, so its absence alongside a session
@@ -59,7 +68,7 @@ export function proxy(request: NextRequest) {
   //    This replaces a bare "is the cookie non-empty" test, which accepted any
   //    string at all as proof of a session.
   const isAuthenticated =
-    session.state === 'active' || (session.state === 'expired' && hasRefreshToken);
+    session.state === 'active' || (session.state === 'expired' && canRenew);
 
   if (isProtectedRoute(pathname) && !isAuthenticated) {
     const response = redirectToLogin(hasRefreshToken ? 'session' : undefined);
@@ -102,7 +111,8 @@ export function proxy(request: NextRequest) {
   // A page navigation is a person doing something, so it restarts the idle
   // timer. Background API polling deliberately does not — see the note on
   // SESSION_ACTIVITY_COOKIE in lib/session.ts.
-  if (isAuthenticated) touchActivityCookie(response);
+  // An SSO session has no idle clock of ours: Keycloak owns its idle timeout.
+  if (isAuthenticated && !iam) touchActivityCookie(response);
 
   return response;
 }

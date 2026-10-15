@@ -4,6 +4,7 @@ import { getClientIp } from '@/lib/clientIp';
 import { checkCsrf } from '@/lib/csrf';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { flattenMe } from '@/lib/meMapper';
 import { checkRateLimit, rateLimitedResponse } from '@/lib/rateLimit';
 import { RATE_LIMITS } from '@/lib/securityConfig';
 import { setSessionCookies } from '@/lib/session';
@@ -92,10 +93,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ message }, { status: response.status === 429 ? 429 : status });
     }
 
-    // Extract the JWT token, refresh token, and user strictly based on the REST envelope
-    const token = data?.data?.token as string | undefined;
+    // Extract the JWT token and refresh token strictly based on the REST envelope.
+    // The login response carries no profile: user type and bank come from /auth/me.
+    const token = data?.data?.access_token as string | undefined;
     const refreshToken = data?.data?.refresh_token as string | undefined;
-    const user = data?.data?.user ?? null;
+
+    const meResponse = token
+      ? await fetch(`${env.API_BASE_URL}/v1/auth/me`, {
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+            'X-Forwarded-For': clientIp,
+          },
+        })
+      : null;
+    const meData = meResponse ? await meResponse.json().catch(() => ({})) : {};
+    const user = meResponse?.ok ? flattenMe(meData?.data) : null;
+
+    if (!user) {
+      logger.error('Login succeeded but the profile could not be loaded from /v1/auth/me');
+      return NextResponse.json({ message: AUTH_MESSAGES.signInUnavailable }, { status: 502 });
+    }
 
     const nextResponse = NextResponse.json({
       success: true,

@@ -2,16 +2,17 @@
   "_comment": "Security policy for the BFF. Single source of truth for both the server-side enforcement (route handlers, middleware) and the client-side idle countdown, so the two can never drift. Values are in seconds. Changing them requires a rebuild — they are policy, not per-environment configuration.",
 
   "rateLimits": {
-    "_comment": "Fixed-window, per client IP. Mirrors the backend limits in oan_a2c/api/auth.py so abuse is stopped one hop earlier without the two layers disagreeing.",
+    "_comment": "Fixed-window, per client IP. Stops abuse one hop before the backend (oan_auth_service) and the OpenG2P IAM service.",
     "login": { "limit": 10, "windowSeconds": 60 },
     "setInitialPassword": { "limit": 10, "windowSeconds": 60 },
     "refresh": { "limit": 30, "windowSeconds": 60 },
     "logout": { "limit": 30, "windowSeconds": 60 },
-    "heartbeat": { "limit": 120, "windowSeconds": 60 }
+    "heartbeat": { "limit": 120, "windowSeconds": 60 },
+    "ssoLogin": { "limit": 10, "windowSeconds": 60 }
   },
 
   "session": {
-    "_comment": "maxAge values mirror the backend refresh-token expiry (oan_a2c.api.auth.generate_refresh_token) so a cookie never outlives the token it carries. idleTimeout is enforced independently of both.",
+    "_comment": "maxAge values mirror the backend refresh-token expiry (oan_auth_service refresh_token_ttl / jwt_refresh_token_ttl) so a cookie never outlives the token it carries. idleTimeout is enforced independently of both.",
     "defaultMaxAgeSeconds": 86400,
     "rememberMeMaxAgeSeconds": 2592000,
     "idleTimeoutSeconds": 900,

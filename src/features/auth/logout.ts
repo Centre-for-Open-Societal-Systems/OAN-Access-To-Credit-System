@@ -1,4 +1,4 @@
-import { logoutUser } from '@/features/auth/api/authApi';
+import { endServerSession, logoutUser } from '@/features/auth/api/authApi';
 import { loginRouteFor, type LogoutReason } from '@/features/auth/rbac';
 import { logout } from '@/features/auth/store/authSlice';
 import { startBlocking } from '@/store/loadingSlice';
@@ -77,11 +77,15 @@ export async function performGlobalLogout(
 
   dispatch(startBlocking('Signing you out…'));
 
+  // An SSO session also has to end at the identity provider, which the server
+  // answers with a URL for; the provider then returns the browser to /login.
+  let providerLogoutUrl: string | null = null;
   try {
-    await clearSession(dispatch);
+    providerLogoutUrl = (await endServerSession()).redirectTo;
+    dispatch(logout());
   } finally {
     if (typeof window !== 'undefined') {
-      window.location.assign(loginRouteFor(reason));
+      window.location.assign(providerLogoutUrl ?? loginRouteFor(reason));
     } else {
       // No document to navigate; leave the flag down so a later browser-side
       // call can still run rather than being swallowed by the guard.

@@ -1,8 +1,12 @@
+import { readAppIamSession } from '@/lib/activeSession';
+import { getClientIp } from '@/lib/clientIp';
 import { checkCsrf } from '@/lib/csrf';
+import { isIamTokenExpired } from '@/lib/iamClaims';
+import { applyIamCookies, canRefreshIamSession, refreshIamSession } from '@/lib/iamSession';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { buildClientResponse, buildUpstreamHeaders } from '@/lib/proxyHeaders';
-import { AUTH_TOKEN_COOKIE, idleSessionResponse, isIdleExpired } from '@/lib/session';
+import { AUTH_TOKEN_COOKIE, idleSessionResponse, isIdleExpired, REFRESH_TOKEN_COOKIE } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RouteContext = { params: Promise<{ path: string[] }> };
@@ -44,7 +48,24 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
   const search = request.nextUrl.search;
   const targetUrl = `${env.API_BASE_URL}/${targetPath}${search}`;
 
-  const authToken = request.cookies.get(AUTH_TOKEN_COOKIE)?.value;
+  let authToken = request.cookies.get(AUTH_TOKEN_COOKIE)?.value;
+
+  // An SSO (IAM) session: its access token is forwarded as the Bearer token, the
+  // same as ours, and oan_auth_service validates it with IAM. IAM has no refresh
+  // endpoint for the client to call, so an expired token is renewed here, before
+  // the request goes out, and IAM's new cookies ride back on this response.
+  let iamSetCookies: string[] = [];
+  if (!authToken && !request.cookies.get(REFRESH_TOKEN_COOKIE)?.value) {
+    const iam = readAppIamSession(request);
+    authToken = iam?.accessToken;
+    if (iam?.claims && isIamTokenExpired(iam.claims) && canRefreshIamSession(iam)) {
+      const renewed = await refreshIamSession(iam, getClientIp(request));
+      if (renewed) {
+        authToken = renewed.accessToken;
+        iamSetCookies = renewed.setCookies;
+      }
+    }
+  }
 
   // Allowlisted client headers plus a trustworthy X-Forwarded-For and the JWT
   // injected from the httpOnly cookie. See lib/proxyHeaders.ts for why both
@@ -76,7 +97,9 @@ async function handleProxy(request: NextRequest, pathArray: string[]) {
     const { body, init } = await buildClientResponse(response, targetUrl, {
       proxyPrefix: '/api/proxy',
     });
-    return new NextResponse(body, init);
+    const clientResponse = new NextResponse(body, init);
+    applyIamCookies(clientResponse, iamSetCookies);
+    return clientResponse;
   } catch (error) {
     const safeTargetUrl = `${env.API_BASE_URL}/${targetPath}`;
     logger.error(`Proxy error for ${safeTargetUrl}:`, error);

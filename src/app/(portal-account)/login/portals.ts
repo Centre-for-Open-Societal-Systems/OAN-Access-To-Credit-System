@@ -21,6 +21,9 @@ export interface PortalConfig {
   /** Whether the Bank Admin / Bank Agent tab pair sits above the form. Only the
    *  two bank portals are alternatives to each other; the rest are not. */
   roleTabs?: boolean;
+  /** Users of this portal sign in only through single sign-on (the OpenG2P IAM
+   *  service): the portal shows an SSO button and no password form. */
+  sso?: boolean;
   form: PortalLoginFormProps;
 }
 
@@ -75,6 +78,9 @@ export const PORTALS: Record<PortalId, PortalConfig> = {
 
   'development-agent': {
     badge: 'Field Agent Portal',
+    // Development Agents are SSO-only; the backend refuses a local account
+    // holding the role (oan_a2c/api/auth.py, require_sso_for_development_agents).
+    sso: true,
     form: {
       subtitle: 'Coordinate field-level agricultural credit access across regions',
       allowedKinds: ['dev_agent'],

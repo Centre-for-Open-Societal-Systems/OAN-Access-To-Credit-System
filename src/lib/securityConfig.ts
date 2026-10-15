@@ -33,6 +33,8 @@ export const RATE_LIMITS = {
   refresh: toRule('refresh'),
   logout: toRule('logout'),
   heartbeat: toRule('heartbeat'),
+  /** Starting an SSO login opens a transaction at IAM, server to server. */
+  ssoLogin: toRule('ssoLogin'),
 } as const;
 
 const session = securityPolicy.session;

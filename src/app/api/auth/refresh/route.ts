@@ -1,7 +1,9 @@
 import { authEnvelopeLogMessage } from '@/lib/api/authEnvelope';
 import { AUTH_MESSAGES } from '@/lib/authMessages';
 import { getClientIp } from '@/lib/clientIp';
+import { readAppIamSession } from '@/lib/activeSession';
 import { checkCsrf } from '@/lib/csrf';
+import { applyIamCookies, expireIamCookies, refreshIamSession, type IamSession } from '@/lib/iamSession';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, rateLimitedResponse } from '@/lib/rateLimit';
@@ -15,6 +17,24 @@ import {
 } from '@/lib/session';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
+/**
+ * Renews an SSO (IAM) session. IAM has no refresh endpoint: it renews an expired
+ * token on any authenticated call, so this asks it for the user profile and
+ * relays the new cookies. When IAM refuses, its cookies are stale and are
+ * expired here so the next request reads as signed out.
+ */
+async function renewIamSession(iam: IamSession, clientIp: string): Promise<NextResponse> {
+  const renewed = await refreshIamSession(iam, clientIp);
+  if (!renewed) {
+    const response = endSession(AUTH_MESSAGES.sessionExpired);
+    expireIamCookies(response);
+    return response;
+  }
+  const response = NextResponse.json({ success: true, message: 'Token refreshed successfully' });
+  applyIamCookies(response, renewed.setCookies);
+  return response;
+}
 
 /** Ends the session in the browser and tells the client to sign in again. */
 function endSession(message: string, status = 401): NextResponse {
@@ -45,6 +65,8 @@ export async function POST(request: NextRequest) {
     const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
     if (!refreshToken) {
+      const iam = readAppIamSession(request);
+      if (iam) return renewIamSession(iam, clientIp);
       return endSession(AUTH_MESSAGES.sessionExpired);
     }
 
@@ -58,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call external API to refresh the JWT
-    const response = await fetch(`${env.API_BASE_URL}/v1/auth/token/refresh`, {
+    const response = await fetch(`${env.API_BASE_URL}/v1/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +103,7 @@ export async function POST(request: NextRequest) {
       return endSession(AUTH_MESSAGES.sessionExpired);
     }
 
-    const token = data?.data?.token as string | undefined;
+    const token = data?.data?.access_token as string | undefined;
     const newRefreshToken = data?.data?.refresh_token as string | undefined;
 
     if (!token || !newRefreshToken) {
