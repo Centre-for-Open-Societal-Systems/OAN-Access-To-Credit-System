@@ -52,6 +52,10 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
       toast.error('Registration number must be 9-10 characters.');
       return;
     }
+    if (!profile.registered_zone?.trim()) {
+      toast.error('Zone is required.');
+      return;
+    }
     setSaving(true);
     try {
       await onboardingService.updateBankProfile({
