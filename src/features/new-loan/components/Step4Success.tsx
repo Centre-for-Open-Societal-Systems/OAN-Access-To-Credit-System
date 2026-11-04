@@ -20,6 +20,7 @@ export function Step4Success() {
   const [submittedAt] = useState(() => Date.now());
   const formData = useSelector((state: RootState) => state.loanForm.formData);
   const applicationId = useSelector((state: RootState) => state.loanForm.applicationId);
+  const lenderName = useSelector((state: RootState) => state.loanForm.lenderName);
 
   const farmerName = `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || "—";
 
@@ -70,7 +71,7 @@ export function Step4Success() {
 
           <h2 className="text-[28px] font-bold mb-3 relative z-10 tracking-tight">Application Submitted Successfully!</h2>
           <p className="text-green-50 text-[15px] max-w-xl mb-6 relative z-10">
-            The loan application for <span className="font-bold text-white">{farmerName}</span> has been securely transmitted to Coop Bank.
+            The loan application for <span className="font-bold text-white">{farmerName}</span> has been securely transmitted{lenderName ? <> to {lenderName}</> : null}.
           </p>
 
           <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-[#117b38] px-4 py-1.5 text-xs font-bold text-white shadow-inner">

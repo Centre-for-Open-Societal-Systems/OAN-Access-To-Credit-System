@@ -65,3 +65,16 @@ export async function getCatalog(params: CatalogQuery = {}): Promise<CatalogList
 export async function getCatalogFacets(): Promise<CatalogFacetsResponse> {
   return fetchApi('v1/catalog/facets');
 }
+
+export interface CatalogBankDetails {
+  bank: string;
+  bank_name: string;
+  brand_name: string | null;
+}
+
+/** Resolve an application's bank ID to the public name shown to users. */
+export async function getCatalogBank(bankId: string): Promise<{ data: CatalogBankDetails }> {
+  return fetchApi(`v1/catalog/banks/${encodeURIComponent(bankId)}`) as Promise<{
+    data: CatalogBankDetails;
+  }>;
+}
