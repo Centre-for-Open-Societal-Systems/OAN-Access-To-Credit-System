@@ -6,11 +6,10 @@ import { CheckCircle2, Info, Loader2, Lock, User, X } from 'lucide-react';
 import { LoanTableRow } from '../LoanTable';
 import { PINNED_OR_META_KEYS, useLoanApplicationModal } from './useLoanApplicationModal';
 
-interface LoanApplicationModalLegacyProps {
+type LoanApplicationModalLegacyProps = {
   isOpen: boolean;
   onClose: () => void;
-  data: LoanTableRow | null;
-}
+} & ({ data: LoanTableRow | null; applicationId?: never } | { applicationId: string; data?: never });
 
 const Field = ({ label, value }: { label: string; value: string | null | undefined }) => (
   <div className="flex flex-col">
@@ -21,11 +20,12 @@ const Field = ({ label, value }: { label: string; value: string | null | undefin
   </div>
 );
 
-export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: LoanApplicationModalLegacyProps) {
-  const { isLoading, fullProfile } = useLoanApplicationModal(isOpen, data);
+export default function LoanApplicationModalLegacy({ isOpen, onClose, data, applicationId }: LoanApplicationModalLegacyProps) {
+  const reference = applicationId ? { id: applicationId } : data ?? null;
+  const { isLoading, fullProfile, error } = useLoanApplicationModal(isOpen, reference);
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
 
-  if (!isOpen || !data) return null;
+  if (!isOpen || !reference) return null;
 
   const extraEntries = fullProfile
     ? Object.entries(fullProfile).filter(
@@ -39,7 +39,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
 
   const fullName = fullProfile?.first_name || fullProfile?.last_name
     ? `${fullProfile.first_name || ''} ${fullProfile.last_name || ''}`.trim()
-    : data.applicant;
+    : data?.applicant;
 
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#0F172A]/40 backdrop-blur-sm overflow-y-auto">
@@ -57,7 +57,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
           <div className="min-w-0 flex-1">
             <h2 id="loan-application-legacy-modal-title" className="text-xl font-bold text-white mb-1">Application Summary</h2>
             <p className="text-emerald-100 text-[13px] font-medium tracking-wide">
-              ID: {data.id} &bull; Submitted {data.updated}
+              ID: {reference.id} &bull; Submitted {data?.updated ?? (fullProfile?.creation ? new Date(fullProfile.creation).toLocaleString() : '—')}
             </p>
           </div>
           <button
@@ -72,12 +72,13 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
         <div className="bg-emerald-50/80 px-8 py-4 flex items-center gap-3 border-b border-emerald-100/50">
           <CheckCircle2 size={24} className="text-emerald-500 fill-emerald-100 shrink-0" />
           <div>
-            <h3 className="text-sm font-bold text-[#16A34A]">{data.status}</h3>
+            <h3 className="text-sm font-bold text-[#16A34A]">{data?.status ?? fullProfile?.status}</h3>
           </div>
         </div>
 
         {/* Body */}
         <div className="px-8 py-8 overflow-y-auto max-h-[60vh] space-y-8 custom-scrollbar">
+          {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : <>
 
           {/* Section 1: Farmer Information */}
           <section>
@@ -92,7 +93,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
                 <Field label="FULL NAME" value={fullName} />
-                <Field label="MOBILE PHONE" value={fullProfile?.phone_number || data.phone || null} />
+                <Field label="MOBILE PHONE" value={fullProfile?.phone_number || data?.phone || null} />
               </div>
             )}
           </section>
@@ -115,7 +116,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
                   value={
                     fullProfile?.loan_amount
                       ? `ETB ${fullProfile.loan_amount.toLocaleString()}`
-                      : data.loanAmount && data.loanAmount !== '—'
+                      : data?.loanAmount && data.loanAmount !== '—'
                         ? (data.loanAmount.startsWith('ETB') ? data.loanAmount : `ETB ${data.loanAmount}`)
                         : null
                   }
@@ -139,7 +140,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data }: Lo
               </div>
             </section>
           )}
-
+          </>}
         </div>
 
         {/* Footer */}
