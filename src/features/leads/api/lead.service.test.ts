@@ -1,0 +1,63 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { leadService } from './lead.service';
+
+const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
+
+describe('leadService.getLeads visit details', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    fetchMock.mockReset();
+    vi.unstubAllGlobals();
+  });
+
+  it('takes visit_date and schedule_status from the lead itself', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [
+          { name: 'LD-0001', status: 'Active', visit_date: '2026-11-20', schedule_status: 'Scheduled' },
+          { name: 'LD-0002', status: 'Active', visit_date: null, schedule_status: null },
+        ],
+        pagination: { total: 2 },
+      })
+    );
+
+    const { results } = await leadService.getLeads();
+
+    expect(results[0]).toMatchObject({ visitDate: '2026-11-20', scheduleStatus: 'Scheduled' });
+    expect(results[1]).toMatchObject({ visitDate: null, scheduleStatus: null });
+  });
+
+  it('does not fetch the visit-schedules list, so leads beyond its first 100 keep their visit details', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ name: 'LD-0500', status: 'Verified', visit_date: '2026-12-01', schedule_status: 'Completed' }],
+        pagination: { total: 500 },
+      })
+    );
+
+    const { results } = await leadService.getLeads({ start: 480, page_length: 20 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/proxy/v1/leads?');
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toContain('visit-schedules');
+    expect(results[0]).toMatchObject({ visitDate: '2026-12-01', scheduleStatus: 'Completed' });
+  });
+
+  it('shows a lead with a Missed visit as Active', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ name: 'LD-0003', status: 'Verified', visit_date: '2026-11-01', schedule_status: 'Missed' }],
+        pagination: { total: 1 },
+      })
+    );
+
+    const { results } = await leadService.getLeads();
+
+    expect(results[0]).toMatchObject({ status: 'Active', scheduleStatus: 'Missed', visitDate: '2026-11-01' });
+  });
+});

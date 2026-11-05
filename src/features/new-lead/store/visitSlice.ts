@@ -1,5 +1,3 @@
-// eslint-disable-next-line boundaries/dependencies -- TODO (2026-08-23): needs to be fixed later; hiding for now as this existed before our changes
-import { invalidateVisitScheduleCache } from '@/features/leads/api/lead.service';
 import { normalizeLeadId } from '@/lib/utils';
 import type { RootState } from '@/store';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -136,10 +134,6 @@ export const scheduleVisitThunk = createAsyncThunk<{
         notes: payload.agenda,
       };
       const response = await newLeadService.scheduleVisit(apiPayload);
-      // Colocated with the mutation (rather than a distant slice matching this
-      // thunk's action type) so a future visit-mutating thunk added here can't
-      // forget to invalidate the leads list's cached schedules.
-      invalidateVisitScheduleCache();
       return { response, payload };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to schedule visit');
@@ -158,7 +152,6 @@ export const updateVisitScheduleStatusThunk = createAsyncThunk<{
         schedule_id: payload.scheduleId,
         status: payload.status,
       });
-      invalidateVisitScheduleCache();
       return { response, payload };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown Cause: Failed to update visit schedule status');

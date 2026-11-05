@@ -91,15 +91,6 @@ export interface LeadSummaryResponse {
   };
 }
 
-export interface VisitSchedule {
-  name: string;
-  lead?: string;
-  visit_date: string;
-  visit_time?: string;
-  status?: string;
-  creation?: string;
-}
-
 export interface RawLead {
   name: string;
   farmer_name?: string;
@@ -114,7 +105,8 @@ export interface RawLead {
   assigned_to?: string;
   creation?: string;
   external_id?: string | null;
-  visitDate?: string | null;
+  visit_date?: string | null;
+  schedule_status?: string | null;
   farmer_id?: string | null;
   consent_date?: string | null;
   consentRequestId?: string | null;
