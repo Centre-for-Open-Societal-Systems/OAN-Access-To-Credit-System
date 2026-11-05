@@ -36,6 +36,7 @@ export interface BankProfile {
 
 export interface UpdateBankProfilePayload {
   bank_name?: string;
+  bank_code?: string;
   brand_name?: string;
   website?: string;
   registered_street?: string;
