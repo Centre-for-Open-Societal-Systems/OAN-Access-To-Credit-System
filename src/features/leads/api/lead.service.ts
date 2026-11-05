@@ -65,6 +65,7 @@ export const leadService = {
         assignedTo: item.assigned_to,
         owner: item.assigned_to === 'me' ? 'me' : item.assigned_to ? 'other' : 'unassigned',
         creation: item.creation || '',
+        statusChangedAt: item.status_changed_at || null,
         external_id: item.external_id,
         visitDate: item.visit_date || null,
         scheduleStatus: item.schedule_status || null,

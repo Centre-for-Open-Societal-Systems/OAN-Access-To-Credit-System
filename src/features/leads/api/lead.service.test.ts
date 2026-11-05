@@ -48,6 +48,23 @@ describe('leadService.getLeads visit details', () => {
     expect(results[0]).toMatchObject({ visitDate: '2026-12-01', scheduleStatus: 'Completed' });
   });
 
+  it('uses the status change time from the backend, falling back to creation', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [
+          { name: 'LD-0006', status: 'Verified', creation: '2026-01-05 08:00:00', status_changed_at: '2026-03-09 14:30:00' },
+          { name: 'LD-0007', status: 'Active', creation: '2026-01-06 08:00:00' },
+        ],
+        pagination: { total: 2 },
+      })
+    );
+
+    const { results } = await leadService.getLeads();
+
+    expect(results[0]).toMatchObject({ creation: '2026-01-05 08:00:00', statusChangedAt: '2026-03-09 14:30:00' });
+    expect(results[1]).toMatchObject({ creation: '2026-01-06 08:00:00', statusChangedAt: null });
+  });
+
   it('keeps the backend status when the latest visit is Missed', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({

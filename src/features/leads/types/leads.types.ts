@@ -47,6 +47,7 @@ export interface Lead {
   assignedTo?: string | undefined;
   owner?: string | undefined;
   creation: string;
+  statusChangedAt?: string | null | undefined;
   farmerPhone?: string | undefined;
   visitDate?: string | null | undefined;
   scheduleStatus?: string | null | undefined;
@@ -104,6 +105,7 @@ export interface RawLead {
   lead_source?: string;
   assigned_to?: string;
   creation?: string;
+  status_changed_at?: string | null;
   external_id?: string | null;
   visit_date?: string | null;
   schedule_status?: string | null;
