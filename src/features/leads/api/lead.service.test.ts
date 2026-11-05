@@ -48,16 +48,21 @@ describe('leadService.getLeads visit details', () => {
     expect(results[0]).toMatchObject({ visitDate: '2026-12-01', scheduleStatus: 'Completed' });
   });
 
-  it('shows a lead with a Missed visit as Active', async () => {
+  it('keeps the backend status when the latest visit is Missed', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
-        data: [{ name: 'LD-0003', status: 'Verified', visit_date: '2026-11-01', schedule_status: 'Missed' }],
-        pagination: { total: 1 },
+        data: [
+          { name: 'LD-0003', status: 'Verified', visit_date: '2026-11-01', schedule_status: 'Missed' },
+          { name: 'LD-0004', status: 'Rejected', visit_date: '2026-11-02', schedule_status: 'Missed' },
+          { name: 'LD-0005', status: 'Active', visit_date: '2026-11-03', schedule_status: 'Missed' },
+        ],
+        pagination: { total: 3 },
       })
     );
 
     const { results } = await leadService.getLeads();
 
-    expect(results[0]).toMatchObject({ status: 'Active', scheduleStatus: 'Missed', visitDate: '2026-11-01' });
+    expect(results.map((l) => l.status)).toEqual(['Verified', 'Rejected', 'Active']);
+    expect(results.every((l) => l.scheduleStatus === 'Missed')).toBe(true);
   });
 });

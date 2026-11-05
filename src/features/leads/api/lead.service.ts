@@ -57,7 +57,7 @@ export const leadService = {
         firstName: item.first_name || null,
         lastName: item.last_name || null,
         phone: item.phone_number || '',
-        status: (item.schedule_status === 'Missed' ? 'Active' : (item.status || '')) as LeadStatus,
+        status: (item.status || '') as LeadStatus,
         location: item.location || '',
         loanType: item.loan_type || '',
         loanAmount: item.loan_amount || '',
