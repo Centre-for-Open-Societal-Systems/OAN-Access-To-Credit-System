@@ -1,6 +1,6 @@
 'use client';
 
-import { isValidLoginIdentifier, normalizeLoginIdentifierInput } from '@/lib/validation/phone';
+import { isValidLoginIdentifier, normalizeLoginIdentifierInput, toCanonicalLoginIdentifier } from '@/lib/validation/phone';
 import { PartnerBanks } from '@/app/(portal-account)/components/PartnerBanks';
 import { SessionEndedNotice } from '@/components/SessionEndedNotice';
 import { Button } from '@/components/ui/Button';
@@ -53,7 +53,7 @@ export function PortalLoginForm({
   subtitle,
   usernameLabel = 'Phone Number or Email',
   usernameType = 'text',
-  usernamePlaceholder = '+251 911 234 567',
+  usernamePlaceholder = '+251-912345678',
   allowedKinds,
   redirectTo,
   showRegisterLink = false,
@@ -121,7 +121,7 @@ export function PortalLoginForm({
     dispatch(clearAuthError());
 
     try {
-      const result = await dispatch(loginThunk({ usr: username, pwd: password, rememberMe }));
+      const result = await dispatch(loginThunk({ usr: toCanonicalLoginIdentifier(username), pwd: password, rememberMe }));
       if (loginThunk.fulfilled.match(result)) {
         if (result.payload.outcome === 'password_change_required') {
           setPendingPasswordChange({ usr: result.payload.usr, temporaryPassword: password });

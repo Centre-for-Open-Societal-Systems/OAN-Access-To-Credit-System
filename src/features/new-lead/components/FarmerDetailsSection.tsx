@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { splitPhoneNumber, toDigitsOnly } from '@/lib/validation/phone';
+import { splitPhoneNumber, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { User } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -29,7 +29,7 @@ export function FarmerDetailsSection() {
   const { countryCode: phoneCountryCode, localDigits: phoneLocalDigits } = splitPhoneNumber(farmerDetails.phoneNumber);
   const phoneCountryFlagUrl = FARMER_COUNTRY_CODES.find((c) => c.code === phoneCountryCode)?.flagUrl;
   const handlePhoneCodeChange = (code: string) => handleChange('phoneNumber')(`${code}${phoneLocalDigits}`);
-  const handlePhoneDigitsChange = (digits: string) => handleChange('phoneNumber')(`${phoneCountryCode}${toDigitsOnly(digits)}`);
+  const handlePhoneDigitsChange = (digits: string) => handleChange('phoneNumber')(`${phoneCountryCode}${toLocalPhoneDigits(digits)}`);
 
   const params = useParams();
   const isLocked = Boolean(params?.id) || isOtpVerified;
@@ -127,7 +127,6 @@ export function FarmerDetailsSection() {
                 id="farmer-phone-number"
                 type="text"
                 inputMode="numeric"
-                maxLength={10}
                 value={phoneLocalDigits}
                 onChange={(e) => handlePhoneDigitsChange(e.target.value)}
                 placeholder="Enter phone number"

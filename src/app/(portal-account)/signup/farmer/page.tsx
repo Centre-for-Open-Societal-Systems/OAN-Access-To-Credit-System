@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Spinner } from '@/components/ui/Loader';
 import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
 import { strongPasswordSchema } from '@/lib/api/api.schemas';
-import { PHONE_NUMBER_REGEX, stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 
 const COUNTRY_CODES: CountryCodeOption[] = [
   { code: '+251', flagUrl: '/images/flags/et.svg', country: 'Ethiopia' },
@@ -55,7 +55,7 @@ export default function FarmerSignupPage() {
       // The phone number is kept — the consent webhook matches a farmer profile to
       // this account by mobile_no — but the email is the credential. Registering
       // without one is rejected by the backend: there is nothing to sign in with.
-      const fullPhone = `${countryCode}${stripLeadingZero(phoneNumber)}`;
+      const fullPhone = `${countryCode}${phoneNumber}`;
       const response = await fetchApi('v1/auth/register', {
         method: 'POST',
         body: JSON.stringify({
@@ -168,8 +168,7 @@ export default function FarmerSignupPage() {
                   type="tel"
                   inputMode="numeric"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(toDigitsOnly(e.target.value))}
-                  maxLength={9}
+                  onChange={(e) => setPhoneNumber(toLocalPhoneDigits(e.target.value))}
                   placeholder="Enter phone number"
                   required
                   className="w-full px-4 py-3 bg-white border border-[#D1D5DB] rounded-r-xl text-[14px] text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A] transition-all placeholder:text-[#9CA3AF] font-medium"

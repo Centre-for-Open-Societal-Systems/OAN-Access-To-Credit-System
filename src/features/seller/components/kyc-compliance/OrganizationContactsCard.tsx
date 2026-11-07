@@ -9,7 +9,7 @@ import {
 } from '@/features/seller/store/onboardingSlice';
 import type { BankProfile } from '@/features/seller/api/onboarding.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { PHONE_NUMBER_REGEX, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_LENGTH, PHONE_NUMBER_REGEX, toDigitsOnly } from '@/lib/validation/phone';
 import { Check, Loader2, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 
@@ -86,7 +86,7 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
     }
 
     if (!PHONE_NUMBER_REGEX.test(form.groMobile) || !PHONE_NUMBER_REGEX.test(form.opsMobile)) {
-      setLocalError('Mobile numbers must be exactly 10 digits.');
+      setLocalError('Mobile numbers must be exactly 9 digits.');
       setIsSaved(false);
       return;
     }
@@ -142,7 +142,7 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
               <input
                 type="text"
                 inputMode="numeric"
-                maxLength={10}
+                maxLength={PHONE_NUMBER_LENGTH}
                 placeholder="Enter phone number"
                 value={form.groMobile}
                 onChange={(event) => handleInputChange('groMobile', toDigitsOnly(event.target.value))}
@@ -167,7 +167,7 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
               <input
                 type="text"
                 inputMode="numeric"
-                maxLength={10}
+                maxLength={PHONE_NUMBER_LENGTH}
                 placeholder="Enter phone number"
                 value={form.opsMobile}
                 onChange={(event) => handleInputChange('opsMobile', toDigitsOnly(event.target.value))}
