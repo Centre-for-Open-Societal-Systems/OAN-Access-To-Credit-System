@@ -148,7 +148,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
       toast.success('Profile updated successfully');
     } catch (error) {
       logger.error('updateProfile failed', { error });
-      toast.error('Failed to update profile');
+      toast.error((error instanceof Error && error.message) || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
