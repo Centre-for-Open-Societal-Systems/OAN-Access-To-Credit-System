@@ -244,7 +244,7 @@ export const submitNewLeadThunk = createAsyncThunk<
       // so fall back to the raw value (as before) rather than throwing when
       // the schema rejects it; the backend remains the final validator for
       // that path.
-      // The field itself only ever holds a bare 9-digit local number (no
+      // The field itself only ever holds a bare local number (no
       // country-code selector on this form) — the backend stores/matches
       // leads by phone_number in "+251..." E.164 form (api-flow-backend.md),
       // so the dial code is added here, once, at the payload boundary. Only

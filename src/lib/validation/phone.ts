@@ -1,8 +1,20 @@
-/** Local mobile number digits, excluding any country/dial code prefix. */
-export const PHONE_NUMBER_LENGTH = 9;
+/**
+ * Sanity bounds for a local number (no dial code, no trunk 0). The real,
+ * per-country rule is enforced by the backend (libphonenumber); these only
+ * catch obvious typos. 15 is the E.164 maximum for a whole number.
+ */
+export const PHONE_NUMBER_MIN_DIGITS = 7;
+export const PHONE_NUMBER_MAX_DIGITS = 15;
 
-/** Nine digits with no trunk `0`: a 9-character "091234567" is only 8 once the 0 is dropped. */
-export const PHONE_NUMBER_REGEX = /^[1-9]\d{8}$/;
+/** Digits only, no leading `0` (a trunk 0 is dropped before validating). */
+export const PHONE_NUMBER_REGEX = new RegExp(
+  `^[1-9]\\d{${PHONE_NUMBER_MIN_DIGITS - 1},${PHONE_NUMBER_MAX_DIGITS - 1}}$`,
+);
+
+export const PHONE_NUMBER_ERROR = 'Enter a valid phone number.';
+
+/** Length of an Ethiopian local number; used only where the dial code defaults to +251. */
+const DEFAULT_REGION_LOCAL_DIGITS = 9;
 
 /** Strips every non-digit character (spaces, dashes, parens, `+`, letters). */
 export function toDigitsOnly(value: string): string {
@@ -20,13 +32,22 @@ export function stripLeadingZero(digits: string): string {
 }
 
 /**
+ * Drops a leading "251" dial code from a pasted full Ethiopian number
+ * ("+251 912 345 678"). Only done at exactly 12 digits (251 + 9 local): other
+ * lengths that start with 251 are treated as local numbers, not a dial code.
+ */
+export function stripDialCode(digits: string): string {
+  return digits.length === DEFAULT_REGION_LOCAL_DIGITS + 3 && digits.startsWith('251') ? digits.slice(3) : digits;
+}
+
+/**
  * Sanitizes a local-number input as it's typed or pasted: digits only, trunk 0
- * dropped, capped at PHONE_NUMBER_LENGTH. The cap lives here rather than in a
+ * dropped, capped at PHONE_NUMBER_MAX_DIGITS. The cap lives here rather than in a
  * `maxLength` attribute, which would truncate a pasted "0912345678" to
  * "091234567" before the trunk 0 could be dropped, losing the last digit.
  */
 export function toLocalPhoneDigits(value: string): string {
-  return stripLeadingZero(toDigitsOnly(value)).slice(0, PHONE_NUMBER_LENGTH);
+  return stripLeadingZero(stripDialCode(toDigitsOnly(value))).slice(0, PHONE_NUMBER_MAX_DIGITS);
 }
 
 /** Dial codes used anywhere in the app's registration/registration-adjacent forms. */
@@ -61,13 +82,15 @@ export function splitPhoneNumber(value: string): { countryCode: string; localDig
 }
 
 /**
- * Most digits a phone-style login identifier can hold: 9 local digits, plus the
- * trunk 0 or the dial code when the value carries one.
+ * Most digits a phone-style login identifier can hold. With a `+` any country is
+ * allowed (E.164 max); without one the number defaults to +251, so it is an
+ * Ethiopian local number, plus the trunk 0 or the dial code when present.
  */
 function loginPhoneMaxDigits(value: string): number {
   const digits = toDigitsOnly(value);
-  if (value.trimStart().startsWith('+') || digits.startsWith('251')) return PHONE_NUMBER_LENGTH + 3;
-  return digits.startsWith('0') ? PHONE_NUMBER_LENGTH + 1 : PHONE_NUMBER_LENGTH;
+  if (value.trimStart().startsWith('+')) return PHONE_NUMBER_MAX_DIGITS;
+  if (digits.startsWith('251')) return DEFAULT_REGION_LOCAL_DIGITS + 3;
+  return digits.startsWith('0') ? DEFAULT_REGION_LOCAL_DIGITS + 1 : DEFAULT_REGION_LOCAL_DIGITS;
 }
 
 /** Caps phone-style (no `@`) login input to its required digit count; emails pass through. */
@@ -98,7 +121,7 @@ function loginPhoneToE164(value: string): string | null {
   return PHONE_NUMBER_REGEX.test(local) ? `${countryCode}${local}` : null;
 }
 
-/** Login identifier is an email, or a phone whose local part is exactly PHONE_NUMBER_LENGTH digits. */
+/** Login identifier is an email, or a phone whose local part passes PHONE_NUMBER_REGEX. */
 export function isValidLoginIdentifier(value: string): boolean {
   const v = value.trim();
   if (!v) return false;

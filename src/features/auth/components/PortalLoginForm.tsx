@@ -114,7 +114,7 @@ export function PortalLoginForm({
     setErrorMessage(null);
     setNotice(null);
     if (!isValidLoginIdentifier(username)) {
-      setErrorMessage('Enter a valid email or a 9-digit phone number.');
+      setErrorMessage('Enter a valid email or phone number.');
       return;
     }
     setIsLoading(true);

@@ -7,7 +7,7 @@ import {
 } from '@/features/seller/store/onboardingSlice';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
-import { PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { registerSellerSchema } from '@/lib/api/api.schemas';
 import { toast } from '@/lib/toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -40,7 +40,7 @@ export function CreateAccountForm() {
     dispatch(clearOnboardingErrors());
 
     if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
-      setLocalError('Mobile number must be exactly 9 digits.');
+      setLocalError(PHONE_NUMBER_ERROR);
       return;
     }
 

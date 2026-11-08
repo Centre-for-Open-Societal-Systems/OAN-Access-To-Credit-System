@@ -9,7 +9,7 @@ import {
 } from '@/features/seller/store/onboardingSlice';
 import type { BankProfile } from '@/features/seller/api/onboarding.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { PHONE_NUMBER_LENGTH, PHONE_NUMBER_REGEX, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { Check, Loader2, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 
@@ -86,7 +86,7 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
     }
 
     if (!PHONE_NUMBER_REGEX.test(form.groMobile) || !PHONE_NUMBER_REGEX.test(form.opsMobile)) {
-      setLocalError('Mobile numbers must be exactly 9 digits.');
+      setLocalError(PHONE_NUMBER_ERROR);
       setIsSaved(false);
       return;
     }
@@ -142,10 +142,9 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
               <input
                 type="text"
                 inputMode="numeric"
-                maxLength={PHONE_NUMBER_LENGTH}
                 placeholder="Enter phone number"
                 value={form.groMobile}
-                onChange={(event) => handleInputChange('groMobile', toDigitsOnly(event.target.value))}
+                onChange={(event) => handleInputChange('groMobile', toLocalPhoneDigits(event.target.value))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -167,10 +166,9 @@ export function OrganizationContactsCard({ profile }: OrganizationContactsCardPr
               <input
                 type="text"
                 inputMode="numeric"
-                maxLength={PHONE_NUMBER_LENGTH}
                 placeholder="Enter phone number"
                 value={form.opsMobile}
-                onChange={(event) => handleInputChange('opsMobile', toDigitsOnly(event.target.value))}
+                onChange={(event) => handleInputChange('opsMobile', toLocalPhoneDigits(event.target.value))}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-[14px] transition-all focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>

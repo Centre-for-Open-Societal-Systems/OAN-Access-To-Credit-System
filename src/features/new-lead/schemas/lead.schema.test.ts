@@ -28,10 +28,12 @@ describe('createLeadSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects a leading country code', () => {
-    const result = createLeadSchema.safeParse({ phoneNumber: '+251911000000' });
+  it('drops a pasted trunk 0 or +251 prefix', () => {
+    for (const phoneNumber of ['0911000000', '+251911000000']) {
+      const result = createLeadSchema.safeParse({ phoneNumber });
 
-    expect(result.success).toBe(false);
+      expect(result.success && result.data.phoneNumber).toBe('911000000');
+    }
   });
 
   it('rejects non-numeric input', () => {

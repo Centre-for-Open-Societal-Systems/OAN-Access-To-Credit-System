@@ -1,7 +1,6 @@
 'use client';
 
-import { PHONE_NUMBER_MAX_LENGTH } from '@/features/seller/constants/field-limits';
-import { PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { useState } from 'react';
 import { FormCard } from './FormCard';
@@ -34,7 +33,7 @@ export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed,
   const [isPhoneTouched, setIsPhoneTouched] = useState(false);
   const phoneLengthError =
     isPhoneTouched && localPhoneDigits.length > 0 && !PHONE_NUMBER_REGEX.test(localPhoneDigits)
-      ? `Phone number must be exactly ${PHONE_NUMBER_MAX_LENGTH} digits.`
+      ? PHONE_NUMBER_ERROR
       : null;
 
   // Propagate the full number (code + digits) upstream whenever either changes.

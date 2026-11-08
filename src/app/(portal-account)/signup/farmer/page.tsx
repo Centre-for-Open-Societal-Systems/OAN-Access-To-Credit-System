@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Spinner } from '@/components/ui/Loader';
 import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
 import { strongPasswordSchema } from '@/lib/api/api.schemas';
-import { PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 
 const COUNTRY_CODES: CountryCodeOption[] = [
   { code: '+251', flagUrl: '/images/flags/et.svg', country: 'Ethiopia' },
@@ -34,7 +34,7 @@ export default function FarmerSignupPage() {
     event.preventDefault();
     
     if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
-      setError('Phone number must be exactly 9 digits.');
+      setError(PHONE_NUMBER_ERROR);
       return;
     }
 

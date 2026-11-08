@@ -10,7 +10,7 @@ import { onboardingService } from '@/features/seller/api/onboarding.service';
 import { toast } from '@/lib/toast';
 import { logger } from '@/lib/logger';
 import { toProxiedFileUrl } from '@/lib/utils';
-import { PHONE_NUMBER_REGEX, splitPhoneNumber, toLocalPhoneDigits } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, splitPhoneNumber, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { SelectField } from '@/components/ui/SelectField';
 
@@ -118,7 +118,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
   }, [isOpen, loadProfile]);
 
   const handleSaveProfile = async () => {
-    // Only enforce the 9-digit format when the phone was actually edited this
+    // Only validate the phone format when the phone was actually edited this
     // session. A stored number may predate it (a legacy or foreign number), and
     // an unrelated save (name/language) shouldn't be blocked by that.
     const originalPhoneNumber = profile?.personal_information.phone_number || '';
@@ -126,7 +126,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
     const phoneChanged =
       formData.phoneCountryCode !== original.countryCode || formData.phoneLocalDigits !== original.localDigits;
     if (!isProfileReadOnly && phoneChanged && !PHONE_NUMBER_REGEX.test(formData.phoneLocalDigits)) {
-      toast.error('Phone number must be exactly 9 digits');
+      toast.error(PHONE_NUMBER_ERROR);
       return;
     }
     // Untouched: send the original value through byte-for-byte rather than
