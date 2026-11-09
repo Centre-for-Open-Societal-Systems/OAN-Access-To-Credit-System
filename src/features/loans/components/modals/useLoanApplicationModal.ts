@@ -65,6 +65,11 @@ export const PINNED_OR_META_KEYS = new Set([
   'phone',
   'phone_number',
 
+  // Pinned identifiers
+  'farmer_id',
+  'loan_officer',
+  'loan_officer_name',
+
   // Metadata / Timestamps
   'stage_id',
   'creation',

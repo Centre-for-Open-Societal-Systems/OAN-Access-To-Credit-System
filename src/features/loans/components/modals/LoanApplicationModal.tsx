@@ -235,7 +235,7 @@ export default function LoanApplicationModal({ isOpen, onClose, data, stages = [
 
                     {fullProfile && Object.entries(fullProfile)
                       .filter(([key, value]) =>
-                        !PINNED_OR_META_KEYS.has(key) && value !== null && value !== '' && typeof value !== 'object'
+                        !PINNED_OR_META_KEYS.has(key) && value != null && value !== '' && typeof value !== 'object'
                       )
                       .map(([key, value]) => {
                         // Some values like source_of_income might be long, so we handle them below or let them span 2 cols if needed.

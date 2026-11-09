@@ -32,6 +32,7 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data, appl
       ([key, value]) =>
         !PINNED_OR_META_KEYS.has(key) &&
         value !== null &&
+        value !== undefined &&
         value !== '' &&
         typeof value !== 'object'
     )
@@ -94,6 +95,11 @@ export default function LoanApplicationModalLegacy({ isOpen, onClose, data, appl
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
                 <Field label="FULL NAME" value={fullName} />
                 <Field label="MOBILE PHONE" value={fullProfile?.phone_number || data?.phone || null} />
+                <Field label="FARMER ID" value={fullProfile?.farmer_id} />
+                <Field
+                  label="LOAN OFFICER"
+                  value={fullProfile?.loan_officer_name || fullProfile?.loan_officer || 'Unassigned'}
+                />
               </div>
             )}
           </section>

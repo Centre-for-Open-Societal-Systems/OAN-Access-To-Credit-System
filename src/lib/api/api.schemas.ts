@@ -55,6 +55,7 @@ export const loanApplicationFullSchema = z.object({
   loan_product_name: z.string().nullish().transform(val => val ?? undefined),
   loan_reason: z.string().nullish().transform(val => val ?? ''),
   loan_officer: z.string().nullish().transform(val => val ?? undefined),
+  loan_officer_name: z.string().nullish().transform(val => val ?? undefined),
   first_name: z.string().nullish().transform(val => val ?? undefined),
   last_name: z.string().nullish().transform(val => val ?? undefined),
   father_name: z.string().nullable().optional(),
