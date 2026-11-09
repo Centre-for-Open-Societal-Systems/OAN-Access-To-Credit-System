@@ -1,5 +1,6 @@
 'use client';
 
+import { NotificationRecordTarget } from '@/components/header/NotificationRecordTarget';
 import CatalogBrowser from '@/components/loan-catalog/CatalogBrowser';
 import { LOAN_PRODUCT_STATUS_PRESENTATION } from '@/features/seller/constants/loan-product-status';
 import { selectCatalogVersion } from '@/features/seller/store/loanProductsSlice';
@@ -54,14 +55,17 @@ export function BankProductCatalog({ portalLabel }: BankProductCatalogProps) {
   );
 
   return (
-    <CatalogBrowser
-      fetchProducts={getCatalog}
-      renderCard={renderCard}
-      refreshToken={catalogVersion}
-      statusOptions={STATUS_OPTIONS}
-      header={<BankHeaderCard portalLabel={portalLabel} />}
-      emptyTitle="No loan products found"
-      emptySubtitle="Create a loan product to publish it to the marketplace."
-    />
+    <>
+      <NotificationRecordTarget type="product" />
+      <CatalogBrowser
+        fetchProducts={getCatalog}
+        renderCard={renderCard}
+        refreshToken={catalogVersion}
+        statusOptions={STATUS_OPTIONS}
+        header={<BankHeaderCard portalLabel={portalLabel} />}
+        emptyTitle="No loan products found"
+        emptySubtitle="Create a loan product to publish it to the marketplace."
+      />
+    </>
   );
 }

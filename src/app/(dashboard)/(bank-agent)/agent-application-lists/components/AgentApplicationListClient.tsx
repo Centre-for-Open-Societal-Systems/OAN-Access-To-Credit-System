@@ -1,6 +1,7 @@
 'use client';
 
 import { AccessDenied } from '@/components/AccessDenied';
+import { NotificationRecordTarget } from '@/components/header/NotificationRecordTarget';
 import { ConnectionError } from '@/components/ConnectionError';
 import {
   BankApplicationRow,
@@ -27,6 +28,15 @@ const LoanApplicationModal = dynamic(
 );
 
 export default function AgentApplicationListClient() {
+  return (
+    <>
+      <NotificationRecordTarget type="application" />
+      <ApplicationList />
+    </>
+  );
+}
+
+function ApplicationList() {
   const dispatch = useAppDispatch();
   const queryParams = useAppSelector(selectBankQueryParams);
   const error = useAppSelector(selectBankApplicationsError);
