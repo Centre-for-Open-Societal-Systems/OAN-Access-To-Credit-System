@@ -1,8 +1,9 @@
-import { getUserProfile, updateProfile, type UserProfileResponse } from '@/features/auth/api/authApi';
+import { changePassword, getUserProfile, updateProfile, type UserProfileResponse } from '@/features/auth/api/authApi';
 import { authReducer } from '@/features/auth/store/authSlice';
 import type { User } from '@/features/auth/types/auth.types';
+import { toast } from '@/lib/toast';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileModal } from './ProfileModal';
@@ -15,6 +16,10 @@ vi.mock('@/features/auth/api/authApi', () => ({
 
 vi.mock('@/features/seller/api/onboarding.service', () => ({
   onboardingService: { uploadImage: vi.fn() },
+}));
+
+vi.mock('@/lib/toast', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 const EMAIL = 'abebe@oan.test';
@@ -162,4 +167,32 @@ describe('ProfileModal — every other role still edits its own profile', () => 
       expect(screen.getByRole('button', { name: /upload new photo/i })).toBeInTheDocument();
     }
   );
+});
+
+describe('ProfileModal — password update', () => {
+  beforeEach(() => {
+    vi.mocked(getUserProfile).mockReset().mockResolvedValue(PROFILE);
+    vi.mocked(changePassword).mockReset();
+    vi.mocked(toast.error).mockReset();
+  });
+
+  it('rejects reusing the current password without calling the API', async () => {
+    renderModal(FARMER);
+    await loaded();
+    fireEvent.click(screen.getByRole('button', { name: /update password/i }));
+
+    fireEvent.change(screen.getByPlaceholderText('••••••••••••'), {
+      target: { value: 'CurrentPassword1!' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('New password'), {
+      target: { value: 'CurrentPassword1!' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Confirm password'), {
+      target: { value: 'CurrentPassword1!' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save password/i }));
+
+    expect(toast.error).toHaveBeenCalledWith('New password must be different from the current password');
+    expect(changePassword).not.toHaveBeenCalled();
+  });
 });

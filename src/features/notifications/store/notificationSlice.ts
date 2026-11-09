@@ -122,6 +122,9 @@ export const notificationSlice = createSlice({
         state.error = action.payload ?? 'Error fetching notifications';
       })
       // Mark Read (mutate on fulfilled)
+      .addCase(markNotificationsRead.pending, (state) => {
+        state.error = null;
+      })
       .addCase(markNotificationsRead.fulfilled, (state, action: PayloadAction<MarkReadParams>) => {
         const arg = action.payload;
         const markAll = arg.all ?? arg.mark_all ?? false;
@@ -154,6 +157,9 @@ export const notificationSlice = createSlice({
         state.error = action.payload ?? 'Failed to mark notifications as read';
       })
       // Clear Notifications (mutate on fulfilled)
+      .addCase(clearNotifications.pending, (state) => {
+        state.error = null;
+      })
       .addCase(clearNotifications.fulfilled, (state, action: PayloadAction<ClearNotificationsParams>) => {
         const arg = action.payload;
         const clearAll = arg.all ?? arg.clear_all ?? false;

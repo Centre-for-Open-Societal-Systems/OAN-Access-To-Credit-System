@@ -5,6 +5,8 @@ import { LoanTableRow } from '@/features/loans/components/LoanTable';
 // eslint-disable-next-line boundaries/dependencies -- TODO (2026-08-23): needs to be fixed later; hiding for now as this existed before our changes
 import LoanApplicationModal from '@/features/loans/components/modals/LoanApplicationModalLegacy';
 import { resetForm } from '@/features/new-loan/store/newLoanFormSlice';
+import { downloadLoanApplicationPdf } from '@/features/new-loan/utils/downloadLoanApplicationPdf';
+import { logger } from '@/lib/logger';
 import type { RootState } from '@/store';
 import { Calendar, Check, Download, FileText, LayoutDashboard, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,6 +17,7 @@ export function Step4Success() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const formData = useSelector((state: RootState) => state.loanForm.formData);
   const applicationId = useSelector((state: RootState) => state.loanForm.applicationId);
   const lenderName = useSelector((state: RootState) => state.loanForm.lenderName);
@@ -57,6 +60,36 @@ export function Step4Success() {
     dispatch(resetForm());
     window.scrollTo({ top: 0, behavior: 'smooth' });
     router.push('/loan-application-dashboard');
+  };
+
+  const handleDownloadPdf = () => {
+    if (!applicationId) {
+      setDownloadError('The application ID is missing, so the PDF could not be generated.');
+      return;
+    }
+
+    if (!hasValidSubmittedDate || !submittedDate) {
+      setDownloadError('The submission time is missing, so the PDF could not be generated.');
+      return;
+    }
+
+    setDownloadError(null);
+    try {
+      downloadLoanApplicationPdf({
+        applicationId,
+        applicantName: farmerName,
+        submittedAt: submittedDate,
+        loanType: formData.loanType || null,
+        purpose: formData.purpose || null,
+        requestedAmount: formData.requestedAmount || null,
+        duration: formData.duration || null,
+        phone: formData.mobilePhone || null,
+        region: formData.region || null,
+      });
+    } catch (error) {
+      logger.error('Failed to download loan application PDF', { applicationId, error });
+      setDownloadError('The PDF could not be generated. Please try again.');
+    }
   };
 
   return (
@@ -125,7 +158,7 @@ export function Step4Success() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-4 pb-2">
             <button 
-              onClick={() => window.print()}
+              onClick={handleDownloadPdf}
               className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-md border border-gray-300 bg-white px-6 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
             >
               <Download size={16} /> Download PDF
@@ -143,6 +176,12 @@ export function Step4Success() {
               <LayoutDashboard size={16} /> Return to Dashboard
             </button>
           </div>
+
+          {downloadError && (
+            <p role="alert" className="text-center text-sm font-medium text-red-600">
+              {downloadError}
+            </p>
+          )}
 
         </div>
       </div>
