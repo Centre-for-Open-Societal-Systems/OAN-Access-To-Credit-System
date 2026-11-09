@@ -85,6 +85,10 @@ export interface CreateLoanApplicationResponse {
   };
 }
 
+export interface SubmitLoanApplicationResponse {
+  submitted_at: string;
+}
+
 
 export interface GetLoansParams {
   page?: number;
@@ -244,10 +248,10 @@ export const loanService = {
    * stamps `stage_id` and `stage_label`, and transitions the application into
    * the active pipeline.
    */
-  async submitApplication(application_id: string): Promise<ApiResponse<null>> {
+  async submitApplication(application_id: string): Promise<ApiResponse<SubmitLoanApplicationResponse>> {
     return fetchApi(`v1/applications/${encodeURIComponent(application_id)}/submit`, {
       method: 'POST',
-    }) as Promise<ApiResponse<null>>;
+    }) as Promise<ApiResponse<SubmitLoanApplicationResponse>>;
   },
 
   async createLoanApplication(lead_id: string): Promise<ApiResponse<CreateLoanApplicationResponse>> {

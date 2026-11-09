@@ -18,24 +18,27 @@ export function Step4Success() {
   const dispatch = useDispatch();
   const [showSummaryPopup, setShowSummaryPopup] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  // Captured once (lazy initializer) rather than called directly in the render
-  // body, where Date.now() would return a new value on every re-render.
-  const [submittedAt] = useState(() => Date.now());
   const formData = useSelector((state: RootState) => state.loanForm.formData);
   const applicationId = useSelector((state: RootState) => state.loanForm.applicationId);
   const lenderName = useSelector((state: RootState) => state.loanForm.lenderName);
+  const submittedAt = useSelector((state: RootState) => state.loanForm.submittedAt);
 
   const farmerName = `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || "—";
 
-  const formattedSubmittedDate = new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }) + ' ' + new Date().toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+  const submittedDate = submittedAt ? new Date(submittedAt) : null;
+  const submittedTimestamp = submittedDate?.getTime() ?? null;
+  const hasValidSubmittedDate = submittedDate !== null && submittedTimestamp !== null && !Number.isNaN(submittedTimestamp);
+  const formattedSubmittedDate = hasValidSubmittedDate
+    ? `${submittedDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })} ${submittedDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })}`
+    : 'Not available';
 
   const modalData: LoanTableRow = {
     id: applicationId || '—',
@@ -50,7 +53,7 @@ export function Step4Success() {
     loanTerm: formData.duration || "—",
     loanAmount: formData.requestedAmount ? `ETB ${parseFloat(formData.requestedAmount).toLocaleString()}` : "—",
     action: "view",
-    timestamp: submittedAt,
+    timestamp: hasValidSubmittedDate ? submittedTimestamp : null,
   };
 
   const handleReturnToDashboard = () => {
@@ -65,12 +68,17 @@ export function Step4Success() {
       return;
     }
 
+    if (!hasValidSubmittedDate || !submittedDate) {
+      setDownloadError('The submission time is missing, so the PDF could not be generated.');
+      return;
+    }
+
     setDownloadError(null);
     try {
       downloadLoanApplicationPdf({
         applicationId,
         applicantName: farmerName,
-        submittedAt: new Date(submittedAt),
+        submittedAt: submittedDate,
         loanType: formData.loanType || null,
         purpose: formData.purpose || null,
         requestedAmount: formData.requestedAmount || null,
