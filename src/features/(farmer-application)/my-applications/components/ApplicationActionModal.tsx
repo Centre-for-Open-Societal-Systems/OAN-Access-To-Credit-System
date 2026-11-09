@@ -5,7 +5,10 @@ import { Building2, Calendar, DollarSign, FileText, Loader2, Send, X } from 'luc
 import { useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { logger } from '@/lib/logger';
+import { formatDateTime } from '@/lib/format/dateTime';
 import { getApplication, submitApplication } from '../../api/farmerApi';
+import { useBankNames } from '../../hooks/useBankNames';
+import { NO_VALUE } from '../../format';
 import { isDraftApplication, type FarmerLoanApplication } from '../../types';
 import { themeForApplication } from './ApplicationCard';
 
@@ -47,6 +50,7 @@ export default function ApplicationActionModal({
   // Prefer the freshly fetched document over the row that opened the modal: the
   // bank may have moved the application on since the list was loaded.
   const current = details ?? application;
+  const bankNames = useBankNames([details?.bank]);
   const statusLabel = current.status;
   // After a successful submit the application is no longer a draft, but the list
   // behind us has not refetched yet — so stop offering to submit it again.
@@ -188,7 +192,7 @@ export default function ApplicationActionModal({
                     <Building2 className="w-4 h-4 text-gray-400" />
                     <div>
                       <span className="text-gray-400 block">Bank</span>
-                      <span className="font-semibold text-gray-800">{details.bank || '—'}</span>
+                      <span className="font-semibold text-gray-800">{(details.bank && bankNames[details.bank]) || details.bank || NO_VALUE}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -204,7 +208,7 @@ export default function ApplicationActionModal({
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <div>
                       <span className="text-gray-400 block">Created On</span>
-                      <span className="font-semibold text-gray-800">{details.creation || subtitle}</span>
+                      <span className="font-semibold text-gray-800">{formatDateTime(details.creation)}</span>
                     </div>
                   </div>
                 </div>

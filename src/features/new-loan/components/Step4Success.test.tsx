@@ -1,8 +1,14 @@
+import type { LoanApplicationSummary } from '@/features/loans/api/loan.service';
 import { configureStore } from '@reduxjs/toolkit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loanFormReducer, setApplicationId, setFormData } from '../store/newLoanFormSlice';
+import {
+  fetchLoanApplicationAPI,
+  loanFormReducer,
+  setApplicationId,
+  setFormData,
+} from '../store/newLoanFormSlice';
 import { downloadLoanApplicationPdf } from '../utils/downloadLoanApplicationPdf';
 import { Step4Success } from './Step4Success';
 
@@ -65,5 +71,30 @@ describe('Step4Success', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('The application ID is missing');
     expect(downloadLoanApplicationPdf).not.toHaveBeenCalled();
+  });
+
+  it('shows the bank associated with the submitted application', () => {
+    const store = configureStore({ reducer: { loanForm: loanFormReducer } });
+    const application = {
+      application_id: 'APP-1',
+      bank: 'PB-0085',
+      status: 'Active',
+      creation: '2026-11-04',
+      is_terminal: false,
+      is_successful: false,
+      lenderName: 'Coopay Bank',
+    } as LoanApplicationSummary & { lenderName: string };
+
+    store.dispatch(fetchLoanApplicationAPI.fulfilled(application, 'request-1', 'LD-0001'));
+    store.dispatch(setFormData({ firstName: 'Abebe', lastName: 'Kebede' }));
+
+    render(
+      <Provider store={store}>
+        <Step4Success />
+      </Provider>
+    );
+
+    expect(screen.getByText(/has been securely transmitted to Coopay Bank\./)).toBeInTheDocument();
+    expect(screen.queryByText(/transmitted to Coop Bank\./)).not.toBeInTheDocument();
   });
 });

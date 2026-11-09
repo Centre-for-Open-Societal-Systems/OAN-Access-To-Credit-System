@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { KPI_CARDS_LAYOUT, LEAD_STATUS_MAP, resolveDateFilter } from '@/features/leads/constants/leads.constants';
 import type { KpiStat, Lead } from '@/features/leads/types/leads.types';
+import { leadKey, toggleLead, toggleVisible, type LeadSelection } from '@/features/leads/utils/leadSelection';
 
 import LeadKpiCard from '@/features/leads/components/LeadKpiCard';
 import { TablePagination } from '@/components/ui/TablePagination';
@@ -55,7 +56,8 @@ export function LeadsDashboardClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showAdvFilters, setShowAdvFilters] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selection, setSelection] = useState<LeadSelection>({});
+  const selectedRows = useMemo(() => Object.keys(selection), [selection]);
   const [openColFilter, setOpenColFilter] = useState<string | null>(null);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -171,9 +173,12 @@ export function LeadsDashboardClient() {
     ? allLeads.slice((currentPage - 1) * pageSize, currentPage * pageSize) 
     : allLeads;
 
-  const allChecked = visible.length > 0 && visible.every((l: Lead) => selectedRows.includes(l.id + l.phone));
-  const toggleAll = () => setSelectedRows(allChecked ? [] : visible.map((l: Lead) => l.id + l.phone));
-  const toggleRow = (key: string) => setSelectedRows(p => p.includes(key) ? p.filter(x => x !== key) : [...p, key]);
+  const allChecked = visible.length > 0 && visible.every((l: Lead) => leadKey(l) in selection);
+  const toggleAll = () => setSelection(prev => toggleVisible(prev, visible, allChecked));
+  const toggleRow = (key: string) => {
+    const lead = visible.find((l: Lead) => leadKey(l) === key);
+    if (lead) setSelection(prev => toggleLead(prev, lead));
+  };
 
   const clearAllFilters = () => {
     dispatch(resetFilters());
@@ -190,13 +195,11 @@ export function LeadsDashboardClient() {
   };
 
   const handleExportCSV = () => {
-    // Export the user's selected rows; if none are selected, fall back to the
-    // current filtered view. Selection is client-side and only spans loaded
-    // rows, so this is intentionally a frontend export of what the user picked —
-    // not a full-dataset export (that would need a backend endpoint).
-    const source = selectedRows.length > 0
-      ? allLeads.filter((l: Lead) => selectedRows.includes(l.id + l.phone))
-      : visible;
+    // Export the user's selected rows, including ones picked on other pages; if
+    // none are selected, fall back to the current filtered view. This is a
+    // frontend export of what the user picked, not a full-dataset export (that
+    // would need a backend endpoint).
+    const source = selectedRows.length > 0 ? Object.values(selection) : visible;
 
     if (source.length === 0) return;
 
@@ -262,9 +265,9 @@ export function LeadsDashboardClient() {
             className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-5 py-3 text-base font-medium text-text-primary transition hover:bg-slate-50 active:scale-95"
           >
             <FileOutput size={18} />
-            {/* Only a partial selection differs from a page export: select-all (allChecked)
-                covers the whole current page, which is identical to exporting with no selection. */}
-            {selectedRows.length > 0 && !allChecked ? `Export Selected (${selectedRows.length})` : 'Export CSV'}
+            {/* Only a selection that differs from the current page is an "Export Selected": picking
+                every row on this page and nothing else is identical to exporting with no selection. */}
+            {selectedRows.length > 0 && !(allChecked && selectedRows.length === visible.length) ? `Export Selected (${selectedRows.length})` : 'Export CSV'}
           </button>
           <button
             type="button"

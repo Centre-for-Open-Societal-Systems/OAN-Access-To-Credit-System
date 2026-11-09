@@ -2,18 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { createLeadSchema } from './lead.schema';
 
 describe('createLeadSchema', () => {
-  it('passes a clean 10-digit number through unchanged', () => {
-    const result = createLeadSchema.safeParse({ phoneNumber: '0911000000' });
+  it('passes a clean 9-digit number through unchanged', () => {
+    const result = createLeadSchema.safeParse({ phoneNumber: '911000000' });
 
     expect(result.success).toBe(true);
-    expect(result.success && result.data.phoneNumber).toBe('0911000000');
+    expect(result.success && result.data.phoneNumber).toBe('911000000');
   });
 
   it('strips spaces, dashes, and parentheses before validating', () => {
-    const result = createLeadSchema.safeParse({ phoneNumber: '(091) 100-0000' });
+    const result = createLeadSchema.safeParse({ phoneNumber: '(911) 000-000' });
 
     expect(result.success).toBe(true);
-    expect(result.success && result.data.phoneNumber).toBe('0911000000');
+    expect(result.success && result.data.phoneNumber).toBe('911000000');
   });
 
   it('rejects a number that is too short even after sanitizing', () => {
@@ -28,10 +28,12 @@ describe('createLeadSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects a leading country code', () => {
-    const result = createLeadSchema.safeParse({ phoneNumber: '+251911000000' });
+  it('drops a pasted trunk 0 or +251 prefix', () => {
+    for (const phoneNumber of ['0911000000', '+251911000000']) {
+      const result = createLeadSchema.safeParse({ phoneNumber });
 
-    expect(result.success).toBe(false);
+      expect(result.success && result.data.phoneNumber).toBe('911000000');
+    }
   });
 
   it('rejects non-numeric input', () => {

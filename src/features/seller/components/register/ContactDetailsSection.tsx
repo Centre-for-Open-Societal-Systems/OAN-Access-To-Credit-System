@@ -1,7 +1,6 @@
 'use client';
 
-import { PHONE_NUMBER_MAX_LENGTH } from '@/features/seller/constants/field-limits';
-import { stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { useState } from 'react';
 import { FormCard } from './FormCard';
@@ -33,17 +32,14 @@ export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed,
   const [localPhoneDigits, setLocalPhoneDigits] = useState('');
   const [isPhoneTouched, setIsPhoneTouched] = useState(false);
   const phoneLengthError =
-    isPhoneTouched && localPhoneDigits.length > 0 && localPhoneDigits.length !== PHONE_NUMBER_MAX_LENGTH
-      ? `Phone number must be exactly ${PHONE_NUMBER_MAX_LENGTH} digits.`
+    isPhoneTouched && localPhoneDigits.length > 0 && !PHONE_NUMBER_REGEX.test(localPhoneDigits)
+      ? PHONE_NUMBER_ERROR
       : null;
 
   // Propagate the full number (code + digits) upstream whenever either changes.
-  // The typed digits keep any leading trunk 0 for the on-screen field/length
-  // check; it's stripped only in the value sent upstream, so "+251" + digits
-  // comes out as valid E.164 rather than gaining an extra digit.
   const propagatePhone = (code: string, digits: string) => {
-    onChange({ registered_phone: digits ? `${code}${stripLeadingZero(digits)}` : '' });
-    onPhoneValidityChange?.(digits.length === PHONE_NUMBER_MAX_LENGTH);
+    onChange({ registered_phone: digits ? `${code}${digits}` : '' });
+    onPhoneValidityChange?.(PHONE_NUMBER_REGEX.test(digits));
   };
 
   return (
@@ -88,11 +84,10 @@ export function ContactDetailsSection({ fields, onChange, isAgreed, setIsAgreed,
               type="tel"
               inputMode="numeric"
               autoComplete="off"
-              maxLength={PHONE_NUMBER_MAX_LENGTH}
               placeholder="Enter phone number"
               value={localPhoneDigits}
               onChange={(e) => {
-                const digits = toDigitsOnly(e.target.value);
+                const digits = toLocalPhoneDigits(e.target.value);
                 setLocalPhoneDigits(digits);
                 propagatePhone(selectedPhoneCode, digits);
               }}
