@@ -47,6 +47,7 @@ export interface Lead {
   assignedTo?: string | undefined;
   owner?: string | undefined;
   creation: string;
+  statusChangedAt?: string | null | undefined;
   farmerPhone?: string | undefined;
   visitDate?: string | null | undefined;
   scheduleStatus?: string | null | undefined;
@@ -91,15 +92,6 @@ export interface LeadSummaryResponse {
   };
 }
 
-export interface VisitSchedule {
-  name: string;
-  lead?: string;
-  visit_date: string;
-  visit_time?: string;
-  status?: string;
-  creation?: string;
-}
-
 export interface RawLead {
   name: string;
   farmer_name?: string;
@@ -113,8 +105,10 @@ export interface RawLead {
   lead_source?: string;
   assigned_to?: string;
   creation?: string;
+  status_changed_at?: string | null;
   external_id?: string | null;
-  visitDate?: string | null;
+  visit_date?: string | null;
+  schedule_status?: string | null;
   farmer_id?: string | null;
   consent_date?: string | null;
   consentRequestId?: string | null;
