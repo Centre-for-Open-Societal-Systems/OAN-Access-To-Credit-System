@@ -7,6 +7,7 @@ import {
   selectAttributes,
   selectCategories,
   selectDetailError,
+  selectDetailStatus,
   selectProductsMutationError,
   selectProductsMutationStatus,
   selectSelectedProductDetail,
@@ -23,7 +24,7 @@ import { BaseLoanProductModal } from '../loan-products/BaseLoanProductModal';
 interface ReviewProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: LoanProductSummary | null;
+  product: LoanProductSummary | Pick<LoanProductSummary, 'name'> | null;
   initialMode?: 'approve' | 'reject' | null;
   readOnlyView?: boolean;
 }
@@ -33,7 +34,9 @@ export function ReviewProductModal({ isOpen, onClose, product, initialMode = nul
   const mutationStatus = useAppSelector(selectProductsMutationStatus);
   const mutationError = useAppSelector(selectProductsMutationError);
   const detailError = useAppSelector(selectDetailError);
-  const productDetail = useAppSelector(selectSelectedProductDetail);
+  const detailStatus = useAppSelector(selectDetailStatus);
+  const selectedDetail = useAppSelector(selectSelectedProductDetail);
+  const productDetail = selectedDetail?.name === product?.name ? selectedDetail : null;
   const fetchedCategories = useAppSelector(selectCategories);
   const fetchedTags = useAppSelector(selectTags);
   const fetchedAttributes = useAppSelector(selectAttributes);
@@ -105,10 +108,8 @@ export function ReviewProductModal({ isOpen, onClose, product, initialMode = nul
 
   const isMutating = mutationStatus === 'loading';
 
-  // We explicitly do NOT block the UI or disable buttons while detail is loading.
-  // The form will immediately render using summary fallback data, allowing for instant
-  // approve/reject actions, while the detail fetch silently hydrates the form in the background.
-  const isLoadingDetail = false;
+  const summary = 'product_name' in product ? product : null;
+  const isLoadingDetail = !summary && !productDetail && detailStatus !== 'failed';
 
   const categoryOptions = mapTermOptions(fetchedCategories);
   const tagOptions = mapTermOptions(fetchedTags);
@@ -118,14 +119,14 @@ export function ReviewProductModal({ isOpen, onClose, product, initialMode = nul
   // the detail verbatim. A per-field `?? summary` fallback would make a value the
   // seller legitimately cleared (e.g. min amount) silently show the stale summary
   // number instead of empty — which an approver could then act on.
-  const source = productDetail ?? product;
+  const source = productDetail ?? summary;
   const formValues = {
-    productName: source.product_name ?? '',
-    minInterestRate: source.min_interest_rate?.toString() ?? '',
-    maxInterestRate: source.max_interest_rate?.toString() ?? '',
-    minAmount: source.min_amount?.toString() ?? '',
-    maxAmount: source.max_amount?.toString() ?? '',
-    tenureMonths: source.tenure_months?.toString() ?? '',
+    productName: source?.product_name ?? '',
+    minInterestRate: source?.min_interest_rate?.toString() ?? '',
+    maxInterestRate: source?.max_interest_rate?.toString() ?? '',
+    minAmount: source?.min_amount?.toString() ?? '',
+    maxAmount: source?.max_amount?.toString() ?? '',
+    tenureMonths: source?.tenure_months?.toString() ?? '',
     description: productDetail?.description ?? '',
   };
 

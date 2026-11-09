@@ -211,7 +211,7 @@ function LeadTable({
         return (
           <div className="flex flex-col items-center justify-center h-full">
             <span className="flex flex-col text-md text-gray-500">
-              {formatStatusDate(l.creation)}
+              {formatStatusDate(l.statusChangedAt || l.creation)}
             </span>
           </div>
         );

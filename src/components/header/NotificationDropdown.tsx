@@ -1,5 +1,6 @@
 'use client';
 
+import { selectUserKind } from '@/features/auth/store/authSlice';
 import {
   clearNotifications,
   fetchNotifications,
@@ -9,7 +10,9 @@ import {
 } from '@/features/notifications/store/notificationSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { CheckCircle2, FileText, Loader2, Trash2, X, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import React, { useEffect, useRef } from 'react';
+import { notificationRoute } from './notification-route';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
@@ -18,6 +21,7 @@ interface NotificationDropdownProps {
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
   const dispatch = useAppDispatch();
+  const userKind = useAppSelector(selectUserKind);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { items, unreadCount, loading } = useAppSelector((state) => state.notifications);
 
@@ -132,15 +136,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
           items.map((item, index) => {
             const isUnread = isItemUnread(item);
             const notifId = getNotificationId(item, index);
+            const href = notificationRoute(item, userKind);
+            const markRead = () => {
+              if (isUnread && notifId) handleMarkSingleRead(notifId);
+            };
             return (
               <div
                 key={`${notifId}-${index}`}
-                onClick={() => {
-                  if (isUnread && notifId) {
-                    handleMarkSingleRead(notifId);
-                  }
-                }}
-                className={`p-4 flex items-start gap-3.5 transition-colors cursor-pointer group relative ${
+                className={`p-4 flex items-start gap-3.5 transition-colors group relative ${
                   isUnread ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7]' : 'bg-white hover:bg-gray-50'
                 }`}
               >
@@ -148,7 +151,27 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-sm font-bold text-gray-900 leading-snug">
-                      {item.subject || 'Notification'}
+                      {href ? (
+                        <Link
+                          href={href}
+                          prefetch={false}
+                          onClick={() => {
+                            markRead();
+                            onClose();
+                          }}
+                          className="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                        >
+                          {item.subject || 'Notification'}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={markRead}
+                          className="text-left after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                        >
+                          {item.subject || 'Notification'}
+                        </button>
+                      )}
                     </h4>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {isUnread && (
@@ -159,7 +182,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         onClick={(e) => handleClearSingle(e, notifId)}
                         title="Delete notification"
                         aria-label="Delete notification"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                        className="relative z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

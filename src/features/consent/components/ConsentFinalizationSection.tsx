@@ -183,6 +183,14 @@ export function ConsentFinalizationSection({ leadId: leadIdProp, audience = 'age
     }
   };
 
+  const handleToggleAllFields = () => {
+    if (consentType === 'baseline') return; // Baseline already shares every permitted field
+    const allIds = allowedFieldsList.map(f => f.id);
+    const allSelected = allIds.length > 0 && allIds.every(id => selectedFieldIds.includes(id));
+    setSelectedFieldIds(allSelected ? [] : allIds);
+    if (!allSelected && localError) setLocalError(null);
+  };
+
   const handleSubmit = async () => {
     setLocalError(null);
     const activeFields = consentType === 'baseline' ? allowedFieldsList.map(f => f.id) : selectedFieldIds;
@@ -227,6 +235,8 @@ export function ConsentFinalizationSection({ leadId: leadIdProp, audience = 'age
 
   const isFieldDisabled = consentType === 'baseline';
   const displayedFieldIds = isFieldDisabled ? allowedFieldsList.map(f => f.id) : selectedFieldIds;
+  const areAllFieldsSelected =
+    allowedFieldsList.length > 0 && allowedFieldsList.every(f => displayedFieldIds.includes(f.id));
 
   return (
     <>
@@ -473,10 +483,27 @@ export function ConsentFinalizationSection({ leadId: leadIdProp, audience = 'age
 
           {/* Permitted Data Fields */}
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-semibold text-[#374151] flex items-center gap-1.5">
-              <FileText size={14} className="text-[#6B7280]" />
-              Permitted Registry Fields
-            </label>
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-[14px] font-semibold text-[#374151] flex items-center gap-1.5">
+                <FileText size={14} className="text-[#6B7280]" />
+                Permitted Registry Fields
+              </label>
+              {allowedFieldsList.length > 0 && (
+                <label
+                  className={`flex items-center gap-2 text-[13px] font-medium text-[#374151] ${isFieldDisabled ? 'opacity-85 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+                    }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={areAllFieldsSelected}
+                    onChange={handleToggleAllFields}
+                    disabled={isFieldDisabled}
+                    className="cursor-pointer shrink-0"
+                  />
+                  Select all
+                </label>
+              )}
+            </div>
             <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {allowedFieldsList.map((field) => {

@@ -85,9 +85,11 @@ export const PORTALS: Record<PortalId, PortalConfig> = {
 
   'development-agent': {
     badge: 'Field Agent Portal',
-    // Development Agents sign in through IAM; the backend refuses a local
-    // account holding the role (oan_a2c/api/auth.py,
-    // require_sso_for_development_agents).
+    // Development Agents sign in through IAM when the `agent` option is
+    // offered; the backend then refuses a local account holding the role
+    // (oan_a2c/api/auth.py, require_sso_for_development_agents). When it is
+    // not offered, PortalSignIn falls back to the password form and the backend
+    // accepts it.
     iamLogin: true,
     iamKeys: ['agent'],
     form: {
