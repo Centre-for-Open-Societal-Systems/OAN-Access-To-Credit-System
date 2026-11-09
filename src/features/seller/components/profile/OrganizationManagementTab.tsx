@@ -42,20 +42,24 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
 
   const handleSave = async () => {
     if (!profile || readOnly) return;
-    // bank_code isn't part of the update_bank_profile payload below (the
-    // backend doesn't support changing it post-registration), so only
-    // enforce the length rule when it was actually edited — an org whose
-    // registration number predates this rule shouldn't be unable to save
-    // an unrelated change (name, address, logo) because of it.
+    // The registration number is only sent, and its length rule only enforced,
+    // when it was actually edited — an org whose registration number predates
+    // this rule shouldn't be unable to save an unrelated change (name, address,
+    // logo) because of it.
     const bankCodeChanged = profile.bank_code !== originalBankCode;
     if (bankCodeChanged && !isValidTaxRegistrationLength(profile.bank_code)) {
       toast.error('Registration number must be 9-10 characters.');
+      return;
+    }
+    if (!profile.registered_zone?.trim()) {
+      toast.error('Zone is required.');
       return;
     }
     setSaving(true);
     try {
       await onboardingService.updateBankProfile({
         bank_name: profile.bank_name,
+        ...(bankCodeChanged && { bank_code: profile.bank_code.trim() }),
         ...(profile.brand_name !== undefined && { brand_name: profile.brand_name }),
         ...(profile.website !== undefined && { website: profile.website }),
         registered_street: profile.registered_street,
@@ -68,6 +72,7 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
         registered_phone: profile.registered_phone,
         ...(logoPreview || profile.logo ? { logo: logoPreview || profile.logo } : {}),
       });
+      setOriginalBankCode(profile.bank_code);
       toast.success('Organization profile updated successfully');
     } catch (err) {
       toast.error((err instanceof Error && err.message) || 'Failed to update profile');

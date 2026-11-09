@@ -8,7 +8,6 @@ import {
     CreateLeadResponse, GetActivitiesResponse, GetCallDetailsResponse, GetLeadMetadataResponse, newLeadService,
     SpecificLeadAPI, UpdateLeadStatusResponse
 } from '../api/newLead.service';
-import { stripLeadingZero } from '@/lib/validation/phone';
 import { createLeadSchema } from '../schemas/lead.schema';
 import { clearForm, initializeLead } from './actions';
 import { fetchAssignmentInfoThunk } from './assignmentSlice';
@@ -245,7 +244,7 @@ export const submitNewLeadThunk = createAsyncThunk<
       // so fall back to the raw value (as before) rather than throwing when
       // the schema rejects it; the backend remains the final validator for
       // that path.
-      // The field itself only ever holds a bare 10-digit local number (no
+      // The field itself only ever holds a bare local number (no
       // country-code selector on this form) — the backend stores/matches
       // leads by phone_number in "+251..." E.164 form (api-flow-backend.md),
       // so the dial code is added here, once, at the payload boundary. Only
@@ -255,7 +254,7 @@ export const submitNewLeadThunk = createAsyncThunk<
       // rather than passing it through as-is for the backend to validate.
       const parsed = createLeadSchema.safeParse({ phoneNumber: draft.phoneNumber });
       const phoneNumberForBackend = parsed.success
-        ? `${LEAD_PHONE_COUNTRY_CODE}${stripLeadingZero(parsed.data.phoneNumber)}`
+        ? `${LEAD_PHONE_COUNTRY_CODE}${parsed.data.phoneNumber}`
         : draft.phoneNumber;
 
       const payload = {

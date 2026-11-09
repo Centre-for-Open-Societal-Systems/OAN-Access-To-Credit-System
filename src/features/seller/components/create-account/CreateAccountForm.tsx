@@ -7,8 +7,7 @@ import {
 } from '@/features/seller/store/onboardingSlice';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
-import { PHONE_NUMBER_MAX_LENGTH } from '@/features/seller/constants/field-limits';
-import { PHONE_NUMBER_REGEX, stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { registerSellerSchema } from '@/lib/api/api.schemas';
 import { toast } from '@/lib/toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -41,11 +40,11 @@ export function CreateAccountForm() {
     dispatch(clearOnboardingErrors());
 
     if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
-      setLocalError('Mobile number must be exactly 9 digits.');
+      setLocalError(PHONE_NUMBER_ERROR);
       return;
     }
 
-    const fullMobileNumber = `${countryCode}${stripLeadingZero(phoneNumber)}`;
+    const fullMobileNumber = `${countryCode}${phoneNumber}`;
 
     const validationResult = registerSellerSchema.safeParse({
       email,
@@ -125,9 +124,8 @@ export function CreateAccountForm() {
               type="tel"
               inputMode="numeric"
               autoComplete="off"
-              maxLength={PHONE_NUMBER_MAX_LENGTH}
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(toDigitsOnly(e.target.value))}
+              onChange={(e) => setPhoneNumber(toLocalPhoneDigits(e.target.value))}
               placeholder="Enter phone number"
               className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#16A34A] focus:border-[#16A34A] text-sm text-gray-900 transition-colors"
               required

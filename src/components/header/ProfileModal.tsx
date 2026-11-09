@@ -10,7 +10,7 @@ import { onboardingService } from '@/features/seller/api/onboarding.service';
 import { toast } from '@/lib/toast';
 import { logger } from '@/lib/logger';
 import { toProxiedFileUrl } from '@/lib/utils';
-import { PHONE_NUMBER_REGEX, splitPhoneNumber, stripLeadingZero, toDigitsOnly } from '@/lib/validation/phone';
+import { PHONE_NUMBER_ERROR, PHONE_NUMBER_REGEX, splitPhoneNumber, toLocalPhoneDigits } from '@/lib/validation/phone';
 import { CountryCodeSelect, type CountryCodeOption } from '@/components/ui/CountryCodeSelect';
 import { SelectField } from '@/components/ui/SelectField';
 
@@ -118,16 +118,15 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
   }, [isOpen, loadProfile]);
 
   const handleSaveProfile = async () => {
-    // Only enforce the fresh-entry 10-digit format when the phone was
-    // actually edited this session. A stored number may be legitimately 9
-    // local digits (E.164 with no trunk 0, e.g. "+251912345678"), and an
-    // unrelated save (name/language) shouldn't be blocked by that.
+    // Only validate the phone format when the phone was actually edited this
+    // session. A stored number may predate it (a legacy or foreign number), and
+    // an unrelated save (name/language) shouldn't be blocked by that.
     const originalPhoneNumber = profile?.personal_information.phone_number || '';
     const original = splitPhoneNumber(originalPhoneNumber);
     const phoneChanged =
       formData.phoneCountryCode !== original.countryCode || formData.phoneLocalDigits !== original.localDigits;
     if (!isProfileReadOnly && phoneChanged && !PHONE_NUMBER_REGEX.test(formData.phoneLocalDigits)) {
-      toast.error('Phone number must be exactly 9 digits');
+      toast.error(PHONE_NUMBER_ERROR);
       return;
     }
     // Untouched: send the original value through byte-for-byte rather than
@@ -135,7 +134,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
     // for any dial code it doesn't recognize, and re-concatenating that
     // fallback would corrupt a legacy/foreign number nobody actually edited.
     const phoneNumber = phoneChanged
-      ? `${formData.phoneCountryCode}${stripLeadingZero(formData.phoneLocalDigits)}`
+      ? `${formData.phoneCountryCode}${formData.phoneLocalDigits}`
       : originalPhoneNumber;
     try {
       setIsSaving(true);
@@ -149,7 +148,7 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
       toast.success('Profile updated successfully');
     } catch (error) {
       logger.error('updateProfile failed', { error });
-      toast.error('Failed to update profile');
+      toast.error((error instanceof Error && error.message) || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -422,9 +421,8 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
                             id="profile-phone"
                             type="tel"
                             inputMode="numeric"
-                            maxLength={9}
                             value={formData.phoneLocalDigits}
-                            onChange={(e) => setFormData({ ...formData, phoneLocalDigits: toDigitsOnly(e.target.value) })}
+                            onChange={(e) => setFormData({ ...formData, phoneLocalDigits: toLocalPhoneDigits(e.target.value) })}
                             placeholder="Enter phone number"
                             className={editableFieldClass}
                           />

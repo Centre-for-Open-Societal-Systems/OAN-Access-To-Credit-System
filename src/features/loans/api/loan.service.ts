@@ -199,9 +199,10 @@ export const loanService = {
     return fetchApi(`v1/loan-applications/${encodeURIComponent(application_id)}/documents/${encodeURIComponent(file_id)}/content?view=${view}`) as Promise<null>;
   },
 
-  async getFullProfile(application_id: string): Promise<ApiResponse<LoanApplicationFull>> {
+  async getFullProfile(application_id: string, options?: RequestInit): Promise<ApiResponse<LoanApplicationFull>> {
     const response = await fetchApi(
       `v1/loan-applications/${encodeURIComponent(application_id)}/full-profile`,
+      options,
     ) as ApiResponse<LoanApplicationFull>;
     return {
       ...response,

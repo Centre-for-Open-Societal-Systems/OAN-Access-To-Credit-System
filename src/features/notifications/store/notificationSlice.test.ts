@@ -65,6 +65,22 @@ describe('notificationSlice', () => {
       expect(nextState.unreadCount).toBe(1);
     });
 
+    it('decrements the server unread total without recounting only the loaded page', () => {
+      const state: NotificationState = {
+        items: [...sampleItems],
+        unreadCount: 12,
+        loading: false,
+        error: null,
+      };
+
+      const nextState = notificationReducer(
+        state,
+        markNotificationsRead.fulfilled({ ids: ['notif-1'] }, '', { ids: ['notif-1'] })
+      );
+
+      expect(nextState.unreadCount).toBe(11);
+    });
+
     it('marks all notifications read when all is true', () => {
       const state: NotificationState = {
         items: [...sampleItems],
@@ -100,6 +116,38 @@ describe('notificationSlice', () => {
       expect(nextState.items).toHaveLength(2);
       expect(nextState.items.some((item) => item.id === 'notif-1')).toBe(false);
       expect(nextState.unreadCount).toBe(1);
+    });
+
+    it('decrements the server unread total without recounting only the loaded page', () => {
+      const state: NotificationState = {
+        items: [...sampleItems],
+        unreadCount: 12,
+        loading: false,
+        error: null,
+      };
+
+      const nextState = notificationReducer(
+        state,
+        clearNotifications.fulfilled({ ids: ['notif-1'] }, '', { ids: ['notif-1'] })
+      );
+
+      expect(nextState.unreadCount).toBe(11);
+    });
+
+    it('preserves the server unread total when deleting a read notification', () => {
+      const state: NotificationState = {
+        items: [...sampleItems],
+        unreadCount: 12,
+        loading: false,
+        error: null,
+      };
+
+      const nextState = notificationReducer(
+        state,
+        clearNotifications.fulfilled({ ids: ['notif-2'] }, '', { ids: ['notif-2'] })
+      );
+
+      expect(nextState.unreadCount).toBe(12);
     });
 
     it('empties all notifications when all is true', () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { PHONE_NUMBER_ERROR } from '@/lib/validation/phone';
 import { ContactDetailsSection, type ContactFields } from '@/features/seller/components/register/ContactDetailsSection';
 import { OrganisationSection, type OrganisationFields } from '@/features/seller/components/register/OrganisationSection';
 import { RegisteredAddressSection, type RegisteredAddressFields } from '@/features/seller/components/register/RegisteredAddressSection';
@@ -67,7 +68,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPhoneValid) {
-      toast.error('Phone number must be exactly 9 digits.');
+      toast.error(PHONE_NUMBER_ERROR);
       return;
     }
     if (!isValidTaxRegistrationLength(orgFields.bank_code)) {

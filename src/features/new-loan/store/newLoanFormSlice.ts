@@ -3,6 +3,7 @@ import { loanService, type LoanApplicationSummary } from '@/features/loans/api/l
 // eslint-disable-next-line boundaries/dependencies -- TODO (2026-08-23): needs to be fixed later; hiding for now as this existed before our changes
 import { consentService } from '@/features/consent/api/consent.service';
 import type { VerifyOtpResponse } from '@/lib/api/api.schemas';
+import { getCatalogBank } from '@/lib/api/catalogApi';
 import { logger } from '@/lib/logger';
 import { normalizeLeadId } from '@/lib/utils';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -28,6 +29,7 @@ interface LoanFormState {
   currentStep: number;
   leadId: string | null;
   applicationId: string | null;
+  lenderName: string | null;
   consentRequestData: ConsentRequestData | null;
   otpVerified: boolean;
   uploadedDocuments: Record<string, unknown>;
@@ -55,6 +57,7 @@ const loadInitialState = (): LoanFormState => {
         const parsed = JSON.parse(saved);
         return {
           ...parsed,
+          lenderName: typeof parsed.lenderName === 'string' ? parsed.lenderName : null,
           // Never trust a persisted consent/OTP state — always re-verify after a reload.
           consentRequestData: null,
           otpVerified: false,
@@ -72,6 +75,7 @@ const loadInitialState = (): LoanFormState => {
     currentStep: 1,
     leadId: null,
     applicationId: null,
+    lenderName: null,
     consentRequestData: null,
     otpVerified: false,
     uploadedDocuments: {},
@@ -126,7 +130,7 @@ export const createAndVerifyLoanApplicationThunk = createAsyncThunk<
 );
 
 export const fetchLoanApplicationAPI = createAsyncThunk<
-  LoanApplicationSummary,
+  LoanApplicationSummary & { lenderName: string | null },
   string,
   { state: RootState }
 >(
@@ -134,7 +138,19 @@ export const fetchLoanApplicationAPI = createAsyncThunk<
   async (leadId: string, { rejectWithValue }) => {
     try {
       const cleanLeadId = normalizeLeadId(leadId);
-      return await loanService.findApplicationByLeadId(cleanLeadId);
+      const application = await loanService.findApplicationByLeadId(cleanLeadId);
+      let lenderName: string | null = null;
+
+      if (application.bank) {
+        try {
+          const bank = await getCatalogBank(application.bank);
+          lenderName = bank.data.brand_name?.trim() || bank.data.bank_name;
+        } catch (error) {
+          logger.error('Failed to resolve the application bank name:', error);
+        }
+      }
+
+      return { ...application, lenderName };
     } catch (err) {
       return rejectWithValue(err instanceof Error ? err.message : 'Failed to fetch application');
     }
@@ -299,6 +315,7 @@ export const newLoanFormSlice = createSlice({
         currentStep: 1,
         leadId: null,
         applicationId: null,
+        lenderName: null,
         consentRequestData: null,
         otpVerified: false,
         uploadedDocuments: {},
@@ -327,14 +344,16 @@ export const newLoanFormSlice = createSlice({
     builder.addCase(fetchLoanApplicationAPI.fulfilled, (state, action) => {
       state.loadingStates.fetchApp = false;
       if (action.payload) {
-        const app = action.payload as { application_id?: string; step?: number };
+        const app = action.payload;
         state.applicationId = app.application_id || null;
+        state.lenderName = app.lenderName;
         if (app.step && typeof app.step === 'number') {
           state.currentStep = app.step;
         }
       } else {
         // Clear applicationId to avoid stale state from previous lead
         state.applicationId = null;
+        state.lenderName = null;
         state.currentStep = 1;
       }
     });
