@@ -159,6 +159,10 @@ export function ProfileModal({ isOpen, onClose, role = 'Admin' }: ProfileModalPr
       toast.error('New passwords do not match');
       return;
     }
+    if (newPassword === currentPassword) {
+      toast.error('New password must be different from the current password');
+      return;
+    }
     if (newPassword.length < 8) {
       toast.error('Password must be at least 8 characters long');
       return;
