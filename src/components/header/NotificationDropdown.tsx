@@ -23,7 +23,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
   const dispatch = useAppDispatch();
   const userKind = useAppSelector(selectUserKind);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { items, unreadCount, loading } = useAppSelector((state) => state.notifications);
+  const { items, unreadCount, loading, error } = useAppSelector((state) => state.notifications);
+
+  const loadNotifications = () => {
+    dispatch(fetchNotifications({ read_status: 'all', limit: 20, start: 0 }));
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -125,10 +129,27 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
 
       {/* Content */}
       <div className="max-h-[340px] overflow-y-auto divide-y divide-gray-100">
+        {error && items.length > 0 && (
+          <div role="alert" className="bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+            {error}
+          </div>
+        )}
         {loading && items.length === 0 ? (
           <div className="flex items-center justify-center py-8 text-gray-400 gap-2">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-xs">Loading notifications...</span>
+          </div>
+        ) : error && items.length === 0 ? (
+          <div role="alert" className="flex flex-col items-center gap-3 px-5 py-8 text-center">
+            <XCircle className="h-6 w-6 text-red-500" aria-hidden="true" />
+            <p className="text-xs font-medium text-red-700">{error}</p>
+            <button
+              type="button"
+              onClick={loadNotifications}
+              className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+            >
+              Try again
+            </button>
           </div>
         ) : items.length === 0 ? (
           <div className="py-8 text-center text-xs text-gray-400">No notifications found</div>
