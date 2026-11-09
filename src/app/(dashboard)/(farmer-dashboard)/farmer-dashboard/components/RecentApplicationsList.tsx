@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button';
+import { useBankNames } from '@/features/(farmer-application)/hooks/useBankNames';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -12,7 +13,8 @@ interface RecentApplication {
 }
 
 export default function RecentApplicationsList({ applications = [] }: { applications?: RecentApplication[] }) {
-  
+  const bankNames = useBankNames(applications.map((app) => app.bank));
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Approved':
@@ -49,7 +51,7 @@ export default function RecentApplicationsList({ applications = [] }: { applicat
             return (
               <div key={app.application_id || idx} className={`flex items-start justify-between ${idx !== applications.length - 1 ? 'border-b border-gray-50 pb-5' : ''}`}>
                 <div>
-                  <div className="font-bold text-gray-900 mb-1">{app.bank || '—'}</div>
+                  <div className="font-bold text-gray-900 mb-1">{bankNames[app.bank] || app.bank || '—'}</div>
                   <div className="text-sm font-medium text-gray-400">
                     {app.loan_product_name || 'Unknown Product'} · {dateStr || '—'}
                   </div>
