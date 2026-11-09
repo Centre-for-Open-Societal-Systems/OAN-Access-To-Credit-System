@@ -4,7 +4,7 @@ import { PartnerBanks } from '@/app/(portal-account)/components/PartnerBanks';
 import { SessionEndedNotice } from '@/components/SessionEndedNotice';
 import { Button } from '@/components/ui/Button';
 import { MotionEffects } from '@/components/motion/MotionEffect';
-import { ArrowRight, CheckCircle, Landmark, Settings, Users, Tractor } from 'lucide-react';
+import { ArrowRight, CheckCircle, Landmark, Users, Tractor } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
@@ -63,19 +63,18 @@ const ROLE_CHOICES: readonly RoleChoice[] = [
     description: 'Support farmer outreach and data collection',
     iamKeys: PORTALS['development-agent'].iamKeys,
   },
-  {
-    id: 'admin',
-    // There is no /login/administrator route and never has been — this card
-    // 404'd. The platform administrator is rbac's `marketplace` kind, and
-    // /login/bank-admin is the portal that admits it, so that is where it leads
-    // until an admin portal of its own exists.
-    href: '/login/bank-admin',
-    icon: Settings,
-    iconWrapper: 'bg-[#F5F3FF]',
-    iconColor: 'text-purple-600',
-    title: 'Administrator',
-    description: 'Monitor activity and manage system access',
-  },
+  // TODO: Restore this option with the Settings icon when a dedicated
+  // Administrator login interface is available. Routing it to bank-admin
+  // incorrectly presents the Bank role login interface.
+  // {
+  //   id: 'admin',
+  //   href: '/login/administrator',
+  //   icon: Settings,
+  //   iconWrapper: 'bg-[#F5F3FF]',
+  //   iconColor: 'text-purple-600',
+  //   title: 'Administrator',
+  //   description: 'Monitor activity and manage system access',
+  // },
 ];
 
 export function LoginForm({ providers = null }: { providers?: LoginProvider[] | null }) {
