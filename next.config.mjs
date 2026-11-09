@@ -32,7 +32,7 @@ export default function config(phase) {
       ignoreBuildErrors: false,
     },
 
-    allowedDevOrigins: ['192.168.3.1'],
+    allowedDevOrigins: ['192.168.3.1', 'local.development.oanstaging.com'],
 
     sassOptions: {
       includePaths: ['./src/assets/styles'],
