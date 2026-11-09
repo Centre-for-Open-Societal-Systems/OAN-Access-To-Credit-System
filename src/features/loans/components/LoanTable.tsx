@@ -42,7 +42,7 @@ export interface LoanTableRow {
   location?: string | undefined;
   updated: string;
   action: string;
-  timestamp: number;
+  timestamp: number | null;
   application_id?: string;
   creation?: string;
   region?: string | undefined;

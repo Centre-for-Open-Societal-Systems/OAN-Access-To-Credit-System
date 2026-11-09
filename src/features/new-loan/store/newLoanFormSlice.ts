@@ -30,6 +30,7 @@ interface LoanFormState {
   leadId: string | null;
   applicationId: string | null;
   lenderName: string | null;
+  submittedAt: string | null;
   consentRequestData: ConsentRequestData | null;
   otpVerified: boolean;
   uploadedDocuments: Record<string, unknown>;
@@ -58,6 +59,7 @@ const loadInitialState = (): LoanFormState => {
         return {
           ...parsed,
           lenderName: typeof parsed.lenderName === 'string' ? parsed.lenderName : null,
+          submittedAt: typeof parsed.submittedAt === 'string' ? parsed.submittedAt : null,
           // Never trust a persisted consent/OTP state — always re-verify after a reload.
           consentRequestData: null,
           otpVerified: false,
@@ -76,6 +78,7 @@ const loadInitialState = (): LoanFormState => {
     leadId: null,
     applicationId: null,
     lenderName: null,
+    submittedAt: null,
     consentRequestData: null,
     otpVerified: false,
     uploadedDocuments: {},
@@ -316,6 +319,7 @@ export const newLoanFormSlice = createSlice({
         leadId: null,
         applicationId: null,
         lenderName: null,
+        submittedAt: null,
         consentRequestData: null,
         otpVerified: false,
         uploadedDocuments: {},
@@ -347,6 +351,7 @@ export const newLoanFormSlice = createSlice({
         const app = action.payload;
         state.applicationId = app.application_id || null;
         state.lenderName = app.lenderName;
+        state.submittedAt = app.submitted_at || null;
         if (app.step && typeof app.step === 'number') {
           state.currentStep = app.step;
         }
@@ -354,6 +359,7 @@ export const newLoanFormSlice = createSlice({
         // Clear applicationId to avoid stale state from previous lead
         state.applicationId = null;
         state.lenderName = null;
+        state.submittedAt = null;
         state.currentStep = 1;
       }
     });
@@ -400,8 +406,9 @@ export const newLoanFormSlice = createSlice({
 
     // submitApplication
     builder.addCase(submitApplicationAPI.pending, (state) => { state.loadingStates.submitApp = true; state.errors.submitApp = null; });
-    builder.addCase(submitApplicationAPI.fulfilled, (state) => {
+    builder.addCase(submitApplicationAPI.fulfilled, (state, action) => {
       state.loadingStates.submitApp = false;
+      state.submittedAt = action.payload.data.submitted_at;
     });
     builder.addCase(submitApplicationAPI.rejected, (state, action) => { state.loadingStates.submitApp = false; state.errors.submitApp = action.payload as string; });
   }

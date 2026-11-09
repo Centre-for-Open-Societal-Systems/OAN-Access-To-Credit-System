@@ -132,6 +132,7 @@ export const loanApplicationSummarySchema = z.object({
   kebele: z.string().nullish().transform((val) => val ?? undefined),
   phone_number: z.string().nullish().transform((val) => val ?? ''),
   creation: z.string(),
+  submitted_at: z.string().nullable().optional(),
   first_name: z.string().nullish().transform((val) => val ?? undefined),
   last_name: z.string().nullish().transform((val) => val ?? undefined),
   bank: z.string().nullish().transform((val) => val ?? undefined),
