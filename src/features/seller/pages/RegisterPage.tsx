@@ -49,6 +49,8 @@ export default function RegisterPage() {
 
   const [addressFields, setAddressFields] = useState<RegisteredAddressFields>({
     registered_street: '',
+    registered_kebele_village: '',
+    registered_woreda_district: '',
     registered_zone: '',
     registered_region: '',
     registered_country: 'Ethiopia',

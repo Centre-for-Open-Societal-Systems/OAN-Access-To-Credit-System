@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import { toProxiedFileUrl } from '@/lib/utils';
 import { ArrowRight, Camera } from 'lucide-react';
+import { LocationSelects, type LocationValue } from '@/components/ui/LocationSelects';
 import { useEffect, useRef, useState } from 'react';
 
 const inputClass = (disabled: boolean) =>
@@ -38,6 +39,17 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
     if (!readOnly && profile) {
       setProfile({ ...profile, [e.target.name]: e.target.value });
     }
+  };
+
+  const handleLocationChange = (next: Partial<LocationValue>) => {
+    if (readOnly || !profile) return;
+    setProfile({
+      ...profile,
+      ...(next.region !== undefined && { registered_region: next.region }),
+      ...(next.zone !== undefined && { registered_zone: next.zone }),
+      ...(next.woreda !== undefined && { registered_woreda_district: next.woreda }),
+      ...(next.kebele !== undefined && { registered_kebele_village: next.kebele }),
+    });
   };
 
   const handleSave = async () => {
@@ -125,10 +137,6 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
             { label: 'Legal Name', name: 'bank_name', placeholder: 'Ethiopia OpenAgriNet PLC', required: true },
             { label: 'Registration Number', name: 'bank_code', placeholder: 'REG-ET-20231042', required: true, maxLength: 10 },
             { label: 'Street address', name: 'registered_street', placeholder: 'Enter Street address', required: true },
-            { label: 'Kebele / Village', name: 'registered_kebele_village', placeholder: 'Enter Kebele / Village' },
-            { label: 'Woreda / District', name: 'registered_woreda_district', placeholder: 'Enter Woreda / District' },
-            { label: 'Zone', name: 'registered_zone', placeholder: 'Enter Zone', required: true },
-            { label: 'Region', name: 'registered_region', placeholder: 'Enter Region', required: true },
             { label: 'Postal code', name: 'registered_postal_code', placeholder: 'Enter Postal code', required: true, maxLength: POSTAL_CODE_MAX_LENGTH },
             { label: 'Organization Type', name: 'entity_type', placeholder: 'e.g. Bank, Microfinance Institution', required: true },
             { label: 'Website URL', name: 'website', placeholder: 'https://www.example.com', type: 'text' },
@@ -149,6 +157,17 @@ export default function OrganizationManagementTab({ readOnly = false }: { readOn
               />
             </div>
           ))}
+          <LocationSelects
+            value={{
+              region: profile.registered_region || '',
+              zone: profile.registered_zone || '',
+              woreda: profile.registered_woreda_district || '',
+              kebele: profile.registered_kebele_village || '',
+            }}
+            onChange={handleLocationChange}
+            labels={{ woreda: 'Woreda / District', kebele: 'Kebele / Village' }}
+            required={{ region: true, zone: true }}
+          />
         </div>
       </div>
 

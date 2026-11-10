@@ -1,9 +1,12 @@
 import { POSTAL_CODE_MAX_LENGTH } from '@/features/seller/constants/field-limits';
+import { LocationSelects } from '@/components/ui/LocationSelects';
 import { FormCard } from './FormCard';
 import { InputField } from './InputField';
 
 export interface RegisteredAddressFields {
   registered_street: string;
+  registered_kebele_village: string;
+  registered_woreda_district: string;
   registered_zone: string;
   registered_region: string;
   registered_country: string;
@@ -29,29 +32,24 @@ export function RegisteredAddressSection({ fields, onChange, errors = {} }: Regi
         error={errors.registered_street}
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <InputField
-          label="Kebele / Village"
-          placeholder="Enter Kebele / Village"
-        />
-        <InputField
-          label="Woreda / District"
-          placeholder="Enter Woreda / District"
-        />
-        <InputField
-          label="Zone"
-          required
-          placeholder="Enter Zone"
-          value={fields.registered_zone}
-          onChange={(e) => onChange({ registered_zone: e.target.value })}
-          error={errors.registered_zone}
-        />
-        <InputField
-          label="Region"
-          required
-          placeholder="Enter Region"
-          value={fields.registered_region}
-          onChange={(e) => onChange({ registered_region: e.target.value })}
-          error={errors.registered_region}
+        <LocationSelects
+          value={{
+            region: fields.registered_region,
+            zone: fields.registered_zone,
+            woreda: fields.registered_woreda_district,
+            kebele: fields.registered_kebele_village,
+          }}
+          onChange={(next) =>
+            onChange({
+              ...(next.region !== undefined && { registered_region: next.region }),
+              ...(next.zone !== undefined && { registered_zone: next.zone }),
+              ...(next.woreda !== undefined && { registered_woreda_district: next.woreda }),
+              ...(next.kebele !== undefined && { registered_kebele_village: next.kebele }),
+            })
+          }
+          labels={{ woreda: 'Woreda / District', kebele: 'Kebele / Village' }}
+          required={{ region: true, zone: true }}
+          errors={{ region: errors.registered_region, zone: errors.registered_zone }}
         />
         <InputField
           label="Country"
