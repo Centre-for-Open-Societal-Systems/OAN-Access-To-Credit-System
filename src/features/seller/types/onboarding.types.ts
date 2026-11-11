@@ -24,6 +24,8 @@ export interface RegisterBankPayload {
   entity_type: string;
   bank_code: string;
   registered_street: string;
+  registered_kebele_village?: string;
+  registered_woreda_district?: string;
   registered_zone: string;
   registered_region: string;
   registered_country: string;

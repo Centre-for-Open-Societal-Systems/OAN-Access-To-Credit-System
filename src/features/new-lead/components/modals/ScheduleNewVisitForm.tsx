@@ -2,13 +2,13 @@
 import { logger } from '@/lib/logger';
 
 import { Portal } from '@/components/Portal';
-import { SelectField } from '@/components/ui/SelectField';
 import { X } from 'lucide-react';
 import { useId, useState } from 'react';
 
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { FeedbackModal } from '@/components/ui/FeedbackModal';
 import { TimePickerField } from '@/components/ui/TimePickerField';
+import { LocationSelects, type LocationValue } from '@/components/ui/LocationSelects';
 import { useModalA11y } from '@/hooks/useModalA11y';
 import { normalizeLeadId } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -72,17 +72,6 @@ const isPastTimeForToday = (dateStr: string, timeStr: string): boolean => {
   const visitTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
   return visitTime.getTime() < now.getTime();
 };
-
-/**
- * Keeps a prefilled value selectable.
- *
- * The four location lists below are still hardcoded, so a visit saved against
- * any other place would render its value (SelectField shows `value` whether or
- * not it is an option) but vanish from the list the moment the agent opened it —
- * leaving no way to pick it back after changing their mind.
- */
-const withCurrent = (options: string[], value: string): string[] =>
-  value && !options.includes(value) ? [...options, value] : options;
 
 export const ScheduleNewVisitForm = ({
   asModal = false,
@@ -164,6 +153,13 @@ export const ScheduleNewVisitForm = ({
   const edited = <T,>(set: (value: T) => void) => (value: T) => {
     setIsDirty(true);
     set(value);
+  };
+
+  const applyLocation = (next: Partial<LocationValue>) => {
+    if (next.region !== undefined) edited(setRegion)(next.region);
+    if (next.zone !== undefined) edited(setZone)(next.zone);
+    if (next.woreda !== undefined) edited(setWoreda)(next.woreda);
+    if (next.kebele !== undefined) edited(setKebele)(next.kebele);
   };
 
   const dialogRef = useModalA11y<HTMLDivElement>(asModal && isOpen, () => onClose?.());
@@ -267,52 +263,13 @@ export const ScheduleNewVisitForm = ({
             />
           </div>
 
-          {/* Region & Zone Row */}
-          <div className="flex flex-col sm:flex-row items-start gap-4 w-full">
-            <div className="flex-1 w-full">
-              <SelectField
-                label="Region"
-                placeholder="Select Region"
-                options={withCurrent(['Oromia', 'Amhara'], region)}
-                value={region}
-                onChange={edited(setRegion)}
-                required
-              />
-            </div>
-            <div className="flex-1 w-full">
-              <SelectField
-                label="Zone"
-                placeholder="Select Zone"
-                options={withCurrent(['Jimma'], zone)}
-                value={zone}
-                onChange={edited(setZone)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Woreda & Kebele Row */}
-          <div className="flex flex-col sm:flex-row items-start gap-4 w-full">
-            <div className="flex-1 w-full">
-              <SelectField
-                label="Woreda"
-                placeholder="Select Woreda"
-                options={withCurrent(['Limmu Kosa'], woreda)}
-                value={woreda}
-                onChange={edited(setWoreda)}
-                required
-              />
-            </div>
-            <div className="flex-1 w-full">
-              <SelectField
-                label="Kebele"
-                placeholder="Select Kebele"
-                options={withCurrent(['Kebele 1'], kebele)}
-                value={kebele}
-                onChange={edited(setKebele)}
-                required
-              />
-            </div>
+          {/* Region > Zone > Woreda > Kebele */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+            <LocationSelects
+              value={{ region, zone, woreda, kebele }}
+              onChange={applyLocation}
+              required={{ region: true, zone: true, woreda: true, kebele: true }}
+            />
           </div>
 
         </div>
