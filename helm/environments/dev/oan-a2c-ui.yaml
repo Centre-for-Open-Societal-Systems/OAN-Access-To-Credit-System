@@ -11,7 +11,7 @@ ui:
 
   env:
     # Read at runtime, so the image is not tied to this environment.
-    API_BASE_URL: https://a2c-backend.development.oanstaging.com/api
+    API_BASE_URL: https://a2c-service.development.oanstaging.com/api
 
   # Exposure is not decided yet: enable ingress or httproute and set the host.
   # ingress:
