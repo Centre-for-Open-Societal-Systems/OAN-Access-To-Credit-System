@@ -1,3 +1,7 @@
+// DEPRECATED: this pipeline still pushes to the legacy ECR repo `oan/access-to-credit-system`
+// with <branch>-<build> tags and publishes no Helm chart. The current pipeline is `Jenkinsfile`,
+// which pushes develop to `oan/oan-a2c-ui/a2c-ui` with the chart version as the image tag and
+// packages and publishes the chart oan-a2c-ui to oan-helm.
 pipeline {
     agent any
 

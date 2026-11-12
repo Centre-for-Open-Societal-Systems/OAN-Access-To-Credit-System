@@ -1,0 +1,6 @@
+dependencies:
+- name: ui-service
+  repository: ""
+  version: 0.1.0
+digest: sha256:37ac32eca5477934d36470d437ea6767cdc28113a69abaab98dbadcaf72b1e68
+generated: "2026-11-11T11:20:08.070605+05:30"

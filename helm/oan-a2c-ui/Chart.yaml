@@ -1,0 +1,24 @@
+apiVersion: v2
+name: oan-a2c-ui
+description: OAN Access to Credit (A2C) Next.js UI; deploys the OAN ui-service chart with the A2C defaults.
+type: application
+version: 0.1.0-dev.1
+appVersion: latest
+keywords:
+- oan
+- openagrinet
+- nextjs
+- a2c
+home: https://github.com/Centre-for-Open-Societal-Systems/oan-helm
+sources:
+- https://github.com/Centre-for-Open-Societal-Systems/oan-helm
+maintainers:
+- name: OpenAgriNet (OAN)
+  url: https://github.com/Centre-for-Open-Societal-Systems/oan-helm
+dependencies:
+- name: ui-service
+  alias: ui
+  version: 0.1.0
+annotations:
+  oan.org/owner: OpenAgriNet (OAN)
+  oan.org/chart-source: https://github.com/Centre-for-Open-Societal-Systems/oan-helm/tree/main/charts/oan-a2c-ui
