@@ -24,6 +24,14 @@ VALUES_FILE="$(cd "$(dirname "$0")/../helm/environments/dev" && pwd)/oan-a2c-ui.
 echo "=== Deploying ${HELM_RELEASE} to namespace ${HELM_NAMESPACE} ==="
 echo "    image: ${IMAGE_REPOSITORY}:${IMMUTABLE_TAG}"
 
+echo "=== Pre-flight: render the chart and validate it against the API server ==="
+helm template "${HELM_RELEASE}" "${CHART_DIR}" \
+  --namespace "${HELM_NAMESPACE}" \
+  --values "${VALUES_FILE}" \
+  --set ui.image.repository="${IMAGE_REPOSITORY}" \
+  --set ui.image.tag="${IMMUTABLE_TAG}" \
+  | kubectl apply --dry-run=server --namespace "${HELM_NAMESPACE}" -f -
+
 helm upgrade "${HELM_RELEASE}" "${CHART_DIR}" \
   --install \
   --namespace "${HELM_NAMESPACE}" \
