@@ -1,0 +1,33 @@
+# Defaults for the OAN A2C UI (OAN-Access-To-Credit-System). Everything sits under `ui`, the values
+# of the ui-service chart this one depends on. Per-environment values live in
+# environments/<env>/values/oan-a2c-ui.yaml.
+#
+# Set at install, not here:
+# - ui.image.tag: the Jenkins tag, e.g. staging-aws-<build>
+# Image repository and the backend URL are per environment.
+
+ui:
+  image:
+    # Set per environment. package_chart.py needs both keys to exist.
+    repository: ""
+    tag: ""
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPU: 75
+    targetMemory: 75
+  # HPA needs requests to compute utilization.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  # `kubectl set image` in Jenkins targets this container name.
+  containerName: a2c-ui
+
+  env:
+    # Read at runtime (src/lib/env.ts, src/proxy.ts), so one image serves every environment.
+    # Per environment, e.g. https://a2c-backend-development.oanstaging.com/api
+    API_BASE_URL: ""

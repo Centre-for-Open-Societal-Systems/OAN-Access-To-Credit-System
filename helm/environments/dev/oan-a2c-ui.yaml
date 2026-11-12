@@ -1,0 +1,20 @@
+# Values for the oan-a2c-ui chart (charts/oan-a2c-ui).
+# Release `a2c-ui`, namespace `a2c-develop`.
+#
+# Set at install, not here:
+# - ui.image.tag: the Jenkins tag `0.0.0-develop.<build>`
+
+ui:
+  image:
+    # Jenkinsfile ECR_REPO for the develop branch.
+    repository: 379220350808.dkr.ecr.ap-south-1.amazonaws.com/oan/oan-a2c-ui/a2c-ui
+
+  env:
+    # Read at runtime, so the image is not tied to this environment.
+    API_BASE_URL: https://a2c-service.development.oanstaging.com/api
+
+  # Exposure is not decided yet: enable ingress or httproute and set the host.
+  # ingress:
+  #   enabled: true
+  #   hosts:
+  #   - host: <a2c ui host>

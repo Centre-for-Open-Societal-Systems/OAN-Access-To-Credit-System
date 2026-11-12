@@ -3,7 +3,8 @@
 //  pipeline for the `oan-package` GitHub Organization folder (multibranch).
 //
 //  Per branch:
-//    develop     -> build + push to ECR (oan-a2c-frontend) + ci/deploy-dev.sh
+//    develop     -> build + push to ECR (oan/oan-a2c-ui/a2c-ui) + ci/deploy-dev.sh,
+//                   then package + publish the Helm chart oan-a2c-ui to oan-helm
 //                   (existing dev-VM docker-compose deploy — UNCHANGED)
 //    staging_aws -> build + push to ECR (oan/access-to-credit-system) + SSH docker-compose
 //                   deploy to a SEPARATE frontend stack on the AWS backend box (BACKEND_IP,
@@ -12,15 +13,16 @@
 //    staging_ati -> build + push to ECR (oan/access-to-credit-system) + ci/update-kustomize-ati.sh
 //                   (GitOps: bump oan-kustomize `staging` overlay; ArgoCD on node 41 syncs)
 //
-//  develop stays on the LEGACY `oan-a2c-frontend` repo because ci/deploy-dev.sh and
-//  the dev VM's .env reference it. `main` is handled separately by Jenkinsfile.main
+//  develop moved off the legacy `oan-a2c-frontend` repo: ci/deploy-dev.sh rewrites the whole
+//  ECR_IMAGE line of the dev VM's .env on every deploy. `main` is handled separately by Jenkinsfile.main
 //  (staging VM) during validation; staging_aws supersedes it.
 //
 //  API_BASE_URL is baked into the Next.js image at build time (per branch):
 //    develop -> the dev backend;  staging_aws -> the existing public backend
 //    (a2c-backend.oanstaging.com);  staging_ati -> the on-prem backend on node 41.
 //
-//  Tags:  <branch>-<build>   immutable, pinned by oan-kustomize
+//  Tags:  develop: <package.json version>-develop.<build>, e.g. 0.0.0-develop.57 (= chart version)
+//         staging_*: <branch>-<build>   immutable, pinned by oan-kustomize
 //         <branch>-latest    moving alias
 //
 //  Agent needs: docker(+buildx), aws cli v2, git, kustomize.
@@ -50,10 +52,10 @@ pipeline {
     stage('Resolve') {
       steps {
         script {
-          // develop -> legacy repo + dev backend (unchanged).
+          // develop -> oan/oan-a2c-ui/a2c-ui (ECR repo must exist) + dev backend.
           // staging_aws -> namespaced repo + existing public backend.
           // staging_ati -> namespaced repo + on-prem backend (node 41).
-          env.ECR_REPO      = (env.BRANCH_NAME == 'develop') ? 'oan-a2c-frontend' : 'oan/access-to-credit-system'
+          env.ECR_REPO      = (env.BRANCH_NAME == 'develop') ? 'oan/oan-a2c-ui/a2c-ui' : 'oan/access-to-credit-system'
           env.API_BASE_URL  = (env.BRANCH_NAME == 'staging_ati') ? env.STAGING_API_BASE_URL
                             : (env.BRANCH_NAME == 'staging_aws') ? env.AWS_STAGING_API_BASE_URL
                             : env.DEV_API_BASE_URL
@@ -65,6 +67,10 @@ pipeline {
                             : (env.BRANCH_NAME == 'staging_aws') ? 'staging-aws'
                             : env.BRANCH_NAME
           env.IMMUTABLE_TAG = "${tagPrefix}-${env.BUILD_NUMBER}"
+          // develop: tag = chart version = <package.json version>-develop.<build>, e.g. 0.0.0-develop.57
+          if (env.BRANCH_NAME == 'develop') {
+            env.IMMUTABLE_TAG = sh(returnStdout: true, script: 'python3 ci/package_chart.py version').trim()
+          }
           env.MOVING_TAG    = "${tagPrefix}-latest"
           echo "branch=${env.BRANCH_NAME}  repo=${env.ECR_REPO}  tag=${env.IMMUTABLE_TAG}  api=${env.API_BASE_URL}"
         }
@@ -111,6 +117,25 @@ pipeline {
             docker rmi ${IMAGE_URI}:${IMMUTABLE_TAG} ${IMAGE_URI}:${MOVING_TAG} || true
             echo "Pushed ${IMAGE_URI}:${IMMUTABLE_TAG} (+ ${MOVING_TAG})"
           '''
+        }
+      }
+    }
+
+    // ---------------------- Helm chart package (same name as the chart) ----------------------
+    // Flow (develop): Resolve (version) -> Build image -> Push to ECR -> Package chart -> deploy -> Publish chart.
+    // helm/oan-a2c-ui is zipped with this build's image before the deploy; the same archive is
+    // published to oan-helm after it.
+    stage('Package chart') {
+      when { branch 'develop' }
+      steps {
+        withCredentials([string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID')]) {
+          script {
+            env.IMAGE_TAG = env.IMMUTABLE_TAG
+            env.SOURCE_COMMIT = sh(returnStdout: true, script: 'git rev-parse --verify HEAD').trim()
+            env.COMMIT_SUBJECT = sh(returnStdout: true, script: 'git log -1 --pretty=%s').trim()
+            env.IMAGE_REPOSITORY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+          }
+          sh 'python3 ci/package_chart.py package'
         }
       }
     }
@@ -210,6 +235,20 @@ SSHEOF
             ci/update-kustomize-ati.sh staging access-to-credit-system \
               "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMMUTABLE_TAG}"
           '''
+        }
+      }
+    }
+    // ---------------------- Helm chart publish ----------------------
+    // Adds the archive built by 'Package chart' to repository/develop/ of oan-helm, only after
+    // the dev VM deploy succeeded.
+    stage('Publish chart') {
+      when { branch 'develop' }
+      steps {
+        // UNSTABLE, not failed: the image is already deployed.
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          withCredentials([usernamePassword(credentialsId: 'oan-helm-fork-token', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+            sh 'python3 ci/package_chart.py publish'
+          }
         }
       }
     }
