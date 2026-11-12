@@ -3,9 +3,9 @@
 //  pipeline for the `oan-package` GitHub Organization folder (multibranch).
 //
 //  Per branch:
-//    develop     -> build + push to ECR (oan/oan-a2c-ui/a2c-ui) + ci/deploy-dev.sh,
+//    develop     -> build + push to ECR (oan/oan-a2c-ui/a2c-ui) + ci/deploy-helm-dev.sh
+//                   (Helm upgrade on oan_dev k3s, namespace `a2c`, via VPN kubeconfig),
 //                   then package + publish the Helm chart oan-a2c-ui to oan-helm
-//                   (existing dev-VM docker-compose deploy — UNCHANGED)
 //    staging_aws -> build + push to ECR (oan/access-to-credit-system) + SSH docker-compose
 //                   deploy to a SEPARATE frontend stack on the AWS backend box (BACKEND_IP,
 //                   ${STAGING_AWS_APP_DIR}, host port 3002). Mirrors Jenkinsfile.main, which
@@ -13,20 +13,19 @@
 //    staging_ati -> build + push to ECR (oan/access-to-credit-system) + ci/update-kustomize-ati.sh
 //                   (GitOps: bump oan-kustomize `staging` overlay; ArgoCD on node 41 syncs)
 //
-//  develop moved off the legacy `oan-a2c-frontend` repo: ci/deploy-dev.sh rewrites the whole
-//  ECR_IMAGE line of the dev VM's .env on every deploy. `main` is handled separately by Jenkinsfile.main
-//  (staging VM) during validation; staging_aws supersedes it.
+//  develop: the VPN deploy agent (oan-ci-deploy) runs ci/deploy-helm-dev.sh with the
+//  `oan-dev-kubeconfig` Secret file credential (same kubeconfig used by the oan_a2c backend).
+//  The agent must have kubectl + helm available. No SSH or EC2 credentials needed.
 //
-//  API_BASE_URL is baked into the Next.js image at build time (per branch):
-//    develop -> the dev backend;  staging_aws -> the existing public backend
-//    (a2c-backend.oanstaging.com);  staging_ati -> the on-prem backend on node 41.
+//  API_BASE_URL is set at runtime via Helm values (helm/environments/dev/oan-a2c-ui.yaml),
+//  so the same image is deployed without a rebuild when the backend URL changes.
 //
 //  Tags:  develop: <package.json version>-develop.<build>, e.g. 0.0.0-develop.57 (= chart version)
 //         staging_*: <branch>-<build>   immutable, pinned by oan-kustomize
 //         <branch>-latest    moving alias
 //
 //  Agent needs: docker(+buildx), aws cli v2, git, kustomize.
-//  Credentials: AWS_ACCOUNT_ID; frontend-uat-ssh-key + FRONTEND_UAT_IP (develop);
+//  Credentials: AWS_ACCOUNT_ID; oan-dev-kubeconfig (develop);
 //               backend-ssh-key (staging_aws); oan-deployer (staging_ati GitOps).
 // =============================================================================
 pipeline {
@@ -136,27 +135,31 @@ pipeline {
             env.IMAGE_REPOSITORY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
           }
           sh 'python3 ci/package_chart.py package'
+          stash name: 'built-chart', includes: 'built-chart/**'
         }
       }
     }
 
     // ---------------------- per-branch deploy ----------------------
 
-    stage('develop → dev VM') {
+    stage('develop → oan_dev (helm)') {
       when { branch 'develop' }
+      agent { label 'oan-ci-deploy' }
+      options { timeout(time: 15, unit: 'MINUTES') }
       steps {
+        checkout scm
+        sh 'rm -rf built-chart'
+        unstash 'built-chart'
         withCredentials([
           string(credentialsId: 'AWS_ACCOUNT_ID', variable: 'AWS_ACCOUNT_ID'),
-          sshUserPrivateKey(credentialsId: 'frontend-uat-ssh-key',
-                            keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
-          string(credentialsId: 'FRONTEND_UAT_IP', variable: 'DEV_IP')
+          file(credentialsId: 'oan-dev-kubeconfig', variable: 'KUBECONFIG')
         ]) {
           sh '''#!/usr/bin/env bash
             set -euo pipefail
-            chmod +x ci/deploy-dev.sh
-            AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} SSH_KEY=${SSH_KEY} SSH_USER=${SSH_USER} DEV_IP=${DEV_IP} \
-            AWS_REGION=${AWS_REGION} ECR_REPO=${ECR_REPO} IMAGE_TAG=${IMMUTABLE_TAG} API_BASE_URL=${API_BASE_URL} \
-            bash ci/deploy-dev.sh
+            chmod +x ci/deploy-helm-dev.sh
+            IMAGE_REPOSITORY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}" \
+            IMMUTABLE_TAG="${IMMUTABLE_TAG}" \
+            bash ci/deploy-helm-dev.sh
           '''
         }
       }
