@@ -27,7 +27,6 @@ echo "    image: ${IMAGE_REPOSITORY}:${IMMUTABLE_TAG}"
 helm upgrade "${HELM_RELEASE}" "${CHART_DIR}" \
   --install \
   --namespace "${HELM_NAMESPACE}" \
-  --create-namespace \
   --values "${VALUES_FILE}" \
   --set ui.image.repository="${IMAGE_REPOSITORY}" \
   --set ui.image.tag="${IMMUTABLE_TAG}" \
