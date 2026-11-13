@@ -19,15 +19,22 @@ set -euo pipefail
 HELM_RELEASE="${HELM_RELEASE:-a2c-ui}"
 HELM_NAMESPACE="${HELM_NAMESPACE:-a2c}"
 CHART_DIR="$(cd "$(dirname "$0")/../helm/oan-a2c-ui" && pwd)"
-VALUES_FILE="$(cd "$(dirname "$0")/../helm/environments/dev/oan-a2c-ui.yaml" && pwd)"
+VALUES_FILE="$(cd "$(dirname "$0")/../helm/environments/dev" && pwd)/oan-a2c-ui.yaml"
 
 echo "=== Deploying ${HELM_RELEASE} to namespace ${HELM_NAMESPACE} ==="
 echo "    image: ${IMAGE_REPOSITORY}:${IMMUTABLE_TAG}"
 
+echo "=== Pre-flight: render the chart and validate it against the API server ==="
+helm template "${HELM_RELEASE}" "${CHART_DIR}" \
+  --namespace "${HELM_NAMESPACE}" \
+  --values "${VALUES_FILE}" \
+  --set ui.image.repository="${IMAGE_REPOSITORY}" \
+  --set ui.image.tag="${IMMUTABLE_TAG}" \
+  | kubectl apply --dry-run=server --namespace "${HELM_NAMESPACE}" -f -
+
 helm upgrade "${HELM_RELEASE}" "${CHART_DIR}" \
   --install \
   --namespace "${HELM_NAMESPACE}" \
-  --create-namespace \
   --values "${VALUES_FILE}" \
   --set ui.image.repository="${IMAGE_REPOSITORY}" \
   --set ui.image.tag="${IMMUTABLE_TAG}" \

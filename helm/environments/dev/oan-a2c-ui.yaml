@@ -16,5 +16,11 @@ ui:
 
   ingress:
     enabled: true
+    # The only IngressClass on oan_dev and not the default one: without it no controller serves the host.
+    className: apisix
     hosts:
     - host: a2c.development.oanstaging.com
+      # Helm replaces the chart's default host list, so the paths are repeated here.
+      paths:
+      - path: /
+        pathType: Prefix

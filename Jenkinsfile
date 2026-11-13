@@ -110,6 +110,11 @@ pipeline {
             IMAGE_URI="${REGISTRY}/${ECR_REPO}"
             aws ecr get-login-password --region ${AWS_REGION} \
               | docker login --username AWS --password-stdin "${REGISTRY}"
+
+            # ECR does not create a repository on push.
+            aws ecr describe-repositories --region ${AWS_REGION} --repository-names "${ECR_REPO}" >/dev/null 2>&1 \
+              || aws ecr create-repository --region ${AWS_REGION} --repository-name "${ECR_REPO}" >/dev/null
+
             docker push ${IMAGE_URI}:${IMMUTABLE_TAG}
             docker push ${IMAGE_URI}:${MOVING_TAG}
             # Scoped cleanup only — never `docker system prune -f` on a shared agent.
