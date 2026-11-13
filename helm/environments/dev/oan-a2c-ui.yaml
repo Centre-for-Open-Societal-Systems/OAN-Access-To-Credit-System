@@ -2,13 +2,13 @@
 # Release `a2c-ui`, namespace `a2c` (shared with the backend service).
 #
 # Set at install, not here:
-# - ui.image.tag: the Jenkins tag `0.0.0-develop.<build>`
+# - ui.image.tag: the Jenkins tag `0.0.1-develop.<build>`
 
 ui:
   image:
-    # Jenkinsfile ECR_REPO for the develop branch: oan/oan-a2c-ui/a2c-ui
+    # Jenkinsfile ECR_REPO for the develop branch: eoan/oan-a2c-ui/a2c-ui
     # Node IAM role (oan-services-dev-ecr-pull) must allow ecr:BatchGetImage on this repo.
-    repository: 379220350808.dkr.ecr.ap-south-1.amazonaws.com/oan/oan-a2c-ui/a2c-ui
+    repository: 379220350808.dkr.ecr.ap-south-1.amazonaws.com/eoan/oan-a2c-ui/a2c-ui
 
   env:
     # Read at runtime (src/lib/env.ts), so one image serves every environment.

@@ -3,7 +3,7 @@
 //  pipeline for the `oan-package` GitHub Organization folder (multibranch).
 //
 //  Per branch:
-//    develop     -> build + push to ECR (oan/oan-a2c-ui/a2c-ui) + ci/deploy-helm-dev.sh
+//    develop     -> build + push to ECR (eoan/oan-a2c-ui/a2c-ui) + ci/deploy-helm-dev.sh
 //                   (Helm upgrade on oan_dev k3s, namespace `a2c`, via VPN kubeconfig),
 //                   then package + publish the Helm chart oan-a2c-ui to oan-helm
 //    staging_aws -> build + push to ECR (oan/access-to-credit-system) + SSH docker-compose
@@ -20,7 +20,7 @@
 //  API_BASE_URL is set at runtime via Helm values (helm/environments/dev/oan-a2c-ui.yaml),
 //  so the same image is deployed without a rebuild when the backend URL changes.
 //
-//  Tags:  develop: <package.json version>-develop.<build>, e.g. 0.0.0-develop.57 (= chart version)
+//  Tags:  develop: <package.json version>-develop.<build>, e.g. 0.0.1-develop.57 (= chart version)
 //         staging_*: <branch>-<build>   immutable, pinned by oan-kustomize
 //         <branch>-latest    moving alias
 //
@@ -51,10 +51,10 @@ pipeline {
     stage('Resolve') {
       steps {
         script {
-          // develop -> oan/oan-a2c-ui/a2c-ui (ECR repo must exist) + dev backend.
+          // develop -> eoan/oan-a2c-ui/a2c-ui (ECR repo must exist) + dev backend.
           // staging_aws -> namespaced repo + existing public backend.
           // staging_ati -> namespaced repo + on-prem backend (node 41).
-          env.ECR_REPO      = (env.BRANCH_NAME == 'develop') ? 'oan/oan-a2c-ui/a2c-ui' : 'oan/access-to-credit-system'
+          env.ECR_REPO      = (env.BRANCH_NAME == 'develop') ? 'eoan/oan-a2c-ui/a2c-ui' : 'oan/access-to-credit-system'
           env.API_BASE_URL  = (env.BRANCH_NAME == 'staging_ati') ? env.STAGING_API_BASE_URL
                             : (env.BRANCH_NAME == 'staging_aws') ? env.AWS_STAGING_API_BASE_URL
                             : env.DEV_API_BASE_URL
@@ -66,7 +66,7 @@ pipeline {
                             : (env.BRANCH_NAME == 'staging_aws') ? 'staging-aws'
                             : env.BRANCH_NAME
           env.IMMUTABLE_TAG = "${tagPrefix}-${env.BUILD_NUMBER}"
-          // develop: tag = chart version = <package.json version>-develop.<build>, e.g. 0.0.0-develop.57
+          // develop: tag = chart version = <package.json version>-develop.<build>, e.g. 0.0.1-develop.57
           if (env.BRANCH_NAME == 'develop') {
             env.IMMUTABLE_TAG = sh(returnStdout: true, script: 'python3 ci/package_chart.py version').trim()
           }

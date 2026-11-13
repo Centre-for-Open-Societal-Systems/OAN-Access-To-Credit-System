@@ -6,7 +6,7 @@
 #  Required env (injected by Jenkins):
 #    KUBECONFIG        path to the oan-dev kubeconfig (Secret file credential)
 #    IMAGE_REPOSITORY  full ECR URI of the frontend image (without tag)
-#    IMMUTABLE_TAG     image tag for this build, e.g. 0.0.0-develop.42
+#    IMMUTABLE_TAG     image tag for this build, e.g. 0.0.1-develop.42
 #    HELM_RELEASE      Helm release name, default: a2c-ui
 #    HELM_NAMESPACE    Kubernetes namespace,  default: a2c
 # =============================================================================
