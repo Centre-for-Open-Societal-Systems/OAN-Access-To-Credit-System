@@ -12,13 +12,14 @@ ui:
     repository: ""
     tag: ""
 
+  # Off: the Deployment runs ui-service's replicaCount (1). The bounds stay for turning it back on.
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 3
     targetCPU: 75
     targetMemory: 75
-  # HPA needs requests to compute utilization.
+  # An HPA needs requests to compute utilization.
   resources:
     requests:
       cpu: 50m
